@@ -30,7 +30,7 @@ jobs:
           node-version: "24"
 
       - name: Tests
-        run: node --test scripts/*.test.mjs
+        run: node --test scripts/*.test.mjs server/*.test.mjs
 
       - name: Fetch characters and compute scores
         env:

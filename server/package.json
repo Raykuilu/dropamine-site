@@ -1,0 +1,9 @@
+{
+  "name": "dropamine-api",
+  "private": true,
+  "type": "module",
+  "description": "api.dropamine.app: Battle.net sign-in for the Dropamine Hiscores",
+  "main": "server.mjs",
+  "scripts": { "start": "node server.mjs", "test": "node --test lib.test.mjs" },
+  "engines": { "node": ">=24" }
+}

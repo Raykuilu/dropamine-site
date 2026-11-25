@@ -331,6 +331,77 @@ function applyStatic() {
   if (v) $$('[data-meta]').forEach(el => { el.textContent = (el.closest('[lang]').lang === 'fr' ? I18N.meta[1] : I18N.meta[0]).replace('{v}', v); });
 }
 
+/* ======================================================================
+   Connexion Battle.net (api.dropamine.app) : n'apparaît que si le service répond.
+   ====================================================================== */
+const API = 'https://api.dropamine.app';
+Object.assign(I18N, {
+  bnTitle: ['Register with Battle.net', 'Inscription avec Battle.net'],
+  bnPitch: ['Sign in with Blizzard: your Forever characters are listed, tick the ones to show. We never see your password.',
+    'Connecte-toi chez Blizzard : tes personnages Forever s\'affichent, coche ceux à montrer. Nous ne voyons jamais ton mot de passe.'],
+  bnLogin: ['Sign in with Battle.net', 'Se connecter avec Battle.net'], bnLogout: ['Sign out', 'Se déconnecter'],
+  bnNone: ['No Forever character on this account (level 10+, logged out at least once).', 'Aucun personnage Forever sur ce compte (niveau 10 minimum, déconnecté au moins une fois).'],
+  bnListed: ['LISTED', 'INSCRIT'], bnLow: ['level 10 required', 'niveau 10 requis'],
+  bnAdd: ['Register selected', 'Inscrire la sélection'], bnRemove: ['Remove selected', 'Retirer la sélection'],
+  bnDone: ['Done: {n} character{s} updated. The Hiscores refresh within a few minutes.', 'C\'est fait : {n} personnage{s} mis à jour. Les classements se rafraîchissent d\'ici quelques minutes.'],
+  bnError: ['Something went wrong. Try again in a moment.', 'Un problème est survenu. Réessaie dans un instant.'],
+  bnAuthError: ['Battle.net sign-in did not complete. Try again.', 'La connexion Battle.net n\'a pas abouti. Réessaie.'],
+  bnOr: ['Or use the GitHub form below.', 'Ou utilise le formulaire GitHub ci-dessous.'],
+});
+const Bnet = (() => {
+  let alive = null, me = null, msg = '';
+  const box = () => $('#bnet');
+  const call = (path, body) => fetch(API + path, body ? { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'include' });
+  async function probe() {
+    if (alive !== null) return alive;
+    try { alive = (await fetch(API + '/health', { cache: 'no-store' })).ok; } catch { alive = false; }
+    return alive;
+  }
+  async function load() {
+    try { const r = await call('/me'); me = r.ok ? await r.json() : null; } catch { me = null; }
+  }
+  function draw() {
+    const b = box(); if (!alive) { b.hidden = true; return; }
+    b.hidden = false;
+    if (!me) {
+      b.innerHTML = `<div class="head"><h2>${t('bnTitle')}</h2></div><p style="color:var(--muted);margin:0 0 16px">${t('bnPitch')}</p>
+        <a class="btn bnet-btn" href="${API}/auth/login">${t('bnLogin')}</a>${msg ? `<p class="msg">${msg}</p>` : ''}<p class="msg">${t('bnOr')}</p>`;
+      return;
+    }
+    const chars = me.characters || [];
+    b.innerHTML = `<div class="who-bn"><b>${esc(me.battletag || 'Battle.net')}</b><a data-bn="logout">${t('bnLogout')}</a></div>
+      ${chars.length ? `<div class="list">${chars.map(c => `<label class="${c.level < 10 ? 'off' : ''}${c.registered ? ' on' : ''}"><input type="checkbox" value="${esc(c.key)}" ${c.level < 10 ? 'disabled' : ''} ${c.registered ? 'checked' : ''}>
+        <span><b>${esc(c.name || c.slug)} ${esc(c.surname || '')}</b><small>${esc(c.region.toUpperCase())} · ${esc(L2(CLASS[c.classId]) || '')} ${c.level}${c.level < 10 ? ' · ' + t('bnLow') : ''}</small></span>
+        ${c.registered ? `<span class="tagged">${t('bnListed')}</span>` : ''}</label>`).join('')}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" data-bn="claim">${t('bnAdd')}</button><button class="btn ghost" data-bn="release">${t('bnRemove')}</button></div>`
+        : `<p class="msg">${t('bnNone')}</p>`}
+      ${msg ? `<p class="msg">${msg}</p>` : ''}`;
+  }
+  async function show() {
+    if (!(await probe())) { box().hidden = true; return; }
+    const q = new URLSearchParams(location.search);
+    if (q.get('bnet') === 'error') msg = t('bnAuthError');
+    await load(); draw();
+  }
+  document.addEventListener('click', async e => {
+    const el = e.target.closest('[data-bn]'); if (!el) return;
+    e.preventDefault(); const act = el.dataset.bn;
+    if (act === 'logout') { await call('/logout', {}).catch(() => {}); me = null; msg = ''; draw(); return; }
+    const checked = $$('#bnet input:checked').map(i => i.value), all = $$('#bnet input').map(i => i.value);
+    const keys = act === 'claim' ? checked : all.filter(k => !checked.includes(k) && me.characters.find(c => c.key === k)?.registered);
+    if (!keys.length) return;
+    $$('#bnet [data-bn]').forEach(x => x.setAttribute('disabled', ''));
+    try {
+      const r = await call('/' + act, { keys });
+      const j = await r.json();
+      msg = r.ok ? t('bnDone', { n: (j.done || []).length }) : t('bnError');
+      Ribbon.swell(.8);
+    } catch { msg = t('bnError'); }
+    await load(); draw();
+  });
+  return { show };
+})();
+
 /* ---------- Animations d'arrivée ---------- */
 function animate(view) {
   $$('.tri i,.prof .bar i,.mbar i', view).forEach((el, i) => {
@@ -354,7 +425,7 @@ const tabs = $$('.tabs button');
 function readUrl() {
   const q = new URLSearchParams(location.search);
   const v = q.get('p');
-  state.view = VIEWS.includes(v) ? v : (q.get('c') ? 'char' : q.get('g') ? 'guild' : 'home');
+  state.view = VIEWS.includes(v) ? v : (q.get('bnet') ? 'join' : q.get('c') ? 'char' : q.get('g') ? 'guild' : 'home');
   state.region = ['eu', 'us', 'tw'].includes(q.get('r')) ? q.get('r') : 'eu';
   state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0;
   state.c = q.get('c') || state.c; state.g = q.get('g') || '';
@@ -369,7 +440,7 @@ function writeUrl(push) {
   if (state.view === 'guild' && state.g) q.set('g', state.g);
   history[push ? 'pushState' : 'replaceState'](null, '', q.toString() ? '?' + q : location.pathname);
 }
-const RENDER = { rank: renderRank, char: renderChar, guild: renderGuild, news: renderNews };
+const RENDER = { rank: renderRank, char: renderChar, guild: renderGuild, news: renderNews, join: () => Bnet.show() };
 const TITLES = { rank: 'tab.rank', char: 'tab.char', guild: 'tab.guild', news: 'tab.news', get: 'btn.download', join: 'foot.join', privacy: 'foot.privacy' };
 function render(push) {
   applyStatic();

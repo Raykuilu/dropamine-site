@@ -291,3 +291,22 @@ html[data-lang=en] [lang=fr],html[data-lang=fr] [lang=en]{display:none!important
 .lang-btn{all:unset;cursor:pointer;font-family:var(--display);font-weight:700;letter-spacing:.12em;font-size:13px;color:var(--muted);height:36px;padding:0 12px;border:1px solid var(--line-2);border-radius:999px;transition:.25s var(--ease)}
 .lang-btn:hover{color:var(--gold);border-color:var(--rim-lo)}
 .lang-btn:focus-visible{outline:2px solid var(--rim);outline-offset:2px}
+
+/* ============ Connexion Battle.net (page Inscription) ============ */
+.bnet{margin-bottom:clamp(18px,2.4vw,28px)}
+.bnet .who-bn{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-bottom:14px}
+.bnet .who-bn b{font-family:var(--display);letter-spacing:.06em;color:var(--gold);font-size:20px}
+.bnet .who-bn a{margin-left:auto;color:var(--muted);font-size:14px;cursor:pointer}
+.bnet .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin:6px 0 16px}
+.bnet label{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line-2);border-radius:var(--radius);cursor:pointer;transition:border-color .2s,background .2s}
+.bnet label:hover{border-color:var(--rim-lo)}
+.bnet label.on{border-color:var(--rim);background:rgba(196,154,92,.08)}
+.bnet label.off{opacity:.5;cursor:not-allowed}
+.bnet input{accent-color:#d9b56f;width:16px;height:16px}
+.bnet label span{flex:1;min-width:0}
+.bnet label b{display:block;font-weight:500}
+.bnet label small{color:var(--faint);font-style:italic}
+.bnet .tagged{font-family:var(--display);font-weight:700;letter-spacing:.1em;font-size:11px;color:#b5dd9d}
+.bnet .msg{margin-top:12px;color:var(--muted);font-style:italic}
+.btn.bnet-btn{background:linear-gradient(180deg,#1a8fe0,#0e6cb4);color:#fff;box-shadow:0 6px 18px -6px rgba(26,143,224,.6)}
+.btn[disabled]{opacity:.5;pointer-events:none}
