@@ -213,7 +213,7 @@ export function sitemap(players, day) {
 // Un navigateur ne doit jamais mélanger une page neuve avec un vieux app.js / style.css en cache :
 // index.html les appelle avec l'empreinte de leur contenu (app.js?v=xxxxxxxx).
 export function stampHtml(html, hashes) {
-  return html.replace(/(src|href)="(app\.js|style\.css)(\?v=[0-9a-f]+)?"/g, (_, attr, file) => `${attr}="${file}?v=${hashes[file]}"`);
+  return html.replace(/(src|href)="(app\.js|share\.js|style\.css)(\?v=[0-9a-f]+)?"/g, (_, attr, file) => `${attr}="${file}?v=${hashes[file]}"`);
 }
 async function stampAssets() {
   const { createHash } = await import('node:crypto');
@@ -221,7 +221,7 @@ async function stampAssets() {
   for (const f of ['app.js', 'share.js', 'style.css']) hashes[f] = createHash('sha256').update(await readFile(join(ROOT, 'site', f))).digest('hex').slice(0, 8);
   const file = join(ROOT, 'site/index.html');
   await writeFile(file, stampHtml(await readFile(file, 'utf8'), hashes));
-  console.log(`empreintes : app.js ${hashes['app.js']}, style.css ${hashes['style.css']}`);
+  console.log(`empreintes : ${Object.entries(hashes).map(([f, h]) => f + ' ' + h).join(', ')}`);
 }
 
 async function main() {
