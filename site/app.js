@@ -30,7 +30,7 @@ const I18N = {
   tipRank: ['Rank {r} / {m}', 'Rang {r} / {m}'], tipPlace: ['{r} in the Hiscores', '{r} au classement'],
   tipEst: ['Estimated: equipped weapon counted at its maximum', 'Estimé : arme équipée comptée au maximum'], 'tab.guild': ['Guilds', 'Guildes'],
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
-  'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source', 'Code du site'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
+  'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source (open source, MIT)', 'Code du site (open source, MIT)'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
   'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.stat': ['STATISTICS', 'STATISTIQUES'],
   kills: ['Creatures killed', 'Créatures tuées'], quests: ['Quests', 'Quêtes'], flights: ['Flights taken', 'Trajets aériens'], deaths: ['Deaths', 'Morts'],
