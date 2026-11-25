@@ -18,7 +18,7 @@ it presents the addon and hosts the **Dropamine Hiscores**.
 Requires Node 20+. Set `BNET_CLIENT_ID` and `BNET_CLIENT_SECRET` (a Battle.net API client), then:
 
 ```sh
-node --test scripts/
+node --test scripts/*.test.mjs
 node scripts/build.mjs
 ```
 
