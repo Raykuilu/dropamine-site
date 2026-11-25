@@ -164,6 +164,18 @@ async function pool(items, n, fn) {
   await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) await fn(items[i++]); }));
 }
 
+// Plan du site pour les moteurs de recherche : les pages fixes, puis une fiche par personnage et par guilde
+export function sitemap(players, day) {
+  const SITE = 'https://dropamine.app/';
+  const xml = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const urls = ['', '?p=rank', '?p=guild', '?p=news', '?p=get', '?p=join', '?p=privacy'].map(q => SITE + q);
+  for (const p of players) urls.push(`${SITE}?p=char&c=${encodeURIComponent(p.key)}`);
+  const guilds = new Set(players.filter(p => p.guild?.slug).map(p => `${p.region !== 'eu' ? `r=${p.region}&` : ''}g=${encodeURIComponent(p.guild.slug)}`));
+  for (const g of guilds) urls.push(`${SITE}?p=guild&${g}`);
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
+    + urls.map(u => `  <url><loc>${xml(u)}</loc><lastmod>${day}</lastmod></url>`).join('\n') + '\n</urlset>\n';
+}
+
 // Un navigateur ne doit jamais mélanger une page neuve avec un vieux app.js / style.css en cache :
 // index.html les appelle avec l'empreinte de leur contenu (app.js?v=xxxxxxxx).
 export function stampHtml(html, hashes) {
@@ -244,6 +256,7 @@ async function main() {
     JSON.stringify({ updated: new Date().toISOString(), players }, null, 1));
   console.log(`${players.length} personnage(s) écrit(s) dans site/data/hiscores.json`);
 
+  await writeFile(join(ROOT, 'site/sitemap.xml'), sitemap(players, today));
   await stampAssets();
 
   // Nouveautés : le CHANGELOG public de l'addon (une erreur ici ne bloque pas le classement)

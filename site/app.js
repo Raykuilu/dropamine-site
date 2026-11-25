@@ -14,7 +14,8 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 let LANG = document.documentElement.dataset.lang === 'fr' ? 'fr' : 'en';
 const I18N = {
   'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'], 'acct.out': ['Sign out', 'Se déconnecter'],
-  myChars: ['My characters', 'Mes personnages'], 'tab.guild': ['Guilds', 'Guildes'],
+  myChars: ['My characters', 'Mes personnages'],
+  youHere: ['YOU', 'TOI'], 'tab.guild': ['Guilds', 'Guildes'],
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
   'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source', 'Code du site'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
@@ -29,9 +30,9 @@ const I18N = {
   registered: ['{n} registered', '{n} inscrit{s}'], previewN: ['{n} in preview', '{n} en aperçu'],
   legend: ['Weapons estimated, waiting for the Dropamine file', 'Armes estimées, en attente du fichier Dropamine'], weaponsDef: ['Weapons & Defense', 'Armes et Défense'], professions: ['Professions', 'Métiers'],
   failedT: ['Data unavailable', 'Données indisponibles'], failed: ["The Hiscores couldn't be loaded. Try again in a moment.", "Le classement n'a pas pu être chargé. Réessaie dans un instant."],
-  nobodyT: ['Nobody yet', "Personne pour l'instant"], nobody: ['No registered character in this region.', 'Aucun personnage inscrit dans cette région.'], registerYours: ['Register yours', 'Inscris le tien'],
+  nobodyT: ['Nobody yet', "Personne pour l'instant"], nobody: ['No character in this region yet.', 'Aucun personnage dans cette région pour le moment.'], registerYours: ['Register yours', 'Inscris le tien'],
   noCharT: ['No character', 'Aucun personnage'], noChar: ['Search for a character, pick one in the Hiscores, or <a href="?p=join" data-view-link="join">sign in</a> to see yours.', 'Cherche un personnage, choisis-en un dans le classement, ou <a href="?p=join" data-view-link="join">connecte-toi</a> pour voir le tien.'],
-  noSearch: ['No registered character matches.', 'Aucun personnage inscrit ne correspond.'],
+  noSearch: ['No character matches.', 'Aucun personnage ne correspond.'],
   chartSoon: ['The chart will appear after a few days of tracking.', 'La courbe apparaîtra après quelques jours de suivi.'],
   levelN: ['level {n}', 'niveau {n}'], of60: ['out of 60', 'sur 60'], profCount: ['{n} profession{s}', '{n} métier{s}'], noProf: ['No profession learned.', 'Aucun métier appris.'],
   progress: ['Progress', 'Progression'], defW: ['Defense {d} · weapons {w}', 'Défense {d} · armes {w}'], estP: [' (estimated)', ' (estimées)'],
@@ -40,7 +41,7 @@ const I18N = {
   ctaEst: ["<b>Estimated score.</b> Weapon skills are not in the armory, so each equipped weapon is counted at its maximum. The player's Dropamine file will soon give the exact score.",
     "<b>Score estimé.</b> Les compétences d'armes ne sont pas dans l'armurerie : elles sont comptées au maximum pour chaque arme équipée. Le fichier Dropamine du joueur donnera bientôt le score exact."],
   guildsT: ['Guilds', 'Guildes'], guildsNote: ["ranked by their members' total · Forever {r}", 'classées par le total de leurs membres · Forever {r}'],
-  noGuildT: ['No guild', 'Aucune guilde'], noGuild: ['Guilds appear as soon as one of their members registers.', "Les guildes apparaissent dès qu'un de leurs membres est inscrit."],
+  noGuildT: ['No guild', 'Aucune guilde'], noGuild: ['Guilds appear as soon as one of their members is listed.', "Les guildes apparaissent dès qu'un de leurs membres est affiché."],
   allGuilds: ['← All guilds', '← Toutes les guildes'], membersN: ['{n} member{s}', '{n} membre{s}'],
   guildTotal: ['REGISTERED TOTAL · {r} GUILD', 'TOTAL DES INSCRITS · {r} GUILDE'],
   bestTotal: ['BEST TOTAL', 'MEILLEUR TOTAL'], bestProf: ['BEST PROFESSION', 'MEILLEUR MÉTIER'], bestWeek: ['BEST WEEK', 'PLUS FORTE SEMAINE'],
@@ -188,9 +189,13 @@ const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.comple
 
 /* ---------- Accueil : le pont vers les classements ---------- */
 function renderHome() {
-  const top = rankBy(SKILLS[0], inRegion()).slice(0, 5);
+  const all = rankBy(SKILLS[0], inRegion()), top = all.slice(0, 5);
+  const line = ({ p, v, r }, cls = '') => `<div class="row${r <= 3 ? ' top' : ''}${cls}" data-c="${esc(pkey(p))}" style="grid-template-columns:44px minmax(0,1fr) minmax(90px,160px) 96px"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b><small>${who(p)}</small></span></span>${tri(p)}<span class="tot">${fmt(v)}${estTag(p)}</span></div>`;
+  // connecté : ton meilleur personnage, sous le top 5 s'il n'y figure pas
+  const me = all.find(x => pkey(x.p) === Bnet.best());
+  const you = me && !top.includes(me) ? `<div class="you-sep">${t('youHere')}</div>${line(me, ' you')}` : '';
   $('#home-top').innerHTML = DATA.failed ? failed() : top.length
-    ? top.map(({ p, v, r }) => `<div class="row${r <= 3 ? ' top' : ''}" data-c="${esc(pkey(p))}" style="grid-template-columns:44px minmax(0,1fr) minmax(90px,160px) 96px"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b><small>${who(p)}</small></span></span>${tri(p)}<span class="tot">${fmt(v)}${estTag(p)}</span></div>`).join('')
+    ? top.map(x => line(x, pkey(x.p) === Bnet.best() ? ' you' : '')).join('') + you
     : nobody();
 }
 

@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-25T15:40:31.300Z",
+ "updated": "2026-11-25T16:22:46.489Z",
  "players": [
   {
    "key": "eu/gue-rrier",
@@ -251,6 +251,88 @@
    "preview": true
   },
   {
+   "key": "eu/ray-kuilu",
+   "region": "eu",
+   "slug": "ray-kuilu",
+   "name": "Ray",
+   "surname": "Kuilu",
+   "class": "Druide",
+   "classId": 11,
+   "race": "Elfe de la nuit",
+   "raceId": 4,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 36,
+   "defense": 177,
+   "weapons": 691,
+   "weaponsSource": "dropamine",
+   "professions": [
+    {
+     "id": 165,
+     "name": "Leatherworking",
+     "skill": 120,
+     "max": 150,
+     "recipes": 46
+    },
+    {
+     "id": 393,
+     "name": "Skinning",
+     "skill": 223,
+     "max": 300,
+     "recipes": 2
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 161,
+     "max": 225,
+     "recipes": 28
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 137,
+     "max": 225,
+     "recipes": 2
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 208,
+     "max": 225,
+     "recipes": 14
+    }
+   ],
+   "parts": {
+    "level": 36,
+    "combat": 868,
+    "professions": 849
+   },
+   "total": 1753,
+   "max": 2460,
+   "complete": true,
+   "stats": {
+    "kills": 4607,
+    "deaths": 46,
+    "quests": 439,
+    "flights": 116
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 1753
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/77/32432717-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/77/32432717-avatar.jpg"
+  },
+  {
    "key": "eu/rakshir-noirsillage",
    "region": "eu",
    "slug": "rakshir-noirsillage",
@@ -325,88 +407,6 @@
    "render": "https://render.worldofwarcraft.com/forever-eu/character/182/11834806-main-raw.png",
    "avatar": "https://render.worldofwarcraft.com/forever-eu/character/182/11834806-avatar.jpg",
    "preview": true
-  },
-  {
-   "key": "eu/ray-kuilu",
-   "region": "eu",
-   "slug": "ray-kuilu",
-   "name": "Ray",
-   "surname": "Kuilu",
-   "class": "Druide",
-   "classId": 11,
-   "race": "Elfe de la nuit",
-   "raceId": 4,
-   "gender": "MALE",
-   "faction": "ALLIANCE",
-   "guild": {
-    "name": "Everybody Knows",
-    "slug": "everybody-knows"
-   },
-   "ruleset": "JcJ",
-   "rulesetId": 1,
-   "level": 36,
-   "defense": 177,
-   "weapons": 180,
-   "weaponsSource": "estimate",
-   "professions": [
-    {
-     "id": 165,
-     "name": "Leatherworking",
-     "skill": 120,
-     "max": 150,
-     "recipes": 46
-    },
-    {
-     "id": 393,
-     "name": "Skinning",
-     "skill": 223,
-     "max": 300,
-     "recipes": 2
-    },
-    {
-     "id": 185,
-     "name": "Cooking",
-     "skill": 161,
-     "max": 225,
-     "recipes": 28
-    },
-    {
-     "id": 356,
-     "name": "Fishing",
-     "skill": 137,
-     "max": 225,
-     "recipes": 2
-    },
-    {
-     "id": 129,
-     "name": "First Aid",
-     "skill": 208,
-     "max": 225,
-     "recipes": 14
-    }
-   ],
-   "parts": {
-    "level": 36,
-    "combat": 357,
-    "professions": 849
-   },
-   "total": 1242,
-   "max": 2460,
-   "complete": false,
-   "stats": {
-    "kills": 4607,
-    "deaths": 46,
-    "quests": 439,
-    "flights": 116
-   },
-   "history": [
-    {
-     "d": "2026-11-25",
-     "t": 1242
-    }
-   ],
-   "render": "https://render.worldofwarcraft.com/forever-eu/character/77/32432717-main-raw.png",
-   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/77/32432717-avatar.jpg"
   },
   {
    "key": "eu/yema-lobrah",
@@ -559,10 +559,10 @@
    "max": 2460,
    "complete": false,
    "stats": {
-    "kills": 5303,
+    "kills": 5304,
     "deaths": 39,
-    "quests": 322,
-    "flights": 63
+    "quests": 323,
+    "flights": 64
    },
    "history": [
     {

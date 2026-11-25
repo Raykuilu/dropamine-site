@@ -81,3 +81,11 @@ test('empreintes des fichiers du site', () => {
   const out = stampHtml('<link rel="stylesheet" href="style.css"><script src="app.js?v=0000ffff"></script>', h);
   assert.equal(out, '<link rel="stylesheet" href="style.css?v=bbbb2222"><script src="app.js?v=aaaa1111"></script>');
 });
+
+import { sitemap } from './build.mjs';
+test('plan du site : pages fixes, fiches et guildes, adresses échappées', () => {
+  const x = sitemap([{ key: 'eu/ray-kuilu', region: 'eu', guild: { slug: 'everybody-knows' } }, { key: 'us/a-b', region: 'us', guild: null }], '2026-11-25');
+  assert.ok(x.includes('<loc>https://dropamine.app/?p=char&amp;c=eu%2Fray-kuilu</loc>'));
+  assert.ok(x.includes('<loc>https://dropamine.app/?p=guild&amp;g=everybody-knows</loc>'));
+  assert.ok(x.includes('<lastmod>2026-11-25</lastmod>'));
+});

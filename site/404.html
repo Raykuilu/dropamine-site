@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Page not found · Dropamine</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#110d09">
+<link rel="icon" type="image/png" href="/Dropamine-Logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#110d09;--gold:#e8c88a;--cream:#efe2c6;--muted:#a8946f;--line:#3c2f1e}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;display:grid;place-items:center;padding:24px 16px;background:radial-gradient(ellipse at 50% 0%,#2a1f14 0%,var(--bg) 60%) var(--bg);color:var(--cream);font-family:'EB Garamond',Georgia,serif;text-align:center}
+  main{max-width:480px}
+  img{width:88px;height:auto;filter:drop-shadow(0 10px 20px rgba(0,0,0,.6))}
+  .code{font-family:'Cormorant SC',Georgia,serif;font-weight:700;font-size:clamp(64px,16vw,112px);line-height:1;color:var(--gold);letter-spacing:.06em;margin:18px 0 4px}
+  h1{font-family:'Cormorant SC',Georgia,serif;font-weight:600;letter-spacing:.08em;font-size:22px;margin:0 0 12px;color:var(--cream)}
+  p{color:var(--muted);font-style:italic;margin:0 0 26px;font-size:18px}
+  a{display:inline-block;font-family:'Cormorant SC',Georgia,serif;font-weight:700;letter-spacing:.08em;font-size:16px;color:#1a120a;background:linear-gradient(180deg,#f1d79f,#d9b56f);padding:11px 24px;border-radius:999px;text-decoration:none;box-shadow:0 6px 18px -6px rgba(232,200,138,.55)}
+  a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+  .ribbon{height:4px;width:160px;margin:26px auto 0;border-radius:2px;background:linear-gradient(90deg,#b85a46,#6a88c0,#5f9a4a)}
+</style>
+</head>
+<body>
+<main>
+  <img src="/Dropamine-Logo.png" alt="Dropamine">
+  <div class="code">404</div>
+  <h1 id="t">This page dropped nothing</h1>
+  <p id="d">The address leads nowhere. The addon, the Hiscores and every character are on the home page.</p>
+  <a id="b" href="/">Back to Dropamine</a>
+  <div class="ribbon" aria-hidden="true"></div>
+</main>
+<script>
+  // même choix de langue que le site : dernier choix, sinon celle du navigateur
+  var s = null; try { s = localStorage.getItem('lang'); } catch (e) {}
+  if (s === 'fr' || (!s && /^fr\b/i.test(navigator.language || ''))) {
+    document.documentElement.lang = 'fr'; document.title = 'Page introuvable · Dropamine';
+    document.getElementById('t').textContent = "Cette page n'a rien lâché";
+    document.getElementById('d').textContent = "L'adresse ne mène nulle part. L'addon, les classements et tous les personnages sont sur l'accueil.";
+    document.getElementById('b').textContent = "Retour à Dropamine";
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /img/badges/_make.html
+
+Sitemap: https://dropamine.app/sitemap.xml
