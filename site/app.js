@@ -16,6 +16,8 @@ const I18N = {
   'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'], 'acct.out': ['Sign out', 'Se déconnecter'],
   myChars: ['My characters', 'Mes personnages'],
   youHere: ['YOU', 'TOI'],
+  pulseChars: ['{n} characters tracked', '{n} personnages suivis'], pulseGuilds: ['{n} guild{s}', '{n} guilde{s}'],
+  pulseToday: ['updated today at {h}', "mis à jour aujourd'hui à {h}"], pulseOn: ['updated {d}', 'mis à jour le {d}'],
   tipSpare: ['Not in hand at the last armory read', "Pas en main lors de la dernière lecture de l'armurerie"],
   moreW: ['+ {n} other weapon skill{s}', '+ {n} autre{s} compétence{s} d’arme'], lessW: ['Only weapons in use', 'Seulement les armes utilisées'],
   viewT: ['Display', 'Affichage'], viewList: ['List', 'Liste'], viewGrid: ['Grid, as in the addon', "Grille, comme dans l'addon"],
@@ -224,6 +226,15 @@ const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.comple
 
 /* ---------- Accueil : le pont vers les classements ---------- */
 function renderHome() {
+  // les chiffres qui montrent que le projet vit (toutes régions)
+  if (DATA.players.length) {
+    const gs = new Set(DATA.players.filter(p => p.guild).map(p => (p.region || 'eu') + '/' + p.guild.slug));
+    const up = DATA.updated ? new Date(DATA.updated) : null;
+    const when = up ? (up.toDateString() === new Date().toDateString()
+      ? t('pulseToday', { h: up.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }) })
+      : t('pulseOn', { d: up.toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) })) : '';
+    $$('[data-pulse]').forEach(el => { el.innerHTML = `<i class="live"></i>${t('pulseChars', { n: fmt(DATA.players.length) })} · ${t('pulseGuilds', { n: gs.size })}${when ? ' · ' + when : ''}`; });
+  }
   const all = rankBy(SKILLS[0], inRegion()), top = all.slice(0, 5);
   // les +1 du jour : les plus gros gains depuis la veille, en petits toasts façon addon
   const gains = inRegion().map(p => ({ p, d: dayGain(p) })).filter(x => x.d > 0).sort((a, b) => b.d - a.d).slice(0, 6);
