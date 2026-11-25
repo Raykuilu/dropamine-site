@@ -74,3 +74,10 @@ test('aperçu de guilde : niveau 10+, sans les inscrits ni les retirés', () => 
   assert.deepEqual(out.map(e => e.key), ['eu/tim-plar']);
   assert.equal(out[0].preview, true);
 });
+
+import { stampHtml } from './build.mjs';
+test('empreintes des fichiers du site', () => {
+  const h = { 'app.js': 'aaaa1111', 'style.css': 'bbbb2222' };
+  const out = stampHtml('<link rel="stylesheet" href="style.css"><script src="app.js?v=0000ffff"></script>', h);
+  assert.equal(out, '<link rel="stylesheet" href="style.css?v=bbbb2222"><script src="app.js?v=aaaa1111"></script>');
+});

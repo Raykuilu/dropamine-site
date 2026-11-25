@@ -164,6 +164,20 @@ async function pool(items, n, fn) {
   await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) await fn(items[i++]); }));
 }
 
+// Un navigateur ne doit jamais mélanger une page neuve avec un vieux app.js / style.css en cache :
+// index.html les appelle avec l'empreinte de leur contenu (app.js?v=xxxxxxxx).
+export function stampHtml(html, hashes) {
+  return html.replace(/(src|href)="(app\.js|style\.css)(\?v=[0-9a-f]+)?"/g, (_, attr, file) => `${attr}="${file}?v=${hashes[file]}"`);
+}
+async function stampAssets() {
+  const { createHash } = await import('node:crypto');
+  const hashes = {};
+  for (const f of ['app.js', 'style.css']) hashes[f] = createHash('sha256').update(await readFile(join(ROOT, 'site', f))).digest('hex').slice(0, 8);
+  const file = join(ROOT, 'site/index.html');
+  await writeFile(file, stampHtml(await readFile(file, 'utf8'), hashes));
+  console.log(`empreintes : app.js ${hashes['app.js']}, style.css ${hashes['style.css']}`);
+}
+
 async function main() {
   const registry = await readJson(join(ROOT, 'data/registry.json'), { characters: [] });
   const uploads = await readJson(join(ROOT, 'data/uploads.json'), {});
@@ -229,6 +243,8 @@ async function main() {
   await writeFile(join(ROOT, 'site/data/hiscores.json'),
     JSON.stringify({ updated: new Date().toISOString(), players }, null, 1));
   console.log(`${players.length} personnage(s) écrit(s) dans site/data/hiscores.json`);
+
+  await stampAssets();
 
   // Nouveautés : le CHANGELOG public de l'addon (une erreur ici ne bloque pas le classement)
   try {
