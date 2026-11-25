@@ -507,3 +507,7 @@ html[data-lang=en] [lang=fr],html[data-lang=fr] [lang=en]{display:none!important
 @media (max-width:900px){.startfaq{grid-template-columns:minmax(0,1fr)}}
 @media (prefers-reduced-motion:reduce){.pulse .live{animation:none}}
 html.static .pulse .live{animation:none}
+/* en-tête de guilde : nom à gauche, total à droite ; empilés sur téléphone */
+.who.gh{grid-template-columns:minmax(0,1fr) auto}
+.who.gh h2{overflow-wrap:anywhere}
+@media (max-width:900px){.who.gh{grid-template-columns:minmax(0,1fr);gap:10px}}

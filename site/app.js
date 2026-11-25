@@ -483,7 +483,7 @@ function renderGuild() {
       <div class="slist">${bestOf.map(lineOf).join('')}</div>${dropBar(gp)}</div>`;
   $('#guild-panel').innerHTML = `
     <span class="back" data-g="">${t('allGuilds')}</span>
-    <div class="who" style="grid-template-columns:minmax(0,1fr) auto">
+    <div class="who gh">
       <div><h2>${esc(g.name)}</h2><p>${t('membersN', { n: members.length })}</p></div>
       <div class="score"><div class="n" data-n="${g.total}">${fmt(g.total)}</div><div class="r">${t('guildTotal', { r: ord(rank) })}</div></div>
     </div>
