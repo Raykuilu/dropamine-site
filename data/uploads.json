@@ -1,1 +1,133 @@
-{}
+{
+  "eu/ray-kuilu": {
+    "weapons": 691,
+    "weaponList": [
+      {
+        "id": "axes",
+        "rank": 0
+      },
+      {
+        "id": "axes2h",
+        "rank": 0
+      },
+      {
+        "id": "maces",
+        "rank": 0
+      },
+      {
+        "id": "maces2h",
+        "rank": 128
+      },
+      {
+        "id": "swords",
+        "rank": 0
+      },
+      {
+        "id": "swords2h",
+        "rank": 0
+      },
+      {
+        "id": "polearms",
+        "rank": 151
+      },
+      {
+        "id": "staves",
+        "rank": 103
+      },
+      {
+        "id": "fist",
+        "rank": 0
+      },
+      {
+        "id": "daggers",
+        "rank": 1
+      },
+      {
+        "id": "unarmed",
+        "rank": 130
+      },
+      {
+        "id": "feral",
+        "rank": 178
+      },
+      {
+        "id": "bows",
+        "rank": 0
+      },
+      {
+        "id": "guns",
+        "rank": 0
+      },
+      {
+        "id": "crossbows",
+        "rank": 0
+      },
+      {
+        "id": "thrown",
+        "rank": 0
+      },
+      {
+        "id": "wands",
+        "rank": 0
+      }
+    ],
+    "defense": 177,
+    "level": 36,
+    "professions": [
+      {
+        "id": "alchemy",
+        "rank": 0
+      },
+      {
+        "id": "blacksmithing",
+        "rank": 0
+      },
+      {
+        "id": "enchanting",
+        "rank": 0
+      },
+      {
+        "id": "engineering",
+        "rank": 0
+      },
+      {
+        "id": "herbalism",
+        "rank": 0
+      },
+      {
+        "id": "leatherworking",
+        "rank": 120
+      },
+      {
+        "id": "mining",
+        "rank": 0
+      },
+      {
+        "id": "skinning",
+        "rank": 223
+      },
+      {
+        "id": "tailoring",
+        "rank": 0
+      },
+      {
+        "id": "cooking",
+        "rank": 161
+      },
+      {
+        "id": "fishing",
+        "rank": 137
+      },
+      {
+        "id": "firstaid",
+        "rank": 208
+      },
+      {
+        "id": "riding",
+        "rank": 0
+      }
+    ],
+    "version": "3.11.0",
+    "at": "2026-11-25"
+  }
+}
