@@ -337,3 +337,19 @@ html[data-lang=en] [lang=fr],html[data-lang=fr] [lang=en]{display:none!important
 .mine-pick>span:first-child{font-family:var(--display);letter-spacing:.1em;font-size:13px;color:var(--faint);margin-right:4px}
 .mine-pick small{color:inherit;opacity:.7}
 .tabs button[hidden]{display:none}
+/* Barre de navigation : deux rangées dès que les onglets et les outils ne tiennent plus côte à côte */
+@media (max-width:1220px){
+  .nav .wrap{flex-wrap:wrap;height:auto;padding:6px 0 10px;row-gap:8px}
+  .tabs{order:1;width:100%;overflow-x:auto;scrollbar-width:none}
+  .tools{order:2;width:100%;margin-left:0}
+  .search{flex:1;width:auto}
+}
+.tabs button{white-space:nowrap}
+.acct-out{all:unset;cursor:pointer;display:none;place-items:center;width:36px;height:36px;box-sizing:border-box;border:1px solid var(--line-2);border-radius:50%;color:var(--muted);transition:.25s var(--ease)}
+.acct-out:hover{color:var(--gold);border-color:var(--rim-lo)}
+.acct-out:focus-visible{outline:2px solid var(--rim);outline-offset:2px}
+.acct.on+.acct-out{display:grid}
+/* la recherche rétrécit d'abord (jusqu'à 130 px) avant que la barre passe sur deux rangées */
+.tabs{flex:none}
+.tools{flex:1 1 auto;min-width:0;justify-content:flex-end}
+.search{flex:0 1 270px;width:auto;min-width:130px}

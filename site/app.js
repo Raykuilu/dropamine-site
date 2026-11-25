@@ -13,7 +13,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
    ====================================================================== */
 let LANG = document.documentElement.dataset.lang === 'fr' ? 'fr' : 'en';
 const I18N = {
-  'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'],
+  'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'], 'acct.out': ['Sign out', 'Se déconnecter'],
   myChars: ['My characters', 'Mes personnages'], 'tab.guild': ['Guilds', 'Guildes'],
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
   'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source', 'Code du site'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
@@ -346,6 +346,7 @@ document.addEventListener('click', e => { const x = e.target.closest('.release.m
 /* ---------- Texte fixe traduit (data-t) et pied de page ---------- */
 function applyStatic() {
   $$('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+  $$('[data-t-title]').forEach(el => { el.title = t(el.dataset.tTitle); el.setAttribute('aria-label', t(el.dataset.tTitle)); });
   $$('[data-t-ph]').forEach(el => { el.placeholder = t(el.dataset.tPh); el.setAttribute('aria-label', t(el.dataset.tPh)); });
   $('#lang').textContent = LANG === 'fr' ? 'EN' : 'FR';
   $('#lang').title = LANG === 'fr' ? 'English' : 'Français';
@@ -470,6 +471,11 @@ const Bnet = (() => {
     const tab = $('.tabs [data-view="char"]'); if (tab) tab.hidden = !mine().length;
   }
   async function init() { if (await probe()) await load(); }
+  // déconnexion depuis la barre de navigation
+  $('#acct-out')?.addEventListener('click', async () => {
+    await call('/logout', {}).catch(() => {}); me = null; msg = ''; upMsg = '';
+    render(false); Ribbon.swell(.6);
+  });
   async function refresh() { await load(); render(false); }
   return { show, init, header, mine, best, isMine, refresh };
 })();
