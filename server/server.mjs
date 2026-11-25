@@ -7,6 +7,7 @@
 //   GET  /me                  → { battletag, characters: [...], registered: [...] }  (session requise)
 //   POST /claim   { keys }    → inscrit ces personnages (seulement ceux du compte connecté)
 //   POST /release { keys }    → les retire (seulement ceux du compte connecté)
+//   POST /upload  { line }    → ligne « /drop hiscores » : compétences d'armes exactes (inscrit le personnage au passage)
 //   POST /logout
 //
 // Le registre vit dans le dépôt GitHub du site (data/registry.json) : le service le met à jour
@@ -14,7 +15,7 @@
 
 import { createServer } from 'node:http';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
-import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey } from './lib.mjs';
+import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload } from './lib.mjs';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -97,20 +98,22 @@ async function accountCharacters(tok) {
 const gh = (path, init = {}) => fetch(`https://api.github.com/repos/${CFG.ghRepo}${path}`, {
   ...init, headers: { Authorization: `Bearer ${CFG.ghToken}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'dropamine-api', ...(init.headers || {}) },
 });
-async function readRegistry() {
-  const res = await gh('/contents/data/registry.json?ref=main');
-  if (!res.ok) throw new Error(`lecture du registre (${res.status})`);
+async function readFile(path, fallback) {
+  const res = await gh(`/contents/${path}?ref=main`);
+  if (res.status === 404 && fallback !== undefined) return { data: fallback, sha: undefined };
+  if (!res.ok) throw new Error(`lecture de ${path} (${res.status})`);
   const j = await res.json();
-  return { registry: JSON.parse(Buffer.from(j.content, 'base64').toString('utf8')), sha: j.sha };
+  return { data: JSON.parse(Buffer.from(j.content, 'base64').toString('utf8')), sha: j.sha };
 }
-async function writeRegistry(registry, sha, message) {
-  const res = await gh('/contents/data/registry.json', { method: 'PUT', body: JSON.stringify({
+const readRegistry = async () => { const { data, sha } = await readFile('data/registry.json'); return { registry: data, sha }; };
+async function writeFile(path, data, sha, message) {
+  const res = await gh(`/contents/${path}`, { method: 'PUT', body: JSON.stringify({
     message, sha, branch: 'main',
-    content: Buffer.from(JSON.stringify(registry, null, 2) + '\n').toString('base64'),
+    content: Buffer.from(JSON.stringify(data, null, 2) + '\n').toString('base64'),
     committer: { name: 'dropamine-api', email: '41898282+github-actions[bot]@users.noreply.github.com' },
   }) });
   if (res.status === 409 || res.status === 422) return false;                 // quelqu'un a écrit entre-temps : on recommence
-  if (!res.ok) throw new Error(`écriture du registre (${res.status})`);
+  if (!res.ok) throw new Error(`écriture de ${path} (${res.status})`);
   return true;
 }
 async function deleteHistory(key) {
@@ -121,15 +124,18 @@ async function deleteHistory(key) {
   await gh(path, { method: 'DELETE', body: JSON.stringify({ message: `Hiscores: remove history of ${key}`, sha, branch: 'main' }) });
 }
 const refreshSite = () => gh('/actions/workflows/update.yml/dispatches', { method: 'POST', body: JSON.stringify({ ref: 'main' }) }).catch(() => {});
-async function updateRegistry(fn, message) {
+// lecture → modification → écriture, recommencée si quelqu'un a écrit entre-temps
+async function updateFile(path, fallback, fn, message) {
   for (let attempt = 0; attempt < 3; attempt++) {
-    const { registry, sha } = await readRegistry();
-    const r = fn(registry);
+    const { data, sha } = await readFile(path, fallback);
+    const r = fn(data);
     if (!r.changed) return r;
-    if (await writeRegistry(r.registry, sha, message)) return r;
+    if (await writeFile(path, r.registry, sha, message)) return r;
   }
-  throw new Error('registre occupé, réessaie dans un instant');
+  throw new Error(`${path} occupé, réessaie dans un instant`);
 }
+const updateRegistry = (fn, message) => updateFile('data/registry.json', undefined, fn, message);
+const updateUploads = (fn, message) => updateFile('data/uploads.json', {}, fn, message);
 
 // ---------------------------------------------------------------- HTTP
 function send(res, status, body, headers = {}) {
@@ -172,7 +178,7 @@ const server = createServer(async (req, res) => {
     }
 
     // routes de session : appelées par dropamine.app (CORS avec cookie)
-    if (['/me', '/claim', '/release', '/logout'].includes(url.pathname)) {
+    if (['/me', '/claim', '/release', '/upload', '/logout'].includes(url.pathname)) {
       if (req.method === 'POST' && req.headers.origin !== CFG.siteUrl) return send(res, 403, { error: 'origine refusée' }, cors);
       const s = session(req);
       if (url.pathname === '/logout') {
@@ -195,9 +201,29 @@ const server = createServer(async (req, res) => {
         const r = url.pathname === '/claim'
           ? await updateRegistry(reg => applyClaim(reg, keys, owner, s.characters), `Hiscores: register ${keys.join(', ')} (Battle.net)`)
           : await updateRegistry(reg => applyRelease(reg, keys, s.characters), `Hiscores: remove ${keys.join(', ')} (Battle.net)`);
-        if (url.pathname === '/release') for (const k of r.done) await deleteHistory(k).catch(() => {});
+        if (url.pathname === '/release' && r.done.length) {
+          for (const k of r.done) await deleteHistory(k).catch(() => {});
+          await updateUploads(u => {
+            const n = { ...u }; let changed = false;
+            for (const k of r.done) if (n[k]) { delete n[k]; changed = true; }
+            return { registry: n, changed };
+          }, `Hiscores: remove Dropamine line of ${r.done.join(', ')}`).catch(() => {});
+        }
         if (r.changed) refreshSite();
         return send(res, 200, { done: r.done, refused: r.refused }, cors);
+      }
+      if (url.pathname === '/upload' && req.method === 'POST') {
+        const p = parseHiscoresLine((await readBody(req)).line);
+        if (p.error) return send(res, 400, { error: p.error }, cors);
+        const c = matchUpload(p, s.characters);
+        if (!c) return send(res, 400, { error: 'not-yours' }, cors);
+        if (c.level < 10) return send(res, 400, { error: 'level' }, cors);
+        await updateRegistry(reg => applyClaim(reg, [c.key], `bnet:${s.bnetId}`, s.characters), `Hiscores: register ${c.key} (Battle.net)`);
+        const entry = { weapons: p.weapons, weaponList: p.weaponList, defense: p.defense, level: p.level,
+          professions: p.professions, version: p.version, at: new Date().toISOString().slice(0, 10) };
+        await updateUploads(u => ({ registry: { ...u, [c.key]: entry }, changed: true }), `Hiscores: Dropamine line for ${c.key}`);
+        refreshSite();
+        return send(res, 200, { key: c.key, weapons: p.weapons, count: p.weaponList.length }, cors);
       }
     }
     return send(res, 404, { error: 'introuvable' });

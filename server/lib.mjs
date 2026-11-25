@@ -72,3 +72,35 @@ export function parseCookies(header) {
   return out;
 }
 export const validKey = k => typeof k === 'string' && /^(eu|us|tw)\/[\p{L}\p{N}]+(-[\p{L}\p{N}]+)+$/u.test(k) && k.length <= 80;
+
+// ---------------------------------------------------------------- ligne « /drop hiscores » (Dropamine 3.11+)
+// DROPAMINE-HS1:n=Ray;l=36;r=eu;g=Everybody Knows;d=177;ws=278;w=136=176,54=102;p=393=223,129=208;v=3.11.0;t=…;c=xxxxxxxx
+export const HS_PREFIX = 'DROPAMINE-HS1:';
+export function hsChecksum(body) {          // même calcul que Hiscores.lua (octets UTF-8, modulo 2^32)
+  let h = 5381;
+  for (const b of Buffer.from(body, 'utf8')) h = (h * 33 + b) % 4294967296;
+  return h.toString(16).padStart(8, '0');
+}
+const pairs = s => String(s ?? '').split(',').filter(Boolean).map(x => x.split('=')).filter(x => x.length === 2 && /^\d+$/.test(x[1]))
+  .map(([id, rank]) => ({ id: /^\d+$/.test(id) ? +id : id, rank: +rank }));
+export function parseHiscoresLine(raw) {
+  const s = String(raw ?? '').trim().replace(/\s*\n[\s\S]*$/, '');
+  if (!s.startsWith(HS_PREFIX)) return { error: 'format' };
+  const m = s.slice(HS_PREFIX.length).match(/^(.*);c=([0-9a-f]{8})$/);
+  if (!m) return { error: 'format' };
+  if (hsChecksum(m[1]) !== m[2]) return { error: 'checksum' };
+  const f = {};
+  for (const part of m[1].split(';')) { const i = part.indexOf('='); if (i > 0) f[part.slice(0, i)] = part.slice(i + 1); }
+  const level = +f.l, weapons = pairs(f.w);
+  if (!f.n || !(level >= 1 && level <= 60) || !['eu', 'us', 'tw', 'kr', 'cn'].includes(f.r)) return { error: 'format' };
+  if (weapons.some(w => w.rank > 5 * level)) return { error: 'values' };
+  return { name: f.n, level, region: f.r, guild: f.g || null, defense: +f.d || 0,
+    weapons: weapons.reduce((a, w) => a + w.rank, 0), weaponList: weapons, professions: pairs(f.p), version: f.v || null, time: +f.t || 0 };
+}
+// À quel personnage du compte connecté appartient la ligne ? (même région, même prénom ; niveau pour départager)
+export function matchUpload(parsed, characters) {
+  const same = [...characters.values()].filter(c => c.region === parsed.region && String(c.name ?? '').toLowerCase() === parsed.name.toLowerCase());
+  if (same.length === 1) return same[0];
+  const byLevel = same.filter(c => c.level === parsed.level);
+  return byLevel.length === 1 ? byLevel[0] : null;
+}

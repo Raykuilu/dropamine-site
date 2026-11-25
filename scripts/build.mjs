@@ -75,7 +75,11 @@ export function score({ profile, professions, equipment, statistics }, upload) {
 
   let weapons, weaponsSource;
   if (upload && Number.isFinite(upload.weapons)) {
-    weapons = upload.weapons; weaponsSource = 'dropamine';
+    // ligne « /drop hiscores » : chaque arme plafonnée à 5 × le niveau actuel de l'armurerie
+    weapons = Array.isArray(upload.weaponList)
+      ? upload.weaponList.reduce((a, w) => a + Math.min(+w.rank || 0, 5 * level), 0)
+      : Math.min(upload.weapons, 5 * level * 20);
+    weaponsSource = 'dropamine';
   } else {
     // estimation : chaque type d'arme équipée compté au maximum (5 × niveau)
     const kinds = new Set((equipment?.equipped_items ?? [])

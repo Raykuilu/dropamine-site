@@ -310,3 +310,11 @@ html[data-lang=en] [lang=fr],html[data-lang=fr] [lang=en]{display:none!important
 .bnet .msg{margin-top:12px;color:var(--muted);font-style:italic}
 .btn.bnet-btn{background:linear-gradient(180deg,#1a8fe0,#0e6cb4);color:#fff;box-shadow:0 6px 18px -6px rgba(26,143,224,.6)}
 .btn[disabled]{opacity:.5;pointer-events:none}
+.bnet .paste{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.bnet .paste h3{font-family:var(--display);font-weight:700;letter-spacing:.06em;font-size:20px;color:var(--gold);margin:0 0 6px}
+.bnet .paste p{color:var(--muted);margin:0 0 10px}
+.bnet textarea{width:100%;min-height:64px;resize:vertical;font:13px/1.4 ui-monospace,Consolas,monospace;color:var(--cream);background:rgba(0,0,0,.35);border:1px solid var(--line-2);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px}
+.bnet textarea:focus{outline:none;border-color:var(--rim)}
+.bnet .lead{color:var(--muted);margin:0 0 16px}
+.fine{margin:16px 0 0;font-size:14px;color:var(--faint)}
+.fine a{color:var(--muted)}

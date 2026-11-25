@@ -205,34 +205,22 @@
 <section class="view" id="join" aria-label="Join">
   <div class="panel bnet" id="bnet" hidden></div>
   <div class="panel" lang="en">
-    <div class="head"><h2>Register a character</h2><span class="note">free, no password</span></div>
-    <div class="grid2">
-      <ol class="steps">
-        <li><b>Open the form</b>: you need a (free) GitHub account. Battle.net sign-in will come later.</li>
-        <li><b>Pick your region</b> and type your character as the armory shows it: first name and surname.</li>
-        <li><b>That's it.</b> The character is checked in the armory (level 10 or more, logged out at least once), then added; it shows up at the next update.</li>
-      </ol>
-      <div style="display:grid;gap:14px;align-content:start">
-        <a class="btn gold" href="https://github.com/Raykuilu/dropamine-site/issues/new?template=inscription.yml" rel="noopener">Open the registration form</a>
-        <a class="btn ghost" href="https://github.com/Raykuilu/dropamine-site/issues/new?template=retrait.yml" rel="noopener">Remove a character</a>
-        <div class="cta"><b>Estimated score?</b> Weapon skills are not in the armory, so each equipped weapon is counted at its maximum. Sending your Dropamine file, for an exact score, comes with a future version of the addon.</div>
-      </div>
-    </div>
+    <div class="head"><h2>How it works</h2><span class="note">free · 30 seconds</span></div>
+    <ol class="steps">
+      <li><b>Sign in with Battle.net.</b> On Blizzard's own page: we never see your password, and only read your Forever character list.</li>
+      <li><b>Tick your characters.</b> Level 10 or more. They show up in the Hiscores within a few minutes.</li>
+      <li><b>Exact score (optional).</b> Weapon skills are not in the armory, so they are estimated. In game, type <code>/drop hiscores</code>, copy the line and paste it above: your real weapon skills replace the estimate.</li>
+    </ol>
+    <p class="fine">No Battle.net access? <a href="https://github.com/Raykuilu/dropamine-site/issues/new?template=inscription.yml" rel="noopener">GitHub form</a> · <a href="https://github.com/Raykuilu/dropamine-site/issues/new?template=retrait.yml" rel="noopener">removal</a></p>
   </div>
   <div class="panel" lang="fr">
-    <div class="head"><h2>Inscrire un personnage</h2><span class="note">gratuit, sans mot de passe</span></div>
-    <div class="grid2">
-      <ol class="steps">
-        <li><b>Ouvre le formulaire</b> : il te faut un compte GitHub (gratuit). Une connexion Battle.net viendra plus tard.</li>
-        <li><b>Indique ta région</b> et ton personnage tel qu'il apparaît dans l'armurerie : prénom et nom.</li>
-        <li><b>C'est tout.</b> Le personnage est vérifié dans l'armurerie (niveau 10 minimum, déconnecté au moins une fois) puis ajouté ; il apparaît à la mise à jour suivante.</li>
-      </ol>
-      <div style="display:grid;gap:14px;align-content:start">
-        <a class="btn gold" href="https://github.com/Raykuilu/dropamine-site/issues/new?template=inscription.yml" rel="noopener">Ouvrir le formulaire d'inscription</a>
-        <a class="btn ghost" href="https://github.com/Raykuilu/dropamine-site/issues/new?template=retrait.yml" rel="noopener">Retirer un personnage</a>
-        <div class="cta"><b>Score estimé ?</b> Les compétences d'armes n'existent pas dans l'armurerie : elles sont comptées au maximum pour chaque arme équipée. L'envoi du fichier Dropamine, pour un score exact, arrivera avec une prochaine version de l'addon.</div>
-      </div>
-    </div>
+    <div class="head"><h2>Comment ça marche</h2><span class="note">gratuit · 30 secondes</span></div>
+    <ol class="steps">
+      <li><b>Connecte-toi avec Battle.net.</b> Sur la page de Blizzard : nous ne voyons jamais ton mot de passe et lisons seulement la liste de tes personnages Forever.</li>
+      <li><b>Coche tes personnages.</b> Niveau 10 minimum. Ils apparaissent dans les classements d'ici quelques minutes.</li>
+      <li><b>Score exact (facultatif).</b> Les compétences d'armes n'existent pas dans l'armurerie : elles sont estimées. En jeu, tape <code>/drop hiscores</code>, copie la ligne et colle-la ci-dessus : tes vraies compétences d'armes remplacent l'estimation.</li>
+    </ol>
+    <p class="fine">Pas d'accès Battle.net ? <a href="https://github.com/Raykuilu/dropamine-site/issues/new?template=inscription.yml" rel="noopener">Formulaire GitHub</a> · <a href="https://github.com/Raykuilu/dropamine-site/issues/new?template=retrait.yml" rel="noopener">retrait</a></p>
   </div>
 </section>
 
@@ -247,7 +235,9 @@
     <h3>Data provided "as is"</h3>
     <p>Game data comes from Blizzard Entertainment through its official API and is shown "as is", without any warranty of accuracy or availability. Scores are computed by this site and may differ from the game.</p>
     <h3>Leaving</h3>
-    <p>The <a href="https://github.com/Raykuilu/dropamine-site/issues/new?template=retrait.yml" rel="noopener">removal form</a> deletes the character and its history at the next update.</p>
+    <p>On the <a href="?p=join" data-view-link="join">Join page</a>, sign in with Battle.net, untick the character and press "Remove selected": the character, its history and its Dropamine line are deleted at the next update. Without Battle.net, use the <a href="https://github.com/Raykuilu/dropamine-site/issues/new?template=retrait.yml" rel="noopener">removal form</a>.</p>
+    <h3>Battle.net sign-in and Dropamine line</h3>
+    <p>Sign-in only reads your WoW Forever character list, kept in memory for the session (12 hours); your Battle.net token is not stored. A pasted <code>/drop hiscores</code> line keeps only skill levels, Defense and level, never a name or account detail beyond the character.</p>
     <h3>This site</h3>
     <p>No account, no cookie, no tracker or analytics. Hosted on GitHub Pages; fonts come from Google Fonts and character pictures from Blizzard's servers. Your language choice is remembered in your browser only.</p>
     <h3>Legal</h3>
@@ -262,7 +252,9 @@
     <h3>Données fournies « telles quelles »</h3>
     <p>Les données de jeu proviennent de Blizzard Entertainment via son API officielle et sont affichées « telles quelles », sans garantie d'exactitude ni de disponibilité. Les scores sont calculés par ce site et peuvent différer du jeu.</p>
     <h3>Se retirer</h3>
-    <p>Le <a href="https://github.com/Raykuilu/dropamine-site/issues/new?template=retrait.yml" rel="noopener">formulaire de retrait</a> supprime le personnage et son historique à la mise à jour suivante.</p>
+    <p>Sur la <a href="?p=join" data-view-link="join">page Inscription</a>, connecte-toi avec Battle.net, décoche le personnage et appuie sur « Retirer la sélection » : le personnage, son historique et sa ligne Dropamine sont supprimés à la mise à jour suivante. Sans Battle.net, utilise le <a href="https://github.com/Raykuilu/dropamine-site/issues/new?template=retrait.yml" rel="noopener">formulaire de retrait</a>.</p>
+    <h3>Connexion Battle.net et ligne Dropamine</h3>
+    <p>La connexion lit seulement la liste de tes personnages WoW Forever, gardée en mémoire le temps de la session (12 heures) ; ton jeton Battle.net n'est pas conservé. Une ligne <code>/drop hiscores</code> collée ne garde que les niveaux de compétences, la Défense et le niveau, rien d'autre sur ton compte.</p>
     <h3>Ce site</h3>
     <p>Aucun compte, aucun cookie, aucun traceur ni outil de mesure d'audience. Le site est hébergé par GitHub Pages ; les polices viennent de Google Fonts et les images des personnages des serveurs de Blizzard. Ton choix de langue est retenu dans ton navigateur uniquement.</p>
     <h3>Mentions</h3>

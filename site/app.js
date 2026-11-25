@@ -348,10 +348,24 @@ Object.assign(I18N, {
   bnDone: ['Done: {n} character{s} updated. The Hiscores refresh within a few minutes.', 'C\'est fait : {n} personnage{s} mis à jour. Les classements se rafraîchissent d\'ici quelques minutes.'],
   bnError: ['Something went wrong. Try again in a moment.', 'Un problème est survenu. Réessaie dans un instant.'],
   bnAuthError: ['Battle.net sign-in did not complete. Try again.', 'La connexion Battle.net n\'a pas abouti. Réessaie.'],
-  bnOr: ['Or use the GitHub form below.', 'Ou utilise le formulaire GitHub ci-dessous.'],
+  bnDown: ['Battle.net sign-in is unavailable right now. Try again later, or use the GitHub form below.',
+    'La connexion Battle.net est indisponible pour le moment. Réessaie plus tard, ou utilise le formulaire GitHub ci-dessous.'],
+  upTitle: ['Exact score with Dropamine', 'Score exact avec Dropamine'],
+  upPitch: ['In game, type /drop hiscores, copy the line (Ctrl+C) and paste it here. Your real weapon skills replace the estimate.',
+    'En jeu, tape /drop hiscores, copie la ligne (Ctrl+C) et colle-la ici. Tes vraies compétences d\'armes remplacent l\'estimation.'],
+  upSend: ['Send my line', 'Envoyer ma ligne'], upPh: ['DROPAMINE-HS1:…', 'DROPAMINE-HS1:…'],
+  upOk: ['Received: {w} weapon skill points ({n} weapons). The Hiscores refresh within a few minutes.',
+    'Reçu : {w} points de compétences d\'armes ({n} armes). Les classements se rafraîchissent d\'ici quelques minutes.'],
+  upErr: {
+    format: ['This is not a Dropamine line. Copy the whole first line of the /drop hiscores window.', 'Ce n\'est pas une ligne Dropamine. Copie toute la première ligne de la fenêtre /drop hiscores.'],
+    checksum: ['This line was cut or modified. Copy it again from the game.', 'Cette ligne est tronquée ou modifiée. Recopie-la depuis le jeu.'],
+    values: ['These values are not possible for this level.', 'Ces valeurs sont impossibles pour ce niveau.'],
+    'not-yours': ['This character is not on your Battle.net account (same region and first name).', 'Ce personnage n\'est pas sur ton compte Battle.net (même région et même prénom).'],
+    level: ['Level 10 is required.', 'Le niveau 10 est requis.'],
+  },
 });
 const Bnet = (() => {
-  let alive = null, me = null, msg = '';
+  let alive = null, me = null, msg = '', upMsg = '';
   const box = () => $('#bnet');
   const call = (path, body) => fetch(API + path, body ? { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'include' });
   async function probe() {
@@ -363,11 +377,11 @@ const Bnet = (() => {
     try { const r = await call('/me'); me = r.ok ? await r.json() : null; } catch { me = null; }
   }
   function draw() {
-    const b = box(); if (!alive) { b.hidden = true; return; }
-    b.hidden = false;
+    const b = box(); b.hidden = false;
+    if (!alive) { b.innerHTML = `<div class="head"><h2>${t('bnTitle')}</h2></div><p class="lead">${t('bnDown')}</p>`; return; }
     if (!me) {
-      b.innerHTML = `<div class="head"><h2>${t('bnTitle')}</h2></div><p style="color:var(--muted);margin:0 0 16px">${t('bnPitch')}</p>
-        <a class="btn bnet-btn" href="${API}/auth/login">${t('bnLogin')}</a>${msg ? `<p class="msg">${msg}</p>` : ''}<p class="msg">${t('bnOr')}</p>`;
+      b.innerHTML = `<div class="head"><h2>${t('bnTitle')}</h2></div><p class="lead">${t('bnPitch')}</p>
+        <a class="btn bnet-btn" href="${API}/auth/login">${t('bnLogin')}</a>${msg ? `<p class="msg">${msg}</p>` : ''}`;
       return;
     }
     const chars = me.characters || [];
@@ -377,10 +391,13 @@ const Bnet = (() => {
         ${c.registered ? `<span class="tagged">${t('bnListed')}</span>` : ''}</label>`).join('')}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" data-bn="claim">${t('bnAdd')}</button><button class="btn ghost" data-bn="release">${t('bnRemove')}</button></div>`
         : `<p class="msg">${t('bnNone')}</p>`}
-      ${msg ? `<p class="msg">${msg}</p>` : ''}`;
+      ${msg ? `<p class="msg">${msg}</p>` : ''}
+      ${chars.length ? `<div class="paste"><h3>${t('upTitle')}</h3><p>${esc(t('upPitch')).replace('/drop hiscores', '<code>/drop hiscores</code>')}</p>
+        <textarea id="hsline" spellcheck="false" placeholder="${t('upPh')}"></textarea>
+        <button class="btn gold" data-bn="upload">${t('upSend')}</button>${upMsg ? `<p class="msg">${upMsg}</p>` : ''}</div>` : ''}`;
   }
   async function show() {
-    if (!(await probe())) { box().hidden = true; return; }
+    if (!(await probe())) { draw(); return; }
     const q = new URLSearchParams(location.search);
     if (q.get('bnet') === 'error') msg = t('bnAuthError');
     await load(); draw();
@@ -388,7 +405,17 @@ const Bnet = (() => {
   document.addEventListener('click', async e => {
     const el = e.target.closest('[data-bn]'); if (!el) return;
     e.preventDefault(); const act = el.dataset.bn;
-    if (act === 'logout') { await call('/logout', {}).catch(() => {}); me = null; msg = ''; draw(); return; }
+    if (act === 'logout') { await call('/logout', {}).catch(() => {}); me = null; msg = ''; upMsg = ''; draw(); return; }
+    if (act === 'upload') {
+      const line = $('#hsline')?.value.trim(); if (!line) return;
+      el.setAttribute('disabled', '');
+      try {
+        const r = await call('/upload', { line }), j = await r.json();
+        upMsg = r.ok ? t('upOk', { w: fmt(j.weapons), n: j.count }) : L2(I18N.upErr[j.error] || I18N.bnError);
+        if (r.ok) Ribbon.swell(.8);
+      } catch { upMsg = t('bnError'); }
+      await load(); draw(); return;
+    }
     const checked = $$('#bnet input:checked').map(i => i.value), all = $$('#bnet input').map(i => i.value);
     const keys = act === 'claim' ? checked : all.filter(k => !checked.includes(k) && me.characters.find(c => c.key === k)?.registered);
     if (!keys.length) return;

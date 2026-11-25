@@ -48,3 +48,21 @@ test('cookies et identifiants', () => {
   assert.ok(validKey('eu/ray-kuilu')); assert.ok(validKey('eu/dé-mine'));
   assert.ok(!validKey('eu/ray')); assert.ok(!validKey('kr/ray-kuilu')); assert.ok(!validKey('eu/ray-kuilu"><script>'));
 });
+
+import { hsChecksum, parseHiscoresLine, matchUpload, HS_PREFIX } from './lib.mjs';
+const hsLine = body => HS_PREFIX + body + ';c=' + hsChecksum(body);
+const BODY = 'n=Ray;l=36;r=eu;g=Everybody Knows;d=177;ws=278;w=136=176,54=102;p=393=223,129=208;v=3.11.0;t=1795600000';
+
+test('ligne hiscores : lue, vérifiée, rattachée au bon personnage', () => {
+  const p = parseHiscoresLine(hsLine(BODY) + '\n \nRay · niveau 36');
+  assert.equal(p.weapons, 278); assert.equal(p.defense, 177); assert.equal(p.guild, 'Everybody Knows');
+  assert.deepEqual(p.weaponList, [{ id: 136, rank: 176 }, { id: 54, rank: 102 }]);
+  const chars = new Map([['eu/ray-kuilu', { key: 'eu/ray-kuilu', region: 'eu', name: 'Ray', level: 36 }], ['us/ray-other', { key: 'us/ray-other', region: 'us', name: 'Ray', level: 20 }]]);
+  assert.equal(matchUpload(p, chars).key, 'eu/ray-kuilu');
+  assert.equal(matchUpload({ ...p, name: 'Bob' }, chars), null);
+});
+test('ligne hiscores : modifiée, tronquée ou impossible → refusée', () => {
+  assert.equal(parseHiscoresLine(hsLine(BODY).replace('176', '300')).error, 'checksum');
+  assert.equal(parseHiscoresLine('bonjour').error, 'format');
+  assert.equal(parseHiscoresLine(hsLine(BODY.replace('136=176', '136=999'))).error, 'values');
+});
