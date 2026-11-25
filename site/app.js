@@ -16,7 +16,7 @@ const I18N = {
   'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'], 'acct.out': ['Sign out', 'Se déconnecter'],
   myChars: ['My characters', 'Mes personnages'],
   youHere: ['YOU', 'TOI'],
-  pulseChars: ['{n} characters tracked', '{n} personnages suivis'], pulseGuilds: ['{n} guild{s}', '{n} guilde{s}'],
+  pulseDl: ['{n} downloads', '{n} téléchargements'], pulseChars: ['{n} characters tracked', '{n} personnages suivis'], pulseGuilds: ['{n} guild{s}', '{n} guilde{s}'],
   pulseToday: ['updated today at {h}', "mis à jour aujourd'hui à {h}"], pulseOn: ['updated {d}', 'mis à jour le {d}'],
   tipSpare: ['Not in hand at the last armory read', "Pas en main lors de la dernière lecture de l'armurerie"],
   moreW: ['+ {n} other weapon skill{s}', '+ {n} autre{s} compétence{s} d’arme'], lessW: ['Only weapons in use', 'Seulement les armes utilisées'],
@@ -225,6 +225,8 @@ const plus = p => { const d = dayGain(p); return d > 0 ? `<span class="plus" tit
 const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.complete ? '' : `<em>${t('est')}</em>`;
 
 /* ---------- Accueil : le pont vers les classements ---------- */
+// téléchargements CurseForge, mis à jour à la main (chiffre donné par l'auteur)
+const CF_DOWNLOADS = 522;
 function renderHome() {
   // les chiffres qui montrent que le projet vit (toutes régions)
   if (DATA.players.length) {
@@ -233,7 +235,7 @@ function renderHome() {
     const when = up ? (up.toDateString() === new Date().toDateString()
       ? t('pulseToday', { h: up.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }) })
       : t('pulseOn', { d: up.toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) })) : '';
-    $$('[data-pulse]').forEach(el => { el.innerHTML = `<i class="live"></i>${t('pulseChars', { n: fmt(DATA.players.length) })} · ${t('pulseGuilds', { n: gs.size })}${when ? ' · ' + when : ''}`; });
+    $$('[data-pulse]').forEach(el => { el.innerHTML = `<i class="live"></i>${t('pulseDl', { n: fmt(CF_DOWNLOADS) })} · ${t('pulseChars', { n: fmt(DATA.players.length) })} · ${t('pulseGuilds', { n: gs.size })}${when ? ' · ' + when : ''}`; });
   }
   const all = rankBy(SKILLS[0], inRegion()), top = all.slice(0, 5);
   // les +1 du jour : les plus gros gains depuis la veille, en petits toasts façon addon
