@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-25T13:56:51.831Z",
+ "updated": "2026-11-25T14:10:51.135Z",
  "region": "eu",
  "players": [
   {
@@ -75,6 +75,8 @@
      "t": 1242
     }
    ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/77/32432717-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/77/32432717-avatar.jpg",
    "rank": 1
   }
  ]

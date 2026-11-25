@@ -103,10 +103,12 @@ async function main() {
     const base = `/profile/wow/character/${encodeURIComponent(slug)}`;
     const profile = await get(tok, base);
     if (!profile) { console.warn(`· ${slug} : introuvable (niveau < 10 ou pas encore visible)`); continue; }
-    const [professions, equipment, statistics, achStats] = await Promise.all([
+    const [professions, equipment, statistics, achStats, media] = await Promise.all([
       get(tok, `${base}/professions`), get(tok, `${base}/equipment`),
       get(tok, `${base}/statistics`), get(tok, `${base}/achievements/statistics`),
+      get(tok, `${base}/character-media`).catch(() => null),   // rendu 3D : absent quelques heures après la création
     ]);
+    const asset = key => media?.assets?.find(a => a.key === key)?.value ?? null;
     const s = score({ profile, professions, equipment, statistics }, uploads[slug]);
 
     // historique : un point par jour
@@ -121,6 +123,7 @@ async function main() {
       class: profile.character_class?.name, race: profile.race?.name, faction: profile.faction?.type,
       guild: profile.guild ? { name: profile.guild.name, slug: profile.guild.slug } : null,
       ruleset: profile.ruleset?.name, ...s, stats: pickStats(achStats), history: hist.slice(-30),
+      render: asset('main-raw'), avatar: asset('avatar'),
     });
     console.log(`✓ ${slug} : ${s.total}${s.complete ? '' : ' (estimé)'}`);
   }
