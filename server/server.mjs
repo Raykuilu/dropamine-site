@@ -15,6 +15,17 @@
 import { createServer } from 'node:http';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey } from './lib.mjs';
+import { readFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+// Secrets : variables d'environnement, ou à défaut un fichier server/.env privé (jamais versionné)
+const ENV_FILE = fileURLToPath(new URL('./.env', import.meta.url));
+if (existsSync(ENV_FILE)) {
+  for (const line of readFileSync(ENV_FILE, 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+}
 
 const env = k => { const v = process.env[k]; if (!v) throw new Error(`variable d'environnement manquante : ${k}`); return v; };
 const CFG = {

@@ -2,10 +2,11 @@
   "name": "dropamine-site",
   "private": true,
   "type": "module",
-  "description": "Dropamine website: addon showcase and WoW Forever hiscores",
+  "description": "Dropamine website (addon showcase, WoW Forever hiscores) and its api service",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node --test scripts/*.test.mjs"
+    "start": "node server/server.mjs",
+    "test": "node --test scripts/*.test.mjs server/*.test.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines": { "node": ">=24" }
 }
