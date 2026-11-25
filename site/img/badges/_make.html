@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:transparent}
+body{width:600px;height:128px;display:grid;place-items:center}
+.b{box-sizing:border-box;width:580px;height:104px;border-radius:52px;display:flex;align-items:center;gap:22px;padding:0 40px 0 26px;font-family:'Cormorant SC',Georgia,serif;position:relative}
+.ic{width:60px;height:60px;flex:none;display:grid;place-items:center;border-radius:50%}
+.t{display:flex;flex-direction:column;line-height:1}
+.k{font-weight:600;font-size:19px;letter-spacing:.24em;opacity:.78;margin-bottom:7px}
+.m{font-weight:700;font-size:37px;letter-spacing:.07em}
+.site{background:linear-gradient(180deg,#f3dba6,#d6b066);color:#1a120a;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 0 rgba(90,60,20,.35),0 6px 14px -4px rgba(0,0,0,.55)}
+.site .ic{background:#1a120a}
+.site .ic img{width:44px;height:44px;object-fit:contain}
+.git{background:linear-gradient(180deg,#221a12,#140f0a);color:#e8c88a;border:2px solid #c49a5c;box-shadow:inset 0 1px 0 rgba(232,200,138,.18),0 6px 14px -4px rgba(0,0,0,.55)}
+.git .ic{border:2px solid #8a6a3a;color:#e8c88a}
+.cof{background:linear-gradient(180deg,#d98a73,#a4503d);color:#fff4e6;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 0 rgba(60,20,10,.4),0 6px 14px -4px rgba(0,0,0,.55)}
+.cof .ic{background:rgba(255,244,230,.16);color:#fff4e6}
+</style></head><body><div id="b"></div>
+<script>
+const q=new URLSearchParams(location.search),b=q.get('b'),fr=q.get('l')==='fr';
+const cup='<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.5 1 1.5 1 3M12 3c0 1.5 1 1.5 1 3"/></svg>';
+const code='<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg>';
+const B={
+ site:{c:'site',i:'<img src="Dropamine-Logo.png">',k:fr?'CLASSEMENTS':'HISCORES',m:'dropamine.app'},
+ git:{c:'git',i:code,k:fr?'CODE SOURCE':'OPEN SOURCE',m:'GitHub'},
+ cof:{c:'cof',i:cup,k:fr?'SOUTENIR':'SUPPORT',m:fr?'Offre-moi un café':'Buy me a coffee'}}[b];
+document.getElementById('b').outerHTML=`<div class="b ${B.c}"><span class="ic">${B.i}</span><span class="t"><span class="k">${B.k}</span><span class="m">${B.m}</span></span></div>`;
+</script></body></html>
