@@ -525,3 +525,4 @@ html.static .pulse .live{animation:none}
 .cact .dl{background:linear-gradient(180deg,var(--gold),var(--rim));color:#1a120a;border-color:var(--rim)}
 .cact button:hover{filter:brightness(1.1)}
 .cact button:focus-visible{outline:2px solid var(--rim);outline-offset:2px}
+.hsd{padding-top:44px}

@@ -53,12 +53,14 @@
     else if (logo) g.drawImage(logo, 60, 170, 280, 280);
     // parchemin
     const px = 400, py = 18, pw = W - 418, ph = H - 36;
-    g.fillStyle = grad(px, py, px, py + ph, [[0, '#ecdfb6'], [1, '#cdb684']]); rr(px, py, pw, ph, 8); g.fill();
-    g.save(); rr(px, py, pw, ph, 8); g.clip();
-    for (let i = 0; i < 3200; i++) { g.fillStyle = rnd() < 0.5 ? '#5a3a1009' : '#ffffff12'; g.fillRect(px + rnd() * pw, py + rnd() * ph, 3, 2); }
-    const v = g.createRadialGradient(px + pw / 2, py + ph / 2, pw * 0.3, px + pw / 2, py + ph / 2, pw * 0.7); v.addColorStop(0, '#0000'); v.addColorStop(1, '#5a3a1030'); g.fillStyle = v; g.fillRect(px, py, pw, ph);
-    g.restore();
-    rr(px, py, pw, ph, 8); g.lineWidth = 4; g.strokeStyle = '#5a3f1e'; g.stroke();
+    // la feuille couvre toute la moitié droite, sans marge (pas de bande noire autour)
+    const sw = W - px;
+    g.fillStyle = grad(px, 0, px, H, [[0, '#ecdfb6'], [1, '#cdb684']]); g.fillRect(px, 0, sw, H);
+    for (let i = 0; i < 3400; i++) { g.fillStyle = rnd() < 0.5 ? '#5a3a1009' : '#ffffff12'; g.fillRect(px + rnd() * sw, rnd() * H, 3, 2); }
+    const v = g.createRadialGradient(px + sw / 2, H / 2, sw * 0.3, px + sw / 2, H / 2, sw * 0.75); v.addColorStop(0, '#0000'); v.addColorStop(1, '#5a3a1036'); g.fillStyle = v; g.fillRect(px, 0, sw, H);
+    g.fillStyle = grad(px, 0, px + 18, 0, [[0, '#00000055'], [1, '#0000']]); g.fillRect(px, 0, 18, H);   // ombre du portrait sur la feuille
+    g.fillStyle = '#5a3f1e'; g.fillRect(px, 0, 3, H);
+    g.strokeStyle = '#5a3f1e88'; g.lineWidth = 1.5; g.strokeRect(px + 10, 8, sw - 18, H - 16);
     ribbon(px + 24, py + 16, pw - 48);
     // titre et sceau-goutte (le logo d'origine)
     T(L.title, px + 30, py + 72, 38, '#3a2410', { f: SC, w: 700, max: pw - 190 });
