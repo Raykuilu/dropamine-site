@@ -112,7 +112,12 @@ async function writeFile(path, data, sha, message) {
     content: Buffer.from(JSON.stringify(data, null, 2) + '\n').toString('base64'),
     committer: { name: 'dropamine-api', email: '41898282+github-actions[bot]@users.noreply.github.com' },
   }) });
-  if (res.status === 409 || res.status === 422) return false;                 // quelqu'un a écrit entre-temps : on recommence
+  // 409 / 422 : quelqu'un a écrit entre-temps (ou la branche n'est pas encore à jour juste après un commit) ;
+  // 5xx : incident passager chez GitHub. Dans ces cas on relit et on recommence.
+  if (res.status === 409 || res.status === 422 || res.status >= 500) {
+    console.warn(new Date().toISOString(), `écriture de ${path} : ${res.status}, nouvel essai`);
+    return false;
+  }
   if (!res.ok) throw new Error(`écriture de ${path} (${res.status})`);
   return true;
 }
@@ -126,8 +131,11 @@ async function deleteHistory(key) {
 const refreshSite = () => gh('/actions/workflows/update.yml/dispatches', { method: 'POST', body: JSON.stringify({ ref: 'main' }) }).catch(() => {});
 // lecture → modification → écriture, recommencée si quelqu'un a écrit entre-temps
 async function updateFile(path, fallback, fn, message) {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const { data, sha } = await readFile(path, fallback);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (attempt) await new Promise(ok => setTimeout(ok, 800 * attempt));   // 0,8 s, 1,6 s, 2,4 s, 3,2 s
+    let got;
+    try { got = await readFile(path, fallback); } catch (err) { if (attempt === 4) throw err; continue; }   // lecture ratée : on réessaie aussi
+    const { data, sha } = got;
     const r = fn(data);
     if (!r.changed) return r;
     if (await writeFile(path, r.registry, sha, message)) return r;
