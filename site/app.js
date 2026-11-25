@@ -15,7 +15,7 @@ let LANG = document.documentElement.dataset.lang === 'fr' ? 'fr' : 'en';
 const I18N = {
   'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.guild': ['Guilds', 'Guildes'],
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
-  'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source', 'Code du site'],
+  'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source', 'Code du site'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
   'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.stat': ['STATISTICS', 'STATISTIQUES'],
   kills: ['Creatures killed', 'Créatures tuées'], quests: ['Quests', 'Quêtes'], flights: ['Flights taken', 'Trajets aériens'], deaths: ['Deaths', 'Morts'],
@@ -330,7 +330,11 @@ function applyStatic() {
   $('#lang').title = LANG === 'fr' ? 'English' : 'Français';
   if (DATA.updated) $('#updated').textContent = t('updated', { d: new Date(DATA.updated).toLocaleDateString(locale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) });
   const v = NEWS?.versions?.[0]?.version;
-  if (v) $$('[data-meta]').forEach(el => { el.textContent = (el.closest('[lang]').lang === 'fr' ? I18N.meta[1] : I18N.meta[0]).replace('{v}', v); });
+  if (v) $$('[data-meta]').forEach(el => {
+    const link = el.querySelector('a');   // le lien « café » survit à la mise à jour du numéro de version
+    el.textContent = (el.closest('[lang]').lang === 'fr' ? I18N.meta[1] : I18N.meta[0]).replace('{v}', v) + (link ? ' · ' : '');
+    if (link) el.append(link);
+  });
 }
 
 /* ======================================================================
