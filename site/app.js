@@ -22,9 +22,16 @@ const I18N = {
   moreW: ['+ {n} other weapon skill{s}', '+ {n} autre{s} compétence{s} d’arme'], lessW: ['Only weapons in use', 'Seulement les armes utilisées'],
   viewT: ['Display', 'Affichage'], viewList: ['List', 'Liste'], viewGrid: ['Grid, as in the addon', "Grille, comme dans l'addon"],
   share: ['Share', 'Partager'], close: ['Close', 'Fermer'],
-  cardBtn: ['My card', 'Ma carte'], cardT: ['Card', 'Carte'], cardOpen: ['Open the card', 'Ouvrir la carte'], cardTheme: ['Scene', 'Ambiance'], cardSkills: ['Skills shown (4)', 'Compétences affichées (4)'],
+  cardBtn: ['My card', 'Ma carte'], cardTitle: ['Title', 'Titre'], cardTitlePh: ['Master skinner, Pride of Teldrassil…', 'Maître dépeceur, Fierté de Teldrassil…'],
+  cardWeather: ['Weather', 'Météo'], cardFrame: ['Frame', 'Cadre'], cardFinish: ['Finish', 'Finition'], cardShow: ['Show', 'Afficher'], cardReset: ['Reset', 'Réinitialiser'],
+  frameAt: ['Unlocked at {n} drops', 'Débloqué à {n} drops'], albumJoin: ['Preview · register to unlock', 'Aperçu · inscris-toi pour la débloquer'],
+  'th.image': ['Your image', 'Ton image'], 'wx.auto': ['Auto', 'Auto'], 'wx.rays': ['Sunbeams', 'Rayons'], 'wx.fireflies': ['Fireflies', 'Lucioles'], 'wx.snow': ['Snow', 'Neige'],
+  'wx.rain': ['Rain', 'Pluie'], 'wx.embers': ['Embers', 'Braises'], 'wx.mist': ['Mist', 'Brume'], 'wx.none': ['Clear', 'Dégagé'],
+  'fr.bronze': ['Bronze', 'Bronze'], 'fr.argent': ['Silver', 'Argent'], 'fr.or': ['Gold', 'Or'], 'fr.legende': ['Legendary', 'Légendaire'],
+  'fi.mate': ['Matte', 'Mate'], 'fi.brillante': ['Shiny', 'Brillante'], 'fi.holo': ['Holo', 'Holo'],
+  'sh.guild': ['Guild', 'Guilde'], 'sh.no': ['Collection number', 'Numéro de collection'], 'sh.bar': ['Total bar', 'Barre du total'], cardT: ['Card', 'Carte'], cardOpen: ['Open the card', 'Ouvrir la carte'], cardTheme: ['Scene', 'Ambiance'], cardSkills: ['Skills shown (4)', 'Compétences affichées (4)'],
   cardDl: ['Download PNG', 'Télécharger PNG'], cardCopy: ['Copy image', "Copier l'image"], cardCopied: ['Copied', 'Copiée'], cardNoCopy: ['Copy not allowed here', 'Copie impossible ici'],
-  cardNote: ['The frame changes with your total: bronze, silver, gold, then legendary. The number is your registration order.', "Le cadre évolue avec ton total : bronze, argent, or, puis légendaire. Le numéro est ton ordre d'inscription."],
+  cardNote: ['Frames unlock with your total: bronze, silver, gold, then legendary. Your image stays in your browser. The number is your registration order.', "Les cadres se débloquent avec ton total : bronze, argent, or, puis légendaire. Ton image reste dans ton navigateur. Le numéro est ton ordre d'inscription."],
   cardPreview: ['Guild preview · not registered', 'Aperçu de guilde · non inscrit'], rarities: ['Common|Uncommon|Rare|Epic|Legendary', 'Commun|Peu commun|Rare|Épique|Légendaire'],
   'th.faction': ['Faction', 'Faction'], 'th.race': ['Race', 'Race'], 'th.classe': ['Class', 'Classe'], 'th.neutre': ['Dropamine', 'Dropamine'],
   albumT: ['Guild album', 'Album de la guilde'], albumNote: ['click a card to open it', 'clique une carte pour l’ouvrir'], copied: ['Link copied', 'Lien copié'],
@@ -440,7 +447,7 @@ function renderChar() {
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-share]'); if (!b) return;
   const p = DATA.players.find(x => pkey(x) === b.dataset.share); if (!p) return;
-  const url = `https://dropamine.app/?p=char&c=${encodeURIComponent(pkey(p))}`;
+  const url = shareUrl(p);
   const text = `${p.name} ${p.surname} · ${fmt(p.total)} / ${fmt(p.max || 2460)} · Dropamine Hiscores`;
   try {
     if (navigator.share && matchMedia('(pointer:coarse)').matches) { await navigator.share({ title: text, url }); return; }
@@ -451,62 +458,110 @@ document.addEventListener('click', async e => {
 });
 
 /* ---------- Carte personnage : fenêtre de création (le dessin est dans card.js) ---------- */
+const shareUrl = p => `https://dropamine.app/c/${encodeURIComponent(p.region || 'eu')}/${encodeURIComponent(p.slug)}/`;
 const CardUI = (() => {
-  const THEMES = ['faction', 'race', 'classe', 'neutre'];
-  let dlg, p, theme = 'faction', pick = [], busy = 0;
-  const choices = () => skillItems(p, [p]).filter(i => i.key !== 'level');
-  const labels = () => {
-    const desc = LANG === 'fr' ? `${className(p)} ${raceName(p)}` : `${raceName(p)} ${className(p)}`;
+  const THEMES = ['faction', 'race', 'classe', 'neutre', 'image'];
+  const WEATHERS = ['auto', 'rays', 'fireflies', 'snow', 'rain', 'embers', 'mist', 'none'];
+  const FINISHES = ['mate', 'brillante', 'holo'];
+  let dlg, p, pr, bg = null, busy = 0, canFiles = false;
+  const items = pl => skillItems(pl, [pl]).filter(i => i.key !== 'level');
+  const defaults = pl => ({ theme: 'faction', weather: 'auto', frame: '', title: '', pick: null, show: { guild: true, no: true, bar: true },
+    finish: ['or', 'legende'].includes(DropCard.rarityOf(pl).frame) ? 'brillante' : 'mate' });
+  const prefsKey = pl => 'card:' + pkey(pl);
+  function loadPrefs(pl) {
+    const d = defaults(pl); let s = {};
+    try { s = JSON.parse(localStorage.getItem(prefsKey(pl))) || {}; } catch (e) { /* pas de stockage : réglages par défaut */ }
+    return { ...d, ...s, show: { ...d.show, ...(s.show || {}) } };
+  }
+  const save = () => { try { localStorage.setItem(prefsKey(p), JSON.stringify(pr)); } catch (e) { /* réglages gardés pour cette visite */ } };
+  // options de dessin : partagées par la fenêtre et par les images du calcul quotidien
+  function optsFor(pl, prefs, image) {
+    const list = items(pl);
+    const pick = prefs.pick || list.filter(i => !i.est).sort((a, b) => b.rank - a.rank).slice(0, 4).map(i => i.key);
+    const desc = LANG === 'fr' ? `${className(pl)} ${raceName(pl)}` : `${raceName(pl)} ${className(pl)}`, cap = desc.charAt(0).toUpperCase() + desc.slice(1);
     return {
-      line: desc.charAt(0).toUpperCase() + desc.slice(1) + (p.guild ? ` · ${p.guild.name}` : ''),
-      rarity: t('rarities').split('|'), total: fmt(p.total), max: fmt(p.max || 2460),
-      no: p.no ? `#${String(p.no).padStart(3, '0')} · Forever ${(p.region || 'eu').toUpperCase()}${rulesetName(p) ? ' · ' + rulesetName(p) : ''}` : t('cardPreview'),
+      theme: prefs.theme === 'image' && !image ? 'faction' : prefs.theme, weather: prefs.weather, frame: prefs.frame, finish: prefs.finish,
+      title: prefs.title.trim(), show: prefs.show, bg: image || null,
+      skills: pick.map(k => list.find(i => i.key === k)).filter(Boolean).map(i => ({ name: i.name, img: icon(i.img), v: i.rank, max: i.max, est: i.est })),
+      L: { line: cap + (pl.guild ? ` · ${pl.guild.name}` : ''), lineNoGuild: cap, rarity: t('rarities').split('|'), total: fmt(pl.total), max: fmt(pl.max || 2460),
+        no: pl.no ? `#${String(pl.no).padStart(3, '0')} · Forever ${(pl.region || 'eu').toUpperCase()}${rulesetName(pl) ? ' · ' + rulesetName(pl) : ''}` : t('cardPreview') },
     };
-  };
+  }
   async function draw() {
     const run = ++busy, cv = $('canvas', dlg);
     await document.fonts.ready;
-    const items = choices(), skills = pick.map(k => items.find(i => i.key === k)).filter(Boolean)
-      .map(i => ({ name: i.name, img: icon(i.img), v: i.rank, max: i.max, est: i.est }));
     const off = document.createElement('canvas');
-    const R = await DropCard.draw(off, p, { theme, skills, L: labels() });
+    const R = await DropCard.draw(off, p, optsFor(p, pr, bg));
     if (run !== busy) return;   // un choix plus récent a déjà relancé le dessin
     cv.width = off.width; cv.height = off.height; cv.getContext('2d').drawImage(off, 0, 0);
-    $('.card3d', dlg).dataset.r = R.frame; $('.crar', dlg).innerHTML = `<i style="background:${R.col}"></i>${t('rarities').split('|')[R.i]}`;
+    $('.card3d', dlg).dataset.r = pr.finish === 'holo' ? 'holo' : pr.finish === 'brillante' ? 'or' : R.frame;
+    $('.crar', dlg).innerHTML = `<i style="background:${R.col};color:${R.col}"></i>${t('rarities').split('|')[R.i]} · ${fmt(p.total)} / ${fmt(p.max || 2460)}`;
   }
+  const chips = (list, cur, key, label, extra = () => '') => list.map(k => `<button type="button" data-o="${key}" data-v="${k}" aria-pressed="${k === cur}" ${extra(k)}>${label(k)}</button>`).join('');
   function side() {
-    const items = choices();
-    $('.cthemes', dlg).innerHTML = THEMES.map(k => `<button type="button" data-th="${k}" aria-pressed="${k === theme}">${t('th.' + k)}</button>`).join('');
-    $('.cpick', dlg).innerHTML = items.map(i => `<label class="g-${i.group}"><input type="checkbox" value="${i.key}" ${pick.includes(i.key) ? 'checked' : ''}>
+    const list = items(p);
+    const cur = pr.pick || list.filter(i => !i.est).sort((a, b) => b.rank - a.rank).slice(0, 4).map(i => i.key);
+    const R = DropCard.rarityOf(p), frames = DropCard.framesOf(p), fcur = pr.frame || R.frame;
+    $('.c-theme', dlg).innerHTML = chips(THEMES, bg || pr.theme !== 'image' ? pr.theme : 'faction', 'theme', k => t('th.' + k));
+    $('.c-weather', dlg).innerHTML = chips(WEATHERS, pr.weather, 'weather', k => t('wx.' + k));
+    $('.c-frame', dlg).innerHTML = frames.map(f => `<button type="button" data-o="frame" data-v="${f.k}" aria-pressed="${f.k === fcur}" ${f.open ? '' : `disabled title="${esc(t('frameAt', { n: fmt(f.at) }))}"`}>${f.open ? '' : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> '}${t('fr.' + f.k)}${f.open ? '' : ` <small>${fmt(f.at)}</small>`}</button>`).join('');
+    $('.c-finish', dlg).innerHTML = chips(FINISHES, pr.finish, 'finish', k => t('fi.' + k));
+    $('.c-show', dlg).innerHTML = ['guild', 'no', 'bar'].map(k => `<label><input type="checkbox" data-show="${k}" ${pr.show[k] ? 'checked' : ''}>${t('sh.' + k)}</label>`).join('');
+    $('.cpick', dlg).innerHTML = list.map(i => `<label class="g-${i.group}"><input type="checkbox" value="${i.key}" ${cur.includes(i.key) ? 'checked' : ''}>
       <img src="${icon(i.img)}" alt="" referrerpolicy="no-referrer"><span>${esc(i.name)}</span><b>${i.est ? '~' : ''}${i.rank}</b></label>`).join('');
+    $('.c-title', dlg).value = pr.title;
+    $('.sh', dlg).hidden = !canFiles;
   }
   function build() {
     dlg = document.createElement('dialog'); dlg.className = 'cardd';
     dlg.innerHTML = `<button class="cx" type="button" aria-label="${t('close')}">×</button>
       <div class="cstage"><div class="card3d"><canvas width="750" height="1050"></canvas><i class="holo"></i><i class="glare"></i></div></div>
-      <div class="cside"><h3>${t('cardT')}</h3><p class="crar"></p>
-        <h4>${t('cardTheme')}</h4><div class="cthemes vsw2"></div>
+      <div class="cside"><h3></h3><p class="crar"></p>
+        <h4>${t('cardTitle')}</h4><input class="c-title" type="text" maxlength="32" placeholder="${esc(t('cardTitlePh'))}">
+        <h4>${t('cardTheme')}</h4><div class="c-theme vsw2"></div><input class="c-file" type="file" accept="image/*" hidden>
+        <h4>${t('cardWeather')}</h4><div class="c-weather vsw2"></div>
+        <h4>${t('cardFrame')}</h4><div class="c-frame vsw2"></div>
+        <h4>${t('cardFinish')}</h4><div class="c-finish vsw2"></div>
+        <h4>${t('cardShow')}</h4><div class="c-show"></div>
         <h4>${t('cardSkills')}</h4><div class="cpick"></div>
-        <div class="cact"><button type="button" class="dl">${t('cardDl')}</button><button type="button" class="cp">${t('cardCopy')}</button></div>
+        <div class="cact"><button type="button" class="dl">${t('cardDl')}</button><button type="button" class="sh">${t('share')}</button><button type="button" class="cp">${t('cardCopy')}</button><button type="button" class="rs">${t('cardReset')}</button></div>
         <p class="cnote">${t('cardNote')}</p></div>`;
     document.body.append(dlg);
-    dlg.addEventListener('click', e => {
+    const png = () => new Promise(r => $('canvas', dlg).toBlob(r, 'image/png'));
+    dlg.addEventListener('click', async e => {
       if (e.target === dlg || e.target.closest('.cx')) return dlg.close();
-      const th = e.target.closest('[data-th]'); if (th) { theme = th.dataset.th; side(); draw(); return; }
-      if (e.target.closest('.dl')) { const a = document.createElement('a'); a.download = `dropamine-${p.slug}.png`; a.href = $('canvas', dlg).toDataURL('image/png'); a.click(); return; }
-      const cp = e.target.closest('.cp');
-      if (cp) {
-        const blob = new Promise(r => $('canvas', dlg).toBlob(r, 'image/png'));
-        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-          .then(() => { cp.textContent = t('cardCopied'); setTimeout(() => cp.textContent = t('cardCopy'), 1800); })
-          .catch(() => { cp.textContent = t('cardNoCopy'); });
+      const o = e.target.closest('[data-o]');
+      if (o && !o.disabled) {
+        if (o.dataset.o === 'theme' && o.dataset.v === 'image') { $('.c-file', dlg).click(); return; }
+        pr[o.dataset.o] = o.dataset.v; save(); side(); draw(); return;
       }
+      if (e.target.closest('.rs')) { pr = defaults(p); bg = null; save(); side(); draw(); return; }
+      if (e.target.closest('.dl')) { const a = document.createElement('a'); a.download = `dropamine-${p.slug}.png`; a.href = $('canvas', dlg).toDataURL('image/png'); a.click(); return; }
+      if (e.target.closest('.sh')) {
+        try { await navigator.share({ files: [new File([await png()], `dropamine-${p.slug}.png`, { type: 'image/png' })], title: `${p.name} ${p.surname} · Dropamine`, url: shareUrl(p) }); }
+        catch (err) { /* partage annulé */ }
+        return;
+      }
+      const cp = e.target.closest('.cp');
+      if (cp) navigator.clipboard.write([new ClipboardItem({ 'image/png': png() })])
+        .then(() => { cp.textContent = t('cardCopied'); setTimeout(() => cp.textContent = t('cardCopy'), 1800); })
+        .catch(() => { cp.textContent = t('cardNoCopy'); });
     });
     dlg.addEventListener('change', e => {
-      const k = e.target.value; if (!k) return;
-      if (e.target.checked) { pick.push(k); if (pick.length > 4) pick.shift(); } else pick = pick.filter(x => x !== k);
-      side(); draw();
+      const el = e.target;
+      if (el.classList.contains('c-file')) {
+        const f = el.files?.[0]; if (!f) return;
+        const img = new Image(); img.onload = () => { bg = img; pr.theme = 'image'; save(); side(); draw(); }; img.src = URL.createObjectURL(f);   // l'image reste dans le navigateur
+        el.value = ''; return;
+      }
+      if (el.dataset.show) { pr.show = { ...pr.show, [el.dataset.show]: el.checked }; save(); draw(); return; }
+      if (el.type === 'checkbox' && el.value) {
+        let cur = pr.pick || items(p).filter(i => !i.est).sort((a, b) => b.rank - a.rank).slice(0, 4).map(i => i.key);
+        if (el.checked) { cur = [...cur, el.value]; if (cur.length > 4) cur.shift(); } else cur = cur.filter(x => x !== el.value);
+        pr.pick = cur; save(); side(); draw();
+      }
     });
+    let tt; dlg.addEventListener('input', e => { if (!e.target.classList.contains('c-title')) return; pr.title = e.target.value; clearTimeout(tt); tt = setTimeout(() => { save(); draw(); }, 200); });
     // effet holographique : la carte suit le pointeur (désactivé si l'utilisateur limite les animations)
     const c3 = $('.card3d', dlg);
     c3.addEventListener('pointermove', e => {
@@ -520,8 +575,9 @@ const CardUI = (() => {
   function open(player) {
     if (!window.DropCard) return;
     if (!dlg) build();
-    p = player; theme = 'faction';
-    pick = choices().filter(i => !i.est).sort((a, b) => b.rank - a.rank).slice(0, 4).map(i => i.key);
+    if (p !== player) bg = null;
+    p = player; pr = loadPrefs(p);
+    try { canFiles = !!navigator.canShare?.({ files: [new File([''], 'x.png', { type: 'image/png' })] }) && matchMedia('(pointer:coarse)').matches; } catch (e) { canFiles = false; }
     $('.cside h3', dlg).textContent = `${p.name} ${p.surname}`;
     side(); dlg.showModal(); draw();
   }
@@ -529,16 +585,31 @@ const CardUI = (() => {
     const b = e.target.closest('[data-card]'); if (!b) return;
     const pl = DATA.players.find(x => pkey(x) === b.dataset.card); if (pl) { Tip.hide(); open(pl); }
   });
-  return { open };
+  return { open, optsFor, defaults };
 })();
-// vignette de l'album de guilde : le cadre et la gemme suivent la rareté, comme sur la carte
+// image seule de la carte, pour le calcul quotidien (?cardshot=région/slug ; &w=s pour la vignette)
+async function cardShot(key) {
+  const p = DATA.players.find(x => pkey(x) === key);
+  document.body.innerHTML = '<canvas id="cs"></canvas>';
+  document.documentElement.style.background = '#120d08';
+  document.body.style.cssText = 'margin:0;background:none;overflow:hidden';
+  if (!p || !window.DropCard) { document.title = 'missing'; return; }
+  await document.fonts.ready;
+  const cv = $('#cs'); await DropCard.draw(cv, p, CardUI.optsFor(p, CardUI.defaults(p)));
+  cv.style.cssText = 'display:block;width:100vw;height:100vh';
+  document.title = 'ready';
+}
+// vignette de l'album : l'image de la carte calculée chaque jour, sinon une version simple
 const miniCard = p => {
   const R = window.DropCard ? DropCard.rarityOf(p) : { frame: 'bronze', col: '#9d9d9d', i: 0 };
-  return `<button type="button" class="mcard f-${R.frame}" data-card="${esc(pkey(p))}" style="--rc:${R.col};--ac:${p.faction === 'HORDE' ? '#7a1d12' : '#173a7a'}" aria-label="${t('cardOpen')} : ${full(p)}">
+  const thumb = `cards/${encodeURIComponent(p.region || 'eu')}/${encodeURIComponent(p.slug)}-s.png?v=${encodeURIComponent((DATA.updated || '').slice(0, 10))}`;
+  return `<button type="button" class="mcard f-${R.frame}${p.preview ? ' pv' : ' reg'}" data-card="${esc(pkey(p))}" style="--rc:${R.col};--ac:${p.faction === 'HORDE' ? '#7a1d12' : '#173a7a'}" aria-label="${t('cardOpen')} : ${full(p)}">
     <span class="art">${p.render ? `<img src="${esc(p.render)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="logo"></span>'}</span>
     <span class="lv">${p.level}</span><i class="gem"></i>
     <b>${full(p)}</b><small>${fmt(p.total)} · ${t('rarities').split('|')[R.i]}</small>
-    <em>${p.no ? '#' + String(p.no).padStart(3, '0') : t('preview')}</em></button>`;
+    <em>${p.no ? '#' + String(p.no).padStart(3, '0') : ''}</em>
+    <img class="thumb" src="${thumb}" alt="" loading="lazy" onerror="this.remove()">
+    ${p.preview ? `<span class="pvtag">${t('albumJoin')}</span>` : ''}</button>`;
 };
 
 /* ---------- Guildes ---------- */
@@ -869,4 +940,4 @@ Promise.all([
     .catch(() => { NEWS = { versions: [] }; }),
   Bnet.init(),
 ]).then(() => { Ribbon.load(false); return document.fonts.ready; })
-  .then(() => { render(false); Ribbon.swell(.7); });
+  .then(() => { const cs = new URLSearchParams(location.search).get('cardshot'); if (cs) return cardShot(cs); render(false); Ribbon.swell(.7); });

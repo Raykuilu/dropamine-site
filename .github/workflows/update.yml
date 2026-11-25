@@ -46,6 +46,10 @@ jobs:
           git diff --cached --quiet || git commit -m "Hiscores: daily history $(date -u +%F)"
           git push
 
+      - name: Character cards and share pages
+        continue-on-error: true
+        run: node scripts/cards.mjs
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
