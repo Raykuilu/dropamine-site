@@ -111,7 +111,7 @@ const Ribbon = (() => {
   function draw() {
     const e = Math.min(1, energy + (loading ? .35 + .15 * Math.sin(time * 6) : 0));
     const th = 2.6 + 9 * e;
-    const curve = (k, b) => x => k * th + th * (.22 + .28 * e) * Math.sin(2 * Math.PI * x / b.per + b.ph + time * b.speed * (1 + 2.5 * e)) * (k / 3 + .4);
+    const curve = (k, b) => x => k * th + th * (.22 + .28 * e) * Math.sin(2 * Math.PI * x / b.per + b.ph + (b.run || 0)) * (k / 3 + .4);
     let prev = () => 0;
     bands.forEach((b, i) => {
       const top = prev, bot = curve(i + 1, b);
@@ -126,6 +126,8 @@ const Ribbon = (() => {
   function frame(now) {
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     time += dt; energy *= Math.pow(.18, dt);
+    const e = Math.min(1, energy + (loading ? .35 : 0));
+    bands.forEach(b => { b.run = ((b.run || 0) + dt * b.speed * (1 + .5 * e)) % (2 * Math.PI); });   // phase cumulée : la vague gonfle sans s'emballer
     draw();
     if (!document.hidden) requestAnimationFrame(frame); else running = false;
   }
