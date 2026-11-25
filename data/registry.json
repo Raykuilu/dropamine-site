@@ -1,4 +1,9 @@
 {
-  "_comment": "Personnages inscrits ({prénom}-{nom} en minuscules). Seuls eux apparaissent sur le site.",
-  "characters": ["ray-kuilu"]
+  "_comment": "Personnages inscrits, « région/prénom-nom » en minuscules (ajoutés par le formulaire d inscription). owners : compte GitHub qui a inscrit le personnage (seul à pouvoir le retirer automatiquement).",
+  "characters": [
+    "eu/ray-kuilu"
+  ],
+  "owners": {
+    "eu/ray-kuilu": "Raykuilu"
+  }
 }

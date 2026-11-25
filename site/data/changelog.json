@@ -1,0 +1,218 @@
+{
+ "updated": "2026-11-25T14:17:20.759Z",
+ "versions": [
+  {
+   "version": "3.10.0",
+   "sections": [
+    {
+     "title": "New",
+     "items": [
+      "Guild milestones (off by default): a guild message when your total level crosses a milestone (Progress > Announcements, with a preview test button).",
+      "Weapon masters: <code>/drop weapons</code> also lists the weapons your class can still learn and where (Stormwind, Ironforge, Darnassus, Orgrimmar, Thunder Bluff, Undercity). The \"weapon not learned\" reminder works even before you have visited a weapon master.",
+      "Hardcore tab (Advanced > Hardcore), ready for the upcoming Forever Hardcore mode: when your target is elite, of unknown level (??) or 3+ levels above you, the panel frame pulses red, a banner says why (\"Elite · level ??\") and the drop beats red, with a line in its tooltip. Skill tiles keep their usual colours. An alert sound plays once per dangerous target, even with the add-on sounds off (option \"Alert sound on target\", with a test button). Two sliders set the size and strength of the panel glow and of the drop halo (0% turns each off; moving a slider previews the alert for 4 s). Only active on a Hardcore character; <code>/drop hc</code> shows whether Hardcore is official, manual or simulated (<code>/drop hc simu</code> simulates it).",
+      "Unofficial Hardcore: \"I play Hardcore (unofficial)\" in the Hardcore tab (or <code>/drop hc on|off</code>) turns the Hardcore helpers on for that character only.",
+      "SkillUp Forever link (only if SkillUp Forever is installed, Professions > SkillUp Forever): — The profession tile tooltip shows SkillUp's current and next step, in place of Dropamine's \"Next +1\". — A toast only when the next step sends you somewhere: a recipe trainer, a vendor or a quest giver. Profession ranks keep Dropamine's own rank reminder (no second toast). — Alt+click a profession tile to set SkillUp's map waypoint for the step. — Read only on hover and at most every 2 s, never in combat. — GPS arrow: while that waypoint is active (game waypoint, no TomTom / Shortest Path), the drop turns into an arrow pointing at it: green ahead, yellow to the side, red behind, distance in its tooltip. Within ~10 yd: \"Arrived\" toast and the waypoint is removed. Alt+click the drop to remove it. Off in dungeons, or with the \"GPS arrow in the drop\" option.",
+      "Collection log, Professions: with SkillUp Forever (optional), every profession shows its exact recipe total and the list of recipes you are missing, grouped by rank (Apprentice 1-75, Journeyman 76-150, Expert 151-225, Artisan 226-300; click + / – to fold, your current rank open by default), with where to get each one (vendor and zone, quest, drop and chance, world drop, trainer) and whether another of your characters already knows it (\"Pattern\" when only Questie or AtlasLoot could tell where). The right-hand list has a scroll bar. Without it, Cooking and First Aid stay complete and the other professions suggest SkillUp.",
+      "\"New recipe!\" toast when your character learns a recipe, with your progress in that profession when SkillUp Forever is installed (Progress > Announcements).",
+      "Fishing ranks: the Artisan quest now asks for Fishing 225 (also Cooking and First Aid), and the rank reminder says where to go: Old Man Heming in Booty Bay for the Expert book, Nat Pagle in Dustwallow Marsh for the Artisan quest.",
+      "English command aliases: <code>/drop hunt</code> (and <code>add</code> / <code>remove</code>), <code>/drop summary</code>, <code>/drop collapse</code>, <code>/drop expand</code>; English help and README now use English commands (<code>/drop weapons</code>, <code>/drop hunt</code>, <code>/drop tiers</code>, <code>/drop columns</code>, <code>/drop lock</code>, <code>/drop fade</code>).",
+      "Setup tour: the theme page also has a \"Show the total level\" box, and the last page mentions the two optional companions, Dungeon Journal and SkillUp Forever.",
+      "Collection log: the same light highlight under the mouse everywhere (categories, dungeons, recipes, Apprentice / Journeyman / Expert lines); long recipe names are cut with \"…\" and shown in full, with their source, in the tooltip.",
+      "Copy windows (<code>/drop debug</code>, <code>/drop bug</code>, profile export / import) use the game's own window style, with the Dropamine portrait.",
+      "Minimap button: when another add-on already loads LibDataBroker and LibDBIcon (Details, Questie, DBM…), Dropamine's button goes through them, so it looks and behaves like the other buttons and button bags pick it up. Dropamine still ships no library; without them, its own button (same size and border) stays."
+     ]
+    },
+    {
+     "title": "Fixes",
+     "items": [
+      "Recipe sources refresh as soon as SkillUp Forever has finished loading its data.",
+      "Collection log: the \"Sort: level / %\" button was stuck on %; dragging the scroll bar stops when you release the mouse, even outside the bar; the hover highlight reaches the scroll bar."
+     ]
+    }
+   ]
+  },
+  {
+   "version": "3.9.0",
+   "sections": [
+    {
+     "title": "New",
+     "items": [
+      "Hunt: your hunted item is spotted in the loot window and in group rolls (gold frame + \"Hunted item!\"), with a clickable toast for the roll. Option \"Spot the item when looting\" (Hunt tab).",
+      "Professions: when nothing in your bags gives a point, the tile tooltip suggests the next +1: the most worthwhile known recipe, what is missing, and the monsters of your level that drop it. Option \"Suggested next +1\" (Tooltips list).",
+      "Weapons: weapon and Defense tiles below max show the monster levels that give points (weapon: below 5 × the monster level, grey ones included; Defense: non-grey monsters). New <code>/drop weapons</code> lists weapons to level, furthest behind first, with their levels.",
+      "Collection log: a progress bar under each dungeon, \"Sort: level / %\", and a Share button that puts \"Collection Log · Dungeon 12/39 (31 %)\" in your chat.",
+      "Quiet mode turns on automatically in battlegrounds and arenas (option, on by default).",
+      "Test buttons for the hunted-item roll (a sample roll frame with the gold frame, and the toast) and for battleground quiet mode (15 s simulated).",
+      "Settings: a search box at the top (jumps to the setting and highlights it; Enter for the next match), and export / import of all your settings as one line of text (Advanced > Profile, <code>/drop export</code>, <code>/drop import</code>).",
+      "<code>/drop bug</code>: a full report to copy (versions, settings, check, recent errors, loaded add-ons) and a GitHub issue form to paste it into.",
+      "Total level: one tooltip for the droplet, the number and the bar, always shown beside the panel (it no longer covers the bar). Summary by category with percentages; hold Shift (or tick \"Total tooltip: always in full\") for every detail: how it is counted, your class maximum, every skill, today, history and your other characters, plus the 7-day chart.",
+      "Settings tidy-up: \"Quiet mode\" is one list (Never / In dungeon or raid / In group or instance) instead of \"Never\" plus a separate \"Auto quiet in dungeons\" box that kept it on in dungeons; your current behaviour is kept. \"Total tooltip: always in full\" moved to Display, \"Shift+click: share\" to Display > Behaviour; clearer names (\"Creatures: short version\", \"Discoveries: first skinnings and fish\", \"Toast background (Classic theme)\") and up-to-date tab descriptions."
+     ]
+    },
+    {
+     "title": "Fixes",
+     "items": [
+      "Target outline on tiles (red Level, blue weapons / Defense, green professions) now has its own setting, \"Target outline\" (Display > Behaviour). It was tied to the gathering alerts, so unticking those in the Professions tab also switched off the combat outline. The gathering option is now named \"Gathering (skinning, mining, herbalism)\" in the Tooltips list.",
+      "Icons above creature names only depend on the \"Icons on creatures\" list. Unticking the gathering alerts used to hide every icon, Skinning and Recipes included.",
+      "Lines added to tile tooltips by the reminders (Defense against grey enemies) never showed up: they were hooked before the tooltip code was loaded."
+     ]
+    },
+    {
+     "title": "Under the hood",
+     "items": [
+      "Tests run on GitHub at every push, and a release is only published when they pass. No Python needed anymore (Lua only).",
+      "UI.lua split: the toasts live in Toasts.lua, about 1,000 lines of dead code from the old native Skills tab removed (UI.lua: 7,163 -> 3,885 lines).",
+      "Settings list cached; line endings normalised (LF)."
+     ]
+    }
+   ]
+  },
+  {
+   "version": "3.8.3",
+   "sections": [
+    {
+     "title": "Changes",
+     "items": [
+      "Minimap button: same round look as the other minimap buttons (round icon, gold ring), instead of a square plate.",
+      "Profession tiles: a second click closes the profession window (Fishing and Cooking included).",
+      "\"N ready\" badge setting now hides the badge on the tile too, not only the toast.",
+      "Creatures with ingredients: one checkbox per profession (Cooking, First Aid) in a dropdown, instead of a single \"Recipe possible\" toggle. One toast per ingredient per session (two creatures dropping the same Silk Cloth gave two identical toasts).",
+      "Toasts with an empty second line: the green line no longer overflows the bottom edge.",
+      "Settings reorganised: about 85 rows down to 50. Families of checkboxes are now one dropdown list with a checkbox per item and \"None\" on top (Status icons, Gains, Reminders, Celebrations, Sounds, On the tiles, Icons on creatures, Tooltips, Announcements, Tile tooltip, Weapon reminders). Each box is still its own setting: saved choices and /drop commands are unchanged.",
+      "Test buttons on lists play an example of every ticked box, one after another.",
+      "Icons on creatures: Skinning and Recipes can be turned off separately (Professions tab).",
+      "Fishing ground and shopping list options moved to Advanced.",
+      "Themes renamed like in FlareUI: \"FlareUI\" (was FlareUI New, the chat frame look) and \"Modern\" (was FlareUI Old School). Your saved theme is kept; <code>/drop theme flareui|modern</code> also work."
+     ]
+    }
+   ]
+  },
+  {
+   "version": "3.8.2",
+   "sections": [
+    {
+     "title": "Fixes",
+     "items": [
+      "English client: the rare loot alert title (\"Epic loot: …\", \"Legendary loot: …\") was still in French.",
+      "Rare loot alert: no more \"nil\" item name when the item was not cached yet (the alert now waits for the item data), and the colour follows the real item quality (a legendary is no longer shown as epic).",
+      "English client: the Collection log groups (\"Dungeons lvl 10-29\"…) and a few <code>/drop</code> help lines were still in French.",
+      "Hunt and rare loot toasts: clicking to open the item only worked on the first toast (recycled toasts lost the click), and a rare loot colour could leak onto the next toast. The toast title now always uses the linked item's quality colour.",
+      "English client: the Hunt tab equipment slots were in French, and the waist slot read \"Size\".",
+      "Characters tab and tile tooltips: class and skill names saved by a client in another language (e.g. \"Combat farouche\", \"Bâtons\", \"Guerrier\") now show in the addon language; a skill description cached in French is replaced by the English one.",
+      "<code>/drop chasse test</code>: the sample toast now uses the first item of your hunt list, in your language, and is clickable like a real hunt toast (opens the item card)."
+     ]
+    },
+    {
+     "title": "New",
+     "items": [
+      "Loot alerts: one dropdown with a checkbox per quality (Rare, Epic, Legendary) and a \"None\" entry replaces \"Rare loot alert\" + \"Rare loot: from\". The toast title uses the quality colour. Your previous choice is kept (default: Epic and Legendary).",
+      "The guided tour opens once for everyone after this update, with a new page about loot alerts. Once finished or skipped, it does not come back (<code>/drop setup</code> reopens it).",
+      "Settings: no more empty space at the bottom of each tab, and the mouse wheel scrolls faster.",
+      "Settings: every notification now has its Test button (total milestone, fireworks, rare loot alert, hunt alert, trainer rank toast, daily challenge)."
+     ]
+    }
+   ]
+  },
+  {
+   "version": "3.8.1",
+   "sections": [
+    {
+     "title": "New",
+     "items": [
+      "<code>/drop check</code>: a quick health check (modules, secret-value protection, data collection, icon state), in a copyable window.",
+      "<code>/drop resume</code>: your total on one line, ready to paste (Ctrl+C).",
+      "<code>/drop paliers</code>: next total milestone and skills at their cap.",
+      "Overview tab: the duplicate histogram is replaced by a \"Today\" card (points today by category, vs yesterday, last 7 days); the Charts tab keeps the full chart. The \"Last achievement\" and \"Best spot\" cards now open their tab on click.",
+      "Overview tab: a \"Next milestone\" card with progress, and an estimated time to reach it at your current pace, and a breakdown of where points remain (Level, Weapons &amp; defense, Professions). The session curve moved out of the overview.",
+      "<code>/drop records</code>: best session, hour, day and combo, with the current hour compared to your best. The records tooltip in the overview shows the same.",
+      "<code>/drop collection</code>: what the scanner has learned (creatures, skinnable, nodes, recipes), as X / Y when the base allows.",
+      "Characters tab redesign: class icon and class-colored name, total points, and bars for Level, top 2 professions and top 2 weapon/defense skills (skills at 0 are hidden). Characters are sorted from highest to lowest level.",
+      "Achievements follow the known milestones: total 1500 and 2250 added (matching 500/1000/1500/2000/2250), and skill achievements at 150, 225 and 300 (new \"Journeyman\" and \"Expert\"). \"Double gatherer\" / \"Double crafter\" became \"Double profession\" (two professions at 150) and \"Double expert\" (two at 225), so any profession pair can complete them.",
+      "New pace-independent achievements: 60-day streak, 10 and 20 active days out of the last 30, and 5 / 10 skills at their cap. They stay reachable at high level, unlike per-session speed records.",
+      "<code>/drop records</code> also shows your best day over the last 30 days.",
+      "Achievements list reorganised in a consistent order (sessions, regularity, total, skills, exploration) and the 300 skill achievement is now \"Master\", completing Journeyman (150) / Expert (225) / Master (300).",
+      "Total level \"ding\": crossing a total milestone (500, 1000, 1500, 2000, 2250, max) plays the big level-up animation (gold toast, flare, overflowing droplet), once per milestone.",
+      "Hunt tab: an equipment grid. Click a slot to pick the item to hunt from the Dungeon Journal data (read live, nothing bundled; filter by class armor, search by name). Boss kills are detected from loot messages, so attempts are real kills, not opened loot windows. Items can also be added by name, link or ID, or from the last loot.",
+      "Hunt (wanted items, attempts, cumulative drop chance; <code>/drop chasse</code>) and Collection (X / Y) are available at every level. Endgame mode (automatic at max level, or <code>/drop mode endgame</code> to preview) turns the first two Overview cards into shortcuts to them. The tabs are regrouped: Charts + Weekly, and Spots + Efficiency (now \"Farm\"), switched from the footer.",
+      "The Collection tab is now a real log: a list with section subtitles (dungeons by level bracket, professions, discoveries), and per dungeon the bosses with item icons (obtained in colour, missing greyed out), read live from Dungeon Journal.",
+      "About page (<code>?</code> button in the Progression header, <code>/drop about</code>): version, author, GitHub and bug-report links in copyable boxes, inspired by Old School RuneScape for skill tracking and the collection log (unaffiliated); thanks to Flare UI (visual inspiration) and Exehn (Dungeon Journal data and favourites access).",
+      "Rare loot alert: a toast with the item icon when you receive an epic or better item (or rare, in Options > Hunt > \"Rare loot: from\"). <code>/drop rare &lt;link or id></code> previews it for any item.",
+      "The rare loot toast title uses the item's quality colour (rare blue, epic purple, legendary orange).",
+      "Clicking a \"wanted item found\" or \"rare loot\" toast opens the item card (like a chat link, with equipment comparison).",
+      "The Efficiency sub-tab only appears once there is measured data; \"Weapons and Defense\" is now spelled the same everywhere.",
+      "Total tooltip: a \"class maximum\" line for classes that lack a second useful weapon skill (paladin and shaman: no ranged weapon; priest, mage, warlock: only the wand levels), as X / 2160 · %.",
+      "Collection log: each boss line shows an approximate kill count (≈N kills), counted from the loot of its tracked items.",
+      "Guided tour on first launch (once, only on accounts with no saved settings): eight short pages presenting the cells, gain toasts, level-up animation and sound, total milestones and fireworks, the Progression window, Hunt and Collection. Each feature can be tried and switched off on its page. <code>/drop setup</code> reopens it. The three new switches (total milestone, fireworks, hunt alert) are also in Options > Notifications.",
+      "Milestone ding: the character cheers (/cheer); the maximum total adds a gold fireworks burst. <code>/drop ding fx</code> previews the fireworks.",
+      "The \"wanted item found\" toast shows the item icon.",
+      "<code>/drop ding [tier|max]</code> and <code>/drop chasse test</code> replay the milestone animation and the \"wanted item found\" toast, for testing.",
+      "Hunt: removing a tracked item asks for a second click (x then ?, or right-click twice) to avoid accidents.",
+      "Overview (endgame): the first two cards become shortcuts to Hunt and the Collection log (X / Y). <code>/drop item &lt;id></code> shows where an item name comes from (diagnostic).",
+      "Hunt: tracked items (including Journal favourites) are placed on their equipment slot automatically; when several compete for one slot, the best one is shown on the grid.",
+      "Item, dungeon and boss names in Hunt and Collection now follow the game language (read from Dungeon Journal's own translations, items requested from the server when not cached yet).",
+      "Active-time streak: new \"Half an hour straight\" and \"An hour straight\" achievements (30 min / 1 h of play without a break longer than 5 minutes) and a \"longest active streak\" record. Play counts when you fight, move, cast, loot or gain a point (checked every 10 s, never while AFK), so it does not depend on how fast points come and stays reachable at max level.",
+      "Exploration achievements: \"Explorer\" now asks for 10 zones (gathering or fishing points), and a new \"Globetrotter\" asks for 25.",
+      "New achievements reachable with any profession choice: Early bird (a point between 5 and 7 AM), Night owl (midnight to 5 AM), Worldwide angler (fishing points in 5 zones), First blood (first wanted item found in Hunt), Persistent (found after more than 50 attempts), and Collector / Great collector / Dream collection (10 / 25 / 50 % of the collection log).",
+      "English translation completed for the new screens (Hunt, Collection log, guided tour, About, <code>/drop check</code>, Progression).",
+      "Collection log: a new Home page opens first instead of the first dungeon: overall progress, key figures (dungeons complete, approximate boss kills, items), a progress bar per category (click to open it) and the dungeons closest to completion.",
+      "Collection log: click a category title to fold or unfold it (\"+\" / \"-\"); the state is remembered, and each title shows its own X / Y.",
+      "Collection log wording: \"Bestiary\" and \"Skinnable creatures\" replace \"Creatures / Skinnables learned\", \"At cap\" replaces \"Skills at cap\" (it was cut off), and the nodes line is removed (no total to compare with).",
+      "Session recap: the cut-off comparison line and its tooltip are replaced by a table (active time, level / h, skill points / h, value / h) with one column per period (this session, previous, 7-day and 30-day average); this session is green above your 30-day average and red below.",
+      "<code>/drop help</code> lists the new commands (hunt, collection, setup, about, ding).",
+      "Collection log: the Home list is called \"Furthest along\" (it is not limited to nearly finished dungeons), and hovering a dungeon in the list shows its full name (several names were cut off alike).",
+      "Collection log: the Cooking and First Aid lines now list the recipes you still lack, by required skill level, with where they come from (trainer, known from the start, or drop / quest / vendor: the database does not say which). Creatures and skinnables learned are broken down by 10-level bracket, with your own bracket highlighted.",
+      "Collection log: a \"Recipes\" line for each crafting or gathering profession your character has learned (alchemy, blacksmithing, enchanting, engineering, leatherworking, tailoring, mining, herbalism, skinning, fishing, plus cooking and first aid): known recipes out of the total. Open a profession window once so its recipes are read."
+     ]
+    },
+    {
+     "title": "Fixes",
+     "items": [
+      "Status icons (bags full, AFK, fishing...) no longer flicker or vanish when hovering the total tile.",
+      "Characters tab: each character is listed once. A character could appear twice (with and without realm) when the realm name was empty at login; the most recent profile is shown and no saved data is deleted.",
+      "Hunt and Collection are full features: their tabs in the Progress window show at every level (no more max-level-only mode), and their settings have their own \"Hunt\" tab.",
+      "Settings: removed the \"Progress window mode\" (Auto/Route/Endgame) and \"Session goal\" sliders to free space; <code>/drop mode</code> and <code>/drop but &lt;n></code> still work.",
+      "Removed the \"Seasonal tint\" option and <code>/drop saison</code> (it did nothing useful); toasts keep their standard gold.",
+      "Classic theme: the total bar no longer shows a black gap before its first segment.",
+      "Total tooltip no longer errors for classes without a useful weapon skill (warlock, priest, mage, paladin, shaman), which also garbled the tooltip.",
+      "Collection achievements show whole numbers instead of a long decimal; the \"Hunt\" wording is now \"the Hunt tab\".",
+      "<code>/drop records on|off</code> and <code>/drop collection on|off</code> work again (the new report commands had replaced the switches); without on|off they show the report.",
+      "Clicking a tab while the session recap is open now closes the recap.",
+      "Session recap: the tab you came from is no longer left highlighted while the recap is open, and the bottom sub-page selectors are hidden.",
+      "Characters tab: gold is no longer reset to 0 on login/logout.",
+      "Total tooltip: \"Other characters\" lists each character once and no longer repeats the current one.",
+      "Level tooltip: both XP percentages now round the same way."
+     ]
+    },
+    {
+     "title": "Other",
+     "items": [
+      "Settings panel now has tabs (Display, Toasts, Sounds, Professions, Progress, Advanced): one family at a time, no more endless scrolling.",
+      "Settings reorganised: every section is split into titled sub-groups (Look, Layout, Transparency, Gain toasts, Celebrations, Highlighting, Goals and achievements, Weapon reminders…), each option lives in exactly one place, and the tour/Progress options moved next to their topic. No setting, command or saved value changed.",
+      "Tile and character-tab drop: same clean logo (no more drop inside the drop).",
+      "Progress window: larger, sharper logo in the header (64 px source) and no second drop repeated in the total banner.",
+      "New theme <b>FlareUI (New)</b>: the FlareUI chat window frame (thick border and the knotted line along the top and bottom, taken from the game's own art, no header). The previous look is now <b>FlareUI (Old School)</b>; existing accounts keep it. <code>/drop theme flare2</code>. Border texture from FlareUI (MIT, license in Media/LICENSE-FlareUI-Border.txt).",
+      "Guided tour: the \"Cells\" page now lets you pick the panel look (Light, FlareUI New/Old, Classic); new installations start with Light, existing accounts keep their theme.",
+      "Logo: the \"+1\" and the small drop inside the big drop are removed; only the three level layers remain.",
+      "Total tooltip: the 7-day mini chart now uses the same rounded border as the tooltip above it.",
+      "Total tooltip: shows a short summary by default; hold Shift to expand everything (or tick \"Full total tooltip\" in Options › Professions).",
+      "The guided tour can now be reopened from the Options panel (\"Replay the tour\") and from the About window, which also gets a \"Settings\" button; the tour's last page opens the settings.",
+      "Options that have no slash command no longer show \"/drop setup\" as their command."
+     ]
+    }
+   ]
+  },
+  {
+   "version": "3.7.3",
+   "sections": [
+    {
+     "title": "Fixes",
+     "items": [
+      "Dungeons and raids: fixed Lua errors on protected (secret) text values — NPC names while hovering or targeting, and creature types after a spell cast (skinning check), and AFK / combat state reads.",
+      "Dungeons and raids: calm mode now silences the +1, tile glow and spark too, not just toasts.",
+      "Auto calm mode no longer rewrites your saved setting, so a reload or crash inside an instance can't leave it stuck."
+     ]
+    }
+   ]
+  }
+ ]
+}

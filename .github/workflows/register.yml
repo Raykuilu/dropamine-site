@@ -1,0 +1,57 @@
+name: Register or remove a character
+
+# Runs when someone opens the "inscription" or "retrait" issue form.
+# The issue text is untrusted: it only reaches the script through an environment variable.
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: registry
+  cancel-in-progress: false
+
+jobs:
+  register:
+    if: contains(github.event.issue.labels.*.name, 'inscription') || contains(github.event.issue.labels.*.name, 'retrait')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Check the character and update the registry
+        env:
+          KIND: ${{ contains(github.event.issue.labels.*.name, 'retrait') && 'retrait' || 'inscription' }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          BNET_CLIENT_ID: ${{ secrets.BNET_CLIENT_ID }}
+          BNET_CLIENT_SECRET: ${{ secrets.BNET_CLIENT_SECRET }}
+        run: node scripts/register.mjs
+
+      - name: Commit the registry
+        run: |
+          git config user.name "dropamine-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || { git commit -m "Hiscores: registry update (#${{ github.event.issue.number }})" && git push; }
+
+      - name: Answer, close and refresh the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$NUMBER" --body-file out/reply.md
+          status="$(cat out/status)"
+          if [ "$status" = "review" ]; then
+            gh issue edit "$NUMBER" --add-label "à vérifier"
+          else
+            gh issue close "$NUMBER"
+          fi
+          if [ "$status" = "ok" ]; then gh workflow run update.yml --ref main; fi

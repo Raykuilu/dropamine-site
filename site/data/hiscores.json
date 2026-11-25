@@ -1,8 +1,9 @@
 {
- "updated": "2026-11-25T14:10:51.135Z",
- "region": "eu",
+ "updated": "2026-11-25T14:17:20.331Z",
  "players": [
   {
+   "key": "eu/ray-kuilu",
+   "region": "eu",
    "slug": "ray-kuilu",
    "name": "Ray",
    "surname": "Kuilu",
@@ -14,6 +15,7 @@
     "slug": "everybody-knows"
    },
    "ruleset": "JcJ",
+   "rulesetId": 1,
    "level": 36,
    "defense": 177,
    "weapons": 180,
@@ -76,8 +78,7 @@
     }
    ],
    "render": "https://render.worldofwarcraft.com/forever-eu/character/77/32432717-main-raw.png",
-   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/77/32432717-avatar.jpg",
-   "rank": 1
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/77/32432717-avatar.jpg"
   }
  ]
 }

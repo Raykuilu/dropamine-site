@@ -35,3 +35,33 @@ test('deux armes du même type ne comptent qu\'une fois', () => {
   ] } };
   assert.equal(score(two).weapons, 180);
 });
+
+import { parseEntry, parseChangelog } from './build.mjs';
+
+test('inscription : formats acceptés', () => {
+  assert.deepEqual(parseEntry('Ray Kuilu'), { region: 'eu', slug: 'ray-kuilu', key: 'eu/ray-kuilu' });
+  assert.equal(parseEntry('US/Judgement-Judy').key, 'us/judgement-judy');
+  assert.equal(parseEntry('eu: Dé Mine').slug, 'dé-mine');
+  assert.equal(parseEntry('Ray'), null);                 // il faut prénom et nom
+  assert.equal(parseEntry('xx/ray-kuilu').region, 'eu'); // région inconnue : pas un préfixe
+});
+
+test('CHANGELOG : versions, sections, puces imbriquées', () => {
+  const md = '# Changelog\n\n## 3.10.0\n\n### New\n- **Big** thing with `/drop hc`\n  - detail\n- Other\n\n### Fixes\n- Fix\n\n## 3.9.0\n\n- Old\n';
+  const v = parseChangelog(md);
+  assert.equal(v.length, 2);
+  assert.equal(v[0].version, '3.10.0');
+  assert.equal(v[0].sections[0].items[0], '<b>Big</b> thing with <code>/drop hc</code> — detail');
+  assert.equal(v[0].sections[1].title, 'Fixes');
+  assert.equal(v[1].sections[0].items[0], 'Old');
+});
+
+import { entryFromForm } from './register.mjs';
+
+test('formulaire GitHub → entrée', () => {
+  const body = '### Région / Region\n\nEU\n\n### Personnage (prénom et nom) / Character (first name and surname)\n\nRay Kuilu\n\n### Accord / Consent\n\n- [X] ok';
+  assert.equal(entryFromForm(body).key, 'eu/ray-kuilu');
+  assert.equal(entryFromForm(body.replace('EU', 'KR')), null);              // région non prise en charge
+  assert.equal(entryFromForm(body.replace('Ray Kuilu', 'Ray')), null);      // nom incomplet
+  assert.equal(entryFromForm('n\'importe quoi'), null);
+});

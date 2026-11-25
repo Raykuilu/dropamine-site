@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Bug ou idée pour l'addon Dropamine
+    url: https://github.com/Raykuilu/Dropamine/issues
+    about: Les retours sur l'addon lui-même vont dans son propre dépôt.

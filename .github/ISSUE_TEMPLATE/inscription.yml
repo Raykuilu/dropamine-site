@@ -1,0 +1,31 @@
+name: Inscription aux Hiscores / Join the Hiscores
+description: Ajoute un personnage WoW Forever aux Hiscores de dropamine.app.
+title: "Inscription : "
+labels: ["inscription"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Le personnage est vérifié automatiquement dans l'armurerie (niveau 10 minimum, déconnecté au moins une fois), puis ajouté. Tu recevras une réponse ici en une minute environ.
+        The character is checked in the armory (level 10+, logged out at least once), then added. You will get an answer here within about a minute.
+  - type: dropdown
+    id: region
+    attributes:
+      label: Région / Region
+      options: ["EU", "US", "TW"]
+    validations:
+      required: true
+  - type: input
+    id: character
+    attributes:
+      label: Personnage (prénom et nom) / Character (first name and surname)
+      placeholder: "Ray Kuilu"
+    validations:
+      required: true
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Accord / Consent
+      options:
+        - label: "C'est mon personnage et j'accepte qu'il apparaisse publiquement sur dropamine.app. / This is my character and I agree to it being listed publicly."
+          required: true

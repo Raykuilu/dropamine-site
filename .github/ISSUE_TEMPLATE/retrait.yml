@@ -1,0 +1,19 @@
+name: Retrait des Hiscores / Leave the Hiscores
+description: Retire un personnage et son historique de dropamine.app.
+title: "Retrait : "
+labels: ["retrait"]
+body:
+  - type: dropdown
+    id: region
+    attributes:
+      label: Région / Region
+      options: ["EU", "US", "TW"]
+    validations:
+      required: true
+  - type: input
+    id: character
+    attributes:
+      label: Personnage (prénom et nom) / Character (first name and surname)
+      placeholder: "Ray Kuilu"
+    validations:
+      required: true
