@@ -107,11 +107,20 @@ const Ribbon = (() => {
     svg.append(f, l); return { ...b, f, l };
   });
   host.append(svg);
-  let energy = 0, loading = false, time = 0, last = performance.now(), running = false;
+  // Au repos, un ruban fin qui ondule doucement. À chaque navigation, une houle (bosse gaussienne)
+  // traverse le ruban de gauche à droite, une seule fois.
+  const SURGE_W = 170, SURGE_SPEED = 1100;
+  let surges = [], loading = false, time = 0, last = performance.now(), running = false;
+  const lift = x => {
+    let e = loading ? .3 + .1 * Math.sin(time * 5) : 0;
+    for (const s of surges) e += s.amp * Math.exp(-(((x - s.x) / SURGE_W) ** 2));
+    return Math.min(1, e);
+  };
   function draw() {
-    const e = Math.min(1, energy + (loading ? .35 + .15 * Math.sin(time * 6) : 0));
-    const th = 2.6 + 9 * e;
-    const curve = (k, b) => x => k * th + th * (.22 + .28 * e) * Math.sin(2 * Math.PI * x / b.per + b.ph + (b.run || 0)) * (k / 3 + .4);
+    const curve = (k, b) => x => {
+      const e = lift(x), th = 2.6 + 9 * e;
+      return k * th + th * (.22 + .28 * e) * Math.sin(2 * Math.PI * x / b.per + b.ph + (b.run || 0)) * (k / 3 + .4);
+    };
     let prev = () => 0;
     bands.forEach((b, i) => {
       const top = prev, bot = curve(i + 1, b);
@@ -125,9 +134,10 @@ const Ribbon = (() => {
   }
   function frame(now) {
     const dt = Math.min(.05, (now - last) / 1000); last = now;
-    time += dt; energy *= Math.pow(.18, dt);
-    const e = Math.min(1, energy + (loading ? .35 : 0));
-    bands.forEach(b => { b.run = ((b.run || 0) + dt * b.speed * (1 + .5 * e)) % (2 * Math.PI); });   // phase cumulée : la vague gonfle sans s'emballer
+    time += dt;
+    for (const s of surges) { s.x += dt * SURGE_SPEED; s.amp *= Math.pow(.6, dt); }
+    surges = surges.filter(s => s.x < W + 2.5 * SURGE_W);
+    bands.forEach(b => { b.run = ((b.run || 0) + dt * b.speed) % (2 * Math.PI); });   // ondulation de fond, vitesse constante
     draw();
     if (!document.hidden) requestAnimationFrame(frame); else running = false;
   }
@@ -143,7 +153,11 @@ const Ribbon = (() => {
   draw(); start();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) start(); });
   return {
-    swell(power = 1) { if (reduce) return; energy = Math.max(energy, power); bubbles(Math.round(5 * power)); start(); },
+    swell(power = 1) {
+      if (reduce) return;
+      if (surges.some(s => s.x < 2 * SURGE_W)) return;          // une houle vient de partir : pas de doublon
+      surges.push({ x: -2 * SURGE_W, amp: Math.min(1, power) }); bubbles(Math.round(5 * power)); start();
+    },
     load(on) { loading = on; if (on) start(); },
   };
 })();
