@@ -511,3 +511,17 @@ html.static .pulse .live{animation:none}
 .who.gh{grid-template-columns:minmax(0,1fr) auto}
 .who.gh h2{overflow-wrap:anywhere}
 @media (max-width:900px){.who.gh{grid-template-columns:minmax(0,1fr);gap:10px}}
+
+/* ============ Image Hiscores : fenêtre d'aperçu ============ */
+.share.hsb{color:var(--gold);border-color:var(--rim-lo)}
+.hsd{position:fixed;border:1px solid var(--rim-lo);border-radius:10px;background:radial-gradient(120% 80% at 30% 0%,#2a1e12,var(--bg) 60%,var(--ink));color:var(--cream);padding:clamp(14px,2.4vw,24px);width:min(1000px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+.hsd::backdrop{background:rgba(5,3,2,.78);backdrop-filter:blur(3px)}
+.hsd canvas{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+.cx{all:unset;cursor:pointer;position:absolute;z-index:3;top:4px;right:10px;font-size:28px;line-height:1;color:var(--muted);padding:4px 8px}
+.cx:hover{color:var(--gold)}
+.cact{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.cact button{all:unset;cursor:pointer;padding:9px 18px;border-radius:6px;font-family:var(--display);font-weight:600;letter-spacing:.06em;border:1px solid var(--line-2);color:var(--cream);transition:.2s}
+.cact button[hidden]{display:none}
+.cact .dl{background:linear-gradient(180deg,var(--gold),var(--rim));color:#1a120a;border-color:var(--rim)}
+.cact button:hover{filter:brightness(1.1)}
+.cact button:focus-visible{outline:2px solid var(--rim);outline-offset:2px}

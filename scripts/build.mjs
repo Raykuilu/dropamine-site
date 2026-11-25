@@ -121,6 +121,14 @@ export function score({ profile, professions, equipment, statistics }, upload) {
   };
 }
 
+// valeurs du jour, en clés courtes : l = niveau, d = Défense, p{id} = métier, w{arme} = arme (sauf estimations)
+export function skillSnapshot(s) {
+  const o = { l: s.level, d: s.defense };
+  for (const p of s.professions ?? []) o['p' + p.id] = p.skill;
+  for (const w of s.weaponList ?? []) if (!w.est) o['w' + w.id] = w.rank;
+  return o;
+}
+
 function pickStats(achStats) {
   // quelques statistiques de l'armurerie (noms fr_FR / en_US)
   const want = { 'Créatures tuées': 'kills', 'Creatures killed': 'kills', 'Quêtes achevées': 'quests', 'Quests completed': 'quests',
@@ -210,7 +218,7 @@ export function stampHtml(html, hashes) {
 async function stampAssets() {
   const { createHash } = await import('node:crypto');
   const hashes = {};
-  for (const f of ['app.js', 'style.css']) hashes[f] = createHash('sha256').update(await readFile(join(ROOT, 'site', f))).digest('hex').slice(0, 8);
+  for (const f of ['app.js', 'share.js', 'style.css']) hashes[f] = createHash('sha256').update(await readFile(join(ROOT, 'site', f))).digest('hex').slice(0, 8);
   const file = join(ROOT, 'site/index.html');
   await writeFile(file, stampHtml(await readFile(file, 'utf8'), hashes));
   console.log(`empreintes : app.js ${hashes['app.js']}, style.css ${hashes['style.css']}`);
@@ -259,7 +267,9 @@ async function main() {
     const cutoff = new Date(Date.now() - (HISTORY_DAYS - 1) * 864e5).toISOString().slice(0, 10);
     const hist = (await readJson(hfile, [])).filter(h => h.d >= cutoff);
     const last = hist[hist.length - 1];
-    if (last?.d === today) last.t = s.total; else hist.push({ d: today, t: s.total });
+    // chaque compétence du jour aussi (gain sur 7 jours par ligne de l'image Hiscores)
+    const snap = skillSnapshot(s);
+    if (last?.d === today) { last.t = s.total; last.s = snap; } else hist.push({ d: today, t: s.total, s: snap });
     await writeFile(hfile, JSON.stringify(hist));
 
     const p = c.profile;

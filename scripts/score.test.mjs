@@ -121,3 +121,10 @@ test('armes en main : depuis l’armurerie, + Combat farouche pour un druide', (
   const est = score({ profile: { level: 36, character_class: { id: 11 } }, professions: {}, statistics: {}, equipment: eq });
   assert.deepEqual(est.weaponList.map(w => w.id), ['staves']);   // l'estimation ne compte pas Combat farouche
 });
+
+import { skillSnapshot } from './build.mjs';
+test('historique : chaque compétence du jour, sans les armes estimées', () => {
+  const snap = skillSnapshot(score(ray, { weapons: 1, weaponList: [{ id: 'staves', rank: 103 }] }));
+  assert.deepEqual(snap, { l: 36, d: 177, p165: 120, p393: 223, p185: 161, p356: 137, p129: 208, wstaves: 103 });
+  assert.equal(skillSnapshot(score(ray)).wstaves, undefined);
+});

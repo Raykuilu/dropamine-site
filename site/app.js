@@ -21,7 +21,9 @@ const I18N = {
   tipSpare: ['Not in the total: as in the addon, only the weapon in hand and your class’s second skill count', "Hors total : comme dans l'addon, seules l'arme en main et la 2e compétence de ta classe comptent"],
   moreW: ['+ {n} other weapon skill{s}', '+ {n} autre{s} compétence{s} d’arme'], lessW: ['Only weapons in use', 'Seulement les armes utilisées'],
   viewT: ['Display', 'Affichage'], viewList: ['List', 'Liste'], viewGrid: ['Grid, as in the addon', "Grille, comme dans l'addon"],
-  share: ['Share', 'Partager'], copied: ['Link copied', 'Lien copié'],
+  share: ['Share', 'Partager'], close: ['Close', 'Fermer'],
+  hsBtn: ['Hiscores image', 'Image Hiscores'], hsDl: ['Download PNG', 'Télécharger PNG'], hsCopy: ['Copy image', "Copier l'image"], hsCopied: ['Copied', 'Copiée'], hsNoCopy: ['Copy not allowed here', 'Copie impossible ici'],
+  hsSkill: ['Skill', 'Compétence'], hsRank: ['Rank', 'Rang'], hsLevel: ['Level', 'Niveau'], hsWeek: ['7 days', '7 jours'], copied: ['Link copied', 'Lien copié'],
   gainsT: ['TODAY’S +1', 'LES +1 DU JOUR'], gainsNone: ['', ''],
   splitT: ['Split', 'Répartition'], bestByProf: ['Best by profession', 'Meilleurs par métier'], sinceY: ['since yesterday', 'depuis hier'],
   estSep: ['ESTIMATED · NOT RANKED UNTIL THE DROPAMINE LINE IS SENT', 'ESTIMÉS · SANS RANG JUSQU’À L’ENVOI DE LA LIGNE DROPAMINE'],
@@ -420,7 +422,7 @@ function renderChar() {
       ${portrait}
       <div><h2>${full(p)}</h2><p>${desc} · ${t('levelN', { n: p.level })}${p.guild ? ` · <a href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${esc(p.guild.name)}</a>` : ''} · ${esc((p.region || 'eu').toUpperCase())}${rulesetName(p) ? ' ' + esc(rulesetName(p)) : ''}</p>
         ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t('previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}
-        <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button></div>
+        <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button><button class="share hsb" type="button" data-hsimg="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h8"/></svg><span>${t('hsBtn')}</span></button></div>
       <div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n" data-n="${p.total}">${fmt(p.total)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div></div>
     </div>
     ${skillsBlock(p, peers)}
@@ -443,6 +445,75 @@ document.addEventListener('click', async e => {
     setTimeout(() => { sp.textContent = t('share'); b.classList.remove('ok'); }, 1800);
   } catch (err) { /* partage annulé ou presse-papiers refusé : rien à faire */ }
 });
+
+/* ---------- Image Hiscores d'un personnage (dessin dans share.js) ---------- */
+const SECONDARY_PROFS = [185, 356, 129];
+// gain sur 7 jours d'une ligne, d'après l'historique quotidien (null tant qu'il manque un point de comparaison)
+function weekGain(p, key) {
+  const h = p.history || []; if (h.length < 2) return null;
+  const last = h[h.length - 1], cut = new Date(new Date(last.d) - 7 * 864e5).toISOString().slice(0, 10);
+  const base = [...h].reverse().find(x => x.d <= cut) || h[0];
+  const val = e => key === 't' ? e.t : e.s?.[key];
+  return base === last || val(base) == null || val(last) == null ? null : val(last) - val(base);
+}
+// les lignes de l'image : le total puis les 9 cases comptées par l'addon
+function hsRows(p) {
+  const peers = DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu'));
+  const rank = id => rankBy(skillById(id), peers).find(x => x.p === p)?.r || null;
+  const row = (name, img, v, max, group, id, hkey) => ({ name, img, v, max, group, rank: rank(id), week: weekGain(p, hkey), vText: fmt(v), maxText: fmt(max) });
+  const rows = [{ ...row(t('total'), null, p.total, p.max || 2460, 'lvl', 'total', 't'), total: true, parts: p.parts }];
+  rows.push(row(t('level'), p.avatar, p.level, 60, 'lvl', 'level', 'l'));
+  const prim = (p.professions || []).filter(x => !SECONDARY_PROFS.includes(x.id)).sort((a, b) => b.skill - a.skill).slice(0, 2);
+  for (const x of [...prim, ...SECONDARY_PROFS.map(id => p.professions?.find(y => y.id === id)).filter(Boolean)])
+    rows.push(row(profName(x.id, x.name), icon(PROF_ICON[x.id] || 'inv_misc_note_01'), x.skill, x.max || 300, 'prf', 'p' + x.id, 'p' + x.id));
+  for (const id of p.equipped || []) { const w = wpnOf(p, id); if (w && WPN[id]) rows.push(row(L2(WPN[id]) + (w.est ? ` (${t('est')})` : ''), icon(WPN[id][2]), w.rank, 5 * p.level, 'wpn', 'w' + id, 'w' + id)); }
+  if (p.defense) rows.push(row(t('defense'), icon(DEF_ICON), p.defense, 5 * p.level, 'wpn', 'defense', 'd'));
+  rows.forEach(r => { r.rankText = r.rank ? fmt(r.rank) : ''; });
+  return rows;
+}
+const HsImage = (() => {
+  let dlg, p;
+  const png = () => new Promise(r => $('canvas', dlg).toBlob(r, 'image/png'));
+  function build() {
+    dlg = document.createElement('dialog'); dlg.className = 'hsd';
+    dlg.innerHTML = `<button class="cx" type="button" aria-label="${t('close')}">×</button><canvas width="1200" height="630"></canvas>
+      <div class="cact"><button type="button" class="dl">${t('hsDl')}</button><button type="button" class="sh" hidden>${t('share')}</button><button type="button" class="cp">${t('hsCopy')}</button></div>`;
+    document.body.append(dlg);
+    dlg.addEventListener('click', async e => {
+      if (e.target === dlg || e.target.closest('.cx')) return dlg.close();
+      if (e.target.closest('.dl')) { const a = document.createElement('a'); a.download = `dropamine-hiscores-${p.slug}.png`; a.href = $('canvas', dlg).toDataURL('image/png'); a.click(); return; }
+      if (e.target.closest('.sh')) {
+        try { await navigator.share({ files: [new File([await png()], `dropamine-hiscores-${p.slug}.png`, { type: 'image/png' })], title: `${p.name} ${p.surname} · Dropamine Hiscores` }); }
+        catch (err) { /* partage annulé */ }
+        return;
+      }
+      const cp = e.target.closest('.cp');
+      if (cp) navigator.clipboard.write([new ClipboardItem({ 'image/png': png() })])
+        .then(() => { cp.textContent = t('hsCopied'); setTimeout(() => cp.textContent = t('hsCopy'), 1800); })
+        .catch(() => { cp.textContent = t('hsNoCopy'); });
+    });
+  }
+  async function open(player) {
+    if (!window.DropShare) return;
+    if (!dlg) build();
+    p = player;
+    let files = false; try { files = !!navigator.canShare?.({ files: [new File([''], 'x.png', { type: 'image/png' })] }) && matchMedia('(pointer:coarse)').matches; } catch (e) { /* pas de partage de fichier */ }
+    $('.sh', dlg).hidden = !files;
+    dlg.showModal();
+    const desc = LANG === 'fr' ? `${className(p)} ${raceName(p)}` : `${raceName(p)} ${className(p)}`;
+    await document.fonts.ready;
+    await DropShare.draw($('canvas', dlg), p, { rows: hsRows(p), L: {
+      title: `Hiscores · ${p.name} ${p.surname}`,
+      sub: `${desc.charAt(0).toUpperCase() + desc.slice(1)} · ${t('levelN', { n: p.level })}${p.guild ? ' · ' + p.guild.name : ''} · Forever ${(p.region || 'eu').toUpperCase()}`,
+      cols: [t('hsSkill'), t('hsRank'), t('hsLevel'), t('hsWeek')],
+      date: DATA.updated ? new Date(DATA.updated).toLocaleDateString(locale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '' } });
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-hsimg]'); if (!b) return;
+    const pl = DATA.players.find(x => pkey(x) === b.dataset.hsimg); if (pl) { Tip.hide(); open(pl); }
+  });
+  return { open };
+})();
 
 /* ---------- Guildes ---------- */
 function guilds() {
@@ -761,6 +832,7 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
 })();
 
 /* ---------- Démarrage ---------- */
+const BOOT_HSIMG = new URLSearchParams(location.search).get('hsimg');   // lien direct vers l'image Hiscores (lu avant que l'adresse soit réécrite)
 readUrl();
 render(false);
 Ribbon.load(true);
@@ -771,4 +843,4 @@ Promise.all([
     .catch(() => { NEWS = { versions: [] }; }),
   Bnet.init(),
 ]).then(() => { Ribbon.load(false); return document.fonts.ready; })
-  .then(() => { render(false); Ribbon.swell(.7); });
+  .then(() => { render(false); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });

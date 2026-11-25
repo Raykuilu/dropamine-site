@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Partage — maquettes OSRS</title>
+<link rel="stylesheet" href="style.css">
+<style>html,body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<canvas id="cv"></canvas>
+<script>
+const PROF = { 165:'Travail du cuir',393:'Dépeçage',185:'Cuisine',356:'Pêche',129:'Secourisme',171:'Alchimie',164:'Forge',333:'Enchantement',202:'Ingénierie',182:'Herboristerie',186:'Minage',197:'Couture' };
+const PROF_ICON = { 171:'trade_alchemy',164:'trade_blacksmithing',333:'trade_engraving',202:'trade_engineering',182:'trade_herbalism',165:'trade_leatherworking',186:'trade_mining',393:'inv_misc_pelt_wolf_01',197:'trade_tailoring',185:'inv_misc_food_15',356:'trade_fishing',129:'spell_holy_sealofsacrifice' };
+const WPN = { axes:['Haches','inv_axe_01'],axes2h:['Haches à deux mains','inv_axe_09'],maces:['Masses','inv_mace_01'],maces2h:['Masses à deux mains','inv_mace_04'],swords:['Épées','inv_sword_04'],swords2h:['Épées à deux mains','inv_sword_10'],polearms:["Armes d'hast",'inv_spear_06'],staves:['Bâtons','inv_staff_08'],fist:['Armes de pugilat','inv_gauntlets_04'],daggers:['Dagues','inv_weapon_shortblade_05'],unarmed:['Mains nues','inv_gauntlets_04'],feral:['Combat farouche','ability_druid_catform'],bows:['Arcs','inv_weapon_bow_02'],guns:['Armes à feu','inv_weapon_rifle_01'],crossbows:['Arbalètes','inv_weapon_crossbow_01'],thrown:['Armes de jet','inv_throwingknife_02'],wands:['Baguettes','inv_wand_01'] };
+const CLASS = {1:'Guerrier',2:'Paladin',3:'Chasseur',4:'Voleur',5:'Prêtre',7:'Chaman',8:'Mage',9:'Démoniste',11:'Druide'};
+const RACE = {1:'humain',2:'orc',3:'nain',4:'elfe de la nuit',5:'mort-vivant',6:'tauren',7:'gnome',8:'troll'};
+const SECONDARY = [185, 356, 129];
+const icon = n => `https://render.worldofwarcraft.com/eu/icons/56/${n}.jpg`;
+const cv = document.getElementById('cv'), g = cv.getContext('2d');
+const IMG = {}; const load = s => s ? (IMG[s] || (IMG[s] = new Promise(r => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => r(i); i.onerror = () => r(null); i.src = s; }))) : Promise.resolve(null);
+const fmt = n => Math.round(n).toLocaleString('fr-FR').replace(/ /g, ' ');
+let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const NARROW = "'Arial Narrow', Arial, sans-serif", SC = "'Cormorant SC', Georgia, serif", SERIF = "'EB Garamond', Georgia, serif";
+const rr = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
+const grad = (x0, y0, x1, y1, s) => { const l = g.createLinearGradient(x0, y0, x1, y1); s.forEach(([o, c]) => l.addColorStop(o, c)); return l; };
+function radial(x, y, r, c, a = 1) { const q = g.createRadialGradient(x, y, 0, x, y, r); q.addColorStop(0, c); q.addColorStop(1, c.slice(0, 7) + '00'); g.globalAlpha = a; g.fillStyle = q; g.fillRect(x - r, y - r, 2 * r, 2 * r); g.globalAlpha = 1; }
+function T(s, x, y, size, color, o = {}) {
+  g.font = `${o.w || 400} ${size}px ${o.f || SERIF}`; g.textAlign = o.a || 'left'; g.textBaseline = o.b || 'alphabetic';
+  if (o.max) { let z = size; while (z > 10 && g.measureText(s).width > o.max) g.font = `${o.w || 400} ${--z}px ${o.f || SERIF}`; }
+  if (o.stroke) { g.lineJoin = 'round'; g.lineWidth = o.stroke; g.strokeStyle = '#000'; g.strokeText(s, x, y); }
+  g.fillStyle = color; g.fillText(s, x, y); return g.measureText(s).width;
+}
+function cropOf(img) {
+  const c = document.createElement('canvas'); c.width = img.width / 4; c.height = img.height / 4;
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0, c.width, c.height);
+  const d = x.getImageData(0, 0, c.width, c.height).data; let a = c.width, b = c.height, e = 0, f = 0, m = 0, mx = 0;
+  for (let y = 0; y < c.height; y++) for (let i = 0; i < c.width; i++) { const al = d[(y * c.width + i) * 4 + 3]; if (al > 20) { a = Math.min(a, i); e = Math.max(e, i); b = Math.min(b, y); f = Math.max(f, y); m += al; mx += al * i; } }
+  return { sx: a * 4, sy: b * 4, sw: (e - a + 1) * 4, sh: (f - b + 1) * 4, cx: mx / m * 4 };
+}
+function figure(img, cx, bottom, height, glow) {
+  const c = cropOf(img), s = height / c.sh, dw = c.sw * s, dx = cx - (c.cx - c.sx) * s;
+  g.save(); g.scale(1, 0.2); radial(cx, bottom / 0.2, dw * 0.4, '#000000', 0.8); g.restore();
+  g.save(); g.shadowColor = glow; g.shadowBlur = 40; g.drawImage(img, c.sx, c.sy, c.sw, c.sh, dx, bottom - height, dw, height); g.restore();
+  g.drawImage(img, c.sx, c.sy, c.sw, c.sh, dx, bottom - height, dw, height);
+}
+// panneau façon fenêtre de l'addon : olive sombre, grain, double liseré bronze
+function panel(x, y, w, h) {
+  g.fillStyle = grad(0, y, 0, y + h, [[0, '#2a2e20'], [1, '#121410']]); rr(x, y, w, h, 10); g.fill();
+  g.save(); rr(x, y, w, h, 10); g.clip(); for (let i = 0; i < w * h / 250; i++) { g.fillStyle = rnd() < 0.5 ? '#ffffff07' : '#00000016'; g.fillRect(x + rnd() * w, y + rnd() * h, 2, 2); } g.restore();
+  rr(x + 1.5, y + 1.5, w - 3, h - 3, 9); g.lineWidth = 3; g.strokeStyle = '#6b5a3a'; g.stroke();
+  rr(x + 7, y + 7, w - 14, h - 14, 6); g.lineWidth = 1; g.strokeStyle = '#3b3220'; g.stroke();
+}
+function tile(img, x, y, s, v, max, o = {}) {
+  g.save(); rr(x, y, s, s, s * 0.07); g.fillStyle = '#000'; g.fill(); g.clip(); if (img) g.drawImage(img, x, y, s, s);
+  g.fillStyle = grad(0, y + s * 0.3, 0, y + s, [[0, '#0000'], [1, '#000b']]); g.fillRect(x, y, s, s); g.restore();
+  rr(x, y, s, s, s * 0.07); g.lineWidth = Math.max(2, s * 0.03); g.strokeStyle = o.max ? '#e8c060' : '#6b5a3a'; g.stroke();
+  if (o.max) { g.save(); g.shadowColor = '#ffd75e'; g.shadowBlur = 14; rr(x, y, s, s, s * 0.07); g.stroke(); g.restore(); }
+  T(String(v), x + s * 0.93, y + s * 0.62, s * 0.36, o.max ? '#ffe680' : '#fff', { f: NARROW, w: 700, a: 'right', stroke: s * 0.06 });
+  T('/' + max, x + s * 0.93, y + s * 0.9, s * 0.2, '#e6e6e6', { f: NARROW, w: 700, a: 'right', stroke: s * 0.04 });
+}
+function triBar(x, y, w, h, p) {
+  const pt = p.parts, mx = p.max || 2460; rr(x, y, w, h, 3); g.fillStyle = '#0b0806'; g.fill(); g.strokeStyle = '#3c2f1e'; g.lineWidth = 1.5; g.stroke();
+  let cx = x + 2; for (const [f, c] of [[pt.level / mx, '#b85a46'], [pt.combat / mx, '#6a88c0'], [pt.professions / mx, '#5f9a4a']]) { g.fillStyle = c; g.fillRect(cx, y + 2, (w - 4) * f, h - 4); cx += (w - 4) * f; }
+}
+function firework(x, y, r, c) {
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2 + rnd() * 0.1, l = r * (0.6 + rnd() * 0.4); g.strokeStyle = c + '99'; g.lineWidth = 2; g.beginPath(); g.moveTo(x + Math.cos(a) * l * 0.25, y + Math.sin(a) * l * 0.25); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); radial(x + Math.cos(a) * l, y + Math.sin(a) * l, 7, c); }
+  radial(x, y, r * 0.5, c, 0.35); g.restore();
+}
+
+// les 9 cases de l'addon : niveau, 2 métiers, Cuisine, Pêche, Secourisme, mêlée, 2e case, Défense
+function slots(p) {
+  const out = [{ k: 'level', name: 'Niveau', img: p.avatar, v: p.level, max: 60, g: 'lvl' }];
+  const prim = (p.professions || []).filter(x => !SECONDARY.includes(x.id)).sort((a, b) => b.skill - a.skill).slice(0, 2);
+  for (const x of [...prim, ...SECONDARY.map(id => (p.professions || []).find(y => y.id === id)).filter(Boolean)]) out.push({ k: 'p' + x.id, name: PROF[x.id] || x.name, img: icon(PROF_ICON[x.id]), v: x.skill, max: x.max || 300, g: 'prf' });
+  for (const id of p.equipped || []) { const w = (p.weaponList || []).find(z => z.id === id); if (w) out.push({ k: 'w' + id, name: WPN[id][0], img: icon(WPN[id][1]), v: w.rank, max: 5 * p.level, g: 'wpn', est: w.est }); }
+  if (p.defense) out.push({ k: 'def', name: 'Défense', img: icon('inv_shield_06'), v: p.defense, max: 5 * p.level, g: 'wpn' });
+  return out;
+}
+function rankOf(p, s, players) {
+  const val = q => s.k === 'level' ? q.level : s.k === 'def' ? q.defense : s.k[0] === 'p' ? q.professions?.find(x => 'p' + x.id === s.k)?.skill : (q.weaponList || []).find(w => 'w' + w.id === s.k && !w.est)?.rank;
+  const all = players.map(val).filter(v => v != null && v > 0).sort((a, b) => b - a);
+  return all.indexOf(val(p)) + 1 || null;
+}
+
+const D = {
+  // 1. L'onglet des compétences : la fenêtre Dropamine, telle quelle
+  async 1(p, S, I, P) {
+    const W = 1200, H = 630; cv.width = W; cv.height = H;
+    g.fillStyle = '#0b0806'; g.fillRect(0, 0, W, H); panel(10, 10, W - 20, H - 20);
+    // portrait
+    g.save(); rr(26, 26, 380, H - 52, 6); g.clip(); g.fillStyle = grad(0, 26, 0, H, [[0, '#1d2433'], [1, '#08090c']]); g.fillRect(26, 26, 380, H - 52);
+    radial(216, 300, 260, '#c49a5c40'); if (P) figure(P, 216, H - 50, 520, '#c49a5c66'); g.restore();
+    rr(26, 26, 380, H - 52, 6); g.lineWidth = 2; g.strokeStyle = '#6b5a3a'; g.stroke();
+    // en-tête
+    T(`${p.name} ${p.surname}`, 434, 80, 46, '#ffd100', { f: NARROW, w: 700, stroke: 5 });
+    T(`Niveau ${p.level} · ${CLASS[p.classId]} ${RACE[p.raceId]}${p.guild ? ' · <' + p.guild.name + '>' : ''}`, 436, 114, 22, '#fff', { f: NARROW, stroke: 3 });
+    g.fillStyle = '#6b5a3a'; g.fillRect(430, 134, W - 470, 2);
+    // grille 3×3 comme l'addon
+    const s = 112, gap = 18, gx = 436, gy = 154;
+    S.slice(0, 9).forEach((k, i) => tile(I[i], gx + (i % 3) * (s + gap), gy + Math.floor(i / 3) * (s + gap), s, k.v, k.max, { max: k.v >= k.max && k.k !== 'level' }));
+    // colonne de droite : ce qui compte
+    const rx = gx + 3 * (s + gap) + 14;
+    T('CE JOUR', rx, 176, 17, '#c9b98f', { f: NARROW, w: 700 });
+    T('+12', rx, 222, 46, '#8cc472', { f: NARROW, w: 700, stroke: 4 });
+    T('PROCHAIN PALIER', rx, 272, 17, '#c9b98f', { f: NARROW, w: 700 });
+    T('1 500', rx, 314, 40, '#fff', { f: NARROW, w: 700, stroke: 4 }); T('encore 157', rx, 340, 19, '#c9b98f', { f: NARROW });
+    T('RANG EU', rx, 390, 17, '#c9b98f', { f: NARROW, w: 700 }); T('4ᵉ', rx, 430, 40, '#ffd100', { f: NARROW, w: 700, stroke: 4 });
+    // pied comme l'addon : goutte + total + barre
+    g.fillStyle = '#6b5a3a'; g.fillRect(430, 540, W - 470, 2);
+    const logo = await load('Dropamine-Logo.png'); if (logo) g.drawImage(logo, 430, 550, 58, 58);
+    const tw = T(String(p.total), 494, 592, 38, '#fff', { f: NARROW, w: 700, stroke: 4 });
+    T('/ ' + (p.max || 2460), 500 + tw, 592, 22, '#bbb', { f: NARROW, stroke: 3 });
+    triBar(650, 566, W - 690, 28, p);
+  },
+  // 2. Le level-up : le toast de l'addon en grand, avec le feu d'artifice
+  async 2(p, S, I, P) {
+    const W = 1200, H = 630; cv.width = W; cv.height = H;
+    g.fillStyle = grad(0, 0, 0, H, [[0, '#0d1020'], [1, '#030305']]); g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 120; i++) { g.fillStyle = '#ffffff' + ['22', '44', '88'][i % 3]; g.fillRect(rnd() * W, rnd() * H * 0.7, 1.5, 1.5); }
+    firework(250, 140, 110, '#d98a73'); firework(980, 110, 90, '#9cb6e0'); firework(1090, 300, 70, '#8cc472'); firework(120, 380, 70, '#ffd75e');
+    if (P) { g.save(); radial(930, 420, 260, '#ffd75e30'); figure(P, 930, H - 10, 540, '#ffd75e66'); g.restore(); }
+    // le toast
+    const tx = 70, ty = 170, tw = 690, th = 300; panel(tx, ty, tw, th);
+    const k = S.find(x => x.k === 'p393') || S[1], ki = I[S.indexOf(k)];
+    g.save(); g.beginPath(); g.arc(tx + 80, ty + 78, 52, 0, 7); g.clip(); if (ki) g.drawImage(ki, tx + 28, ty + 26, 104, 104); g.restore();
+    g.beginPath(); g.arc(tx + 80, ty + 78, 52, 0, 7); g.lineWidth = 5; g.strokeStyle = '#8a7a55'; g.stroke();
+    T(`${k.name} +1`, tx + 152, ty + 76, 54, '#ffd100', { f: NARROW, w: 700, stroke: 5 });
+    T(`${k.v} / ${k.max}`, tx + 154, ty + 116, 32, '#fff', { f: NARROW, w: 700, stroke: 4 });
+    rr(tx + 152, ty + 132, tw - 190, 12, 3); g.fillStyle = '#0b0806'; g.fill(); g.fillStyle = '#5f9a4a'; rr(tx + 152, ty + 132, (tw - 190) * k.v / k.max, 12, 3); g.fill();
+    g.fillStyle = '#6b5a3a'; g.fillRect(tx + 20, ty + 166, tw - 40, 2);
+    const s = 56; S.slice(0, 9).forEach((q, i) => tile(I[i], tx + 26 + i * (s + 15), ty + 184, s, q.v, q.max));
+    const logo = await load('Dropamine-Logo.png'); if (logo) g.drawImage(logo, tx + 22, ty + 246, 44, 44);
+    const w2 = T(String(p.total), tx + 74, ty + 282, 30, '#fff', { f: NARROW, w: 700, stroke: 4 }); T('/ ' + (p.max || 2460), tx + 80 + w2, ty + 282, 18, '#bbb', { f: NARROW, stroke: 3 });
+    triBar(tx + 220, ty + 260, tw - 250, 22, p);
+    T(`${p.name} ${p.surname}`, 72, 110, 44, '#fff', { f: SC, w: 700 });
+    T('GZ !', 74, 150, 30, '#ffd100', { f: NARROW, w: 700, stroke: 4 });
+    T('dropamine.app', W - 24, H - 20, 18, '#a8946f', { a: 'right' });
+  },
+  // 3. Les Hiscores : la page de classement façon OSRS, sur parchemin
+  async 3(p, S, I, P, all) {
+    const W = 1200, H = 630; cv.width = W; cv.height = H;
+    g.fillStyle = '#0b0806'; g.fillRect(0, 0, W, H);
+    g.save(); g.fillStyle = grad(0, 0, 0, H, [[0, '#1d2433'], [1, '#07080b']]); g.fillRect(0, 0, 400, H); radial(200, 300, 260, '#c49a5c40'); if (P) figure(P, 200, H - 30, 540, '#c49a5c66'); g.restore();
+    // parchemin
+    const px = 400, py = 18, pw = W - 418, ph = H - 36;
+    g.fillStyle = grad(px, py, px, py + ph, [[0, '#e8dab0'], [1, '#cdb684']]); rr(px, py, pw, ph, 8); g.fill();
+    g.save(); rr(px, py, pw, ph, 8); g.clip(); for (let i = 0; i < 3000; i++) { g.fillStyle = rnd() < 0.5 ? '#5a3a1008' : '#ffffff10'; g.fillRect(px + rnd() * pw, py + rnd() * ph, 3, 2); } radial(px + pw / 2, py + ph / 2, pw * 0.8, '#00000000'); g.restore();
+    rr(px, py, pw, ph, 8); g.lineWidth = 4; g.strokeStyle = '#5a3f1e'; g.stroke();
+    T(`Hiscores · ${p.name} ${p.surname}`, px + 30, py + 56, 38, '#3a2410', { f: SC, w: 700 });
+    T(`${CLASS[p.classId]} ${RACE[p.raceId]} niveau ${p.level}${p.guild ? ' · ' + p.guild.name : ''} · Forever EU`, px + 32, py + 86, 19, '#5a4020');
+    const cols = [px + 40, px + 360, px + 540, px + 700];
+    ['Compétence', 'Rang', 'Niveau', 'Semaine'].forEach((h, i) => T(h, cols[i] + (i ? 60 : 0), py + 124, 17, '#7a5a30', { f: NARROW, w: 700, a: i ? 'right' : 'left' }));
+    g.fillStyle = '#5a3f1e'; g.fillRect(px + 30, py + 134, pw - 60, 2);
+    const rows = [{ name: 'Total', img: null, v: p.total, max: p.max || 2460, total: true }, ...S];
+    rows.forEach((k, i) => {
+      const y = py + 168 + i * 40; if (i % 2) { g.fillStyle = '#5a3a1012'; g.fillRect(px + 30, y - 26, pw - 60, 40); }
+      const ic = k.total ? null : I[S.indexOf(k)]; if (ic) g.drawImage(ic, cols[0], y - 22, 30, 30);
+      if (k.total) { g.save(); g.fillStyle = '#5f9a4a'; g.beginPath(); g.arc(cols[0] + 15, y - 7, 12, 0, 7); g.fill(); g.restore(); }
+      T(k.name, cols[0] + 42, y, 21, '#2a1a08', { f: NARROW, w: k.total ? 700 : 400 });
+      const r = k.total ? all.filter(q => q.total > p.total).length + 1 : rankOf(p, k, all);
+      T(r ? fmt(r) : '—', cols[1] + 60, y, 21, r === 1 ? '#8a5a00' : '#2a1a08', { f: NARROW, w: r === 1 ? 700 : 400, a: 'right' });
+      T(`${fmt(k.v)} / ${fmt(k.max)}`, cols[2] + 60, y, 21, '#2a1a08', { f: NARROW, w: 700, a: 'right' });
+      T(i === 0 ? '+38' : ['+3', '+1', '—', '+2', '+4', '+1', '—', '+6', '+5'][i - 1] || '—', cols[3] + 60, y, 21, '#2f6a1a', { f: NARROW, a: 'right' });
+    });
+    T('dropamine.app', px + pw - 28, py + ph - 18, 17, '#7a5a30', { a: 'right' });
+  },
+};
+(async () => {
+  for (const f of ["700 20px 'Cormorant SC'", "400 20px 'EB Garamond'"]) await document.fonts.load(f);
+  const q = new URLSearchParams(location.search);
+  const data = await (await fetch('https://dropamine.app/data/hiscores.json', { cache: 'no-cache' })).json();
+  const p = data.players.find(x => x.slug === (q.get('who') || 'ray-kuilu')), S = slots(p);
+  const [P, ...I] = await Promise.all([load(p.render), ...S.map(k => load(k.img))]);
+  await D[q.get('d') || 1](p, S, I, P, data.players.filter(x => (x.region || 'eu') === (p.region || 'eu')));
+  document.title = 'ready';
+})();
+</script></body></html>
