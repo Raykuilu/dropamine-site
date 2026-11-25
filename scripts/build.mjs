@@ -10,7 +10,7 @@
 // Secrets : BNET_CLIENT_ID / BNET_CLIENT_SECRET (variables d'environnement, jamais écrites).
 // Node 20+ (fetch natif), aucune dépendance.
 
-import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,7 +20,7 @@ export const REGIONS = ['eu', 'us', 'tw'];
 const LOCALE = { eu: 'fr_FR', us: 'en_US', tw: 'zh_TW' };
 const WEAPON_CLASS = 2;          // item_class « Arme »
 const TOTAL_MAX = 2460;          // niveau total maximum de Dropamine
-const HISTORY_DAYS = 120;        // points gardés par personnage
+const HISTORY_DAYS = 30;         // points gardés par personnage (conditions Blizzard : 30 jours maximum)
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/Raykuilu/Dropamine/main/CHANGELOG.md';
 
 // ---------------------------------------------------------------------------
@@ -150,7 +150,12 @@ async function main() {
     const e = parseEntry(raw);
     if (!e) { console.warn(`· entrée ignorée : ${raw}`); continue; }
     const c = await fetchCharacter(tok, e.region, e.slug);
-    if (!c) { console.warn(`· ${e.key} : introuvable (niveau < 10 ou pas encore visible)`); continue; }
+    if (!c) {
+      // conditions Blizzard : un personnage qui n'existe plus n'est ni affiché ni conservé
+      await rm(join(ROOT, 'data/history', e.region, `${e.slug}.json`), { force: true });
+      console.warn(`· ${e.key} : introuvable (niveau < 10, pas encore visible ou supprimé)`);
+      continue;
+    }
     const s = score(c, uploads[e.key] ?? uploads[e.slug]);
     const asset = key => c.media?.assets?.find(a => a.key === key)?.value ?? null;
 
@@ -158,10 +163,12 @@ async function main() {
     const hdir = join(ROOT, 'data/history', e.region), hfile = join(hdir, `${e.slug}.json`), old = join(ROOT, 'data/history', `${e.slug}.json`);
     await mkdir(hdir, { recursive: true });
     if (!existsSync(hfile) && e.region === 'eu' && existsSync(old)) await rename(old, hfile);
-    const hist = await readJson(hfile, []);
+    // conditions Blizzard : rien de plus vieux que 30 jours (par date, pas par nombre de points)
+    const cutoff = new Date(Date.now() - (HISTORY_DAYS - 1) * 864e5).toISOString().slice(0, 10);
+    const hist = (await readJson(hfile, [])).filter(h => h.d >= cutoff);
     const last = hist[hist.length - 1];
     if (last?.d === today) last.t = s.total; else hist.push({ d: today, t: s.total });
-    await writeFile(hfile, JSON.stringify(hist.slice(-HISTORY_DAYS)));
+    await writeFile(hfile, JSON.stringify(hist));
 
     const p = c.profile;
     players.push({
@@ -170,7 +177,7 @@ async function main() {
       gender: p.gender?.type ?? null, faction: p.faction?.type,
       guild: p.guild ? { name: p.guild.name, slug: p.guild.slug } : null,
       ruleset: p.ruleset?.name ?? null, rulesetId: p.ruleset?.id ?? null,
-      ...s, stats: pickStats(c.achStats), history: hist.slice(-30),
+      ...s, stats: pickStats(c.achStats), history: hist,
       render: asset('main-raw'), avatar: asset('avatar'),
     });
     console.log(`✓ ${e.key} : ${s.total}${s.complete ? '' : ' (estimé)'}`);
