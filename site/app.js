@@ -226,7 +226,7 @@ const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.comple
 
 /* ---------- Accueil : le pont vers les classements ---------- */
 // téléchargements CurseForge, mis à jour à la main (chiffre donné par l'auteur)
-const CF_DOWNLOADS = 522;
+const CF_DOWNLOADS = 529;
 function renderHome() {
   // les chiffres qui montrent que le projet vit (toutes régions)
   if (DATA.players.length) {
