@@ -8,6 +8,6 @@ out/
 .env
 server/.env
 
-# images et pages de partage générées chaque jour (scripts/cards.mjs)
+# images de cartes générées en local lors des essais (archivées dans design/cartes)
 site/cards/
 site/c/

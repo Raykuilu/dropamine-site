@@ -210,7 +210,7 @@ export function stampHtml(html, hashes) {
 async function stampAssets() {
   const { createHash } = await import('node:crypto');
   const hashes = {};
-  for (const f of ['app.js', 'card.js', 'style.css']) hashes[f] = createHash('sha256').update(await readFile(join(ROOT, 'site', f))).digest('hex').slice(0, 8);
+  for (const f of ['app.js', 'style.css']) hashes[f] = createHash('sha256').update(await readFile(join(ROOT, 'site', f))).digest('hex').slice(0, 8);
   const file = join(ROOT, 'site/index.html');
   await writeFile(file, stampHtml(await readFile(file, 'utf8'), hashes));
   console.log(`empreintes : app.js ${hashes['app.js']}, style.css ${hashes['style.css']}`);
@@ -236,12 +236,6 @@ async function main() {
     const roster = await get(tok, region, `/data/wow/guild/${encodeURIComponent(slug)}/roster`).catch(err => { console.warn(`· guilde ${g} : ${err.message}`); return null; });
     if (roster) { rosters.push({ region, roster }); console.log(`guilde ${g} : ${roster.members?.length ?? 0} membre(s)`); }
   }
-  // numéro de collection : donné une fois à l'inscription, jamais réattribué (data/numbers.json)
-  const numbers = await readJson(join(ROOT, 'data/numbers.json'), {});
-  const before = JSON.stringify(numbers);
-  let next = Math.max(0, ...Object.values(numbers)) + 1;
-  for (const e of entries) if (!numbers[e.key]) numbers[e.key] = next++;
-  if (JSON.stringify(numbers) !== before) await writeFile(join(ROOT, 'data/numbers.json'), JSON.stringify(numbers, null, 1) + '\n');
   entries.push(...previewEntries(rosters, new Set(entries.map(e => e.key)), optout));
   // un personnage retiré ne garde pas d'historique
   for (const k of optout) { const [r, s] = k.split('/'); await rm(join(ROOT, 'data/history', r, `${s}.json`), { force: true }); }
@@ -277,7 +271,7 @@ async function main() {
       ruleset: p.ruleset?.name ?? null, rulesetId: p.ruleset?.id ?? null,
       ...s, stats: pickStats(c.achStats), history: hist,
       render: asset('main-raw'), avatar: asset('avatar'),
-      ...(e.preview ? { preview: true } : { no: numbers[e.key] }),
+      ...(e.preview ? { preview: true } : {}),
     });
     console.log(`✓ ${e.key} : ${s.total}${s.complete ? '' : ' (estimé)'}${e.preview ? ' [aperçu]' : ''}`);
   });
