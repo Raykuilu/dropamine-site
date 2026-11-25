@@ -20,6 +20,9 @@ export const REGIONS = ['eu', 'us', 'tw'];
 const LOCALE = { eu: 'fr_FR', us: 'en_US', tw: 'zh_TW' };
 const WEAPON_CLASS = 2;          // item_class « Arme »
 const TOTAL_MAX = 2460;          // niveau total maximum de Dropamine
+// sous-classe d'arme Blizzard → identifiant de compétence de l'addon (Catalog.lua de Dropamine)
+const WEAPON_ID = { 0: 'axes', 1: 'axes2h', 2: 'bows', 3: 'guns', 4: 'maces', 5: 'maces2h', 6: 'polearms', 7: 'swords',
+  8: 'swords2h', 10: 'staves', 13: 'fist', 15: 'daggers', 16: 'thrown', 18: 'crossbows', 19: 'wands' };
 const HISTORY_DAYS = 30;         // points gardés par personnage (conditions Blizzard : 30 jours maximum)
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/Raykuilu/Dropamine/main/CHANGELOG.md';
 
@@ -73,23 +76,25 @@ export function score({ profile, professions, equipment, statistics }, upload) {
   const profTotal = profs.reduce((s, p) => s + p.skill, 0);
   const defense = statistics?.defense?.base ?? 0;
 
-  let weapons, weaponsSource;
+  let weapons, weaponsSource, weaponList;
   if (upload && Number.isFinite(upload.weapons)) {
     // ligne « /drop hiscores » : chaque arme plafonnée à 5 × le niveau actuel de l'armurerie
-    weapons = Array.isArray(upload.weaponList)
-      ? upload.weaponList.reduce((a, w) => a + Math.min(+w.rank || 0, 5 * level), 0)
-      : Math.min(upload.weapons, 5 * level * 20);
+    weaponList = Array.isArray(upload.weaponList)
+      ? upload.weaponList.map(w => ({ id: String(w.id), rank: Math.min(+w.rank || 0, 5 * level) })).filter(w => w.rank > 0)
+      : [];
+    weapons = weaponList.length ? weaponList.reduce((a, w) => a + w.rank, 0) : Math.min(upload.weapons, 5 * level * 20);
     weaponsSource = 'dropamine';
   } else {
     // estimation : chaque type d'arme équipée compté au maximum (5 × niveau)
-    const kinds = new Set((equipment?.equipped_items ?? [])
+    const kinds = [...new Set((equipment?.equipped_items ?? [])
       .filter(i => i.item_class?.id === WEAPON_CLASS)
-      .map(i => i.item_subclass?.id));
-    weapons = kinds.size * 5 * level; weaponsSource = 'estimate';
+      .map(i => WEAPON_ID[i.item_subclass?.id]).filter(Boolean))];
+    weaponList = kinds.map(id => ({ id, rank: 5 * level, est: true }));
+    weapons = kinds.length * 5 * level; weaponsSource = 'estimate';
   }
   const total = level + defense + weapons + profTotal;
   return {
-    level, defense, weapons, weaponsSource, professions: profs,
+    level, defense, weapons, weaponsSource, weaponList, professions: profs,
     parts: { level, combat: defense + weapons, professions: profTotal },
     total, max: TOTAL_MAX, complete: weaponsSource === 'dropamine',
   };

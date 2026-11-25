@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-25T16:22:46.489Z",
+ "updated": "2026-11-25T16:59:05.487Z",
  "players": [
   {
    "key": "eu/gue-rrier",
@@ -23,6 +23,18 @@
    "defense": 298,
    "weapons": 600,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "axes2h",
+     "rank": 300,
+     "est": true
+    },
+    {
+     "id": "thrown",
+     "rank": 300,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 186,
@@ -106,6 +118,13 @@
    "defense": 300,
    "weapons": 300,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "polearms",
+     "rank": 300,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 333,
@@ -189,6 +208,23 @@
    "defense": 191,
    "weapons": 600,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "axes",
+     "rank": 200,
+     "est": true
+    },
+    {
+     "id": "daggers",
+     "rank": 200,
+     "est": true
+    },
+    {
+     "id": "thrown",
+     "rank": 200,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 165,
@@ -272,6 +308,32 @@
    "defense": 177,
    "weapons": 691,
    "weaponsSource": "dropamine",
+   "weaponList": [
+    {
+     "id": "maces2h",
+     "rank": 128
+    },
+    {
+     "id": "polearms",
+     "rank": 151
+    },
+    {
+     "id": "staves",
+     "rank": 103
+    },
+    {
+     "id": "daggers",
+     "rank": 1
+    },
+    {
+     "id": "unarmed",
+     "rank": 130
+    },
+    {
+     "id": "feral",
+     "rank": 178
+    }
+   ],
    "professions": [
     {
      "id": 165,
@@ -354,6 +416,23 @@
    "defense": 178,
    "weapons": 570,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "swords",
+     "rank": 190,
+     "est": true
+    },
+    {
+     "id": "axes",
+     "rank": 190,
+     "est": true
+    },
+    {
+     "id": "guns",
+     "rank": 190,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 165,
@@ -430,6 +509,18 @@
    "defense": 179,
    "weapons": 380,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "polearms",
+     "rank": 190,
+     "est": true
+    },
+    {
+     "id": "crossbows",
+     "rank": 190,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 186,
@@ -513,6 +604,13 @@
    "defense": 179,
    "weapons": 180,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "swords",
+     "rank": 180,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 186,
@@ -596,6 +694,18 @@
    "defense": 95,
    "weapons": 220,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "daggers",
+     "rank": 110,
+     "est": true
+    },
+    {
+     "id": "wands",
+     "rank": 110,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 197,
@@ -679,6 +789,18 @@
    "defense": 142,
    "weapons": 300,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "staves",
+     "rank": 150,
+     "est": true
+    },
+    {
+     "id": "wands",
+     "rank": 150,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 197,
@@ -762,6 +884,18 @@
    "defense": 100,
    "weapons": 210,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "swords2h",
+     "rank": 105,
+     "est": true
+    },
+    {
+     "id": "guns",
+     "rank": 105,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 186,
@@ -845,6 +979,13 @@
    "defense": 149,
    "weapons": 160,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "maces2h",
+     "rank": 160,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 333,
@@ -928,6 +1069,18 @@
    "defense": 82,
    "weapons": 180,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "staves",
+     "rank": 90,
+     "est": true
+    },
+    {
+     "id": "wands",
+     "rank": 90,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 197,
@@ -1004,6 +1157,13 @@
    "defense": 45,
    "weapons": 50,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "axes2h",
+     "rank": 50,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 186,
@@ -1079,6 +1239,18 @@
    "defense": 45,
    "weapons": 100,
    "weaponsSource": "estimate",
+   "weaponList": [
+    {
+     "id": "axes",
+     "rank": 50,
+     "est": true
+    },
+    {
+     "id": "guns",
+     "rank": 50,
+     "est": true
+    }
+   ],
    "professions": [
     {
      "id": 186,

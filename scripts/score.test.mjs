@@ -89,3 +89,13 @@ test('plan du site : pages fixes, fiches et guildes, adresses échappées', () =
   assert.ok(x.includes('<loc>https://dropamine.app/?p=guild&amp;g=everybody-knows</loc>'));
   assert.ok(x.includes('<lastmod>2026-11-25</lastmod>'));
 });
+
+test('armes par type : ligne Dropamine (plafonnée, sans les 0) ou estimation par arme équipée', () => {
+  const base = { profile: { level: 36 }, professions: {}, statistics: {} };
+  const up = score(base, { weapons: 999, weaponList: [{ id: 'staves', rank: 103 }, { id: 'feral', rank: 999 }, { id: 'axes', rank: 0 }] });
+  assert.deepEqual(up.weaponList, [{ id: 'staves', rank: 103 }, { id: 'feral', rank: 180 }]);
+  assert.equal(up.weapons, 283);
+  const est = score({ ...base, equipment: { equipped_items: [{ item_class: { id: 2 }, item_subclass: { id: 10 } }, { item_class: { id: 2 }, item_subclass: { id: 15 } }] } });
+  assert.deepEqual(est.weaponList.map(w => w.id), ['staves', 'daggers']);
+  assert.equal(est.weapons, 360); assert.ok(est.weaponList.every(w => w.est));
+});

@@ -15,7 +15,12 @@ let LANG = document.documentElement.dataset.lang === 'fr' ? 'fr' : 'en';
 const I18N = {
   'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'], 'acct.out': ['Sign out', 'Se déconnecter'],
   myChars: ['My characters', 'Mes personnages'],
-  youHere: ['YOU', 'TOI'], 'tab.guild': ['Guilds', 'Guildes'],
+  youHere: ['YOU', 'TOI'], sinceY: ['since yesterday', 'depuis hier'],
+  estSep: ['ESTIMATED · NOT RANKED UNTIL THE DROPAMINE LINE IS SENT', 'ESTIMÉS · SANS RANG JUSQU’À L’ENVOI DE LA LIGNE DROPAMINE'],
+  skillsT: ['Skills', 'Compétences'], statsT: ['Armory statistics', "Statistiques de l'armurerie"],
+  tilesEst: ['hatched tiles: weapons estimated, waiting for the Dropamine line', "tuiles hachurées : armes estimées, en attente de la ligne Dropamine"],
+  tipRank: ['Rank {r} / {m}', 'Rang {r} / {m}'], tipPlace: ['{r} in the Hiscores', '{r} au classement'],
+  tipEst: ['Estimated: equipped weapon counted at its maximum', 'Estimé : arme équipée comptée au maximum'], 'tab.guild': ['Guilds', 'Guildes'],
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
   'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source', 'Code du site'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
@@ -38,12 +43,12 @@ const I18N = {
   progress: ['Progress', 'Progression'], defW: ['Defense {d} · weapons {w}', 'Défense {d} · armes {w}'], estP: [' (estimated)', ' (estimées)'],
   sealOk: ['VERIFIED · ARMORY + DROPAMINE FILE', 'VÉRIFIÉ · ARMURERIE + FICHIER DROPAMINE'], sealEst: ['ARMORY · WEAPONS ESTIMATED', 'ARMURERIE · ARMES ESTIMÉES'],
   totalLevel: ['TOTAL LEVEL', 'NIVEAU TOTAL'],
-  ctaEst: ["<b>Estimated score.</b> Weapon skills are not in the armory, so each equipped weapon is counted at its maximum. The player's Dropamine file will soon give the exact score.",
-    "<b>Score estimé.</b> Les compétences d'armes ne sont pas dans l'armurerie : elles sont comptées au maximum pour chaque arme équipée. Le fichier Dropamine du joueur donnera bientôt le score exact."],
+  ctaEst: ["<b>Estimated score.</b> Weapon skills are not in the armory, so each equipped weapon is counted at its maximum. Is it you? In game, type <code>/drop hiscores</code> and paste the line on the <a href=\"?p=join\" data-view-link=\"join\">Join page</a>: your real weapon skills replace the estimate.",
+    "<b>Score estimé.</b> Les compétences d'armes ne sont pas dans l'armurerie : elles sont comptées au maximum pour chaque arme équipée. C'est toi ? En jeu, tape <code>/drop hiscores</code> et colle la ligne sur la <a href=\"?p=join\" data-view-link=\"join\">page Inscription</a> : tes vraies compétences d'armes remplacent l'estimation."],
   guildsT: ['Guilds', 'Guildes'], guildsNote: ["ranked by their members' total · Forever {r}", 'classées par le total de leurs membres · Forever {r}'],
   noGuildT: ['No guild', 'Aucune guilde'], noGuild: ['Guilds appear as soon as one of their members is listed.', "Les guildes apparaissent dès qu'un de leurs membres est affiché."],
   allGuilds: ['← All guilds', '← Toutes les guildes'], membersN: ['{n} member{s}', '{n} membre{s}'],
-  guildTotal: ['REGISTERED TOTAL · {r} GUILD', 'TOTAL DES INSCRITS · {r} GUILDE'],
+  guildTotal: ['GUILD TOTAL · {r} GUILD', 'TOTAL DE LA GUILDE · {r} GUILDE'],
   bestTotal: ['BEST TOTAL', 'MEILLEUR TOTAL'], bestProf: ['BEST PROFESSION', 'MEILLEUR MÉTIER'], bestWeek: ['BEST WEEK', 'PLUS FORTE SEMAINE'],
   inWeek: ['+{n} in 7 days', '+{n} en 7 jours'], notEnough: ['not enough tracking yet', 'pas encore assez de suivi'],
   latest: ['LATEST VERSION', 'DERNIÈRE VERSION'], showMore: ['Show details', 'Afficher le détail'], fullHistory: ['Full history on', 'Historique complet sur'],
@@ -77,11 +82,30 @@ const raceName = p => L2(RACE[p.raceId]) || (p.race || '').toLowerCase();
 const rulesetName = p => L2((RULESETS.find(([id]) => id === p.rulesetId) || [])[1]) || p.ruleset || '';
 const PROF_ORDER = [393, 186, 182, 171, 164, 333, 202, 165, 197, 185, 356, 129];
 const STAT_KEYS = ['kills', 'quests', 'flights'];
+// Même référentiel que l'addon (Catalog.lua de Dropamine) : noms, icônes et ordre des armes
+const WPN = { axes: ['One-Handed Axes', 'Haches', 'inv_axe_01'], axes2h: ['Two-Handed Axes', 'Haches à deux mains', 'inv_axe_09'],
+  maces: ['One-Handed Maces', 'Masses', 'inv_mace_01'], maces2h: ['Two-Handed Maces', 'Masses à deux mains', 'inv_mace_04'],
+  swords: ['One-Handed Swords', 'Épées', 'inv_sword_04'], swords2h: ['Two-Handed Swords', 'Épées à deux mains', 'inv_sword_10'],
+  polearms: ['Polearms', "Armes d'hast", 'inv_spear_06'], staves: ['Staves', 'Bâtons', 'inv_staff_08'],
+  fist: ['Fist Weapons', 'Armes de pugilat', 'inv_gauntlets_04'], daggers: ['Daggers', 'Dagues', 'inv_weapon_shortblade_05'],
+  unarmed: ['Unarmed', 'Mains nues', 'inv_gauntlets_04'], feral: ['Feral Combat', 'Combat farouche', 'ability_druid_catform'],
+  bows: ['Bows', 'Arcs', 'inv_weapon_bow_02'], guns: ['Guns', 'Armes à feu', 'inv_weapon_rifle_01'],
+  crossbows: ['Crossbows', 'Arbalètes', 'inv_weapon_crossbow_01'], thrown: ['Thrown', 'Armes de jet', 'inv_throwingknife_02'],
+  wands: ['Wands', 'Baguettes', 'inv_wand_01'] };
+const WPN_ORDER = Object.keys(WPN);
+const PROF_ICON = { 171: 'trade_alchemy', 164: 'trade_blacksmithing', 333: 'trade_engraving', 202: 'trade_engineering', 182: 'trade_herbalism',
+  165: 'trade_leatherworking', 186: 'trade_mining', 393: 'inv_misc_pelt_wolf_01', 197: 'trade_tailoring', 185: 'inv_misc_food_15',
+  356: 'trade_fishing', 129: 'spell_holy_sealofsacrifice' };
+const DEF_ICON = 'inv_shield_06';
+const icon = name => `https://render.worldofwarcraft.com/eu/icons/56/${name}.jpg`;   // icônes du jeu, servies par Blizzard
+const wpnOf = (p, id) => p.weaponList?.find(w => w.id === id);
 const SKILLS = [
   { id: 'total', group: null, label: () => t('total'), max: '2 460', get: p => p.total },
-  { id: 'level', group: 'lvl', label: () => t('level'), max: '60', get: p => p.level },
-  { id: 'defense', group: 'wpn', label: () => t('defense'), max: '300', get: p => p.defense || null },
-  ...PROF_ORDER.map(id => ({ id: 'p' + id, group: 'prf', label: () => profName(id), max: '300', prof: id,
+  { id: 'level', group: 'lvl', label: () => t('level'), max: '60', get: p => p.level, logo: true },
+  ...WPN_ORDER.map(id => ({ id: 'w' + id, group: 'wpn', label: () => L2(WPN[id]), max: '300', wpn: id, icon: WPN[id][2],
+    get: p => wpnOf(p, id)?.rank || null, est: p => !!wpnOf(p, id)?.est })),
+  { id: 'defense', group: 'wpn', label: () => t('defense'), max: '300', get: p => p.defense || null, icon: DEF_ICON },
+  ...PROF_ORDER.map(id => ({ id: 'p' + id, group: 'prf', label: () => profName(id), max: '300', prof: id, icon: PROF_ICON[id],
     get: p => p.professions?.find(x => x.id === id)?.skill ?? null })),
   ...STAT_KEYS.map(k => ({ id: k, group: 'stat', label: () => t(k), max: '', get: p => p.stats?.[k] ?? null })),
 ];
@@ -179,18 +203,23 @@ const tri = p => {
     `<i class="l" style="--w:${w(p.parts.level)}"></i><i class="w${p.complete ? '' : ' est'}" style="--w:${w(p.parts.combat)}"></i><i class="p" style="--w:${w(p.parts.professions)}"></i></span>`;
 };
 const skillById = id => SKILLS.find(s => s.id === id) || SKILLS[0];
+// classement : seules les vraies valeurs ont un rang (une arme estimée ne passe jamais devant une arme réelle)
 function rankBy(skill, list) {
-  return list.map(p => ({ p, v: skill.get(p) })).filter(x => x.v != null && x.v > 0)
+  return list.map(p => ({ p, v: skill.get(p) })).filter(x => x.v != null && x.v > 0 && !(skill.est && skill.est(x.p)))
     .sort((a, b) => b.v - a.v || pkey(a.p).localeCompare(pkey(b.p))).map((x, i) => ({ ...x, r: i + 1 }));
 }
 const failed = () => `<div class="empty"><b>${t('failedT')}</b>${t('failed')}</div>`;
 const nobody = () => `<div class="empty"><b>${t('nobodyT')}</b>${t('nobody')} <a href="?p=join" data-view-link="join">${t('registerYours')}</a>.</div>`;
+// gain depuis la veille (deux derniers points de l'historique, à un jour d'écart)
+const dayGain = p => { const h = p.history || []; if (h.length < 2) return 0; const a = h[h.length - 2], b = h[h.length - 1];
+  return new Date(b.d) - new Date(a.d) <= 1.5 * 864e5 ? b.t - a.t : 0; };
+const plus = p => { const d = dayGain(p); return d > 0 ? `<span class="plus" title="${t('sinceY')}">+${fmt(d)}</span>` : ''; };
 const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.complete ? '' : `<em>${t('est')}</em>`;
 
 /* ---------- Accueil : le pont vers les classements ---------- */
 function renderHome() {
   const all = rankBy(SKILLS[0], inRegion()), top = all.slice(0, 5);
-  const line = ({ p, v, r }, cls = '') => `<div class="row${r <= 3 ? ' top' : ''}${cls}" data-c="${esc(pkey(p))}" style="grid-template-columns:44px minmax(0,1fr) minmax(90px,160px) 96px"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b><small>${who(p)}</small></span></span>${tri(p)}<span class="tot">${fmt(v)}${estTag(p)}</span></div>`;
+  const line = ({ p, v, r }, cls = '') => `<div class="row${r <= 3 ? ' top' : ''}${cls}" data-c="${esc(pkey(p))}" style="grid-template-columns:44px minmax(0,1fr) minmax(90px,160px) 96px"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p)}<small>${who(p)}</small></span></span>${tri(p)}<span class="tot">${fmt(v)}${estTag(p)}</span></div>`;
   // connecté : ton meilleur personnage, sous le top 5 s'il n'y figure pas
   const me = all.find(x => pkey(x.p) === Bnet.best());
   const you = me && !top.includes(me) ? `<div class="you-sep">${t('youHere')}</div>${line(me, ' you')}` : '';
@@ -207,9 +236,11 @@ function renderRank() {
   const list = rankBy(sk, state.cls ? byRs.filter(p => p.classId === state.cls) : byRs);
   const classes = [...new Set(byRs.map(p => p.classId).filter(Boolean))].sort((a, b) => L2(CLASS[a]).localeCompare(L2(CLASS[b])));
   let nav = '', grp;
-  SKILLS.forEach(s => {
+  // comme la grille de l'addon : chaque compétence avec son icône ; une arme n'apparaît que si quelqu'un la pratique
+  SKILLS.filter(s => !s.wpn || s.id === sk.id || region.some(p => s.get(p))).forEach(s => {
     if (s.group !== grp) { grp = s.group; if (grp) nav += `<div class="grp"><i class="dot" style="background:${GROUP_COLOR[grp]}"></i>${t('g.' + grp)}</div>`; }
-    nav += `<a href="?p=rank&s=${s.id}" data-skill="${s.id}" class="${s.id === sk.id ? 'on' : ''}">${s.label()} <span>${s.max}</span></a>`;
+    const ic = s.logo || s.id === 'total' ? '<i class="sic logo"></i>' : s.icon ? `<img class="sic" src="${icon(s.icon)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<i class="sic none"></i>';
+    nav += `<a href="?p=rank&s=${s.id}" data-skill="${s.id}" class="${s.id === sk.id ? 'on' : ''}">${ic}<span class="lb">${s.label()}</span> <span>${s.max}</span></a>`;
   });
   const count = id => region.filter(p => p.rulesetId === id).length;
   const rsChips = `<span class="chip ${state.rs ? '' : 'on'}" data-rs="0">${t('allModes')}<span class="n">${region.length}</span></span>` +
@@ -217,13 +248,20 @@ function renderRank() {
   const clsChips = `<span class="chip ${state.cls ? '' : 'on'}" data-cls="0">${t('allClasses')}</span>` +
     classes.map(c => `<span class="chip ${state.cls === c ? 'on' : ''}" data-cls="${c}">${esc(L2(CLASS[c]))}</span>`).join('');
   const isTotal = sk.id === 'total';
-  const rows = list.length ? list.map(({ p, v, r }) => `
-    <div class="row${r <= 3 ? ' top' : ''}" data-c="${esc(pkey(p))}" role="row">
-      <span class="rk">${r}</span>
-      <span class="nm">${avatar(p)}<span><b>${full(p)}</b><small>${who(p)}${rulesetName(p) ? ' · ' + esc(rulesetName(p)) : ''}</small></span></span>
-      ${isTotal ? tri(p) : sk.prof ? `<span class="mbar"><i style="--w:${(100 * v / (p.professions.find(x => x.id === sk.prof)?.max || 300)).toFixed(1)}%"></i></span>` : '<span class="c3"></span>'}
-      <span class="tot">${fmt(v)}${isTotal ? estTag(p) : ''}</span>
-    </div>`).join('') : nobody();
+  // armes estimées : affichées sous le classement, sans rang
+  const pool = state.cls ? byRs.filter(p => p.classId === state.cls) : byRs;
+  const estRows = sk.wpn ? pool.filter(p => sk.est(p) && sk.get(p)).sort((a, b) => sk.get(b) - sk.get(a)).map(p => ({ p, v: sk.get(p), r: 0 })) : [];
+  const row = ({ p, v, r }) => `
+    <div class="row${r && r <= 3 ? ' top' : ''}${r ? '' : ' unranked'}" data-c="${esc(pkey(p))}" role="row">
+      <span class="rk">${r || '–'}</span>
+      <span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p)}<small>${who(p)}${rulesetName(p) ? ' · ' + esc(rulesetName(p)) : ''}</small></span></span>
+      ${isTotal ? tri(p) : sk.prof ? `<span class="mbar"><i style="--w:${(100 * v / (p.professions.find(x => x.id === sk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
+        : sk.wpn ? `<span class="mbar w${sk.est(p) ? ' est' : ''}"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>` : '<span class="c3"></span>'}
+      <span class="tot">${fmt(v)}${isTotal ? estTag(p) : sk.wpn && sk.est(p) ? `<em>${t('est')}</em>` : ''}</span>
+    </div>`;
+  const rows = (list.length || estRows.length)
+    ? list.map(row).join('') + (estRows.length ? `<div class="you-sep est-sep">${t('estSep')}</div>` + estRows.map(row).join('') : '')
+    : nobody();
   $('#rank-panel').innerHTML = `
     <div class="head"><h2>${sk.label()}</h2><span class="note">${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
     <div class="chips" role="group">${rsChips}</div>
@@ -251,6 +289,56 @@ function chartSvg(hist) {
     <path d="M${line} L${W} ${H} L0 ${H}Z" fill="url(#area)"/><path class="stroke" d="M${line}" fill="none" stroke="#e8c88a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
     <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="4.5" fill="#e8c88a"/></svg>`;
 }
+/* Grille de tuiles, comme le panneau de l'addon : icône, rang en bas à droite, « /max » dessous.
+   Ordre de l'addon : Niveau, armes, Défense, métiers. Survol = infobulle façon jeu. */
+const TIER = [[75, ['Apprentice', 'Apprenti']], [150, ['Journeyman', 'Compagnon']], [225, ['Expert', 'Expert']], [300, ['Artisan', 'Artisan']]];
+const tierOf = max => L2((TIER.find(([m]) => max <= m) || TIER[3])[1]);
+function tile({ img, logo, name, rank, max, group, est, r, tier }) {
+  const tip = `<b>${esc(name)}</b><span>${logo ? `${rank} / ${max}` : t('tipRank', { r: rank, m: max })}</span>${tier ? `<span class="tier">${esc(tier)}</span>` : ''}`
+    + (r ? `<span class="rk">${t('tipPlace', { r: ord(r), reg: '' })}</span>` : '') + (est ? `<span class="est">${t('tipEst')}</span>` : '');
+  return `<div class="tile g-${group}${est ? ' est' : ''}" tabindex="0" data-tip="${esc(tip)}" aria-label="${esc(name)} ${rank} / ${max}">`
+    + (logo ? `<span class="logo"></span>` : `<img src="${icon(img)}" alt="" loading="lazy" referrerpolicy="no-referrer">`)
+    + `<span class="num"><b>${rank}</b><small>/${max}</small></span></div>`;
+}
+function charTiles(p, peers) {
+  const place = sk => rankBy(sk, peers).find(x => x.p === p)?.r;
+  const out = [tile({ logo: true, name: t('level'), rank: p.level, max: 60, group: 'lvl', r: place(skillById('level')) })];
+  for (const id of WPN_ORDER) {
+    const w = wpnOf(p, id); if (!w) continue;
+    out.push(tile({ img: WPN[id][2], name: L2(WPN[id]), rank: w.rank, max: 5 * p.level, group: 'wpn', est: w.est, r: w.est ? null : place(skillById('w' + id)) }));
+  }
+  if (p.defense) out.push(tile({ img: DEF_ICON, name: t('defense'), rank: p.defense, max: 5 * p.level, group: 'wpn', r: place(skillById('defense')) }));
+  for (const id of PROF_ORDER) {
+    const pr = p.professions?.find(x => x.id === id); if (!pr) continue;
+    out.push(tile({ img: PROF_ICON[id], name: profName(id, pr.name), rank: pr.skill, max: pr.max || 300, group: 'prf', tier: tierOf(pr.max || 300), r: place(skillById('p' + id)) }));
+  }
+  return out.join('');
+}
+// barre du bas du panneau : la goutte, le niveau total, la barre trois couleurs
+const dropBar = p => `<div class="dbar"><span class="logo"></span><span class="dn"><b data-n="${p.total}">${fmt(p.total)}</b><small> / ${fmt(p.max || 2460)}</small></span>${tri(p)}</div>`;
+
+/* Infobulle façon jeu, partagée par toutes les tuiles (survol, focus clavier, toucher) */
+const Tip = (() => {
+  const el = document.createElement('div'); el.className = 'gtip'; el.setAttribute('role', 'tooltip'); document.body.append(el);
+  let cur = null;
+  const show = t => {
+    cur = t; el.innerHTML = t.dataset.tip; el.classList.add('on');
+    const r = t.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight;
+    let x = r.right + 10, y = r.top;
+    if (x + w > innerWidth - 8) x = r.left - w - 10;
+    if (x < 8) { x = Math.max(8, Math.min(innerWidth - w - 8, r.left)); y = r.bottom + 8; }
+    if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 8);
+    el.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`;
+  };
+  const hide = () => { cur = null; el.classList.remove('on'); };
+  document.addEventListener('mouseover', e => { const t = e.target.closest('[data-tip]'); if (t) show(t); else if (cur) hide(); });
+  document.addEventListener('focusin', e => { const t = e.target.closest('[data-tip]'); if (t) show(t); });
+  document.addEventListener('focusout', hide);
+  document.addEventListener('click', e => { const t = e.target.closest('[data-tip]'); if (t) { cur === t ? hide() : show(t); } else hide(); });
+  addEventListener('scroll', hide, { passive: true });
+  return { hide };
+})();
+
 function renderChar() {
   if (DATA.failed) { $('#char-panel').innerHTML = failed(); return; }
   const p = DATA.players.find(x => pkey(x) === state.c || x.slug === state.c) || DATA.players.find(x => pkey(x) === Bnet.best());
@@ -260,10 +348,6 @@ function renderChar() {
   const totalRank = rankBy(SKILLS[0], peers).find(x => x.p === p)?.r;
   const hist = p.history || [], gained = hist.length > 1 ? hist[hist.length - 1].t - hist[0].t : 0;
   const nProf = p.professions?.length || 0;
-  const profs = [...(p.professions || [])].sort((a, b) => b.skill - a.skill).map(pr => {
-    const r = rankBy(skillById('p' + pr.id), peers).find(x => x.p === p)?.r;
-    return `<div class="prof"><span>${esc(profName(pr.id, pr.name))}</span><span class="bar"><i style="--w:${(100 * pr.skill / (pr.max || 300)).toFixed(1)}%"></i></span><b>${pr.skill}</b><span>${r ? ord(r) : ''}</span></div>`;
-  }).join('') || `<div class="empty">${t('noProf')}</div>`;
   const stats = [...STAT_KEYS, 'deaths'].filter(k => p.stats?.[k] != null).map(k => `<div>${t(k)}<b>${fmt(p.stats[k])}</b></div>`).join('');
   const portrait = p.render
     ? `<div class="portrait"><div class="plinth"></div><div class="plinth2"></div><div class="fig" style="background-image:url('${esc(p.render)}')" role="img" aria-label="${full(p)}"></div></div>`
@@ -277,7 +361,12 @@ function renderChar() {
       ${portrait}
       <div><h2>${full(p)}</h2><p>${desc} · ${t('levelN', { n: p.level })}${p.guild ? ` · <a href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${esc(p.guild.name)}</a>` : ''} · ${esc((p.region || 'eu').toUpperCase())}${rulesetName(p) ? ' ' + esc(rulesetName(p)) : ''}</p>
         ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t('previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}</div>
-      <div class="score"><div class="n" data-n="${p.total}">${fmt(p.total)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div></div>
+      <div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n" data-n="${p.total}">${fmt(p.total)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div></div>
+    </div>
+    <div class="dpanel">
+      <h3 class="sub">${t('skillsT')}${p.complete ? '' : ` <span class="estnote">${t('tilesEst')}</span>`}</h3>
+      <div class="tiles">${charTiles(p, peers)}</div>
+      ${dropBar(p)}
     </div>
     <div class="split">
       <div><div class="k" style="color:var(--lvl-hi)"><i class="dot" style="background:var(--lvl)"></i>${t('g.lvl')}</div><div class="v">${p.level}</div><div class="s">${t('of60')}</div></div>
@@ -285,8 +374,8 @@ function renderChar() {
       <div><div class="k" style="color:var(--prf-hi)"><i class="dot" style="background:var(--prf)"></i>${t('g.prf')}</div><div class="v">${fmt(p.parts.professions)}</div><div class="s">${t('profCount', { n: nProf })}</div></div>
     </div>
     <div class="two">
-      <div><h3 class="sub">${t('professions')}</h3>${profs}</div>
-      <div><h3 class="sub">${t('progress')}${gained ? ` <span>+${fmt(gained)}</span>` : ''}</h3>${chartSvg(hist)}${stats ? `<div class="ledger">${stats}</div>` : ''}</div>
+      <div><h3 class="sub">${t('progress')}${gained ? ` <span>+${fmt(gained)}</span>` : ''}</h3>${chartSvg(hist)}</div>
+      <div><h3 class="sub">${t('statsT')}</h3>${stats ? `<div class="ledger">${stats}</div>` : `<div class="empty">—</div>`}</div>
     </div>
     ${p.complete ? '' : `<div class="cta">${t('ctaEst')}</div>`}`;
 }
@@ -329,7 +418,7 @@ function renderGuild() {
     </div>
     <div class="rows" style="margin-top:clamp(18px,2.6vw,28px)">
       <div class="row th g"><span>${t('rank')}</span><span>${t('member')}</span><span class="c3">${t('split')}</span><span class="c4" style="text-align:right">${t('d7')}</span><span style="text-align:right">${t('totalH')}</span></div>
-      ${members.map((p, i) => { const d = gain7(p); return `<div class="row g${i < 3 ? ' top' : ''}" data-c="${esc(pkey(p))}"><span class="rk">${i + 1}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b><small>${esc(className(p))} ${p.level}</small></span></span>${tri(p)}<span class="up">${d ? (d > 0 ? '+' : '') + fmt(d) : '—'}</span><span class="tot">${fmt(p.total)}${estTag(p)}</span></div>`; }).join('')}
+      ${members.map((p, i) => { const d = gain7(p); return `<div class="row g${i < 3 ? ' top' : ''}" data-c="${esc(pkey(p))}"><span class="rk">${i + 1}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p)}<small>${esc(className(p))} ${p.level}</small></span></span>${tri(p)}<span class="up">${d ? (d > 0 ? '+' : '') + fmt(d) : '—'}</span><span class="tot">${fmt(p.total)}${estTag(p)}</span></div>`; }).join('')}
     </div>`;
 }
 

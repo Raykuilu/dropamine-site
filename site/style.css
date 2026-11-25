@@ -380,3 +380,52 @@ html[data-lang=en] [lang=fr],html[data-lang=fr] [lang=en]{display:none!important
   .tools{gap:6px}
 }
 #foot-coffee[hidden]{display:none}
+/* ---------- Panneau de compétences, comme dans l'addon ---------- */
+.dpanel{margin-top:clamp(20px,2.6vw,28px);padding:18px 18px 14px;border-radius:var(--radius);background:linear-gradient(180deg,#2a2a1c,#1b1a12);border:1px solid #050302;box-shadow:inset 0 0 0 1px rgba(196,154,92,.28),inset 0 0 40px rgba(0,0,0,.5)}
+.dpanel .sub{margin-bottom:14px}
+.estnote{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:0;font-size:14px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:12px 10px}
+.tile{position:relative;aspect-ratio:1;max-width:76px;border-radius:5px;background:#0a0806;border:2px solid #4a3a22;box-shadow:inset 0 0 0 1px #000,0 2px 0 #000,0 0 0 1px rgba(232,200,138,.08);overflow:hidden;cursor:default;outline:none;transition:transform .15s var(--ease),border-color .15s}
+.tile img,.tile .logo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tile .logo{background:radial-gradient(circle at 50% 45%,#2a2016,#0a0806) ;}
+.tile .logo::after{content:"";position:absolute;inset:12%;background:url(Dropamine-Logo.png) center/contain no-repeat}
+.tile::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px}
+.tile.g-lvl::after{background:var(--lvl)}.tile.g-wpn::after{background:var(--wpn)}.tile.g-prf::after{background:var(--prf)}
+.tile:hover,.tile:focus-visible{border-color:var(--rim);transform:translateY(-1px)}
+.tile.est img{filter:saturate(.55) brightness(.75)}
+.tile.est::before{content:"";position:absolute;inset:0;z-index:1;background:repeating-linear-gradient(135deg,rgba(106,136,192,.0) 0 5px,rgba(106,136,192,.35) 5px 7px)}
+.tile .num{position:absolute;right:4px;bottom:5px;z-index:2;display:flex;flex-direction:column;align-items:flex-end;line-height:.92;font-family:"Arial Narrow",Arial,sans-serif;font-weight:700;color:#fff;
+  text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 0 3px #000}
+.tile .num b{font-size:clamp(17px,1.6vw,21px)}
+.tile .num small{font-size:clamp(11px,1vw,13px);color:#f1ecdf}
+.tile.est .num b{color:#cfdcf5;font-style:italic}
+.dbar{display:flex;align-items:center;gap:14px;margin-top:16px;padding-top:12px;border-top:1px solid rgba(196,154,92,.22)}
+.dbar .logo{width:34px;height:42px;flex:none;background:url(Dropamine-Logo.png) center/contain no-repeat;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.dbar .dn{font-family:"Arial Narrow",Arial,sans-serif;font-weight:700;color:#fff;font-size:22px;white-space:nowrap;text-shadow:0 1px 2px #000}
+.dbar .dn small{font-size:15px;color:#bdb6a3;font-weight:600}
+.dbar .tri{flex:1;height:14px;border-radius:2px;background:#0a0806;box-shadow:inset 0 0 0 1px #000,0 0 0 1px rgba(196,154,92,.3)}
+/* infobulle façon jeu */
+.gtip{position:fixed;left:0;top:0;z-index:60;max-width:260px;padding:9px 12px 10px;border-radius:5px;background:rgba(8,10,22,.96);border:1px solid #4d5a7a;box-shadow:0 0 0 1px #000,0 10px 24px rgba(0,0,0,.6);
+  font-family:"Arial Narrow",Arial,sans-serif;font-size:14px;line-height:1.35;color:#fff;pointer-events:none;opacity:0;transition:opacity .12s}
+.gtip.on{opacity:1}
+.gtip b{display:block;font-size:16px;color:#ffd100;margin-bottom:2px}
+.gtip span{display:block}
+.gtip .tier{color:#1eff00}.gtip .rk{color:#e8c88a}.gtip .est{color:#9cb6e0;font-style:italic}
+@media (max-width:560px){.tiles{grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:10px 8px}.dbar .dn{font-size:19px}}
+/* liste des compétences du classement : l'icône de l'addon devant chaque nom */
+.skills a{align-items:center;gap:10px}
+.skills a .lb{flex:1;color:inherit;font-size:inherit}
+.skills .sic{width:22px;height:22px;flex:none;border-radius:3px;border:1px solid #4a3a22;box-shadow:0 0 0 1px #000;object-fit:cover;background:#0a0806}
+.skills .sic.logo{background:url(Dropamine-Logo.png) center/70% no-repeat #0a0806}
+.skills .sic.none{background:radial-gradient(circle,rgba(196,154,92,.35) 0 3px,transparent 4px) #0a0806}
+.mbar.w i{background:linear-gradient(var(--wpn-hi),var(--wpn))}
+.mbar.w.est i{background:repeating-linear-gradient(135deg,var(--wpn) 0 4px,#33435f 4px 7px)}
+.row.unranked{opacity:.72}
+.row.unranked .rk{color:var(--faint)}
+.est-sep{color:#9cb6e0}
+/* « +N » : le toast de l'addon, en miniature */
+.plus{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:999px;font-family:"Arial Narrow",Arial,sans-serif;font-weight:700;font-size:13px;color:#1eff00;background:rgba(30,255,0,.08);box-shadow:0 0 0 1px rgba(30,255,0,.3),0 0 10px rgba(30,255,0,.15);text-shadow:0 1px 0 #000;vertical-align:2px}
+.toast1{display:inline-flex;align-items:baseline;gap:6px;margin-bottom:8px;padding:5px 12px;border-radius:5px;background:linear-gradient(180deg,#1d3a14,#132a0d);border:1px solid #4f8a3a;box-shadow:0 0 14px rgba(30,255,0,.18);font-family:"Arial Narrow",Arial,sans-serif;color:#d6f5c8;font-size:14px}
+.toast1 b{color:#1eff00;font-size:18px;text-shadow:0 1px 0 #000}
+.nm b:has(+ .plus){display:inline-block;max-width:calc(100% - 64px);vertical-align:middle}
+.nm .plus{vertical-align:middle}
