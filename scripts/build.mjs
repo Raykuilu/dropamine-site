@@ -20,6 +20,12 @@ export const REGIONS = ['eu', 'us', 'tw'];
 const LOCALE = { eu: 'fr_FR', us: 'en_US', tw: 'zh_TW' };
 const WEAPON_CLASS = 2;          // item_class « Arme »
 const TOTAL_MAX = 2460;          // niveau total maximum de Dropamine
+// mêmes règles que l'addon (Core.lua : ResolveCombatTiles, SECOND_SLOT_BY_CLASS)
+const RANGED_ONLY = new Set(['bows', 'guns', 'crossbows', 'thrown']);
+const RANGED_KINDS = new Set([...RANGED_ONLY, 'wands']);
+const MELEE_KINDS = new Set(['axes', 'axes2h', 'maces', 'maces2h', 'swords', 'swords2h', 'polearms', 'staves', 'fist', 'daggers', 'unarmed']);
+const SECOND_BY_CLASS = { 9: 'wands', 8: 'wands', 5: 'wands', 11: 'feral', 3: 'ranged', 1: 'ranged', 4: 'ranged' };   // paladin, chaman : aucune
+const SECONDARY_PROFS = new Set([185, 356, 129]);   // Cuisine, Pêche, Secourisme
 // sous-classe d'arme Blizzard → identifiant de compétence de l'addon (Catalog.lua de Dropamine)
 const WEAPON_ID = { 0: 'axes', 1: 'axes2h', 2: 'bows', 3: 'guns', 4: 'maces', 5: 'maces2h', 6: 'polearms', 7: 'swords',
   8: 'swords2h', 10: 'staves', 13: 'fist', 15: 'daggers', 16: 'thrown', 18: 'crossbows', 19: 'wands' };
@@ -73,24 +79,37 @@ export function score({ profile, professions, equipment, statistics }, upload) {
       if (t) profs.push({ id: p.profession.id, name: p.profession.name, skill: t.skill_points, max: t.max_skill_points, recipes: t.known_recipes?.length ?? 0 });
     }
   }
-  const profTotal = profs.reduce((s, p) => s + p.skill, 0);
+  // comme l'addon : les 2 meilleurs métiers principaux + Cuisine, Pêche, Secourisme (la Monte n'entre pas)
+  const primaries = profs.filter(p => !SECONDARY_PROFS.has(p.id) && (professions?.primaries ?? []).some(x => x.profession.id === p.id))
+    .sort((a, b) => b.skill - a.skill).slice(0, 2);
+  const profTotal = [...primaries, ...profs.filter(p => SECONDARY_PROFS.has(p.id))].reduce((s, p) => s + p.skill, 0);
   const defense = statistics?.defense?.base ?? 0;
 
+  // comme l'addon : 3 cases de combat = l'arme de mêlée en main + une 2e compétence selon la classe + Défense
+  const items = (equipment?.equipped_items ?? []).filter(i => i.item_class?.id === WEAPON_CLASS)
+    .map(i => ({ slot: i.slot?.type, kind: WEAPON_ID[i.item_subclass?.id] })).filter(i => i.kind);
+  const mh = items.find(i => i.slot === 'MAIN_HAND') ?? items.find(i => !i.slot && !RANGED_KINDS.has(i.kind));
+  const rg = items.find(i => i.slot === 'RANGED') ?? items.find(i => !i.slot && RANGED_KINDS.has(i.kind));
+  const mode = SECOND_BY_CLASS[profile.character_class?.id];
+  const uploaded = upload && Number.isFinite(upload.weapons);
+  const list = uploaded && Array.isArray(upload.weaponList)
+    ? upload.weaponList.map(w => ({ id: String(w.id), rank: Math.min(+w.rank || 0, 5 * level) })).filter(w => w.rank > 0) : [];
+  const rankOf = id => list.find(w => w.id === id)?.rank ?? 0;
+  const best = ids => list.filter(w => ids.has(w.id)).sort((a, b) => b.rank - a.rank)[0]?.id ?? null;
+  const meleeId = mh && !RANGED_KINDS.has(mh.kind) ? mh.kind : items.length ? best(MELEE_KINDS) : 'unarmed';
+  const secondId = mode === 'feral' ? 'feral' : mode === 'wands' ? 'wands'
+    : mode === 'ranged' ? (rg && RANGED_ONLY.has(rg.kind) && (!uploaded || rankOf(rg.kind)) ? rg.kind : uploaded ? best(RANGED_ONLY) : null) : null;
+  const equipped = [meleeId, secondId].filter(Boolean);
+
   let weapons, weaponsSource, weaponList;
-  // armes en main d'après l'armurerie (pour n'afficher que les armes utilisées), + Combat farouche pour un druide
-  const equipped = [...new Set((equipment?.equipped_items ?? [])
-    .filter(i => i.item_class?.id === WEAPON_CLASS).map(i => WEAPON_ID[i.item_subclass?.id]).filter(Boolean))];
-  if (profile.character_class?.id === 11) equipped.push('feral');
-  if (upload && Number.isFinite(upload.weapons)) {
-    // ligne « /drop hiscores » : chaque arme plafonnée à 5 × le niveau actuel de l'armurerie
-    weaponList = Array.isArray(upload.weaponList)
-      ? upload.weaponList.map(w => ({ id: String(w.id), rank: Math.min(+w.rank || 0, 5 * level) })).filter(w => w.rank > 0)
-      : [];
-    weapons = weaponList.length ? weaponList.reduce((a, w) => a + w.rank, 0) : Math.min(upload.weapons, 5 * level * 20);
+  if (uploaded) {
+    // ligne « /drop hiscores » : chaque arme plafonnée à 5 × le niveau actuel ; seules les 2 cases de combat comptent
+    weaponList = list;
+    weapons = list.length ? rankOf(meleeId) + (secondId ? rankOf(secondId) : 0) : Math.min(upload.weapons, 2 * 5 * level);
     weaponsSource = 'dropamine';
   } else {
-    // estimation : chaque type d'arme équipée compté au maximum (5 × niveau)
-    const kinds = equipped.filter(id => id !== 'feral');
+    // estimation : l'arme de mêlée et l'arme à distance (ou baguette) équipées, comptées au maximum (5 × niveau)
+    const kinds = [mh && !RANGED_KINDS.has(mh.kind) ? mh.kind : null, rg && secondId === rg.kind ? rg.kind : mode === 'wands' && rg?.kind === 'wands' ? 'wands' : null].filter(Boolean);
     weaponList = kinds.map(id => ({ id, rank: 5 * level, est: true }));
     weapons = kinds.length * 5 * level; weaponsSource = 'estimate';
   }

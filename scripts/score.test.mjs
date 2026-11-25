@@ -90,14 +90,28 @@ test('plan du site : pages fixes, fiches et guildes, adresses échappées', () =
   assert.ok(x.includes('<lastmod>2026-11-25</lastmod>'));
 });
 
-test('armes par type : ligne Dropamine (plafonnée, sans les 0) ou estimation par arme équipée', () => {
-  const base = { profile: { level: 36 }, professions: {}, statistics: {} };
-  const up = score(base, { weapons: 999, weaponList: [{ id: 'staves', rank: 103 }, { id: 'feral', rank: 999 }, { id: 'axes', rank: 0 }] });
-  assert.deepEqual(up.weaponList, [{ id: 'staves', rank: 103 }, { id: 'feral', rank: 180 }]);
-  assert.equal(up.weapons, 283);
-  const est = score({ ...base, equipment: { equipped_items: [{ item_class: { id: 2 }, item_subclass: { id: 10 } }, { item_class: { id: 2 }, item_subclass: { id: 15 } }] } });
-  assert.deepEqual(est.weaponList.map(w => w.id), ['staves', 'daggers']);
-  assert.equal(est.weapons, 360); assert.ok(est.weaponList.every(w => w.est));
+test('total comme l’addon : Défense + arme de mêlée en main + 2e case de la classe', () => {
+  const up = { weapons: 999, weaponList: [{ id: 'maces2h', rank: 128 }, { id: 'polearms', rank: 151 }, { id: 'staves', rank: 103 }, { id: 'unarmed', rank: 130 }, { id: 'feral', rank: 999 }, { id: 'axes', rank: 0 }] };
+  // druide au bâton : Bâtons + Combat farouche (plafonné à 180), les autres armes ne comptent pas
+  const druid = score({ ...ray, profile: { level: 36, character_class: { id: 11 } } }, up);
+  assert.deepEqual(druid.weaponList.map(w => w.id), ['maces2h', 'polearms', 'staves', 'unarmed', 'feral']);
+  assert.equal(druid.weapons, 103 + 180);
+  assert.equal(druid.total, 36 + 849 + 177 + 103 + 180);
+  // guerrier : arme en main droite + arme à distance équipée (emplacements de l'armurerie)
+  const eq = { equipped_items: [{ slot: { type: 'MAIN_HAND' }, item_class: { id: 2 }, item_subclass: { id: 0 } }, { slot: { type: 'RANGED' }, item_class: { id: 2 }, item_subclass: { id: 2 } }] };
+  const war = score({ ...ray, profile: { level: 36, character_class: { id: 1 } }, equipment: eq }, { weapons: 1, weaponList: [{ id: 'axes', rank: 150 }, { id: 'bows', rank: 90 }, { id: 'swords', rank: 170 }] });
+  assert.deepEqual(war.equipped, ['axes', 'bows']); assert.equal(war.weapons, 240);
+  // paladin : pas de 2e case ; rien en main : Mains nues
+  const pal = score({ ...ray, profile: { level: 36, character_class: { id: 2 } }, equipment: {} }, { weapons: 1, weaponList: [{ id: 'unarmed', rank: 60 }, { id: 'maces', rank: 170 }] });
+  assert.deepEqual(pal.equipped, ['unarmed']); assert.equal(pal.weapons, 60);
+  // estimation : arme de mêlée en main seulement (deux armes sans emplacement : la première de mêlée)
+  const est = score({ ...ray, equipment: { equipped_items: [{ item_class: { id: 2 }, item_subclass: { id: 10 } }, { item_class: { id: 2 }, item_subclass: { id: 15 } }] } });
+  assert.deepEqual(est.weaponList.map(w => w.id), ['staves']); assert.equal(est.weapons, 180);
+});
+
+test('métiers comme l’addon : les 2 meilleurs principaux + Cuisine, Pêche, Secourisme', () => {
+  const three = { ...ray, professions: { ...ray.professions, primaries: [prof(165, 120, 150), prof(393, 223, 300), prof(186, 50, 75)] } };
+  assert.equal(score(three).parts.professions, 849);
 });
 
 test('armes en main : depuis l’armurerie, + Combat farouche pour un druide', () => {

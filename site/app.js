@@ -18,7 +18,7 @@ const I18N = {
   youHere: ['YOU', 'TOI'],
   pulseDl: ['{n} downloads', '{n} téléchargements'], pulseChars: ['{n} characters tracked', '{n} personnages suivis'], pulseGuilds: ['{n} guild{s}', '{n} guilde{s}'],
   pulseToday: ['updated today at {h}', "mis à jour aujourd'hui à {h}"], pulseOn: ['updated {d}', 'mis à jour le {d}'],
-  tipSpare: ['Not in hand at the last armory read', "Pas en main lors de la dernière lecture de l'armurerie"],
+  tipSpare: ['Not in the total: as in the addon, only the weapon in hand and your class’s second skill count', "Hors total : comme dans l'addon, seules l'arme en main et la 2e compétence de ta classe comptent"],
   moreW: ['+ {n} other weapon skill{s}', '+ {n} autre{s} compétence{s} d’arme'], lessW: ['Only weapons in use', 'Seulement les armes utilisées'],
   viewT: ['Display', 'Affichage'], viewList: ['List', 'Liste'], viewGrid: ['Grid, as in the addon', "Grille, comme dans l'addon"],
   share: ['Share', 'Partager'], close: ['Close', 'Fermer'],
