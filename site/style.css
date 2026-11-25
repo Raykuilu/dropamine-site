@@ -429,3 +429,53 @@ html[data-lang=en] [lang=fr],html[data-lang=fr] [lang=en]{display:none!important
 .toast1 b{color:#1eff00;font-size:18px;text-shadow:0 1px 0 #000}
 .nm b:has(+ .plus){display:inline-block;max-width:calc(100% - 64px);vertical-align:middle}
 .nm .plus{vertical-align:middle}
+/* ---------- Compétences en liste : icône + barre, comme le volet de l'addon ---------- */
+.dhead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.dhead .sub{margin:0}
+.vsw{margin-left:auto;display:flex;gap:4px}
+.vsw button{all:unset;cursor:pointer;display:grid;place-items:center;width:32px;height:30px;border-radius:5px;color:var(--faint);border:1px solid rgba(196,154,92,.22);transition:.2s}
+.vsw button:hover{color:var(--cream)}
+.vsw button[aria-pressed=true]{color:#1a120a;background:var(--gold);border-color:var(--gold)}
+.vsw button:focus-visible{outline:2px solid var(--rim);outline-offset:2px}
+.dpanel .estnote{margin:-4px 0 12px}
+.slist{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:4px 34px}
+.sline{display:grid;grid-template-columns:40px minmax(0,1fr) minmax(70px,1.1fr) 78px 34px;align-items:center;gap:12px;padding:6px 6px;border-radius:5px;outline:none;transition:background .15s}
+.sline:hover,.sline:focus-visible{background:rgba(232,200,138,.06)}
+.sic2{position:relative;width:40px;height:40px;border-radius:4px;overflow:hidden;border:2px solid #4a3a22;box-shadow:inset 0 0 0 1px #000,0 1px 0 #000;background:#0a0806}
+.sic2 img,.sic2 .logo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sic2 .logo{background:url(Dropamine-Logo.png) center/70% no-repeat #0a0806}
+.snm{min-width:0}
+.snm b{display:block;font-weight:500;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.snm small{display:block;font-size:13px;font-style:italic;color:#7fbf63;line-height:1.1}
+.sline.est .snm small{color:#9cb6e0}
+.sbar{height:8px;border-radius:2px;background:#0a0806;box-shadow:inset 0 0 0 1px #000,0 0 0 1px rgba(196,154,92,.22);overflow:hidden}
+.sbar i{display:block;height:100%;width:var(--w)}
+.sline.g-lvl .sbar i{background:linear-gradient(var(--lvl-hi),var(--lvl))}
+.sline.g-wpn .sbar i{background:linear-gradient(var(--wpn-hi),var(--wpn))}
+.sline.g-prf .sbar i{background:linear-gradient(var(--prf-hi),var(--prf))}
+.sline.est .sbar i{background:repeating-linear-gradient(135deg,var(--wpn) 0 4px,#33435f 4px 7px)}
+.sv{text-align:right;font-family:var(--num);white-space:nowrap}
+.sv b{font-size:20px;color:var(--gold);font-weight:700}
+.sv small{color:var(--faint);font-size:14px}
+.spl{text-align:right;font-size:13px;color:var(--muted);font-style:italic}
+.sline.spare,.tile.spare{opacity:.62}
+.tile .num{z-index:2}
+.more{all:unset;cursor:pointer;display:inline-block;margin:10px 6px 0;font-size:14px;font-style:italic;color:var(--gold);text-decoration:underline;text-decoration-color:var(--rim-lo);text-underline-offset:3px}
+.more:focus-visible{outline:2px solid var(--rim);outline-offset:2px}
+@media (max-width:560px){.slist{grid-template-columns:minmax(0,1fr)}.sline{grid-template-columns:36px minmax(0,1fr) 54px 66px;gap:10px}.sline .spl{display:none}.sic2{width:36px;height:36px}}
+.share{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:7px;margin:12px 0 0 10px;padding:4px 12px;border-radius:999px;font-family:var(--display);font-weight:600;letter-spacing:.1em;font-size:13px;color:var(--muted);border:1px solid var(--line-2);vertical-align:top;transition:.2s}
+.share:hover{color:var(--gold);border-color:var(--rim-lo)}
+.share.ok{color:#b5dd9d;border-color:rgba(95,154,74,.5)}
+.share:focus-visible{outline:2px solid var(--rim);outline-offset:2px}
+/* accueil : les +1 du jour */
+.gains{margin:0 0 14px}
+.gains .kicker{margin:0 0 10px;color:#7fbf63}
+.gl{display:flex;flex-wrap:wrap;gap:10px}
+.gt{display:flex;align-items:center;gap:10px;padding:7px 12px 7px 8px;border-radius:6px;background:linear-gradient(180deg,#1d3a14,#132a0d);border:1px solid #4f8a3a;box-shadow:0 0 14px rgba(30,255,0,.12);color:#d6f5c8;transition:transform .15s var(--ease)}
+.gt:hover{transform:translateY(-1px)}
+.gt .ava{width:30px;height:30px}
+.gt b{display:block;font-weight:500;font-size:15px;color:#eaf7e2;line-height:1.1}
+.gt small{display:block;font-size:12px;font-style:italic;color:#8fb57d}
+.gt i{font-style:normal;font-family:"Arial Narrow",Arial,sans-serif;font-weight:700;font-size:18px;color:#1eff00;text-shadow:0 1px 0 #000;margin-left:4px}
+.guildp{margin-top:clamp(18px,2.6vw,28px)}
+.guildp .snm small{color:var(--muted)}

@@ -99,3 +99,11 @@ test('armes par type : ligne Dropamine (plafonnée, sans les 0) ou estimation pa
   assert.deepEqual(est.weaponList.map(w => w.id), ['staves', 'daggers']);
   assert.equal(est.weapons, 360); assert.ok(est.weaponList.every(w => w.est));
 });
+
+test('armes en main : depuis l’armurerie, + Combat farouche pour un druide', () => {
+  const eq = { equipped_items: [{ item_class: { id: 2 }, item_subclass: { id: 10 } }] };
+  const druid = score({ profile: { level: 36, character_class: { id: 11 } }, professions: {}, statistics: {}, equipment: eq }, { weapons: 100, weaponList: [{ id: 'staves', rank: 100 }] });
+  assert.deepEqual(druid.equipped, ['staves', 'feral']);
+  const est = score({ profile: { level: 36, character_class: { id: 11 } }, professions: {}, statistics: {}, equipment: eq });
+  assert.deepEqual(est.weaponList.map(w => w.id), ['staves']);   // l'estimation ne compte pas Combat farouche
+});

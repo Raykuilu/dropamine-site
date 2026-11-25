@@ -15,7 +15,13 @@ let LANG = document.documentElement.dataset.lang === 'fr' ? 'fr' : 'en';
 const I18N = {
   'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'], 'acct.out': ['Sign out', 'Se déconnecter'],
   myChars: ['My characters', 'Mes personnages'],
-  youHere: ['YOU', 'TOI'], sinceY: ['since yesterday', 'depuis hier'],
+  youHere: ['YOU', 'TOI'],
+  tipSpare: ['Not in hand at the last armory read', "Pas en main lors de la dernière lecture de l'armurerie"],
+  moreW: ['+ {n} other weapon skill{s}', '+ {n} autre{s} compétence{s} d’arme'], lessW: ['Only weapons in use', 'Seulement les armes utilisées'],
+  viewT: ['Display', 'Affichage'], viewList: ['List', 'Liste'], viewGrid: ['Grid, as in the addon', "Grille, comme dans l'addon"],
+  share: ['Share', 'Partager'], copied: ['Link copied', 'Lien copié'],
+  gainsT: ['TODAY’S +1', 'LES +1 DU JOUR'], gainsNone: ['', ''],
+  splitT: ['Split', 'Répartition'], bestByProf: ['Best by profession', 'Meilleurs par métier'], sinceY: ['since yesterday', 'depuis hier'],
   estSep: ['ESTIMATED · NOT RANKED UNTIL THE DROPAMINE LINE IS SENT', 'ESTIMÉS · SANS RANG JUSQU’À L’ENVOI DE LA LIGNE DROPAMINE'],
   skillsT: ['Skills', 'Compétences'], statsT: ['Armory statistics', "Statistiques de l'armurerie"],
   tilesEst: ['hatched tiles: weapons estimated, waiting for the Dropamine line', "tuiles hachurées : armes estimées, en attente de la ligne Dropamine"],
@@ -219,12 +225,16 @@ const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.comple
 /* ---------- Accueil : le pont vers les classements ---------- */
 function renderHome() {
   const all = rankBy(SKILLS[0], inRegion()), top = all.slice(0, 5);
+  // les +1 du jour : les plus gros gains depuis la veille, en petits toasts façon addon
+  const gains = inRegion().map(p => ({ p, d: dayGain(p) })).filter(x => x.d > 0).sort((a, b) => b.d - a.d).slice(0, 6);
+  const gainsHtml = gains.length ? `<div class="gains"><p class="kicker">${t('gainsT')}</p><div class="gl">${gains.map(({ p, d }) =>
+    `<a class="gt" href="?p=char&c=${esc(encodeURIComponent(pkey(p)))}" data-c="${esc(pkey(p))}">${avatar(p)}<span><b>${full(p)}</b><small>${esc(className(p))} ${p.level}</small></span><i>+${fmt(d)}</i></a>`).join('')}</div></div>` : '';
   const line = ({ p, v, r }, cls = '') => `<div class="row${r <= 3 ? ' top' : ''}${cls}" data-c="${esc(pkey(p))}" style="grid-template-columns:44px minmax(0,1fr) minmax(90px,160px) 96px"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p)}<small>${who(p)}</small></span></span>${tri(p)}<span class="tot">${fmt(v)}${estTag(p)}</span></div>`;
   // connecté : ton meilleur personnage, sous le top 5 s'il n'y figure pas
   const me = all.find(x => pkey(x.p) === Bnet.best());
   const you = me && !top.includes(me) ? `<div class="you-sep">${t('youHere')}</div>${line(me, ' you')}` : '';
   $('#home-top').innerHTML = DATA.failed ? failed() : top.length
-    ? top.map(x => line(x, pkey(x.p) === Bnet.best() ? ' you' : '')).join('') + you
+    ? gainsHtml + top.map(x => line(x, pkey(x.p) === Bnet.best() ? ' you' : '')).join('') + you
     : nobody();
 }
 
@@ -293,27 +303,63 @@ function chartSvg(hist) {
    Ordre de l'addon : Niveau, armes, Défense, métiers. Survol = infobulle façon jeu. */
 const TIER = [[75, ['Apprentice', 'Apprenti']], [150, ['Journeyman', 'Compagnon']], [225, ['Expert', 'Expert']], [300, ['Artisan', 'Artisan']]];
 const tierOf = max => L2((TIER.find(([m]) => max <= m) || TIER[3])[1]);
-function tile({ img, logo, name, rank, max, group, est, r, tier }) {
-  const tip = `<b>${esc(name)}</b><span>${logo ? `${rank} / ${max}` : t('tipRank', { r: rank, m: max })}</span>${tier ? `<span class="tier">${esc(tier)}</span>` : ''}`
-    + (r ? `<span class="rk">${t('tipPlace', { r: ord(r), reg: '' })}</span>` : '') + (est ? `<span class="est">${t('tipEst')}</span>` : '');
-  return `<div class="tile g-${group}${est ? ' est' : ''}" tabindex="0" data-tip="${esc(tip)}" aria-label="${esc(name)} ${rank} / ${max}">`
-    + (logo ? `<span class="logo"></span>` : `<img src="${icon(img)}" alt="" loading="lazy" referrerpolicy="no-referrer">`)
-    + `<span class="num"><b>${rank}</b><small>/${max}</small></span></div>`;
-}
-function charTiles(p, peers) {
+// Une compétence de la fiche : même données pour la liste et pour la grille
+function skillItems(p, peers) {
   const place = sk => rankBy(sk, peers).find(x => x.p === p)?.r;
-  const out = [tile({ logo: true, name: t('level'), rank: p.level, max: 60, group: 'lvl', r: place(skillById('level')) })];
+  const items = [{ key: 'level', ava: p.avatar, name: t('level'), rank: p.level, max: 60, group: 'lvl', r: place(skillById('level')) }];
+  const used = new Set(p.equipped || []);
   for (const id of WPN_ORDER) {
     const w = wpnOf(p, id); if (!w) continue;
-    out.push(tile({ img: WPN[id][2], name: L2(WPN[id]), rank: w.rank, max: 5 * p.level, group: 'wpn', est: w.est, r: w.est ? null : place(skillById('w' + id)) }));
+    items.push({ key: 'w' + id, img: WPN[id][2], name: L2(WPN[id]), rank: w.rank, max: 5 * p.level, group: 'wpn', est: w.est,
+      r: w.est ? null : place(skillById('w' + id)), spare: used.size > 0 && !used.has(id) });
   }
-  if (p.defense) out.push(tile({ img: DEF_ICON, name: t('defense'), rank: p.defense, max: 5 * p.level, group: 'wpn', r: place(skillById('defense')) }));
+  if (p.defense) items.push({ key: 'defense', img: DEF_ICON, name: t('defense'), rank: p.defense, max: 5 * p.level, group: 'wpn', r: place(skillById('defense')) });
   for (const id of PROF_ORDER) {
     const pr = p.professions?.find(x => x.id === id); if (!pr) continue;
-    out.push(tile({ img: PROF_ICON[id], name: profName(id, pr.name), rank: pr.skill, max: pr.max || 300, group: 'prf', tier: tierOf(pr.max || 300), r: place(skillById('p' + id)) }));
+    items.push({ key: 'p' + id, img: PROF_ICON[id], name: profName(id, pr.name), rank: pr.skill, max: pr.max || 300, group: 'prf', tier: tierOf(pr.max || 300), r: place(skillById('p' + id)) });
   }
-  return out.join('');
+  return items;
 }
+const tipOf = it => `<b>${esc(it.name)}</b><span>${it.key === 'level' ? `${it.rank} / ${it.max}` : t('tipRank', { r: it.rank, m: it.max })}</span>`
+  + (it.tier ? `<span class="tier">${esc(it.tier)}</span>` : '') + (it.r ? `<span class="rk">${t('tipPlace', { r: ord(it.r) })}</span>` : '')
+  + (it.est ? `<span class="est">${t('tipEst')}</span>` : '') + (it.spare ? `<span class="est">${t('tipSpare')}</span>` : '');
+// l'icône : le portrait du personnage pour le niveau, l'icône du jeu pour le reste
+const pic = it => it.key === 'level'
+  ? (it.ava ? `<img src="${esc(it.ava)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="logo"></span>')
+  : `<img src="${icon(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer">`;
+const tileOf = it => `<div class="tile g-${it.group}${it.est ? ' est' : ''}${it.spare ? ' spare' : ''}" tabindex="0" data-tip="${esc(tipOf(it))}" aria-label="${esc(it.name)} ${it.rank} / ${it.max}">`
+  + pic(it) + `<span class="num"><b>${it.rank}</b><small>/${it.max}</small></span></div>`;
+const lineOf = it => `<div class="sline g-${it.group}${it.est ? ' est' : ''}${it.spare ? ' spare' : ''}" tabindex="0" data-tip="${esc(tipOf(it))}">
+  <span class="sic2">${pic(it)}</span>
+  <span class="snm"><b>${esc(it.name)}</b>${it.tier ? `<small>${esc(it.tier)}</small>` : it.est ? `<small>${t('est')}</small>` : ''}</span>
+  <span class="sbar"><i style="--w:${Math.min(100, 100 * it.rank / it.max).toFixed(1)}%"></i></span>
+  <span class="sv"><b>${it.rank}</b><small> / ${it.max}</small></span>
+  <span class="spl">${it.r ? ord(it.r) : ''}</span></div>`;
+let SKVIEW = (() => { try { return localStorage.getItem('skview') === 'grid' ? 'grid' : 'list'; } catch (e) { return 'list'; } })();
+let SHOW_SPARE = false;
+function skillsBlock(p, peers) {
+  const items = skillItems(p, peers), spare = items.filter(i => i.spare);
+  const shown = SHOW_SPARE ? items : items.filter(i => !i.spare);
+  const body = SKVIEW === 'grid' ? `<div class="tiles">${shown.map(tileOf).join('')}</div>` : `<div class="slist">${shown.map(lineOf).join('')}</div>`;
+  const more = spare.length ? `<button class="more" type="button" data-sk="spare">${SHOW_SPARE ? t('lessW') : t('moreW', { n: spare.length })}</button>` : '';
+  return `<div class="dpanel">
+      <div class="dhead"><h3 class="sub">${t('skillsT')}</h3>
+        <div class="vsw" role="group" aria-label="${t('viewT')}">
+          <button type="button" data-sk="list" aria-pressed="${SKVIEW === 'list'}" title="${t('viewList')}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><rect x="3" y="4" width="3" height="4" rx=".5"/><rect x="3" y="10" width="3" height="4" rx=".5"/><rect x="3" y="16" width="3" height="4" rx=".5"/></svg></button>
+          <button type="button" data-sk="grid" aria-pressed="${SKVIEW === 'grid'}" title="${t('viewGrid')}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+        </div></div>
+      ${p.complete ? '' : `<p class="estnote">${t('tilesEst')}</p>`}
+      ${body}${more}
+      ${dropBar(p)}
+    </div>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-sk]'); if (!b) return;
+  const v = b.dataset.sk;
+  if (v === 'spare') SHOW_SPARE = !SHOW_SPARE;
+  else { SKVIEW = v; try { localStorage.setItem('skview', v); } catch (err) { /* choix gardé pour cette visite */ } }
+  Tip.hide(); renderChar(); Ribbon.swell(.35);
+});
 // barre du bas du panneau : la goutte, le niveau total, la barre trois couleurs
 const dropBar = p => `<div class="dbar"><span class="logo"></span><span class="dn"><b data-n="${p.total}">${fmt(p.total)}</b><small> / ${fmt(p.max || 2460)}</small></span>${tri(p)}</div>`;
 
@@ -360,25 +406,30 @@ function renderChar() {
     <div class="who${p.render ? ' has-render' : ''}">
       ${portrait}
       <div><h2>${full(p)}</h2><p>${desc} · ${t('levelN', { n: p.level })}${p.guild ? ` · <a href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${esc(p.guild.name)}</a>` : ''} · ${esc((p.region || 'eu').toUpperCase())}${rulesetName(p) ? ' ' + esc(rulesetName(p)) : ''}</p>
-        ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t('previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}</div>
+        ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t('previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}
+        <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button></div>
       <div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n" data-n="${p.total}">${fmt(p.total)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div></div>
     </div>
-    <div class="dpanel">
-      <h3 class="sub">${t('skillsT')}${p.complete ? '' : ` <span class="estnote">${t('tilesEst')}</span>`}</h3>
-      <div class="tiles">${charTiles(p, peers)}</div>
-      ${dropBar(p)}
-    </div>
-    <div class="split">
-      <div><div class="k" style="color:var(--lvl-hi)"><i class="dot" style="background:var(--lvl)"></i>${t('g.lvl')}</div><div class="v">${p.level}</div><div class="s">${t('of60')}</div></div>
-      <div><div class="k" style="color:var(--wpn-hi)"><i class="dot" style="background:var(--wpn)"></i>${t('g.wpn')}</div><div class="v">${fmt(p.parts.combat)}</div><div class="s">${t('defW', { d: p.defense, w: fmt(p.weapons) })}${p.complete ? '' : t('estP')}</div></div>
-      <div><div class="k" style="color:var(--prf-hi)"><i class="dot" style="background:var(--prf)"></i>${t('g.prf')}</div><div class="v">${fmt(p.parts.professions)}</div><div class="s">${t('profCount', { n: nProf })}</div></div>
-    </div>
+    ${skillsBlock(p, peers)}
     <div class="two">
       <div><h3 class="sub">${t('progress')}${gained ? ` <span>+${fmt(gained)}</span>` : ''}</h3>${chartSvg(hist)}</div>
       <div><h3 class="sub">${t('statsT')}</h3>${stats ? `<div class="ledger">${stats}</div>` : `<div class="empty">—</div>`}</div>
     </div>
     ${p.complete ? '' : `<div class="cta">${t('ctaEst')}</div>`}`;
 }
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-share]'); if (!b) return;
+  const p = DATA.players.find(x => pkey(x) === b.dataset.share); if (!p) return;
+  const url = `https://dropamine.app/?p=char&c=${encodeURIComponent(pkey(p))}`;
+  const text = `${p.name} ${p.surname} · ${fmt(p.total)} / ${fmt(p.max || 2460)} · Dropamine Hiscores`;
+  try {
+    if (navigator.share && matchMedia('(pointer:coarse)').matches) { await navigator.share({ title: text, url }); return; }
+    await navigator.clipboard.writeText(url);
+    const sp = b.querySelector('span'); sp.textContent = t('copied'); b.classList.add('ok');
+    setTimeout(() => { sp.textContent = t('share'); b.classList.remove('ok'); }, 1800);
+  } catch (err) { /* partage annulé ou presse-papiers refusé : rien à faire */ }
+});
 
 /* ---------- Guildes ---------- */
 function guilds() {
@@ -405,6 +456,18 @@ function renderGuild() {
   let best = null; members.forEach(p => p.professions?.forEach(pr => { if (!best || pr.skill > best.pr.skill) best = { p, pr }; }));
   const gains = members.map(p => ({ p, d: gain7(p) })).filter(x => x.d > 0).sort((a, b) => b.d - a.d);
   const feat = (k, v, s) => `<div class="feat"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+  // la guilde comme un seul grand personnage : sa barre trois couleurs, et le meilleur de chaque métier
+  const sum = k => members.reduce((a, p) => a + (p.parts?.[k] || 0), 0);
+  const gp = { total: g.total, max: members.length * 2460, parts: { level: sum('level'), combat: sum('combat'), professions: sum('professions') }, complete: members.every(p => p.complete) };
+  const bestOf = [];
+  for (const id of PROF_ORDER) {
+    let b = null; members.forEach(p => { const pr = p.professions?.find(x => x.id === id); if (pr && (!b || pr.skill > b.pr.skill)) b = { p, pr }; });
+    if (b) bestOf.push({ key: 'p' + id, img: PROF_ICON[id], name: profName(id, b.pr.name), rank: b.pr.skill, max: b.pr.max || 300, group: 'prf', tier: `${b.p.name} ${b.p.surname}` });
+  }
+  const bd = members.reduce((b, p) => (p.defense || 0) > (b?.defense || 0) ? p : b, null);
+  if (bd?.defense) bestOf.unshift({ key: 'defense', img: DEF_ICON, name: t('defense'), rank: bd.defense, max: 5 * bd.level, group: 'wpn', tier: `${bd.name} ${bd.surname}` });
+  const clan = `<div class="dpanel guildp"><div class="dhead"><h3 class="sub">${t('bestByProf')}</h3></div>
+      <div class="slist">${bestOf.map(lineOf).join('')}</div>${dropBar(gp)}</div>`;
   $('#guild-panel').innerHTML = `
     <span class="back" data-g="">${t('allGuilds')}</span>
     <div class="who" style="grid-template-columns:minmax(0,1fr) auto">
@@ -416,9 +479,10 @@ function renderGuild() {
       ${best ? feat(t('bestProf'), full(best.p), `${esc(profName(best.pr.id, best.pr.name))} · ${best.pr.skill}`) : ''}
       ${gains.length ? feat(t('bestWeek'), full(gains[0].p), t('inWeek', { n: fmt(gains[0].d) })) : feat(t('bestWeek'), '—', t('notEnough'))}
     </div>
+    ${clan}
     <div class="rows" style="margin-top:clamp(18px,2.6vw,28px)">
       <div class="row th g"><span>${t('rank')}</span><span>${t('member')}</span><span class="c3">${t('split')}</span><span class="c4" style="text-align:right">${t('d7')}</span><span style="text-align:right">${t('totalH')}</span></div>
-      ${members.map((p, i) => { const d = gain7(p); return `<div class="row g${i < 3 ? ' top' : ''}" data-c="${esc(pkey(p))}"><span class="rk">${i + 1}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p)}<small>${esc(className(p))} ${p.level}</small></span></span>${tri(p)}<span class="up">${d ? (d > 0 ? '+' : '') + fmt(d) : '—'}</span><span class="tot">${fmt(p.total)}${estTag(p)}</span></div>`; }).join('')}
+      ${members.map((p, i) => { const d = gain7(p); return `<div class="row g${i < 3 ? ' top' : ''}" data-c="${esc(pkey(p))}"><span class="rk">${i + 1}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b><small>${esc(className(p))} ${p.level}</small></span></span>${tri(p)}<span class="up">${d ? (d > 0 ? '+' : '') + fmt(d) : '—'}</span><span class="tot">${fmt(p.total)}${estTag(p)}</span></div>`; }).join('')}
     </div>`;
 }
 

@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-25T16:59:05.487Z",
+ "updated": "2026-11-25T17:11:34.455Z",
  "players": [
   {
    "key": "eu/gue-rrier",
@@ -34,6 +34,10 @@
      "rank": 300,
      "est": true
     }
+   ],
+   "equipped": [
+    "axes2h",
+    "thrown"
    ],
    "professions": [
     {
@@ -124,6 +128,10 @@
      "rank": 300,
      "est": true
     }
+   ],
+   "equipped": [
+    "polearms",
+    "feral"
    ],
    "professions": [
     {
@@ -224,6 +232,11 @@
      "rank": 200,
      "est": true
     }
+   ],
+   "equipped": [
+    "axes",
+    "daggers",
+    "thrown"
    ],
    "professions": [
     {
@@ -334,6 +347,10 @@
      "rank": 178
     }
    ],
+   "equipped": [
+    "staves",
+    "feral"
+   ],
    "professions": [
     {
      "id": 165,
@@ -433,6 +450,11 @@
      "est": true
     }
    ],
+   "equipped": [
+    "swords",
+    "axes",
+    "guns"
+   ],
    "professions": [
     {
      "id": 165,
@@ -520,6 +542,10 @@
      "rank": 190,
      "est": true
     }
+   ],
+   "equipped": [
+    "polearms",
+    "crossbows"
    ],
    "professions": [
     {
@@ -610,6 +636,9 @@
      "rank": 180,
      "est": true
     }
+   ],
+   "equipped": [
+    "swords"
    ],
    "professions": [
     {
@@ -706,6 +735,10 @@
      "est": true
     }
    ],
+   "equipped": [
+    "daggers",
+    "wands"
+   ],
    "professions": [
     {
      "id": 197,
@@ -800,6 +833,10 @@
      "rank": 150,
      "est": true
     }
+   ],
+   "equipped": [
+    "staves",
+    "wands"
    ],
    "professions": [
     {
@@ -896,6 +933,10 @@
      "est": true
     }
    ],
+   "equipped": [
+    "swords2h",
+    "guns"
+   ],
    "professions": [
     {
      "id": 186,
@@ -985,6 +1026,9 @@
      "rank": 160,
      "est": true
     }
+   ],
+   "equipped": [
+    "maces2h"
    ],
    "professions": [
     {
@@ -1081,6 +1125,10 @@
      "est": true
     }
    ],
+   "equipped": [
+    "staves",
+    "wands"
+   ],
    "professions": [
     {
      "id": 197,
@@ -1163,6 +1211,9 @@
      "rank": 50,
      "est": true
     }
+   ],
+   "equipped": [
+    "axes2h"
    ],
    "professions": [
     {
@@ -1250,6 +1301,10 @@
      "rank": 50,
      "est": true
     }
+   ],
+   "equipped": [
+    "axes",
+    "guns"
    ],
    "professions": [
     {

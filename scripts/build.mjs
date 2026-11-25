@@ -77,6 +77,10 @@ export function score({ profile, professions, equipment, statistics }, upload) {
   const defense = statistics?.defense?.base ?? 0;
 
   let weapons, weaponsSource, weaponList;
+  // armes en main d'après l'armurerie (pour n'afficher que les armes utilisées), + Combat farouche pour un druide
+  const equipped = [...new Set((equipment?.equipped_items ?? [])
+    .filter(i => i.item_class?.id === WEAPON_CLASS).map(i => WEAPON_ID[i.item_subclass?.id]).filter(Boolean))];
+  if (profile.character_class?.id === 11) equipped.push('feral');
   if (upload && Number.isFinite(upload.weapons)) {
     // ligne « /drop hiscores » : chaque arme plafonnée à 5 × le niveau actuel de l'armurerie
     weaponList = Array.isArray(upload.weaponList)
@@ -86,15 +90,13 @@ export function score({ profile, professions, equipment, statistics }, upload) {
     weaponsSource = 'dropamine';
   } else {
     // estimation : chaque type d'arme équipée compté au maximum (5 × niveau)
-    const kinds = [...new Set((equipment?.equipped_items ?? [])
-      .filter(i => i.item_class?.id === WEAPON_CLASS)
-      .map(i => WEAPON_ID[i.item_subclass?.id]).filter(Boolean))];
+    const kinds = equipped.filter(id => id !== 'feral');
     weaponList = kinds.map(id => ({ id, rank: 5 * level, est: true }));
     weapons = kinds.length * 5 * level; weaponsSource = 'estimate';
   }
   const total = level + defense + weapons + profTotal;
   return {
-    level, defense, weapons, weaponsSource, weaponList, professions: profs,
+    level, defense, weapons, weaponsSource, weaponList, equipped, professions: profs,
     parts: { level, combat: defense + weapons, professions: profTotal },
     total, max: TOTAL_MAX, complete: weaponsSource === 'dropamine',
   };
