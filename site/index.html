@@ -1,21 +1,30 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en" data-lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dropamine — l'addon WoW Forever qui fête chaque +1</title>
-<meta name="description" content="Dropamine, l'addon WoW Forever façon Old School RuneScape : toutes tes compétences à l'écran, chaque +1 qui tombe, carnet de collection, chasse BiS, SkillUp Forever, Hardcore. Et les Hiscores, vérifiés par l'armurerie.">
+<title>Dropamine — the WoW Forever addon that celebrates every +1</title>
+<meta name="description" content="Dropamine, the Old School RuneScape-style addon for WoW Forever: every skill on screen, every +1 celebrated, collection log, BiS hunt, SkillUp Forever, Hardcore alerts. Plus Hiscores checked against the official armory.">
 <meta name="theme-color" content="#110d09">
 <link rel="icon" type="image/png" href="Dropamine-Logo.png">
 <link rel="apple-touch-icon" href="Dropamine-Logo.png">
 <link rel="canonical" href="https://dropamine.app/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Dropamine">
-<meta property="og:title" content="Dropamine — chaque compétence, chaque +1">
-<meta property="og:description" content="L'addon WoW Forever façon OSRS, et ses Hiscores vérifiés par l'armurerie.">
+<meta property="og:title" content="Dropamine — every skill, every +1">
+<meta property="og:description" content="The OSRS-style addon for WoW Forever, and its Hiscores checked against the official armory.">
 <meta property="og:url" content="https://dropamine.app/">
 <meta property="og:image" content="https://dropamine.app/img/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
+<script>
+  // langue : ?lang=, sinon le dernier choix, sinon celle du navigateur (français → FR, le reste → EN)
+  (function () {
+    var q = new URLSearchParams(location.search).get('lang'), s = null;
+    try { s = localStorage.getItem('lang'); } catch (e) {}
+    var l = (q === 'fr' || q === 'en') ? q : (s === 'fr' || s === 'en') ? s : (/^fr\b/i.test(navigator.language || '') ? 'fr' : 'en');
+    document.documentElement.lang = l; document.documentElement.dataset.lang = l;
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500;1,600&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
@@ -25,29 +34,30 @@
 
 <header class="hero">
   <div class="wrap">
-    <a class="brand-logo" href="?p=home" data-view-link="home" aria-label="Dropamine, accueil"></a>
+    <a class="brand-logo" href="./" data-view-link="home" aria-label="Dropamine"></a>
     <div class="brand"><h1>Dropamine</h1><p id="sub">HISCORES · FOREVER EU</p></div>
-    <div class="tag">Chaque compétence. Chaque +1.<b>L'addon et ses Hiscores.</b></div>
+    <div class="tag"><span lang="en">Every skill. Every +1.<b>The addon and its Hiscores.</b></span><span lang="fr">Chaque compétence. Chaque +1.<b>L'addon et ses Hiscores.</b></span></div>
   </div>
 </header>
 
-<nav class="nav" aria-label="Navigation principale">
+<nav class="nav" aria-label="Navigation">
   <div class="wrap">
     <div class="tabs" role="tablist">
       <button role="tab" data-view="home" aria-selected="true">Dropamine</button>
-      <button role="tab" data-view="rank" aria-selected="false">Classements</button>
-      <button role="tab" data-view="char" aria-selected="false">Personnage</button>
-      <button role="tab" data-view="guild" aria-selected="false">Guildes</button>
-      <button role="tab" data-view="news" aria-selected="false">Nouveautés</button>
+      <button role="tab" data-view="rank" aria-selected="false" data-t="tab.rank">Hiscores</button>
+      <button role="tab" data-view="char" aria-selected="false" data-t="tab.char">Character</button>
+      <button role="tab" data-view="guild" aria-selected="false" data-t="tab.guild">Guilds</button>
+      <button role="tab" data-view="news" aria-selected="false" data-t="tab.news">What's new</button>
     </div>
     <div class="tools">
-      <select class="region" id="region" aria-label="Région"><option value="eu">EU</option><option value="us">US</option><option value="tw">TW</option></select>
+      <button class="lang-btn" id="lang" type="button" aria-label="Langue / Language">FR</button>
+      <select class="region" id="region" aria-label="Region"><option value="eu">EU</option><option value="us">US</option><option value="tw">TW</option></select>
       <div class="search" role="search">
         <label><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input id="q" type="search" placeholder="Chercher un personnage…" autocomplete="off" aria-label="Chercher un personnage"></label>
+          <input id="q" type="search" autocomplete="off" data-t-ph="search.ph"></label>
         <div class="suggest" id="suggest" role="listbox"></div>
       </div>
-      <a class="btn gold" href="?p=get" data-view-link="get">Télécharger</a>
+      <a class="btn gold" href="?p=get" data-view-link="get" data-t="btn.download">Download</a>
     </div>
   </div>
   <div class="ribbon" aria-hidden="true"></div>
@@ -55,83 +65,82 @@
 
 <main class="wrap">
 
-<!-- ============ ACCUEIL ============ -->
-<section class="view on" id="home" aria-label="L'addon Dropamine">
+<!-- ============ HOME / ACCUEIL ============ -->
+<section class="view on" id="home" aria-label="Dropamine">
   <div class="intro">
-    <div>
+    <div lang="en">
+      <p class="kicker">FREE ADDON · WOW FOREVER</p>
+      <h2>Every skill.<br><em>Every +1, celebrated.</em></h2>
+      <p class="lead">Dropamine puts all your skills on screen at a glance, Old School RuneScape style, and celebrates every point you earn. Collection log, BiS hunt, profession guide, Hardcore alerts: everything that makes progress addictive, without ever touching the game's own interface.</p>
+      <div class="actions"><a class="btn gold" href="https://www.curseforge.com/wow/addons/dropamine" rel="noopener">Download on CurseForge</a><a class="btn ghost" href="?p=rank" data-view-link="rank">See the Hiscores</a></div>
+      <p class="meta" data-meta>Free · open source (MIT) · English and French</p>
+    </div>
+    <div lang="fr">
       <p class="kicker">ADDON GRATUIT · WOW FOREVER</p>
       <h2>Chaque compétence.<br><em>Chaque +1 qui tombe.</em></h2>
       <p class="lead">Dropamine affiche toutes tes compétences d'un coup d'œil, façon Old School RuneScape, et fête chaque point gagné. Carnet de collection, chasse BiS, guide de métier, alerte Hardcore : tout ce qui rend la progression addictive, sans jamais toucher à l'interface du jeu.</p>
-      <div class="actions">
-        <a class="btn gold" href="https://www.curseforge.com/wow/addons/dropamine" rel="noopener">Télécharger sur CurseForge</a>
-        <a class="btn ghost" href="?p=rank" data-view-link="rank">Voir les classements</a>
-      </div>
-      <p class="meta" id="home-meta">Gratuit · open source (MIT) · français et anglais</p>
+      <div class="actions"><a class="btn gold" href="https://www.curseforge.com/wow/addons/dropamine" rel="noopener">Télécharger sur CurseForge</a><a class="btn ghost" href="?p=rank" data-view-link="rank">Voir les classements</a></div>
+      <p class="meta" data-meta>Gratuit · open source (MIT) · français et anglais</p>
     </div>
-    <div class="shot"><img src="img/grid.jpg" alt="Le panneau de Dropamine : toutes les compétences en grille, avec la cible du moment" width="1200" height="537"></div>
+    <div class="shot"><img src="img/grid.jpg" alt="Dropamine panel" width="1200" height="537"></div>
   </div>
 
   <article class="feature reveal">
-    <div class="copy">
-      <p class="kicker">CHAQUE +1</p>
-      <h3>Le +1 qui tombe</h3>
-      <p class="tagline">Chaque point gagné a droit à sa fête.</p>
-      <ul><li>Un toast pour chaque compétence, arme, Défense ou niveau.</li><li>Le niveau total et ses paliers, avec feu d'artifice.</li><li>Ce qui monte sur ta cible, avant même de frapper.</li></ul>
-    </div>
-    <div class="shot"><img src="img/toast.jpg" alt="Toast de Dropamine pour un point de Dépeçage" loading="lazy" width="595" height="468"></div>
+    <div class="copy" lang="en"><p class="kicker">EVERY +1</p><h3>The +1 drop</h3><p class="tagline">Every point you earn gets its moment.</p>
+      <ul><li>A toast for every skill, weapon, Defense or level gain.</li><li>Your total level and its milestones, with fireworks.</li><li>What levels up on your target, before you even swing.</li></ul></div>
+    <div class="copy" lang="fr"><p class="kicker">CHAQUE +1</p><h3>Le +1 qui tombe</h3><p class="tagline">Chaque point gagné a droit à sa fête.</p>
+      <ul><li>Un toast pour chaque compétence, arme, Défense ou niveau.</li><li>Le niveau total et ses paliers, avec feu d'artifice.</li><li>Ce qui monte sur ta cible, avant même de frapper.</li></ul></div>
+    <div class="shot"><img src="img/toast.jpg" alt="Skill-up toast" loading="lazy" width="595" height="468"></div>
   </article>
 
   <article class="feature reveal">
-    <div class="copy">
-      <p class="kicker">COLLECTION</p>
-      <h3>Le carnet de collection</h3>
-      <p class="tagline">Chaque donjon, chaque boss, chaque objet qui te manque.</p>
-      <ul><li>Objets obtenus en couleur, manquants en gris.</li><li>Kills approximatifs par boss, progression par catégorie.</li><li>Toutes les recettes de chaque métier, rangées par rang.</li></ul>
-    </div>
-    <div class="shot"><img src="img/collection.jpg" alt="Carnet de collection d'un donjon" loading="lazy" width="822" height="605"></div>
+    <div class="copy" lang="en"><p class="kicker">COLLECTION</p><h3>The collection log</h3><p class="tagline">Every dungeon, every boss, every item you still need.</p>
+      <ul><li>Owned items in colour, missing ones greyed out.</li><li>Approximate kill count per boss, progress per category.</li><li>Every recipe of every profession, grouped by rank.</li></ul></div>
+    <div class="copy" lang="fr"><p class="kicker">COLLECTION</p><h3>Le carnet de collection</h3><p class="tagline">Chaque donjon, chaque boss, chaque objet qui te manque.</p>
+      <ul><li>Objets obtenus en couleur, manquants en gris.</li><li>Kills approximatifs par boss, progression par catégorie.</li><li>Toutes les recettes de chaque métier, rangées par rang.</li></ul></div>
+    <div class="shot"><img src="img/collection.jpg" alt="Collection log" loading="lazy" width="822" height="605"></div>
   </article>
 
   <article class="feature reveal">
-    <div class="copy">
-      <p class="kicker">CHASSE BIS</p>
-      <h3>Tes favoris deviennent ta chasse</h3>
-      <p class="tagline">Choisis l'objet, puis va le chercher.</p>
-      <ul><li>Les favoris du Dungeon Journal placés sur ta grille d'équipement.</li><li>Vrais kills de boss et chance cumulée de l'avoir eu.</li><li>« Il est tombé ! » quand l'objet arrive enfin.</li></ul>
-    </div>
-    <div class="shot"><img src="img/hunt.jpg" alt="Chasse BiS liée aux favoris du Dungeon Journal" loading="lazy" width="1200" height="585"></div>
+    <div class="copy" lang="en"><p class="kicker">BIS HUNT</p><h3>Your favourites become your hunt</h3><p class="tagline">Pick the item, then go get it.</p>
+      <ul><li>Your Dungeon Journal favourites placed on your equipment grid.</li><li>Real boss kills and the cumulative chance it should have dropped.</li><li>"It dropped!" when it finally does.</li></ul></div>
+    <div class="copy" lang="fr"><p class="kicker">CHASSE BIS</p><h3>Tes favoris deviennent ta chasse</h3><p class="tagline">Choisis l'objet, puis va le chercher.</p>
+      <ul><li>Les favoris du Dungeon Journal placés sur ta grille d'équipement.</li><li>Vrais kills de boss et chance cumulée de l'avoir eu.</li><li>« Il est tombé ! » quand l'objet arrive enfin.</li></ul></div>
+    <div class="shot"><img src="img/hunt.jpg" alt="BiS hunt" loading="lazy" width="1200" height="585"></div>
   </article>
 
   <article class="feature reveal">
-    <div class="copy">
-      <p class="kicker">MÉTIERS <span class="new">3.10</span></p>
-      <h3>SkillUp Forever, intégré</h3>
-      <p class="tagline">Ta prochaine étape de métier, dans l'infobulle.</p>
-      <ul><li>L'étape en cours et la suivante sur chaque case métier.</li><li>Alt+clic : un point sur la carte, et la goutte devient une flèche GPS.</li><li>Optionnel : seulement si SkillUp Forever est installé.</li></ul>
-    </div>
-    <div class="shot"><img src="img/skillup.jpg" alt="Infobulle de métier avec l'étape SkillUp" loading="lazy" width="641" height="641"></div>
+    <div class="copy" lang="en"><p class="kicker">PROFESSIONS <span class="new">3.10</span></p><h3>SkillUp Forever, built in</h3><p class="tagline">Your next profession step, right in the tooltip.</p>
+      <ul><li>Current and next step on every profession tile.</li><li>Alt+click: a map waypoint, and the drop turns into a GPS arrow.</li><li>Optional: only when SkillUp Forever is installed.</li></ul></div>
+    <div class="copy" lang="fr"><p class="kicker">MÉTIERS <span class="new">3.10</span></p><h3>SkillUp Forever, intégré</h3><p class="tagline">Ta prochaine étape de métier, dans l'infobulle.</p>
+      <ul><li>L'étape en cours et la suivante sur chaque case métier.</li><li>Alt+clic : un point sur la carte, et la goutte devient une flèche GPS.</li><li>Optionnel : seulement si SkillUp Forever est installé.</li></ul></div>
+    <div class="shot"><img src="img/skillup.jpg" alt="Profession tooltip with the SkillUp step" loading="lazy" width="641" height="641"></div>
   </article>
 
   <article class="feature reveal">
-    <div class="copy">
-      <p class="kicker">HARDCORE <span class="new">3.10</span></p>
-      <h3>Sache quand une cible peut te tuer</h3>
-      <p class="tagline">Prêt pour le mode Hardcore de Forever.</p>
-      <ul><li>Élite, niveau ?? ou trois niveaux de plus : lueur rouge, bandeau, goutte qui bat.</li><li>Un son d'alerte, une fois par cible.</li><li>Hardcore non officiel : une case par personnage.</li></ul>
-    </div>
-    <div class="shot"><img src="img/hardcore.jpg" alt="Alerte Hardcore sur le panneau" loading="lazy" width="644" height="514"></div>
+    <div class="copy" lang="en"><p class="kicker">HARDCORE <span class="new">3.10</span></p><h3>Know when a target can kill you</h3><p class="tagline">Ready for Forever's Hardcore mode.</p>
+      <ul><li>Elite, level ?? or three levels above you: red glow, banner, beating drop.</li><li>An alert sound, once per target.</li><li>Unofficial Hardcore: one tick per character.</li></ul></div>
+    <div class="copy" lang="fr"><p class="kicker">HARDCORE <span class="new">3.10</span></p><h3>Sache quand une cible peut te tuer</h3><p class="tagline">Prêt pour le mode Hardcore de Forever.</p>
+      <ul><li>Élite, niveau ?? ou trois niveaux de plus : lueur rouge, bandeau, goutte qui bat.</li><li>Un son d'alerte, une fois par cible.</li><li>Hardcore non officiel : une case par personnage.</li></ul></div>
+    <div class="shot"><img src="img/hardcore.jpg" alt="Hardcore alert" loading="lazy" width="644" height="514"></div>
   </article>
 
   <div class="panel bridge reveal">
-    <div>
-      <p class="kicker">HISCORES</p>
-      <h3>Où en es-tu, toi&nbsp;?</h3>
+    <div lang="en"><p class="kicker">HISCORES</p><h3>Where do you stand?</h3>
+      <p>Level, professions and Defense read from the official armory, every day. Register your character and compare yourself with your guild, your class, your region.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn gold" href="?p=join" data-view-link="join">Register my character</a><a class="btn ghost" href="?p=rank" data-view-link="rank">Full Hiscores</a></div></div>
+    <div lang="fr"><p class="kicker">HISCORES</p><h3>Où en es-tu, toi&nbsp;?</h3>
       <p>Niveau, métiers et Défense lus dans l'armurerie officielle, chaque jour. Inscris ton personnage et compare-toi à ta guilde, ta classe, ta région.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn gold" href="?p=join" data-view-link="join">Inscrire mon personnage</a><a class="btn ghost" href="?p=rank" data-view-link="rank">Tout le classement</a></div>
-    </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn gold" href="?p=join" data-view-link="join">Inscrire mon personnage</a><a class="btn ghost" href="?p=rank" data-view-link="rank">Tout le classement</a></div></div>
     <div class="rows" id="home-top"></div>
   </div>
 
-  <div class="trio reveal">
+  <div class="trio reveal" lang="en">
+    <div><b>Safe</b><span>The native Skills tab is never hidden, moved or rewritten.</span></div>
+    <div><b>Light</b><span>Everything runs on game events: nothing while idle, nothing heavy in combat.</span></div>
+    <div><b>Yours</b><span>Four themes, columns, toasts à la carte; every feature can be switched off.</span></div>
+  </div>
+  <div class="trio reveal" lang="fr">
     <div><b>Sans risque</b><span>L'onglet Compétences natif n'est jamais caché, déplacé ni réécrit.</span></div>
     <div><b>Léger</b><span>Tout tourne sur les événements du jeu : rien au repos, rien de lourd en combat.</span></div>
     <div><b>À ton goût</b><span>Quatre thèmes, des colonnes, des toasts à la carte ; chaque fonction se coupe.</span></div>
@@ -139,21 +148,40 @@
 </section>
 
 <!-- ============ HISCORES ============ -->
-<section class="view" id="rank" aria-label="Classement"><div class="panel" id="rank-panel"><div class="empty">Chargement…</div></div></section>
-<section class="view" id="char" aria-label="Personnage"><div class="panel" id="char-panel"></div></section>
-<section class="view" id="guild" aria-label="Guildes"><div class="panel" id="guild-panel"></div></section>
+<section class="view" id="rank" aria-label="Hiscores"><div class="panel" id="rank-panel"><div class="empty">…</div></div></section>
+<section class="view" id="char" aria-label="Character"><div class="panel" id="char-panel"></div></section>
+<section class="view" id="guild" aria-label="Guilds"><div class="panel" id="guild-panel"></div></section>
 
-<!-- ============ NOUVEAUTÉS ============ -->
-<section class="view" id="news" aria-label="Nouveautés">
+<!-- ============ NEWS / NOUVEAUTÉS ============ -->
+<section class="view" id="news" aria-label="What's new">
   <div class="panel">
-    <div class="head"><h2>Nouveautés</h2><span class="note">le journal des versions de l'addon, tel que publié sur GitHub (en anglais)</span></div>
-    <div id="news-list"><div class="empty">Chargement…</div></div>
+    <div class="head" lang="en"><h2>What's new</h2><span class="note">the addon's changelog, as published on GitHub</span></div>
+    <div class="head" lang="fr"><h2>Nouveautés</h2><span class="note">le journal des versions de l'addon, tel que publié sur GitHub (en anglais)</span></div>
+    <div id="news-list"><div class="empty">…</div></div>
   </div>
 </section>
 
-<!-- ============ TÉLÉCHARGER ============ -->
-<section class="view" id="get" aria-label="Télécharger">
-  <div class="panel">
+<!-- ============ DOWNLOAD / TÉLÉCHARGER ============ -->
+<section class="view" id="get" aria-label="Download">
+  <div class="panel" lang="en">
+    <div class="head"><h2>Download Dropamine</h2><span class="note">free, for WoW Forever only</span></div>
+    <div class="grid2">
+      <div>
+        <ol class="steps">
+          <li><b>Download</b> the addon from <a href="https://www.curseforge.com/wow/addons/dropamine" rel="noopener">CurseForge</a> (or with the CurseForge app), or the latest release archive from <a href="https://github.com/Raykuilu/Dropamine/releases/latest" rel="noopener">GitHub</a>.</li>
+          <li><b>Unzip</b> into <code>World of Warcraft\_forever_\Interface\AddOns\</code>, so you get <code>AddOns\Dropamine\Dropamine.toc</code>.</li>
+          <li><b>Launch the game</b>: a short tour shows each feature. <code>/drop</code> opens the panel, <code>/drop help</code> lists the commands.</li>
+        </ol>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px"><a class="btn gold" href="https://www.curseforge.com/wow/addons/dropamine" rel="noopener">CurseForge</a><a class="btn ghost" href="https://github.com/Raykuilu/Dropamine/releases/latest" rel="noopener">GitHub</a></div>
+      </div>
+      <div style="display:grid;gap:14px;align-content:start">
+        <div class="card"><h4>Dungeon Journal <span style="font-size:13px;color:var(--faint)">optional</span></h4><p>Adds boss loot tables to the collection log and the hunt, with your favourites.</p></div>
+        <div class="card"><h4>SkillUp Forever <span style="font-size:13px;color:var(--faint)">optional</span></h4><p>Your next profession step in the tooltip, the GPS arrow, and complete recipe lists.</p></div>
+        <div class="card"><h4>Questie or AtlasLoot <span style="font-size:13px;color:var(--faint)">optional</span></h4><p>Tell where to find the patterns and recipes you are missing.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel" lang="fr">
     <div class="head"><h2>Télécharger Dropamine</h2><span class="note">gratuit, pour WoW Forever uniquement</span></div>
     <div class="grid2">
       <div>
@@ -173,9 +201,24 @@
   </div>
 </section>
 
-<!-- ============ INSCRIPTION ============ -->
-<section class="view" id="join" aria-label="Inscription">
-  <div class="panel">
+<!-- ============ JOIN / INSCRIPTION ============ -->
+<section class="view" id="join" aria-label="Join">
+  <div class="panel" lang="en">
+    <div class="head"><h2>Register a character</h2><span class="note">free, no password</span></div>
+    <div class="grid2">
+      <ol class="steps">
+        <li><b>Open the form</b>: you need a (free) GitHub account. Battle.net sign-in will come later.</li>
+        <li><b>Pick your region</b> and type your character as the armory shows it: first name and surname.</li>
+        <li><b>That's it.</b> The character is checked in the armory (level 10 or more, logged out at least once), then added; it shows up at the next update.</li>
+      </ol>
+      <div style="display:grid;gap:14px;align-content:start">
+        <a class="btn gold" href="https://github.com/Raykuilu/dropamine-site/issues/new?template=inscription.yml" rel="noopener">Open the registration form</a>
+        <a class="btn ghost" href="https://github.com/Raykuilu/dropamine-site/issues/new?template=retrait.yml" rel="noopener">Remove a character</a>
+        <div class="cta"><b>Estimated score?</b> Weapon skills are not in the armory, so each equipped weapon is counted at its maximum. Sending your Dropamine file, for an exact score, comes with a future version of the addon.</div>
+      </div>
+    </div>
+  </div>
+  <div class="panel" lang="fr">
     <div class="head"><h2>Inscrire un personnage</h2><span class="note">gratuit, sans mot de passe</span></div>
     <div class="grid2">
       <ol class="steps">
@@ -192,9 +235,22 @@
   </div>
 </section>
 
-<!-- ============ CONFIDENTIALITÉ ============ -->
-<section class="view" id="privacy" aria-label="Confidentialité">
-  <div class="panel prose">
+<!-- ============ PRIVACY / CONFIDENTIALITÉ ============ -->
+<section class="view" id="privacy" aria-label="Privacy">
+  <div class="panel prose" lang="en">
+    <div class="head"><h2>Privacy and data</h2></div>
+    <h3>Where the data comes from</h3>
+    <p>From the public WoW Forever armory, read once a day with Blizzard's official API: level, class, race, guild, game mode, professions, Defense, equipment, statistics and the character picture.</p>
+    <h3>Who is listed</h3>
+    <p>Only registered characters. One point per day is kept for the progress charts.</p>
+    <h3>Leaving</h3>
+    <p>The <a href="https://github.com/Raykuilu/dropamine-site/issues/new?template=retrait.yml" rel="noopener">removal form</a> deletes the character and its history at the next update.</p>
+    <h3>This site</h3>
+    <p>No account, no cookie, no tracker or analytics. Hosted on GitHub Pages; fonts come from Google Fonts and character pictures from Blizzard's servers. Your language choice is remembered in your browser only.</p>
+    <h3>Legal</h3>
+    <p>Community project, not affiliated with Blizzard Entertainment. World of Warcraft and character pictures are © Blizzard Entertainment. Dropamine and this site: Raykuilu, MIT licence.</p>
+  </div>
+  <div class="panel prose" lang="fr">
     <div class="head"><h2>Confidentialité et données</h2></div>
     <h3>D'où viennent les données</h3>
     <p>Des pages publiques de l'armurerie WoW Forever, lues une fois par jour avec l'API officielle de Blizzard : niveau, classe, race, guilde, mode de jeu, métiers, Défense, équipement, statistiques et image du personnage.</p>
@@ -203,7 +259,7 @@
     <h3>Se retirer</h3>
     <p>Le <a href="https://github.com/Raykuilu/dropamine-site/issues/new?template=retrait.yml" rel="noopener">formulaire de retrait</a> supprime le personnage et son historique à la mise à jour suivante.</p>
     <h3>Ce site</h3>
-    <p>Aucun compte, aucun cookie, aucun traceur ni outil de mesure d'audience. Le site est hébergé par GitHub Pages ; les polices viennent de Google Fonts et les images des personnages des serveurs de Blizzard.</p>
+    <p>Aucun compte, aucun cookie, aucun traceur ni outil de mesure d'audience. Le site est hébergé par GitHub Pages ; les polices viennent de Google Fonts et les images des personnages des serveurs de Blizzard. Ton choix de langue est retenu dans ton navigateur uniquement.</p>
     <h3>Mentions</h3>
     <p>Projet communautaire, non affilié à Blizzard Entertainment. World of Warcraft et les images des personnages sont © Blizzard Entertainment. Dropamine et ce site : Raykuilu, licence MIT.</p>
   </div>
@@ -213,9 +269,12 @@
 
 <footer>
   <div class="wrap">
-    <div><b>DROPAMINE</b><p>L'addon WoW Forever façon Old School RuneScape (projet non affilié, aucun contenu Jagex). Inspiration visuelle : FlareUI de Malkkav. Merci à Exehn (Dungeon Journal) et cjber (SkillUp Forever).</p><p id="updated"></p></div>
-    <div><b>L'ADDON</b><a href="https://www.curseforge.com/wow/addons/dropamine" rel="noopener">CurseForge</a><a href="https://github.com/Raykuilu/Dropamine" rel="noopener">GitHub</a><a href="?p=news" data-view-link="news">Nouveautés</a></div>
-    <div><b>HISCORES</b><a href="?p=join" data-view-link="join">S'inscrire ou se retirer</a><a href="?p=privacy" data-view-link="privacy">Confidentialité</a><a href="https://github.com/Raykuilu/dropamine-site" rel="noopener">Code du site</a></div>
+    <div><b>DROPAMINE</b>
+      <p lang="en">The Old School RuneScape-style addon for WoW Forever (unaffiliated, no Jagex assets). Visual inspiration: FlareUI by Malkkav. Thanks to Exehn (Dungeon Journal) and cjber (SkillUp Forever).</p>
+      <p lang="fr">L'addon WoW Forever façon Old School RuneScape (projet non affilié, aucun contenu Jagex). Inspiration visuelle : FlareUI de Malkkav. Merci à Exehn (Dungeon Journal) et cjber (SkillUp Forever).</p>
+      <p id="updated"></p></div>
+    <div><b data-t="foot.addon">THE ADDON</b><a href="https://www.curseforge.com/wow/addons/dropamine" rel="noopener">CurseForge</a><a href="https://github.com/Raykuilu/Dropamine" rel="noopener">GitHub</a><a href="?p=news" data-view-link="news" data-t="tab.news">What's new</a></div>
+    <div><b>HISCORES</b><a href="?p=join" data-view-link="join" data-t="foot.join">Join or leave</a><a href="?p=privacy" data-view-link="privacy" data-t="foot.privacy">Privacy</a><a href="https://github.com/Raykuilu/dropamine-site" rel="noopener" data-t="foot.code">Site source</a></div>
   </div>
 </footer>
 

@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-25T14:17:20.331Z",
+ "updated": "2026-11-25T14:33:28.370Z",
  "players": [
   {
    "key": "eu/ray-kuilu",
@@ -8,7 +8,10 @@
    "name": "Ray",
    "surname": "Kuilu",
    "class": "Druide",
+   "classId": 11,
    "race": "Elfe de la nuit",
+   "raceId": 4,
+   "gender": "MALE",
    "faction": "ALLIANCE",
    "guild": {
     "name": "Everybody Knows",

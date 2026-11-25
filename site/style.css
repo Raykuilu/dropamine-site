@@ -285,3 +285,9 @@ html.static .reveal{opacity:1;transform:none}
   .tri i,.prof .bar i,.mbar i{width:var(--w)!important}
   .chart .stroke{stroke-dashoffset:0}
 }
+
+/* ============ Langues : un seul bloc visible (FR ou EN) ============ */
+html[data-lang=en] [lang=fr],html[data-lang=fr] [lang=en]{display:none!important}
+.lang-btn{all:unset;cursor:pointer;font-family:var(--display);font-weight:700;letter-spacing:.12em;font-size:13px;color:var(--muted);height:36px;padding:0 12px;border:1px solid var(--line-2);border-radius:999px;transition:.25s var(--ease)}
+.lang-btn:hover{color:var(--gold);border-color:var(--rim-lo)}
+.lang-btn:focus-visible{outline:2px solid var(--rim);outline-offset:2px}

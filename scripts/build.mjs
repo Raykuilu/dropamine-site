@@ -166,7 +166,8 @@ async function main() {
     const p = c.profile;
     players.push({
       key: e.key, region: e.region, slug: e.slug, name: p.name, surname: p.surname,
-      class: p.character_class?.name, race: p.race?.name, faction: p.faction?.type,
+      class: p.character_class?.name, classId: p.character_class?.id ?? null, race: p.race?.name, raceId: p.race?.id ?? null,
+      gender: p.gender?.type ?? null, faction: p.faction?.type,
       guild: p.guild ? { name: p.guild.name, slug: p.guild.slug } : null,
       ruleset: p.ruleset?.name ?? null, rulesetId: p.ruleset?.id ?? null,
       ...s, stats: pickStats(c.achStats), history: hist.slice(-30),
