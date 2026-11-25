@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Carte personnage — 4 directions</title>
+<link rel="stylesheet" href="style.css">
+<style>body{padding:0;margin:0}canvas{display:block}</style></head><body>
+<canvas id="cv"></canvas>
+<script>
+const PROF = { 165:'Travail du cuir',393:'Dépeçage',185:'Cuisine',356:'Pêche',129:'Secourisme',171:'Alchimie',164:'Forge',333:'Enchantement',202:'Ingénierie',182:'Herboristerie',186:'Minage',197:'Couture' };
+const PROF_ICON = { 171:'trade_alchemy',164:'trade_blacksmithing',333:'trade_engraving',202:'trade_engineering',182:'trade_herbalism',165:'trade_leatherworking',186:'trade_mining',393:'inv_misc_pelt_wolf_01',197:'trade_tailoring',185:'inv_misc_food_15',356:'trade_fishing',129:'spell_holy_sealofsacrifice' };
+const WPN = { axes:['Haches','inv_axe_01'],axes2h:['Haches à deux mains','inv_axe_09'],maces:['Masses','inv_mace_01'],maces2h:['Masses à deux mains','inv_mace_04'],swords:['Épées','inv_sword_04'],swords2h:['Épées à deux mains','inv_sword_10'],polearms:["Armes d'hast",'inv_spear_06'],staves:['Bâtons','inv_staff_08'],fist:['Armes de pugilat','inv_gauntlets_04'],daggers:['Dagues','inv_weapon_shortblade_05'],unarmed:['Mains nues','inv_gauntlets_04'],feral:['Combat farouche','ability_druid_catform'],bows:['Arcs','inv_weapon_bow_02'],guns:['Armes à feu','inv_weapon_rifle_01'],crossbows:['Arbalètes','inv_weapon_crossbow_01'],thrown:['Armes de jet','inv_throwingknife_02'],wands:['Baguettes','inv_wand_01'] };
+const CLASS = {1:'Guerrier',2:'Paladin',3:'Chasseur',4:'Voleur',5:'Prêtre',7:'Chaman',8:'Mage',9:'Démoniste',11:'Druide'};
+const RACE = {1:'Humain',2:'Orc',3:'Nain',4:'Elfe de la nuit',5:'Mort-vivant',6:'Tauren',7:'Gnome',8:'Troll'};
+const icon = n => `https://render.worldofwarcraft.com/eu/icons/56/${n}.jpg`;
+const C = { lvl:'#b85a46', wpn:'#6a88c0', prf:'#5f9a4a', gold:'#e8c88a', cream:'#efe2c6', muted:'#a8946f', rim:'#c49a5c', rimLo:'#8a6a3a', rimDk:'#3b2a17' };
+const RAR = [[0.2,'Commun','#9d9d9d'],[0.4,'Peu commun','#1eff00'],[0.6,'Rare','#0070dd'],[0.8,'Épique','#a335ee'],[2,'Légendaire','#ff8000']];
+const AMB = { ALLIANCE:{ sky:'#173a7a', deep:'#050a18', light:'#7fb0ff', ember:'#e8c88a' }, HORDE:{ sky:'#7a1d12', deep:'#140404', light:'#ff9a5a', ember:'#ffcf7a' } };
+
+const cv = document.getElementById('cv'), g = cv.getContext('2d');
+const fmt = n => n.toLocaleString('fr-FR').replace(/ /g, ' ');
+const IMG = {}; const load = src => IMG[src] || (IMG[src] = new Promise(r => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => r(i); i.onerror = () => r(null); i.src = src; }));
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+function skillsOf(p) {
+  const w = (p.weaponList || []).filter(x => x.rank > 0).map(x => ({ name:WPN[x.id]?.[0], ic:WPN[x.id]?.[1], v:x.rank, max:5*p.level, est:!!x.est }));
+  const pr = (p.professions || []).map(x => ({ name:PROF[x.id] || x.name, ic:PROF_ICON[x.id], v:x.skill, max:x.max || 300 }));
+  const d = p.defense ? [{ name:'Défense', ic:'inv_shield_06', v:p.defense, max:5*p.level }] : [];
+  return [...w, ...d, ...pr].sort((a,b) => b.v - a.v);
+}
+function cropOf(img) {
+  const c = document.createElement('canvas'); c.width = img.width / 4; c.height = img.height / 4;
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0, c.width, c.height);
+  const d = x.getImageData(0, 0, c.width, c.height).data; let a = c.width, b = c.height, e = 0, f = 0;
+  for (let y = 0; y < c.height; y++) for (let i = 0; i < c.width; i++) if (d[(y*c.width+i)*4+3] > 20) { a = Math.min(a,i); e = Math.max(e,i); b = Math.min(b,y); f = Math.max(f,y); }
+  return [a*4, b*4, (e-a+1)*4, (f-b+1)*4];
+}
+const rr = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
+function T(s, x, y, size, color, o = {}) {
+  g.font = `${o.w || 400} ${size}px ${o.f || "'EB Garamond'"}`; g.textAlign = o.a || 'left'; g.textBaseline = o.b || 'alphabetic';
+  if (o.ls) g.letterSpacing = o.ls + 'px'; else g.letterSpacing = '0px';
+  if (o.stroke) { g.lineJoin = 'round'; g.lineWidth = o.stroke; g.strokeStyle = '#000'; g.strokeText(s, x, y); }
+  if (o.glow) { g.save(); g.shadowColor = o.glow; g.shadowBlur = size * 0.5; g.fillStyle = color; g.fillText(s, x, y); g.restore(); }
+  g.fillStyle = color; g.fillText(s, x, y); return g.measureText(s).width;
+}
+function grad(x0, y0, x1, y1, stops) { const l = g.createLinearGradient(x0, y0, x1, y1); stops.forEach(([o, c]) => l.addColorStop(o, c)); return l; }
+function radial(x, y, r, c, a = 1) { const q = g.createRadialGradient(x, y, 0, x, y, r); q.addColorStop(0, c); q.addColorStop(1, c.slice(0, 7) + '00'); g.globalAlpha = a; g.fillStyle = q; g.fillRect(x - r, y - r, 2*r, 2*r); g.globalAlpha = 1; }
+
+// décor : ciel, rayons, brume, braises
+function atmos(x, y, w, h, A, opt = {}) {
+  g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+  g.fillStyle = grad(x, y, x, y + h, [[0, A.sky], [0.7, A.deep], [1, '#000']]); g.fillRect(x, y, w, h);
+  const lx = x + w * (opt.lx ?? 0.35), ly = y - h * 0.1;
+  g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 7; i++) {
+    const a = -0.5 + i * 0.17 + rnd() * 0.06, sp = 0.025 + rnd() * 0.04, len = h * 1.6;
+    g.beginPath(); g.moveTo(lx, ly); g.lineTo(lx + Math.sin(a - sp) * len, ly + Math.cos(a - sp) * len); g.lineTo(lx + Math.sin(a + sp) * len, ly + Math.cos(a + sp) * len); g.closePath();
+    g.fillStyle = grad(lx, ly, lx, ly + len, [[0, A.light + '30'], [0.6, A.light + '08'], [1, A.light + '00']]); g.fill();
+  }
+  radial(lx, ly + h * 0.1, h * 0.7, A.light + '55');
+  g.globalCompositeOperation = 'source-over';
+  for (let i = 0; i < 9; i++) radial(x + rnd() * w, y + h * (0.65 + rnd() * 0.35), w * (0.15 + rnd() * 0.2), '#ffffff', 0.05);
+  g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < (opt.embers ?? 60); i++) { const ex = x + rnd() * w, ey = y + rnd() * h, er = 0.6 + rnd() * 2.2; g.globalAlpha = 0.25 + rnd() * 0.6; radial(ex, ey, er * 4, A.ember); g.fillStyle = A.ember; g.beginPath(); g.arc(ex, ey, er * 0.6, 0, 7); g.fill(); }
+  g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+  const v = g.createRadialGradient(x + w/2, y + h/2, Math.min(w, h) * 0.35, x + w/2, y + h/2, Math.max(w, h) * 0.75); v.addColorStop(0, '#0000'); v.addColorStop(1, '#000000d0'); g.fillStyle = v; g.fillRect(x, y, w, h);
+  g.restore();
+}
+// personnage : lueur de contour + ombre au sol ; part = fraction de hauteur gardée depuis le haut
+function figure(cx, bottom, height, glow, part = 1) {
+  const [sx, sy, sw, sh] = CROP, h0 = sh * part, s = height / h0, dw = sw * s;
+  if (part === 1) { g.save(); g.scale(1, 0.22); radial(cx, bottom / 0.22, dw * 0.45, '#000000', 0.8); g.restore(); }
+  g.save(); g.shadowColor = glow; g.shadowBlur = 50; g.drawImage(RENDER, sx, sy, sw, h0, cx - dw/2, bottom - height, dw, height); g.restore();
+  g.drawImage(RENDER, sx, sy, sw, h0, cx - dw/2, bottom - height, dw, height);
+  return dw;
+}
+// la goutte Dropamine
+function dropPath(cx, top, w, h) {
+  const r = w / 2, cy = top + h - r;
+  g.beginPath(); g.moveTo(cx, top);
+  g.bezierCurveTo(cx + r * 0.25, top + (h - r) * 0.45, cx + r, cy - r * 0.75, cx + r, cy);
+  g.arc(cx, cy, r, 0, Math.PI);
+  g.bezierCurveTo(cx - r, cy - r * 0.75, cx - r * 0.25, top + (h - r) * 0.45, cx, top); g.closePath();
+}
+function liquid(cx, top, w, h, P, inside, scale = 1) {
+  const pt = P.parts, mx = P.max, x0 = cx - w/2, bot = top + h;
+  const bands = [[pt.professions / mx, C.prf, '#8cc472'], [pt.combat / mx, C.wpn, '#9cb6e0'], [pt.level / mx, C.lvl, '#d98a73']];
+  g.save(); dropPath(cx, top, w, h); g.clip();
+  g.fillStyle = '#1a120b'; g.fillRect(x0, top, w, h);
+  if (inside) inside();
+  // remplissage proportionnel à la hauteur (approximation visuelle)
+  let acc = 0; const lvlOf = f => bot - h * 0.06 - (h * 0.82) * f * scale;
+  const ys = bands.map(([f]) => (acc += f, lvlOf(acc)));
+  for (let i = bands.length - 1; i >= 0; i--) {
+    const y = ys[i], ph = i * 1.7;
+    g.beginPath(); g.moveTo(x0, bot);
+    for (let x = 0; x <= w; x += 4) g.lineTo(x0 + x, y + Math.sin(x / w * Math.PI * 3 + ph) * h * 0.012);
+    g.lineTo(x0 + w, bot); g.closePath();
+    g.fillStyle = grad(0, y, 0, y + h * 0.25, [[0, bands[i][2]], [1, bands[i][1]]]); g.globalAlpha = inside ? 0.62 : 1; g.fill(); g.globalAlpha = 1;
+    g.strokeStyle = '#ffffff55'; g.lineWidth = Math.max(1.5, w * 0.006); g.beginPath();
+    for (let x = 0; x <= w; x += 4) g[x ? 'lineTo' : 'moveTo'](x0 + x, y + Math.sin(x / w * Math.PI * 3 + ph) * h * 0.012); g.stroke();
+  }
+  for (let i = 0; i < 9; i++) { const bx = x0 + w * (0.2 + rnd() * 0.6), by = ys[0] + (bot - ys[0]) * rnd() * 0.85 + 6; g.strokeStyle = '#ffffff70'; g.lineWidth = Math.max(1, w * 0.005); g.beginPath(); g.arc(bx, by, w * (0.008 + rnd() * 0.018), 0, 7); g.stroke(); }
+  radial(cx - w * 0.22, top + h * 0.45, w * 0.3, '#ffffff', 0.08);
+  g.restore();
+  // cadre bronze
+  dropPath(cx, top, w, h); g.lineWidth = w * 0.075; g.strokeStyle = '#120c06'; g.stroke();
+  g.lineWidth = w * 0.055; g.strokeStyle = grad(cx - w/2, top, cx + w/2, top + h, [[0, '#e2bd7a'], [0.5, '#8a6a3a'], [1, '#c49a5c']]); g.stroke();
+  g.lineWidth = Math.max(1, w * 0.008); g.strokeStyle = '#f3d9a066'; g.stroke();
+}
+// tuile façon addon : icône, chiffre en bas à droite, /max dessous
+function tile(img, x, y, s, v, max, o = {}) {
+  g.save(); rr(x, y, s, s, s * 0.08); g.fillStyle = '#000'; g.fill(); g.clip();
+  if (img) g.drawImage(img, x, y, s, s);
+  g.fillStyle = grad(0, y + s * 0.35, 0, y + s, [[0, '#0000'], [1, '#000c']]); g.fillRect(x, y, s, s); g.restore();
+  rr(x, y, s, s, s * 0.08); g.lineWidth = Math.max(2, s * 0.035); g.strokeStyle = o.rim || '#6b5a3a'; g.stroke();
+  T(String(v), x + s * 0.92, y + s * 0.6, s * 0.36, '#fff', { f:"'Arial Narrow',Arial,sans-serif", w:700, a:'right', stroke:s * 0.06 });
+  if (max) T('/' + max, x + s * 0.92, y + s * 0.88, s * 0.2, '#e6e6e6', { f:"'Arial Narrow',Arial,sans-serif", w:700, a:'right', stroke:s * 0.04 });
+}
+function triBar(x, y, w, h, P) {
+  const pt = P.parts, mx = P.max; rr(x, y, w, h, h * 0.3); g.fillStyle = '#0b0806'; g.fill(); g.strokeStyle = '#3c2f1e'; g.lineWidth = 1.5; g.stroke();
+  g.save(); rr(x + 2, y + 2, w - 4, h - 4, h * 0.25); g.clip(); let cx = x + 2;
+  for (const [f, c] of [[pt.level / mx, C.lvl], [pt.combat / mx, C.wpn], [pt.professions / mx, C.prf]]) { g.fillStyle = grad(0, y, 0, y + h, [[0, c], [1, c + 'aa']]); g.fillRect(cx, y, (w - 4) * f, h); cx += (w - 4) * f; }
+  g.fillStyle = '#ffffff22'; g.fillRect(x, y + 2, w, h * 0.3); g.restore();
+}
+function plate(x, y, w, h) { rr(x, y, w, h, 6); g.fillStyle = grad(0, y, 0, y + h, [[0, '#2a1e12'], [1, '#120c07']]); g.fill(); g.lineWidth = 2; g.strokeStyle = C.rimLo; g.stroke(); }
+
+let P, RENDER, CROP, AV, SK, ICONS, A, RARITY;
+const D = {
+  // 1. carte à collectionner (750×1050)
+  async 1() {
+    const W = 750, H = 1050; cv.width = W; cv.height = H;
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    rr(4, 4, W - 8, H - 8, 30); g.fillStyle = grad(0, 0, W, H, [[0, '#e2bd7a'], [0.35, '#7a5a2e'], [0.65, '#c49a5c'], [1, '#5a3f1e']]); g.fill();
+    rr(18, 18, W - 36, H - 36, 20); g.fillStyle = '#140e08'; g.fill(); g.lineWidth = 2; g.strokeStyle = '#f3d9a088'; g.stroke();
+    const ax = 36, ay = 104, aw = W - 72, ah = 560;
+    g.save(); rr(ax, ay, aw, ah, 12); g.clip(); atmos(ax, ay, aw, ah, A, { lx:0.5 });
+    figure(ax + aw/2, ay + ah - 18, ah * 0.92, A.light + 'aa'); g.restore();
+    rr(ax, ay, aw, ah, 12); g.lineWidth = 4; g.strokeStyle = C.rim; g.stroke(); g.lineWidth = 1.5; g.strokeStyle = '#000'; g.stroke();
+    // bandeau du nom
+    plate(36, 34, W - 72, 58);
+    T(`${P.name} ${P.surname}`, 56, 75, 38, C.gold, { f:"'Cormorant SC'", w:700 });
+    g.beginPath(); g.arc(W - 74, 63, 24, 0, 7); g.fillStyle = grad(0, 39, 0, 87, [[0, '#d98a73'], [1, '#7a2e22']]); g.fill(); g.lineWidth = 3; g.strokeStyle = C.rim; g.stroke();
+    T(String(P.level), W - 74, 64, 24, '#fff', { f:"'Cormorant Garamond'", w:700, a:'center', b:'middle', stroke:3 });
+    // gemme de rareté
+    g.save(); g.translate(W/2, ay + ah); g.rotate(Math.PI / 4); g.fillStyle = RARITY[2]; g.shadowColor = RARITY[2]; g.shadowBlur = 25; g.fillRect(-16, -16, 32, 32); g.restore();
+    g.save(); g.translate(W/2, ay + ah); g.rotate(Math.PI / 4); g.lineWidth = 3; g.strokeStyle = C.rim; g.strokeRect(-16, -16, 32, 32); g.restore();
+    plate(36, ay + ah + 24, W - 72, 44);
+    T(`${RACE[P.raceId]} · ${CLASS[P.classId]}`, 56, ay + ah + 53, 21, C.cream);
+    T(RARITY[1], W - 56, ay + ah + 53, 21, RARITY[2], { a:'right', w:500 });
+    const ty = ay + ah + 86, s = 120, gap = (W - 72 - 4 * s) / 3;
+    SK.slice(0, 4).forEach((k, i) => tile(ICONS[i], 36 + i * (s + gap), ty, s, k.v, k.max));
+    const by = ty + s + 22; liquid(80, by - 4, 64, 88, P);
+    T(fmt(P.total), 130, by + 46, 46, C.gold, { f:"'Cormorant Garamond'", w:700 });
+    T(`/ ${fmt(P.max)}`, 130 + g.measureText(fmt(P.total)).width + 10, by + 46, 22, C.muted);
+    triBar(130, by + 58, W - 166, 18, P);
+    T('dropamine.app', W/2, H - 30, 17, C.muted, { a:'center', ls:3 });
+  },
+  // 2. affiche cinématique (1200×630)
+  async 2() {
+    const W = 1200, H = 630; cv.width = W; cv.height = H;
+    atmos(0, 0, W, H, A, { lx:0.3, embers:110 });
+    figure(380, H + 40, 640, A.light + 'cc', 1);
+    g.fillStyle = grad(560, 0, W, 0, [[0, '#0000'], [0.35, '#000a'], [1, '#000d']]); g.fillRect(560, 0, W - 560, H);
+    T('DROPAMINE  ·  HISCORES', 690, 120, 18, C.muted, { ls:6 });
+    T(P.name, 684, 215, 104, C.gold, { f:"'Cormorant SC'", w:700, glow:A.light + '66' });
+    T(P.surname, 690, 290, 64, C.cream, { f:"'Cormorant SC'", w:600 });
+    T(`${RACE[P.raceId]} · ${CLASS[P.classId]} niveau ${P.level}${P.guild ? ' · ' + P.guild.name : ''}`, 692, 335, 22, C.muted);
+    liquid(745, 380, 110, 150, P);
+    T(fmt(P.total), 830, 470, 84, C.gold, { f:"'Cormorant Garamond'", w:700 });
+    T(`drops · ${RARITY[1].toLowerCase()}`, 834, 508, 24, RARITY[2], { w:500 });
+    T('dropamine.app', W - 30, H - 26, 17, C.muted, { a:'right', ls:3 });
+  },
+  // 3. fiche façon jeu (1200×630)
+  async 3() {
+    const W = 1200, H = 630; cv.width = W; cv.height = H;
+    g.fillStyle = grad(0, 0, 0, H, [[0, '#262a1d'], [1, '#121410']]); g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 2500; i++) { g.fillStyle = rnd() < 0.5 ? '#ffffff06' : '#00000012'; g.fillRect(rnd() * W, rnd() * H, 2, 2); }
+    rr(8, 8, W - 16, H - 16, 10); g.lineWidth = 3; g.strokeStyle = '#6b5a3a'; g.stroke(); rr(14, 14, W - 28, H - 28, 7); g.lineWidth = 1; g.strokeStyle = '#3b3220'; g.stroke();
+    // en-tête comme le toast de l'addon
+    g.save(); g.beginPath(); g.arc(70, 66, 40, 0, 7); g.clip(); if (AV) g.drawImage(AV, 30, 26, 80, 80); g.restore();
+    g.beginPath(); g.arc(70, 66, 40, 0, 7); g.lineWidth = 4; g.strokeStyle = '#8a7a55'; g.stroke();
+    T(`${P.name} ${P.surname}`, 128, 62, 40, '#ffd100', { f:"'Arial Narrow',Arial,sans-serif", w:700, stroke:4 });
+    T(`Niveau ${P.level} · ${RACE[P.raceId]} ${CLASS[P.classId]}${P.guild ? ' · <' + P.guild.name + '>' : ''}`, 130, 94, 22, '#fff', { f:"'Arial Narrow',Arial,sans-serif", stroke:3 });
+    g.fillStyle = '#6b5a3a'; g.fillRect(20, 122, W - 40, 2);
+    // modèle au centre
+    const mx = W / 2; g.save(); g.beginPath(); g.rect(330, 126, 540, 400); g.clip();
+    radial(mx, 340, 260, A.light + '40'); g.save(); g.scale(1, 0.25); radial(mx, 512 / 0.25, 170, '#000000', 0.7); g.restore();
+    figure(mx, 515, 380, A.light + '88'); g.restore();
+    // emplacements à gauche et à droite
+    const s = 86, gy = 140, step = 97, list = SK.slice(0, 8);
+    list.forEach((k, i) => { const left = i < 4, x = left ? 40 : W - 40 - s, y = gy + (i % 4) * step;
+      tile(ICONS[i], x, y, s, k.v, k.max);
+      T(k.name, left ? x + s + 14 : x - 14, y + s/2 + 7, 21, '#e6d7b0', { f:"'Arial Narrow',Arial,sans-serif", a:left ? 'left' : 'right', stroke:3 }); });
+    // pied comme l'addon : goutte + total + barre
+    g.fillStyle = '#6b5a3a'; g.fillRect(20, 532, W - 40, 2);
+    liquid(64, 545, 52, 70, P);
+    T(String(P.total), 110, 592, 34, '#fff', { f:"'Arial Narrow',Arial,sans-serif", w:700, stroke:4 });
+    T('/ ' + P.max, 110 + g.measureText(String(P.total)).width + 6, 592, 22, '#bbb', { f:"'Arial Narrow',Arial,sans-serif", stroke:3 });
+    triBar(260, 566, W - 300, 30, P);
+  },
+  // 4. le portrait dans la goutte (1080×1350)
+  async 4() {
+    const W = 1080, H = 1350; cv.width = W; cv.height = H;
+    g.fillStyle = grad(0, 0, 0, H, [[0, '#1e150c'], [1, '#070504']]); g.fillRect(0, 0, W, H);
+    radial(W/2, 480, 620, A.light + '30');
+    g.globalCompositeOperation = 'lighter'; for (let i = 0; i < 50; i++) { const ex = rnd() * W, ey = rnd() * H; g.globalAlpha = 0.2 + rnd() * 0.5; g.fillStyle = C.gold; g.beginPath(); g.arc(ex, ey, 0.6 + rnd() * 1.8, 0, 7); g.fill(); } g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    const dw = 700, dh = 920, top = 50;
+    liquid(W/2, top, dw, dh, P, () => { atmos(W/2 - dw/2, top, dw, dh, A, { lx:0.5, embers:40 }); figure(W/2, top + dh - 30, dh * 0.74, A.light + 'aa'); }, 0.42);
+    T(`${P.name} ${P.surname}`, W/2, 1090, 84, C.gold, { f:"'Cormorant SC'", w:700, a:'center', glow:'#e8c88a44' });
+    T(`${RACE[P.raceId]} · ${CLASS[P.classId]} niveau ${P.level}`, W/2, 1140, 28, C.muted, { a:'center' });
+    const tw = T(fmt(P.total), W/2 - 20, 1230, 72, C.cream, { f:"'Cormorant Garamond'", w:700, a:'right' });
+    T(`drops · ${RARITY[1].toLowerCase()}`, W/2, 1222, 30, RARITY[2], { w:500 });
+    T('dropamine.app', W/2, H - 36, 20, C.muted, { a:'center', ls:4 });
+  },
+};
+(async () => {
+  for (const f of ["700 20px 'Cormorant SC'", "600 20px 'Cormorant SC'", "700 20px 'Cormorant Garamond'", "400 20px 'EB Garamond'", "500 20px 'EB Garamond'"]) await document.fonts.load(f);
+  const q = new URLSearchParams(location.search), DATA = await (await fetch('data/hiscores.json')).json();
+  P = DATA.players.find(p => p.slug === (q.get('who') || 'ray-kuilu'));
+  A = AMB[q.get('f') || P.faction] || AMB.ALLIANCE;
+  RARITY = RAR.find(([lim]) => P.total / P.max < lim);
+  RENDER = await load(P.render); CROP = cropOf(RENDER); AV = await load(P.avatar);
+  SK = skillsOf(P); ICONS = await Promise.all(SK.map(k => load(icon(k.ic))));
+  seed = 7; await D[q.get('d') || 1]();
+  document.title = 'ok';
+})();
+</script></body></html>

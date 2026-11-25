@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Carte personnage — maquettes</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{padding:24px}
+.cm{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;max-width:1500px;margin:auto}
+.cm aside{background:var(--panel);border:1px solid var(--line-2);border-radius:6px;padding:16px;font-size:15px;align-self:start}
+.cm h3{font-family:var(--display);color:var(--gold);font-size:18px;margin:14px 0 6px}
+.cm h3:first-child{margin-top:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{background:var(--panel-2);border:1px solid var(--line-2);color:var(--cream);border-radius:4px;padding:5px 10px;font:inherit;font-size:14px;cursor:pointer}
+.seg button.on{border-color:var(--rim);color:var(--gold);background:#2a1e12}
+.cm label{display:flex;gap:8px;align-items:center;padding:2px 0;cursor:pointer}
+.cm select{width:100%;background:var(--panel-2);color:var(--cream);border:1px solid var(--line-2);border-radius:4px;padding:6px;font:inherit}
+#sk{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:4px;padding:4px 8px}
+#sk img{width:18px;height:18px;border-radius:3px}
+#sk small{margin-left:auto;color:var(--muted)}
+.out{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+canvas{max-width:100%;height:auto;border-radius:6px;box-shadow:0 10px 40px #000a}
+.acts{display:flex;gap:8px}
+.acts button{background:var(--rim);color:var(--ink);border:0;border-radius:4px;padding:8px 16px;font:inherit;font-weight:500;cursor:pointer}
+.acts button+button{background:var(--panel-2);color:var(--cream);border:1px solid var(--line-2)}
+@media (max-width:900px){.cm{grid-template-columns:1fr}}
+</style></head><body>
+<div class="cm">
+<aside>
+  <h3>Personnage</h3><select id="who"></select>
+  <h3>Format</h3><div class="seg" id="fmt"></div>
+  <h3>Thème</h3><div class="seg" id="thm"></div>
+  <h3>Afficher</h3><div id="opt"></div>
+  <h3>Compétences <small style="font-family:var(--serif);color:var(--muted);font-size:13px">(8 max)</small></h3><div id="sk"></div>
+</aside>
+<div class="out">
+  <canvas id="cv"></canvas>
+  <div class="acts"><button id="dl">Télécharger PNG</button><button id="cp">Copier l'image</button></div>
+</div>
+</div>
+<script>
+const PROF = { 165:'Travail du cuir',393:'Dépeçage',185:'Cuisine',356:'Pêche',129:'Secourisme',171:'Alchimie',164:'Forge',333:'Enchantement',202:'Ingénierie',182:'Herboristerie',186:'Minage',197:'Couture' };
+const PROF_ICON = { 171:'trade_alchemy',164:'trade_blacksmithing',333:'trade_engraving',202:'trade_engineering',182:'trade_herbalism',165:'trade_leatherworking',186:'trade_mining',393:'inv_misc_pelt_wolf_01',197:'trade_tailoring',185:'inv_misc_food_15',356:'trade_fishing',129:'spell_holy_sealofsacrifice' };
+const WPN = { axes:['Haches','inv_axe_01'],axes2h:['Haches à deux mains','inv_axe_09'],maces:['Masses','inv_mace_01'],maces2h:['Masses à deux mains','inv_mace_04'],swords:['Épées','inv_sword_04'],swords2h:['Épées à deux mains','inv_sword_10'],polearms:["Armes d'hast",'inv_spear_06'],staves:['Bâtons','inv_staff_08'],fist:['Armes de pugilat','inv_gauntlets_04'],daggers:['Dagues','inv_weapon_shortblade_05'],unarmed:['Mains nues','inv_gauntlets_04'],feral:['Combat farouche','ability_druid_catform'],bows:['Arcs','inv_weapon_bow_02'],guns:['Armes à feu','inv_weapon_rifle_01'],crossbows:['Arbalètes','inv_weapon_crossbow_01'],thrown:['Armes de jet','inv_throwingknife_02'],wands:['Baguettes','inv_wand_01'] };
+const CLASS = {1:'Guerrier',2:'Paladin',3:'Chasseur',4:'Voleur',5:'Prêtre',7:'Chaman',8:'Mage',9:'Démoniste',11:'Druide'};
+const CLASS_COL = {1:'#C69B6D',2:'#F48CBA',3:'#AAD372',4:'#FFF468',5:'#FFFFFF',7:'#0070DD',8:'#3FC7EB',9:'#8788EE',11:'#FF7C0A'};
+const RACE = {1:'Humain',2:'Orc',3:'Nain',4:'Elfe de la nuit',5:'Mort-vivant',6:'Tauren',7:'Gnome',8:'Troll'};
+const icon = n => `https://render.worldofwarcraft.com/eu/icons/56/${n}.jpg`;
+
+// thèmes : fond (dégradé), halo derrière le perso, accent, texte doux, cadre
+const RACE_THEME = {
+  1:['#0f1626','#1d2c4a','#7fa3d8','#d9c9a0'], 2:['#14140b','#2f3517','#9bbf4a','#c9a36a'], 3:['#16120e','#3a2c1d','#d39a52','#bfb3a0'],
+  4:['#120d1f','#2b1d47','#9a7fe0','#7fd6c7'], 5:['#0e120f','#1f2a22','#8fbf8a','#9e9aa8'], 6:['#17110b','#3b2816','#d9a35b','#8fb36a'],
+  7:['#0c1517','#173238','#5fc9c2','#e08fb5'], 8:['#0c1416','#16343a','#4fb8b0','#e0864a'] };
+const THEMES = {
+  neutre:  p => ({ bg:['#1a120b','#0b0806'], halo:'#c49a5c', acc:'#e8c88a', soft:'#a8946f', rim:'#8a6a3a', name:'Neutre' }),
+  faction: p => p.faction === 'HORDE'
+    ? { bg:['#3a0d0a','#0e0504'], halo:'#c0392b', acc:'#e9b55a', soft:'#c99a86', rim:'#7a2a1d', crest:'H' }
+    : { bg:['#10224a','#050a17'], halo:'#3f7be0', acc:'#e8c88a', soft:'#9fb2d6', rim:'#3a5a9a', crest:'A' },
+  race:    p => { const r = RACE_THEME[p.raceId] || RACE_THEME[1]; return { bg:[r[1], '#060606'], halo:r[2], acc:r[3], soft:'#b5aa98', rim:r[2] }; },
+  classe:  p => { const c = CLASS_COL[p.classId] || '#c49a5c'; return { bg:['#1b1714','#070606'], halo:c, acc:c, soft:'#b5aa98', rim:c }; },
+};
+const THEME_LABEL = { neutre:'Neutre (Dropamine)', faction:'Faction', race:'Race', classe:'Classe' };
+const FORMATS = { paysage:[1200,630,'Paysage · Discord/X'], portrait:[1080,1350,'Portrait · Insta'], banniere:[1200,400,'Bannière'] };
+const OPTS = { total:['Total + barre tricolore',1], level:['Niveau',1], guild:['Guilde',1], verif:['Badge vérifié',1], stats:['Victimes · quêtes',0], logo:['Logo Dropamine',1] };
+
+const st = { fmt:'paysage', thm:'faction', opt:Object.fromEntries(Object.entries(OPTS).map(([k,v])=>[k,!!v[1]])), sel:new Set() };
+let DATA, P, IMG = {}, RENDER = null, CROP = null;
+const cv = document.getElementById('cv'), g = cv.getContext('2d');
+const $ = s => document.querySelector(s);
+const fmt = n => n.toLocaleString('fr-FR').replace(/ /g, ' ');
+
+function skillsOf(p) {
+  const w = (p.weaponList || []).filter(x => x.rank > 0).map(x => ({ k:'w'+x.id, name:WPN[x.id]?.[0] || x.id, ic:WPN[x.id]?.[1], v:x.rank, max:5*p.level, est:!!x.est, col:'wpn' }));
+  const pr = (p.professions || []).map(x => ({ k:'p'+x.id, name:PROF[x.id] || x.name, ic:PROF_ICON[x.id], v:x.skill, max:x.max || 300, col:'prf' }));
+  const d = p.defense ? [{ k:'def', name:'Défense', ic:'inv_shield_06', v:p.defense, max:5*p.level, col:'wpn' }] : [];
+  return [...w, ...d, ...pr].sort((a,b) => b.v - a.v);
+}
+const loadImg = src => IMG[src] || (IMG[src] = new Promise(r => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => r(i); i.onerror = () => r(null); i.src = src; }));
+
+// recadre le rendu 3D sur le personnage (bornes des pixels non transparents)
+function cropOf(img) {
+  const c = document.createElement('canvas'); c.width = img.width / 4; c.height = img.height / 4;
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0, c.width, c.height);
+  const d = x.getImageData(0, 0, c.width, c.height).data; let a = c.width, b = c.height, e = 0, f = 0;
+  for (let y = 0; y < c.height; y++) for (let i = 0; i < c.width; i++) if (d[(y*c.width+i)*4+3] > 20) { a = Math.min(a,i); e = Math.max(e,i); b = Math.min(b,y); f = Math.max(f,y); }
+  return [a*4, b*4, (e-a+1)*4, (f-b+1)*4];
+}
+
+async function pick(slug) {
+  P = DATA.players.find(p => p.slug === slug);
+  RENDER = P.render ? await loadImg(P.render) : null; CROP = RENDER ? cropOf(RENDER) : null;
+  const all = skillsOf(P); st.sel = new Set(all.slice(0, 6).map(s => s.k));
+  if ($('#sk')) $('#sk').innerHTML = all.map(s => `<label><input type="checkbox" data-k="${s.k}" ${st.sel.has(s.k)?'checked':''}><img src="${icon(s.ic)}" alt="">${s.name}${s.est?' ~':''}<small>${s.v}</small></label>`).join('');
+  draw();
+}
+
+const rr = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
+function text(s, x, y, size, color, font = 'EB Garamond', weight = 400, align = 'left') {
+  g.font = `${weight} ${size}px '${font}'`; g.fillStyle = color; g.textAlign = align; g.fillText(s, x, y); return g.measureText(s).width;
+}
+function bar(x, y, w, h, parts, track = '#00000066') {
+  rr(x, y, w, h, h/2); g.fillStyle = track; g.fill(); g.save(); rr(x, y, w, h, h/2); g.clip();
+  let cx = x; for (const [f, c] of parts) { g.fillStyle = c; g.fillRect(cx, y, w*f, h); cx += w*f; } g.restore();
+}
+const COL = { lvl:['#b85a46','#d98a73'], wpn:['#6a88c0','#9cb6e0'], prf:['#5f9a4a','#8cc472'] };
+
+async function draw() {
+  const [W, H] = FORMATS[st.fmt], T = THEMES[st.thm](P), o = st.opt;
+  cv.width = W; cv.height = H;
+  // fond
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, T.bg[0]); bg.addColorStop(1, T.bg[1]); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  // zone du portrait
+  const port = st.fmt === 'portrait' ? [0, 0, W, H*0.56] : st.fmt === 'banniere' ? [0, 0, W*0.30, H] : [0, 0, W*0.42, H];
+  const [px, py, pw, ph] = port, cx = px + pw/2, cy = py + ph*0.55;
+  const halo = g.createRadialGradient(cx, cy, 10, cx, cy, Math.max(pw, ph)*0.6);
+  halo.addColorStop(0, T.halo + '88'); halo.addColorStop(0.45, T.halo + '22'); halo.addColorStop(1, T.halo + '00');
+  g.fillStyle = halo; g.fillRect(0, 0, W, H);
+  if (T.crest) text(T.crest === 'H' ? 'HORDE' : 'ALLIANCE', cx, py + ph*0.42, pw*(T.crest === 'H' ? 0.24 : 0.15), T.halo + '26', 'Cormorant SC', 700, 'center');
+  if (RENDER) {
+    const [sx, sy, sw, sh] = CROP;
+    const bust = st.fmt === 'banniere';               // bannière : buste seulement
+    const h0 = bust ? sh*0.48 : sh, s = Math.min((ph*(bust ? 1.02 : 0.9))/h0, (pw*0.92)/sw);
+    const dw = sw*s, dh = h0*s, dx = cx - dw/2, dy = bust ? py + ph - dh : py + ph*0.06 + (ph*0.9 - dh);
+    g.save(); g.shadowColor = '#000c'; g.shadowBlur = 40; g.shadowOffsetY = 12;
+    g.drawImage(RENDER, sx, sy, sw, h0, dx, dy, dw, dh); g.restore();
+    if (!bust) { const fl = g.createRadialGradient(cx, dy+dh, 2, cx, dy+dh, dw*0.5); fl.addColorStop(0,'#0008'); fl.addColorStop(1,'#0000'); g.fillStyle = fl; g.fillRect(cx-dw*0.6, dy+dh-30, dw*1.2, 60); }
+  }
+  // contenu
+  let x, y, w; if (st.fmt === 'portrait') { x = 70; y = H*0.56 + 20; w = W - 140; } else if (st.fmt === 'banniere') { x = W*0.32; y = 50; w = W*0.64; } else { x = W*0.44; y = 70; w = W*0.52; }
+  const big = st.fmt === 'portrait' ? 1.25 : 1, sm = st.fmt === 'banniere' ? 0.8 : 1;
+  text(`${P.name} ${P.surname}`, x, y + 44*big*sm, 56*big*sm, T.acc, 'Cormorant SC', 700);
+  const sub = [o.level ? `Niveau ${P.level}` : '', RACE[P.raceId] || P.race, CLASS[P.classId] || P.class, P.region.toUpperCase()].filter(Boolean).join(' · ');
+  let lw = text(sub, x, y + 80*big*sm, 22*big*sm, T.soft);
+  if (o.verif && P.weaponsSource === 'dropamine') text('  ✔ vérifié', x + lw, y + 80*big*sm, 22*big*sm, '#8cc472');
+  y += 96*big*sm;
+  if (o.guild && P.guild) { text(`‹ ${P.guild.name} ›`, x, y + 18*big*sm, 22*big*sm, T.acc + 'cc', 'EB Garamond', 400); y += 32*big*sm; }
+  if (o.total) {
+    if (st.fmt === 'banniere') {
+      text(fmt(P.total), x + w, 96, 64, T.acc, 'Cormorant Garamond', 700, 'right'); text('drops au total', x + w, 120, 18, T.soft, 'EB Garamond', 400, 'right');
+    } else {
+      y += 16; text(fmt(P.total), x, y + 60*big, 76*big, T.acc, 'Cormorant Garamond', 700);
+      text('drops de compétence', x + g.measureText(fmt(P.total)).width + 16, y + 56*big, 20*big, T.soft); y += 76*big;
+    }
+    const pt = P.parts, sum = pt.level + pt.combat + pt.professions, full = P.max || sum;
+    const by = st.fmt === 'banniere' ? y + 6 : y;
+    bar(x, by, w, 10*sm, [[pt.level/full, COL.lvl[0]], [pt.combat/full, COL.wpn[0]], [pt.professions/full, COL.prf[0]]]); y = by + 34*sm;
+  }
+  const sel = skillsOf(P).filter(s => st.sel.has(s.k));
+  const cols = st.fmt === 'banniere' ? 3 : 2, gap = 18*sm, cw = (w - gap*(cols-1))/cols, rh = (st.fmt === 'portrait' ? 74 : 58)*sm;
+  const icons = await Promise.all(sel.map(s => loadImg(icon(s.ic))));
+  sel.forEach((s, i) => {
+    const cx2 = x + (i % cols)*(cw + gap), cy2 = y + Math.floor(i / cols)*rh, is = 34*big*sm;
+    if (icons[i]) { g.save(); rr(cx2, cy2, is, is, 5); g.clip(); g.drawImage(icons[i], cx2, cy2, is, is); g.restore(); }
+    g.strokeStyle = T.rim; g.lineWidth = 1.5; rr(cx2, cy2, is, is, 5); g.stroke();
+    const tx = cx2 + is + 10, tw = cw - is - 10;
+    g.save(); g.beginPath(); g.rect(tx, cy2 - 4, tw - 70, 30); g.clip(); text(s.name, tx, cy2 + 15*big*sm, 19*big*sm, '#efe2c6'); g.restore();
+    text((s.est ? '~' : '') + s.v, tx + tw, cy2 + 15*big*sm, 22*big*sm, T.acc, 'Cormorant Garamond', 700, 'right');
+    bar(tx, cy2 + 24*big*sm, tw, 6*big*sm, [[Math.min(1, s.v/s.max), (COL[s.col][1]) + (s.est ? '80' : '')]]);
+  });
+  if (o.stats && P.stats && st.fmt !== 'banniere') {
+    const ry = y + Math.ceil(sel.length/cols)*rh + 10;
+    text(`${fmt(P.stats.kills)} victimes · ${fmt(P.stats.quests)} quêtes · ${fmt(P.stats.flights)} vols`, x, ry, 20*big, T.soft);
+  }
+  // pied
+  g.fillStyle = '#0000004d'; g.fillRect(0, H - 44, W, 44); g.fillStyle = T.rim; g.fillRect(0, H - 44, W, 1.5);
+  if (o.logo) { const lg = await loadImg('Dropamine-Logo.png'); if (lg) g.drawImage(lg, 18, H - 40, 36, 36); text('Dropamine', 62, H - 15, 24, T.acc, 'Cormorant SC', 700); }
+  text(`dropamine.app/#c/${P.region}/${P.slug}`, W - 20, H - 16, 18, T.soft, 'EB Garamond', 400, 'right');
+  g.strokeStyle = T.rim; g.lineWidth = 3; g.strokeRect(1.5, 1.5, W - 3, H - 3);
+}
+
+function seg(id, map, key, label = v => v) {
+  const el = $(id); el.innerHTML = Object.keys(map).map(k => `<button data-v="${k}" class="${st[key]===k?'on':''}">${label(k)}</button>`).join('');
+  el.onclick = e => { const b = e.target.closest('button'); if (!b) return; st[key] = b.dataset.v; el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); draw(); };
+}
+(async () => {
+  await document.fonts.load("700 20px 'Cormorant SC'"); await document.fonts.load("700 20px 'Cormorant Garamond'"); await document.fonts.load("400 20px 'EB Garamond'");
+  DATA = await (await fetch('data/hiscores.json')).json();
+  const ps = DATA.players.filter(p => !p.preview).sort((a,b) => b.total - a.total);
+  $('#who').innerHTML = ps.map(p => `<option value="${p.slug}">${p.name} ${p.surname} · ${CLASS[p.classId]} ${p.level}</option>`).join('');
+  $('#who').value = 'ray-kuilu'; $('#who').onchange = e => pick(e.target.value);
+  seg('#fmt', FORMATS, 'fmt', k => FORMATS[k][2]); seg('#thm', THEMES, 'thm', k => THEME_LABEL[k]);
+  $('#opt').innerHTML = Object.entries(OPTS).map(([k,[l]]) => `<label><input type="checkbox" data-o="${k}" ${st.opt[k]?'checked':''}>${l}</label>`).join('');
+  $('#opt').onchange = e => { st.opt[e.target.dataset.o] = e.target.checked; draw(); };
+  $('#sk').onchange = e => { const k = e.target.dataset.k; if (e.target.checked) { if (st.sel.size >= 8) { e.target.checked = false; return; } st.sel.add(k); } else st.sel.delete(k); draw(); };
+  $('#dl').onclick = () => { const a = document.createElement('a'); a.download = `dropamine-${P.slug}.png`; a.href = cv.toDataURL('image/png'); a.click(); };
+  $('#cp').onclick = () => cv.toBlob(b => navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]).then(() => $('#cp').textContent = 'Copiée ✔'));
+  const q = new URLSearchParams(location.search);
+  if (q.has('fmt')) st.fmt = q.get('fmt'); if (q.has('thm')) st.thm = q.get('thm');
+  if (q.has('shot')) { document.body.style.padding = 0; $('aside').remove(); $('.acts').remove(); document.querySelector('.cm').style.display = 'block'; cv.style.cssText = 'max-width:none;border-radius:0;box-shadow:none;display:block'; }
+  pick(q.get('who') || 'ray-kuilu');
+})();
+</script>
+</body></html>

@@ -21,7 +21,13 @@ const I18N = {
   tipSpare: ['Not in hand at the last armory read', "Pas en main lors de la dernière lecture de l'armurerie"],
   moreW: ['+ {n} other weapon skill{s}', '+ {n} autre{s} compétence{s} d’arme'], lessW: ['Only weapons in use', 'Seulement les armes utilisées'],
   viewT: ['Display', 'Affichage'], viewList: ['List', 'Liste'], viewGrid: ['Grid, as in the addon', "Grille, comme dans l'addon"],
-  share: ['Share', 'Partager'], copied: ['Link copied', 'Lien copié'],
+  share: ['Share', 'Partager'], close: ['Close', 'Fermer'],
+  cardBtn: ['My card', 'Ma carte'], cardT: ['Card', 'Carte'], cardOpen: ['Open the card', 'Ouvrir la carte'], cardTheme: ['Scene', 'Ambiance'], cardSkills: ['Skills shown (4)', 'Compétences affichées (4)'],
+  cardDl: ['Download PNG', 'Télécharger PNG'], cardCopy: ['Copy image', "Copier l'image"], cardCopied: ['Copied', 'Copiée'], cardNoCopy: ['Copy not allowed here', 'Copie impossible ici'],
+  cardNote: ['The frame changes with your total: bronze, silver, gold, then legendary. The number is your registration order.', "Le cadre évolue avec ton total : bronze, argent, or, puis légendaire. Le numéro est ton ordre d'inscription."],
+  cardPreview: ['Guild preview · not registered', 'Aperçu de guilde · non inscrit'], rarities: ['Common|Uncommon|Rare|Epic|Legendary', 'Commun|Peu commun|Rare|Épique|Légendaire'],
+  'th.faction': ['Faction', 'Faction'], 'th.race': ['Race', 'Race'], 'th.classe': ['Class', 'Classe'], 'th.neutre': ['Dropamine', 'Dropamine'],
+  albumT: ['Guild album', 'Album de la guilde'], albumNote: ['click a card to open it', 'clique une carte pour l’ouvrir'], copied: ['Link copied', 'Lien copié'],
   gainsT: ['TODAY’S +1', 'LES +1 DU JOUR'], gainsNone: ['', ''],
   splitT: ['Split', 'Répartition'], bestByProf: ['Best by profession', 'Meilleurs par métier'], sinceY: ['since yesterday', 'depuis hier'],
   estSep: ['ESTIMATED · NOT RANKED UNTIL THE DROPAMINE LINE IS SENT', 'ESTIMÉS · SANS RANG JUSQU’À L’ENVOI DE LA LIGNE DROPAMINE'],
@@ -420,7 +426,7 @@ function renderChar() {
       ${portrait}
       <div><h2>${full(p)}</h2><p>${desc} · ${t('levelN', { n: p.level })}${p.guild ? ` · <a href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${esc(p.guild.name)}</a>` : ''} · ${esc((p.region || 'eu').toUpperCase())}${rulesetName(p) ? ' ' + esc(rulesetName(p)) : ''}</p>
         ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t('previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}
-        <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button></div>
+        <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button><button class="share cardb" type="button" data-card="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M12 12l2 2-2 2-2-2z"/></svg><span>${t('cardBtn')}</span></button></div>
       <div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n" data-n="${p.total}">${fmt(p.total)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div></div>
     </div>
     ${skillsBlock(p, peers)}
@@ -443,6 +449,97 @@ document.addEventListener('click', async e => {
     setTimeout(() => { sp.textContent = t('share'); b.classList.remove('ok'); }, 1800);
   } catch (err) { /* partage annulé ou presse-papiers refusé : rien à faire */ }
 });
+
+/* ---------- Carte personnage : fenêtre de création (le dessin est dans card.js) ---------- */
+const CardUI = (() => {
+  const THEMES = ['faction', 'race', 'classe', 'neutre'];
+  let dlg, p, theme = 'faction', pick = [], busy = 0;
+  const choices = () => skillItems(p, [p]).filter(i => i.key !== 'level');
+  const labels = () => {
+    const desc = LANG === 'fr' ? `${className(p)} ${raceName(p)}` : `${raceName(p)} ${className(p)}`;
+    return {
+      line: desc.charAt(0).toUpperCase() + desc.slice(1) + (p.guild ? ` · ${p.guild.name}` : ''),
+      rarity: t('rarities').split('|'), total: fmt(p.total), max: fmt(p.max || 2460),
+      no: p.no ? `#${String(p.no).padStart(3, '0')} · Forever ${(p.region || 'eu').toUpperCase()}${rulesetName(p) ? ' · ' + rulesetName(p) : ''}` : t('cardPreview'),
+    };
+  };
+  async function draw() {
+    const run = ++busy, cv = $('canvas', dlg);
+    await document.fonts.ready;
+    const items = choices(), skills = pick.map(k => items.find(i => i.key === k)).filter(Boolean)
+      .map(i => ({ name: i.name, img: icon(i.img), v: i.rank, max: i.max, est: i.est }));
+    const off = document.createElement('canvas');
+    const R = await DropCard.draw(off, p, { theme, skills, L: labels() });
+    if (run !== busy) return;   // un choix plus récent a déjà relancé le dessin
+    cv.width = off.width; cv.height = off.height; cv.getContext('2d').drawImage(off, 0, 0);
+    $('.card3d', dlg).dataset.r = R.frame; $('.crar', dlg).innerHTML = `<i style="background:${R.col}"></i>${t('rarities').split('|')[R.i]}`;
+  }
+  function side() {
+    const items = choices();
+    $('.cthemes', dlg).innerHTML = THEMES.map(k => `<button type="button" data-th="${k}" aria-pressed="${k === theme}">${t('th.' + k)}</button>`).join('');
+    $('.cpick', dlg).innerHTML = items.map(i => `<label class="g-${i.group}"><input type="checkbox" value="${i.key}" ${pick.includes(i.key) ? 'checked' : ''}>
+      <img src="${icon(i.img)}" alt="" referrerpolicy="no-referrer"><span>${esc(i.name)}</span><b>${i.est ? '~' : ''}${i.rank}</b></label>`).join('');
+  }
+  function build() {
+    dlg = document.createElement('dialog'); dlg.className = 'cardd';
+    dlg.innerHTML = `<button class="cx" type="button" aria-label="${t('close')}">×</button>
+      <div class="cstage"><div class="card3d"><canvas width="750" height="1050"></canvas><i class="holo"></i><i class="glare"></i></div></div>
+      <div class="cside"><h3>${t('cardT')}</h3><p class="crar"></p>
+        <h4>${t('cardTheme')}</h4><div class="cthemes vsw2"></div>
+        <h4>${t('cardSkills')}</h4><div class="cpick"></div>
+        <div class="cact"><button type="button" class="dl">${t('cardDl')}</button><button type="button" class="cp">${t('cardCopy')}</button></div>
+        <p class="cnote">${t('cardNote')}</p></div>`;
+    document.body.append(dlg);
+    dlg.addEventListener('click', e => {
+      if (e.target === dlg || e.target.closest('.cx')) return dlg.close();
+      const th = e.target.closest('[data-th]'); if (th) { theme = th.dataset.th; side(); draw(); return; }
+      if (e.target.closest('.dl')) { const a = document.createElement('a'); a.download = `dropamine-${p.slug}.png`; a.href = $('canvas', dlg).toDataURL('image/png'); a.click(); return; }
+      const cp = e.target.closest('.cp');
+      if (cp) {
+        const blob = new Promise(r => $('canvas', dlg).toBlob(r, 'image/png'));
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+          .then(() => { cp.textContent = t('cardCopied'); setTimeout(() => cp.textContent = t('cardCopy'), 1800); })
+          .catch(() => { cp.textContent = t('cardNoCopy'); });
+      }
+    });
+    dlg.addEventListener('change', e => {
+      const k = e.target.value; if (!k) return;
+      if (e.target.checked) { pick.push(k); if (pick.length > 4) pick.shift(); } else pick = pick.filter(x => x !== k);
+      side(); draw();
+    });
+    // effet holographique : la carte suit le pointeur (désactivé si l'utilisateur limite les animations)
+    const c3 = $('.card3d', dlg);
+    c3.addEventListener('pointermove', e => {
+      if (reduce) return;
+      const r = c3.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      c3.style.setProperty('--rx', ((0.5 - y) * 14).toFixed(2) + 'deg'); c3.style.setProperty('--ry', ((x - 0.5) * 18).toFixed(2) + 'deg');
+      c3.style.setProperty('--mx', (x * 100).toFixed(1) + '%'); c3.style.setProperty('--my', (y * 100).toFixed(1) + '%'); c3.classList.add('on');
+    });
+    c3.addEventListener('pointerleave', () => { c3.classList.remove('on'); c3.style.setProperty('--rx', '0deg'); c3.style.setProperty('--ry', '0deg'); });
+  }
+  function open(player) {
+    if (!window.DropCard) return;
+    if (!dlg) build();
+    p = player; theme = 'faction';
+    pick = choices().filter(i => !i.est).sort((a, b) => b.rank - a.rank).slice(0, 4).map(i => i.key);
+    $('.cside h3', dlg).textContent = `${p.name} ${p.surname}`;
+    side(); dlg.showModal(); draw();
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-card]'); if (!b) return;
+    const pl = DATA.players.find(x => pkey(x) === b.dataset.card); if (pl) { Tip.hide(); open(pl); }
+  });
+  return { open };
+})();
+// vignette de l'album de guilde : le cadre et la gemme suivent la rareté, comme sur la carte
+const miniCard = p => {
+  const R = window.DropCard ? DropCard.rarityOf(p) : { frame: 'bronze', col: '#9d9d9d', i: 0 };
+  return `<button type="button" class="mcard f-${R.frame}" data-card="${esc(pkey(p))}" style="--rc:${R.col};--ac:${p.faction === 'HORDE' ? '#7a1d12' : '#173a7a'}" aria-label="${t('cardOpen')} : ${full(p)}">
+    <span class="art">${p.render ? `<img src="${esc(p.render)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="logo"></span>'}</span>
+    <span class="lv">${p.level}</span><i class="gem"></i>
+    <b>${full(p)}</b><small>${fmt(p.total)} · ${t('rarities').split('|')[R.i]}</small>
+    <em>${p.no ? '#' + String(p.no).padStart(3, '0') : t('preview')}</em></button>`;
+};
 
 /* ---------- Guildes ---------- */
 function guilds() {
@@ -493,6 +590,7 @@ function renderGuild() {
       ${gains.length ? feat(t('bestWeek'), full(gains[0].p), t('inWeek', { n: fmt(gains[0].d) })) : feat(t('bestWeek'), '—', t('notEnough'))}
     </div>
     ${clan}
+    <div class="dpanel album"><div class="dhead"><h3 class="sub">${t('albumT')}</h3><span class="note">${t('albumNote')}</span></div><div class="mcards">${members.map(miniCard).join('')}</div></div>
     <div class="rows" style="margin-top:clamp(18px,2.6vw,28px)">
       <div class="row th g"><span>${t('rank')}</span><span>${t('member')}</span><span class="c3">${t('split')}</span><span class="c4" style="text-align:right">${t('d7')}</span><span style="text-align:right">${t('totalH')}</span></div>
       ${members.map((p, i) => { const d = gain7(p); return `<div class="row g${i < 3 ? ' top' : ''}" data-c="${esc(pkey(p))}"><span class="rk">${i + 1}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b><small>${esc(className(p))} ${p.level}</small></span></span>${tri(p)}<span class="up">${d ? (d > 0 ? '+' : '') + fmt(d) : '—'}</span><span class="tot">${fmt(p.total)}${estTag(p)}</span></div>`; }).join('')}
