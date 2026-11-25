@@ -44,6 +44,9 @@ const SESSION_HOURS = 12;
 const sessions = new Map();          // id → { exp, bnetId, battletag, characters: Map(key → perso) }
 const sign = v => createHmac('sha256', CFG.sessionSecret).update(v).digest('base64url');
 const seal = v => `${v}.${sign(v)}`;
+// Le registre est public : on n'y écrit jamais le numéro de compte Battle.net, seulement une empreinte
+// (HMAC avec le secret du service), stable pour un même compte mais impossible à relier à lui.
+const ownerOf = s => `bnet:${createHmac('sha256', CFG.sessionSecret).update('owner:' + s.bnetId).digest('base64url').slice(0, 16)}`;
 function unseal(s) {
   const i = String(s ?? '').lastIndexOf('.'); if (i < 1) return null;
   const v = s.slice(0, i), a = Buffer.from(s.slice(i + 1)), b = Buffer.from(sign(v));
@@ -206,7 +209,7 @@ const server = createServer(async (req, res) => {
         const body = await readBody(req);
         const keys = [...new Set((Array.isArray(body.keys) ? body.keys : []).map(k => String(k).toLowerCase()))].filter(validKey).slice(0, 50);
         if (!keys.length) return send(res, 400, { error: 'aucun personnage' }, cors);
-        const owner = `bnet:${s.bnetId}`;
+        const owner = ownerOf(s);
         const r = url.pathname === '/claim'
           ? await updateRegistry(reg => applyClaim(reg, keys, owner, s.characters), `Hiscores: register ${keys.join(', ')} (Battle.net)`)
           : await updateRegistry(reg => applyRelease(reg, keys, s.characters), `Hiscores: remove ${keys.join(', ')} (Battle.net)`);
@@ -227,7 +230,7 @@ const server = createServer(async (req, res) => {
         const c = matchUpload(p, s.characters);
         if (!c) return send(res, 400, { error: 'not-yours' }, cors);
         if (c.level < 10) return send(res, 400, { error: 'level' }, cors);
-        await updateRegistry(reg => applyClaim(reg, [c.key], `bnet:${s.bnetId}`, s.characters), `Hiscores: register ${c.key} (Battle.net)`);
+        await updateRegistry(reg => applyClaim(reg, [c.key], ownerOf(s), s.characters), `Hiscores: register ${c.key} (Battle.net)`);
         const entry = { weapons: p.weapons, weaponList: p.weaponList, defense: p.defense, level: p.level,
           professions: p.professions, version: p.version, at: new Date().toISOString().slice(0, 10) };
         await updateUploads(u => ({ registry: { ...u, [c.key]: entry }, changed: true }), `Hiscores: Dropamine line for ${c.key}`);

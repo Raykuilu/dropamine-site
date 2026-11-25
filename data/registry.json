@@ -1,5 +1,5 @@
 {
-  "_comment": "Personnages inscrits, « région/prénom-nom » en minuscules (ajoutés par le formulaire d inscription). owners : compte GitHub qui a inscrit le personnage (seul à pouvoir le retirer automatiquement).",
+  "_comment": "Personnages inscrits, « région/prénom-nom » en minuscules. owners : compte GitHub, ou « bnet:… » = empreinte anonyme du compte Battle.net (jamais le numéro de compte). optout : personnages masqués (aperçu de guilde).",
   "characters": [
     "eu/ray-kuilu"
   ],

@@ -536,6 +536,8 @@ function render(push) {
   $('#region').value = state.region;
   document.title = state.view === 'home' ? t('title') : `${t(TITLES[state.view])} · Dropamine`;
   animate($('#' + state.view));
+  // dons : seulement sur les pages de l'addon, jamais à côté des données Blizzard (classements, fiches, guildes)
+  $('#foot-coffee').hidden = !['home', 'get', 'news'].includes(state.view);
   writeUrl(push);
 }
 function go(patch) {
