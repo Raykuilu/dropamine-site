@@ -324,3 +324,9 @@ html[data-lang=en] [lang=fr],html[data-lang=fr] [lang=en]{display:none!important
 .bnet .lead{color:var(--muted);margin:0 0 16px}
 .fine{margin:16px 0 0;font-size:14px;color:var(--faint)}
 .fine a{color:var(--muted)}
+.tot em.pv{color:#9fb6dc}
+.seal.pv{color:#b2c8ec;border-color:rgba(106,136,192,.5);background:rgba(106,136,192,.1)}
+.pv-note{margin:10px 0 0;font-size:14px;color:var(--muted);font-style:italic}
+.pv-note a{color:var(--gold)}
+.bnet .tagged.pv{color:#b2c8ec}
+.bnet .tagged.off{color:var(--faint)}

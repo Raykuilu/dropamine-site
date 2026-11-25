@@ -45,19 +45,22 @@ export function applyClaim(registry, keys, owner, allowed) {
     if (c.level < 10) { refused.push({ key, why: 'level' }); continue; }
     if (!known.has(key)) { reg.characters.push(key); known.add(key); }
     reg.owners[key] = owner;
+    if (reg.optout) reg.optout = reg.optout.filter(k => k !== key);
     done.push(key);
   }
   return { registry: reg, changed: done.length > 0, done, refused };
 }
+// Retirer = ne plus afficher du tout : désinscrit, et ajouté à optout (pour l'aperçu de guilde)
 export function applyRelease(registry, keys, allowed) {
-  const reg = { ...registry, characters: [...(registry.characters ?? [])], owners: { ...(registry.owners ?? {}) } };
+  const reg = { ...registry, characters: [...(registry.characters ?? [])], owners: { ...(registry.owners ?? {}) }, optout: [...(registry.optout ?? [])] };
   const done = [], refused = [];
   for (const key of keys) {
     if (!allowed.has(key)) { refused.push({ key, why: 'not-yours' }); continue; }   // seul le compte Battle.net du personnage peut le retirer
-    const before = reg.characters.length;
+    const before = reg.characters.length, wasOut = reg.optout.includes(key);
     reg.characters = reg.characters.filter(k => String(k).toLowerCase() !== key);
     delete reg.owners[key];
-    if (reg.characters.length !== before) done.push(key);
+    if (!wasOut) reg.optout.push(key);
+    if (reg.characters.length !== before || !wasOut) done.push(key);
   }
   return { registry: reg, changed: done.length > 0, done, refused };
 }

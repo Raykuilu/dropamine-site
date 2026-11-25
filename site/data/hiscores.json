@@ -1,6 +1,331 @@
 {
- "updated": "2026-11-25T14:33:28.370Z",
+ "updated": "2026-11-25T15:40:31.300Z",
  "players": [
+  {
+   "key": "eu/gue-rrier",
+   "region": "eu",
+   "slug": "gue-rrier",
+   "name": "Gue",
+   "surname": "Rrier",
+   "class": "Guerrier",
+   "classId": 1,
+   "race": "Elfe de la nuit",
+   "raceId": 4,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 60,
+   "defense": 298,
+   "weapons": 600,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 186,
+     "name": "Mining",
+     "skill": 300,
+     "max": 300,
+     "recipes": 15
+    },
+    {
+     "id": 164,
+     "name": "Blacksmithing",
+     "skill": 235,
+     "max": 300,
+     "recipes": 85
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 294,
+     "max": 300,
+     "recipes": 41
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 238,
+     "max": 300,
+     "recipes": 2
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 300,
+     "max": 300,
+     "recipes": 19
+    }
+   ],
+   "parts": {
+    "level": 60,
+    "combat": 898,
+    "professions": 1367
+   },
+   "total": 2325,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 13411,
+    "deaths": 219,
+    "quests": 1093,
+    "flights": 312
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 2325
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/177/8049073-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/177/8049073-avatar.jpg",
+   "preview": true
+  },
+  {
+   "key": "eu/patience-disciplïne",
+   "region": "eu",
+   "slug": "patience-disciplïne",
+   "name": "Patience",
+   "surname": "Disciplïne",
+   "class": "Druide",
+   "classId": 11,
+   "race": "Elfe de la nuit",
+   "raceId": 4,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 60,
+   "defense": 300,
+   "weapons": 300,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 333,
+     "name": "Enchanting",
+     "skill": 300,
+     "max": 300,
+     "recipes": 91
+    },
+    {
+     "id": 186,
+     "name": "Mining",
+     "skill": 295,
+     "max": 300,
+     "recipes": 12
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 300,
+     "max": 300,
+     "recipes": 37
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 184,
+     "max": 225,
+     "recipes": 2
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 300,
+     "max": 300,
+     "recipes": 19
+    }
+   ],
+   "parts": {
+    "level": 60,
+    "combat": 600,
+    "professions": 1379
+   },
+   "total": 2039,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 20856,
+    "deaths": 198,
+    "quests": 1016,
+    "flights": 206
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 2039
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/174/7562926-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/174/7562926-avatar.jpg",
+   "preview": true
+  },
+  {
+   "key": "eu/drazz-teck",
+   "region": "eu",
+   "slug": "drazz-teck",
+   "name": "Drazz",
+   "surname": "Teck",
+   "class": "Voleur",
+   "classId": 4,
+   "race": "Elfe de la nuit",
+   "raceId": 4,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 40,
+   "defense": 191,
+   "weapons": 600,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 165,
+     "name": "Leatherworking",
+     "skill": 104,
+     "max": 150,
+     "recipes": 40
+    },
+    {
+     "id": 393,
+     "name": "Skinning",
+     "skill": 225,
+     "max": 225,
+     "recipes": 3
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 225,
+     "max": 225,
+     "recipes": 31
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 193,
+     "max": 225,
+     "recipes": 2
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 198,
+     "max": 225,
+     "recipes": 12
+    }
+   ],
+   "parts": {
+    "level": 40,
+    "combat": 791,
+    "professions": 945
+   },
+   "total": 1776,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 4703,
+    "deaths": 69,
+    "quests": 403,
+    "flights": 90
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 1776
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/205/6903501-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/205/6903501-avatar.jpg",
+   "preview": true
+  },
+  {
+   "key": "eu/rakshir-noirsillage",
+   "region": "eu",
+   "slug": "rakshir-noirsillage",
+   "name": "Rakshir",
+   "surname": "Noirsillage",
+   "class": "Chasseur",
+   "classId": 3,
+   "race": "Elfe de la nuit",
+   "raceId": 4,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 38,
+   "defense": 178,
+   "weapons": 570,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 165,
+     "name": "Leatherworking",
+     "skill": 151,
+     "max": 225,
+     "recipes": 46
+    },
+    {
+     "id": 393,
+     "name": "Skinning",
+     "skill": 223,
+     "max": 225,
+     "recipes": 2
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 5,
+     "max": 75,
+     "recipes": 4
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 213,
+     "max": 225,
+     "recipes": 8
+    }
+   ],
+   "parts": {
+    "level": 38,
+    "combat": 748,
+    "professions": 592
+   },
+   "total": 1378,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 4871,
+    "deaths": 161,
+    "quests": 291,
+    "flights": 76
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 1378
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/182/11834806-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/182/11834806-avatar.jpg",
+   "preview": true
+  },
   {
    "key": "eu/ray-kuilu",
    "region": "eu",
@@ -82,6 +407,716 @@
    ],
    "render": "https://render.worldofwarcraft.com/forever-eu/character/77/32432717-main-raw.png",
    "avatar": "https://render.worldofwarcraft.com/forever-eu/character/77/32432717-avatar.jpg"
+  },
+  {
+   "key": "eu/yema-lobrah",
+   "region": "eu",
+   "slug": "yema-lobrah",
+   "name": "Yema",
+   "surname": "Lobrah",
+   "class": "Chasseur",
+   "classId": 3,
+   "race": "Humain",
+   "raceId": 1,
+   "gender": "FEMALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 38,
+   "defense": 179,
+   "weapons": 380,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 186,
+     "name": "Mining",
+     "skill": 119,
+     "max": 150,
+     "recipes": 6
+    },
+    {
+     "id": 202,
+     "name": "Engineering",
+     "skill": 111,
+     "max": 150,
+     "recipes": 23
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 1,
+     "max": 75,
+     "recipes": 4
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 150,
+     "max": 150,
+     "recipes": 2
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 1,
+     "max": 75,
+     "recipes": 2
+    }
+   ],
+   "parts": {
+    "level": 38,
+    "combat": 559,
+    "professions": 382
+   },
+   "total": 979,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 4843,
+    "deaths": 84,
+    "quests": 370,
+    "flights": 114
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 979
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/91/7150683-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/91/7150683-avatar.jpg",
+   "preview": true
+  },
+  {
+   "key": "eu/tim-plar",
+   "region": "eu",
+   "slug": "tim-plar",
+   "name": "Tim",
+   "surname": "Plar",
+   "class": "Paladin",
+   "classId": 2,
+   "race": "Humain",
+   "raceId": 1,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 36,
+   "defense": 179,
+   "weapons": 180,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 186,
+     "name": "Mining",
+     "skill": 151,
+     "max": 225,
+     "recipes": 8
+    },
+    {
+     "id": 164,
+     "name": "Blacksmithing",
+     "skill": 131,
+     "max": 150,
+     "recipes": 59
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 91,
+     "max": 150,
+     "recipes": 14
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 20,
+     "max": 75,
+     "recipes": 2
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 148,
+     "max": 150,
+     "recipes": 11
+    }
+   ],
+   "parts": {
+    "level": 36,
+    "combat": 359,
+    "professions": 541
+   },
+   "total": 936,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 5303,
+    "deaths": 39,
+    "quests": 322,
+    "flights": 63
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 936
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/137/2727561-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/137/2727561-avatar.jpg",
+   "preview": true
+  },
+  {
+   "key": "eu/spell-cøre",
+   "region": "eu",
+   "slug": "spell-cøre",
+   "name": "Spell",
+   "surname": "Cøre",
+   "class": "Mage",
+   "classId": 8,
+   "race": "Humain",
+   "raceId": 1,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 22,
+   "defense": 95,
+   "weapons": 220,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 197,
+     "name": "Tailoring",
+     "skill": 225,
+     "max": 225,
+     "recipes": 62
+    },
+    {
+     "id": 333,
+     "name": "Enchanting",
+     "skill": 225,
+     "max": 225,
+     "recipes": 27
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 55,
+     "max": 75,
+     "recipes": 5
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 3,
+     "max": 75,
+     "recipes": 1
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 41,
+     "max": 75,
+     "recipes": 2
+    }
+   ],
+   "parts": {
+    "level": 22,
+    "combat": 315,
+    "professions": 549
+   },
+   "total": 886,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 1325,
+    "deaths": 20,
+    "quests": 154,
+    "flights": 21
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 886
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/146/49222802-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/146/49222802-avatar.jpg",
+   "preview": true
+  },
+  {
+   "key": "eu/colìn-maillard",
+   "region": "eu",
+   "slug": "colìn-maillard",
+   "name": "Colìn",
+   "surname": "Maillard",
+   "class": "Prêtre",
+   "classId": 5,
+   "race": "Gnome",
+   "raceId": 7,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 30,
+   "defense": 142,
+   "weapons": 300,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 197,
+     "name": "Tailoring",
+     "skill": 97,
+     "max": 150,
+     "recipes": 30
+    },
+    {
+     "id": 333,
+     "name": "Enchanting",
+     "skill": 107,
+     "max": 150,
+     "recipes": 21
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 108,
+     "max": 150,
+     "recipes": 17
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 11,
+     "max": 75,
+     "recipes": 1
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 7,
+     "max": 75,
+     "recipes": 1
+    }
+   ],
+   "parts": {
+    "level": 30,
+    "combat": 442,
+    "professions": 330
+   },
+   "total": 802,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 3279,
+    "deaths": 45,
+    "quests": 229,
+    "flights": 62
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 802
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/207/9332175-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/207/9332175-avatar.jpg",
+   "preview": true
+  },
+  {
+   "key": "eu/rak-shir",
+   "region": "eu",
+   "slug": "rak-shir",
+   "name": "Rak",
+   "surname": "Shir",
+   "class": "Guerrier",
+   "classId": 1,
+   "race": "Gnome",
+   "raceId": 7,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 21,
+   "defense": 100,
+   "weapons": 210,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 186,
+     "name": "Mining",
+     "skill": 82,
+     "max": 150,
+     "recipes": 3
+    },
+    {
+     "id": 202,
+     "name": "Engineering",
+     "skill": 101,
+     "max": 150,
+     "recipes": 18
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 51,
+     "max": 75,
+     "recipes": 6
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 1,
+     "max": 75,
+     "recipes": 1
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 74,
+     "max": 75,
+     "recipes": 3
+    }
+   ],
+   "parts": {
+    "level": 21,
+    "combat": 310,
+    "professions": 309
+   },
+   "total": 640,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 1280,
+    "deaths": 13,
+    "quests": 134,
+    "flights": 9
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 640
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/150/95776918-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/150/95776918-avatar.jpg",
+   "preview": true
+  },
+  {
+   "key": "eu/nagazach-heal",
+   "region": "eu",
+   "slug": "nagazach-heal",
+   "name": "Nagazach",
+   "surname": "Heal",
+   "class": "Chaman",
+   "classId": 7,
+   "race": "Nain",
+   "raceId": 3,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 32,
+   "defense": 149,
+   "weapons": 160,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 333,
+     "name": "Enchanting",
+     "skill": 51,
+     "max": 75,
+     "recipes": 9
+    },
+    {
+     "id": 182,
+     "name": "Herbalism",
+     "skill": 111,
+     "max": 150,
+     "recipes": 3
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 11,
+     "max": 75,
+     "recipes": 4
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 20,
+     "max": 75,
+     "recipes": 2
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 51,
+     "max": 75,
+     "recipes": 3
+    }
+   ],
+   "parts": {
+    "level": 32,
+    "combat": 309,
+    "professions": 244
+   },
+   "total": 585,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 3316,
+    "deaths": 41,
+    "quests": 287,
+    "flights": 41
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 585
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/133/12982661-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/133/12982661-avatar.jpg",
+   "preview": true
+  },
+  {
+   "key": "eu/forious-simath",
+   "region": "eu",
+   "slug": "forious-simath",
+   "name": "Forious",
+   "surname": "Simath",
+   "class": "Mage",
+   "classId": 8,
+   "race": "Humain",
+   "raceId": 1,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 18,
+   "defense": 82,
+   "weapons": 180,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 197,
+     "name": "Tailoring",
+     "skill": 102,
+     "max": 150,
+     "recipes": 55
+    },
+    {
+     "id": 393,
+     "name": "Skinning",
+     "skill": 75,
+     "max": 75,
+     "recipes": 2
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 1,
+     "max": 75,
+     "recipes": 5
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 1,
+     "max": 75,
+     "recipes": 1
+    }
+   ],
+   "parts": {
+    "level": 18,
+    "combat": 262,
+    "professions": 179
+   },
+   "total": 459,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 1077,
+    "deaths": 33,
+    "quests": 106,
+    "flights": 6
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 459
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/49/16183089-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/49/16183089-avatar.jpg",
+   "preview": true
+  },
+  {
+   "key": "eu/ptitsupo-simath",
+   "region": "eu",
+   "slug": "ptitsupo-simath",
+   "name": "Ptitsupo",
+   "surname": "Simath",
+   "class": "Guerrier",
+   "classId": 1,
+   "race": "Nain",
+   "raceId": 3,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 10,
+   "defense": 45,
+   "weapons": 50,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 186,
+     "name": "Mining",
+     "skill": 72,
+     "max": 75,
+     "recipes": 3
+    },
+    {
+     "id": 164,
+     "name": "Blacksmithing",
+     "skill": 72,
+     "max": 75,
+     "recipes": 23
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 33,
+     "max": 75,
+     "recipes": 6
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 76,
+     "max": 150,
+     "recipes": 5
+    }
+   ],
+   "parts": {
+    "level": 10,
+    "combat": 95,
+    "professions": 253
+   },
+   "total": 358,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 354,
+    "deaths": 2,
+    "quests": 36
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 358
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/15/94684943-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/15/94684943-avatar.jpg",
+   "preview": true
+  },
+  {
+   "key": "eu/ax-pirine",
+   "region": "eu",
+   "slug": "ax-pirine",
+   "name": "Ax",
+   "surname": "Pirine",
+   "class": "Chasseur",
+   "classId": 3,
+   "race": "Nain",
+   "raceId": 3,
+   "gender": "MALE",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "rulesetId": 1,
+   "level": 10,
+   "defense": 45,
+   "weapons": 100,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 186,
+     "name": "Mining",
+     "skill": 5,
+     "max": 75,
+     "recipes": 2
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 1,
+     "max": 75,
+     "recipes": 4
+    }
+   ],
+   "parts": {
+    "level": 10,
+    "combat": 145,
+    "professions": 6
+   },
+   "total": 161,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 295,
+    "deaths": 3,
+    "quests": 39
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 161
+    }
+   ],
+   "render": "https://render.worldofwarcraft.com/forever-eu/character/38/71388966-main-raw.png",
+   "avatar": "https://render.worldofwarcraft.com/forever-eu/character/38/71388966-avatar.jpg",
+   "preview": true
   }
  ]
 }

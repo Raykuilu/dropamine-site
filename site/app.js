@@ -21,8 +21,11 @@ const I18N = {
   kills: ['Creatures killed', 'Créatures tuées'], quests: ['Quests', 'Quêtes'], flights: ['Flights taken', 'Trajets aériens'], deaths: ['Deaths', 'Morts'],
   rank: ['RANK', 'RANG'], character: ['CHARACTER', 'PERSONNAGE'], split: ['BREAKDOWN', 'RÉPARTITION'], value: ['VALUE', 'VALEUR'], totalH: ['TOTAL', 'TOTAL'],
   member: ['MEMBER', 'MEMBRE'], guildH: ['GUILD', 'GUILDE'], members: ['MEMBERS', 'INSCRITS'], d7: ['7 D', '7 J'],
-  est: ['estimated', 'estimé'], allModes: ['All modes', 'Tous les modes'], allClasses: ['All classes', 'Toutes les classes'],
-  registered: ['{n} registered', '{n} inscrit{s}'],
+  est: ['estimated', 'estimé'], preview: ['preview', 'aperçu'],
+  sealPreview: ['GUILD PREVIEW · NOT REGISTERED', 'APERÇU DE GUILDE · NON INSCRIT'],
+  previewNote: ['Shown because their guild is followed. Is it you? <a href="?p=join" data-view-link="join">Sign in</a> to register for an exact score, or to hide it.',
+    "Affiché parce que sa guilde est suivie. C'est toi ? <a href=\"?p=join\" data-view-link=\"join\">Connecte-toi</a> pour t'inscrire avec un score exact, ou pour le masquer."], allModes: ['All modes', 'Tous les modes'], allClasses: ['All classes', 'Toutes les classes'],
+  registered: ['{n} registered', '{n} inscrit{s}'], previewN: ['{n} in preview', '{n} en aperçu'],
   legend: ['Weapons estimated, waiting for the Dropamine file', 'Armes estimées, en attente du fichier Dropamine'], weaponsDef: ['Weapons & Defense', 'Armes et Défense'], professions: ['Professions', 'Métiers'],
   failedT: ['Data unavailable', 'Données indisponibles'], failed: ["The Hiscores couldn't be loaded. Try again in a moment.", "Le classement n'a pas pu être chargé. Réessaie dans un instant."],
   nobodyT: ['Nobody yet', "Personne pour l'instant"], nobody: ['No registered character in this region.', 'Aucun personnage inscrit dans cette région.'], registerYours: ['Register yours', 'Inscris le tien'],
@@ -35,9 +38,9 @@ const I18N = {
   totalLevel: ['TOTAL LEVEL', 'NIVEAU TOTAL'],
   ctaEst: ["<b>Estimated score.</b> Weapon skills are not in the armory, so each equipped weapon is counted at its maximum. The player's Dropamine file will soon give the exact score.",
     "<b>Score estimé.</b> Les compétences d'armes ne sont pas dans l'armurerie : elles sont comptées au maximum pour chaque arme équipée. Le fichier Dropamine du joueur donnera bientôt le score exact."],
-  guildsT: ['Guilds', 'Guildes'], guildsNote: ["ranked by their registered members' total · Forever {r}", 'classées par le total de leurs membres inscrits · Forever {r}'],
+  guildsT: ['Guilds', 'Guildes'], guildsNote: ["ranked by their members' total · Forever {r}", 'classées par le total de leurs membres · Forever {r}'],
   noGuildT: ['No guild', 'Aucune guilde'], noGuild: ['Guilds appear as soon as one of their members registers.', "Les guildes apparaissent dès qu'un de leurs membres est inscrit."],
-  allGuilds: ['← All guilds', '← Toutes les guildes'], membersN: ['{n} registered member{s}', '{n} membre{s} inscrit{s}'],
+  allGuilds: ['← All guilds', '← Toutes les guildes'], membersN: ['{n} member{s}', '{n} membre{s}'],
   guildTotal: ['REGISTERED TOTAL · {r} GUILD', 'TOTAL DES INSCRITS · {r} GUILDE'],
   bestTotal: ['BEST TOTAL', 'MEILLEUR TOTAL'], bestProf: ['BEST PROFESSION', 'MEILLEUR MÉTIER'], bestWeek: ['BEST WEEK', 'PLUS FORTE SEMAINE'],
   inWeek: ['+{n} in 7 days', '+{n} en 7 jours'], notEnough: ['not enough tracking yet', 'pas encore assez de suivi'],
@@ -180,7 +183,7 @@ function rankBy(skill, list) {
 }
 const failed = () => `<div class="empty"><b>${t('failedT')}</b>${t('failed')}</div>`;
 const nobody = () => `<div class="empty"><b>${t('nobodyT')}</b>${t('nobody')} <a href="?p=join" data-view-link="join">${t('registerYours')}</a>.</div>`;
-const estTag = p => p.complete ? '' : `<em>${t('est')}</em>`;
+const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.complete ? '' : `<em>${t('est')}</em>`;
 
 /* ---------- Accueil : le pont vers les classements ---------- */
 function renderHome() {
@@ -216,7 +219,7 @@ function renderRank() {
       <span class="tot">${fmt(v)}${isTotal ? estTag(p) : ''}</span>
     </div>`).join('') : nobody();
   $('#rank-panel').innerHTML = `
-    <div class="head"><h2>${sk.label()}</h2><span class="note">${t('registered', { n: region.length })} · Forever ${state.region.toUpperCase()}</span></div>
+    <div class="head"><h2>${sk.label()}</h2><span class="note">${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
     <div class="chips" role="group">${rsChips}</div>
     <div class="board">
       <nav class="skills">${nav}</nav>
@@ -264,7 +267,7 @@ function renderChar() {
     <div class="who${p.render ? ' has-render' : ''}">
       ${portrait}
       <div><h2>${full(p)}</h2><p>${desc} · ${t('levelN', { n: p.level })}${p.guild ? ` · <a href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${esc(p.guild.name)}</a>` : ''} · ${esc((p.region || 'eu').toUpperCase())}${rulesetName(p) ? ' ' + esc(rulesetName(p)) : ''}</p>
-        ${p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}</div>
+        ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t('previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}</div>
       <div class="score"><div class="n" data-n="${p.total}">${fmt(p.total)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div></div>
     </div>
     <div class="split">
@@ -361,7 +364,7 @@ Object.assign(I18N, {
     'Connecte-toi chez Blizzard : tes personnages Forever s\'affichent, coche ceux à montrer. Nous ne voyons jamais ton mot de passe.'],
   bnLogin: ['Sign in with Battle.net', 'Se connecter avec Battle.net'], bnLogout: ['Sign out', 'Se déconnecter'],
   bnNone: ['No Forever character on this account (level 10+, logged out at least once).', 'Aucun personnage Forever sur ce compte (niveau 10 minimum, déconnecté au moins une fois).'],
-  bnListed: ['LISTED', 'INSCRIT'], bnLow: ['level 10 required', 'niveau 10 requis'],
+  bnListed: ['LISTED', 'INSCRIT'], bnPreview: ['GUILD PREVIEW', 'APERÇU'], bnHidden: ['HIDDEN', 'MASQUÉ'], bnLow: ['level 10 required', 'niveau 10 requis'],
   bnAdd: ['Register selected', 'Inscrire la sélection'], bnRemove: ['Remove selected', 'Retirer la sélection'],
   bnDone: ['Done: {n} character{s} updated. The Hiscores refresh within a few minutes.', 'C\'est fait : {n} personnage{s} mis à jour. Les classements se rafraîchissent d\'ici quelques minutes.'],
   bnError: ['Something went wrong. Try again in a moment.', 'Un problème est survenu. Réessaie dans un instant.'],
@@ -384,6 +387,9 @@ Object.assign(I18N, {
 });
 const Bnet = (() => {
   let alive = null, me = null, msg = '', upMsg = '';
+  // affiché sur le site : inscrit, ou en aperçu de guilde (et pas masqué) ; coché = affiché
+  const previewed = c => !c.registered && !c.optout && DATA.players.some(p => p.preview && pkey(p) === c.key);
+  const shown = c => !!c.registered || previewed(c);
   const box = () => $('#bnet');
   const call = (path, body) => fetch(API + path, body ? { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'include' });
   async function probe() {
@@ -404,9 +410,9 @@ const Bnet = (() => {
     }
     const chars = me.characters || [];
     b.innerHTML = `<div class="who-bn"><b>${esc(me.battletag || 'Battle.net')}</b><a data-bn="logout">${t('bnLogout')}</a></div>
-      ${chars.length ? `<div class="list">${chars.map(c => `<label class="${c.level < 10 ? 'off' : ''}${c.registered ? ' on' : ''}"><input type="checkbox" value="${esc(c.key)}" ${c.level < 10 ? 'disabled' : ''} ${c.registered ? 'checked' : ''}>
+      ${chars.length ? `<div class="list">${chars.map(c => `<label class="${c.level < 10 ? 'off' : ''}${shown(c) ? ' on' : ''}"><input type="checkbox" value="${esc(c.key)}" ${c.level < 10 ? 'disabled' : ''} ${shown(c) ? 'checked' : ''}>
         <span><b>${esc(c.name || c.slug)} ${esc(c.surname || '')}</b><small>${esc(c.region.toUpperCase())} · ${esc(L2(CLASS[c.classId]) || '')} ${c.level}${c.level < 10 ? ' · ' + t('bnLow') : ''}</small></span>
-        ${c.registered ? `<span class="tagged">${t('bnListed')}</span>` : ''}</label>`).join('')}</div>
+        ${c.registered ? `<span class="tagged">${t('bnListed')}</span>` : previewed(c) ? `<span class="tagged pv">${t('bnPreview')}</span>` : c.optout ? `<span class="tagged off">${t('bnHidden')}</span>` : ''}</label>`).join('')}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn gold" data-bn="claim">${t('bnAdd')}</button><button class="btn ghost" data-bn="release">${t('bnRemove')}</button></div>`
         : `<p class="msg">${t('bnNone')}</p>`}
       ${msg ? `<p class="msg">${msg}</p>` : ''}
@@ -435,7 +441,8 @@ const Bnet = (() => {
       await load(); draw(); return;
     }
     const checked = $$('#bnet input:checked').map(i => i.value), all = $$('#bnet input').map(i => i.value);
-    const keys = act === 'claim' ? checked : all.filter(k => !checked.includes(k) && me.characters.find(c => c.key === k)?.registered);
+    const keys = act === 'claim' ? checked.filter(k => !me.characters.find(c => c.key === k)?.registered)
+      : all.filter(k => !checked.includes(k) && shown(me.characters.find(c => c.key === k) || {}));
     if (!keys.length) return;
     $$('#bnet [data-bn]').forEach(x => x.setAttribute('disabled', ''));
     try {

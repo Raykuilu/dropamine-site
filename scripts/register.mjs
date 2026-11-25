@@ -57,6 +57,7 @@ async function main() {
       } else {
         reg.characters.push(e.key);
         reg.owners[e.key] = author;
+        if (reg.optout) reg.optout = reg.optout.filter(k => k !== e.key);
         status = 'ok';
         reply.push(`**${c.profile.name} ${c.profile.surname}** (${e.region.toUpperCase()}, niveau ${c.profile.level}) est inscrit ! Il apparaîtra sur https://dropamine.app d'ici quelques minutes.`,
           '', `**${c.profile.name} ${c.profile.surname}** is registered! It will show on https://dropamine.app within a few minutes.`);
@@ -65,7 +66,11 @@ async function main() {
   } else if (kind === 'retrait') {
     const idx = reg.characters.findIndex(c => parseEntry(c)?.key === e.key);
     if (idx < 0) {
-      reply.push(`**${e.key}** n'est pas inscrit. / **${e.key}** is not registered.`); status = 'ok';
+      // pas inscrit : peut-être affiché en aperçu par sa guilde → on ne l'affichera plus (liste optout)
+      reg.optout ??= [];
+      if (!reg.optout.includes(e.key)) reg.optout.push(e.key);
+      await rm(join(ROOT, 'data/history', e.region, `${e.slug}.json`), { force: true });
+      reply.push(`**${e.key}** ne sera plus affiché sur le site (ni inscrit, ni en aperçu de guilde). / **${e.key}** will no longer be shown on the site (neither registered nor as a guild preview).`); status = 'ok';
     } else if (reg.owners[e.key] && reg.owners[e.key] !== author) {
       // seul le compte qui a inscrit le personnage peut le retirer automatiquement
       status = 'review';

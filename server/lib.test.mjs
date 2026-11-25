@@ -66,3 +66,12 @@ test('ligne hiscores : modifiée, tronquée ou impossible → refusée', () => {
   assert.equal(parseHiscoresLine('bonjour').error, 'format');
   assert.equal(parseHiscoresLine(hsLine(BODY.replace('136=176', '136=999'))).error, 'values');
 });
+
+test('retirer un personnage en aperçu de guilde → optout ; le réinscrire → plus optout', () => {
+  const mine = new Map([['eu/tim-plar', { key: 'eu/tim-plar', level: 36 }]]);
+  const r = applyRelease({ characters: ['eu/ray-kuilu'], owners: {} }, ['eu/tim-plar'], mine);
+  assert.deepEqual(r.done, ['eu/tim-plar']); assert.deepEqual(r.registry.optout, ['eu/tim-plar']);
+  assert.equal(applyRelease(r.registry, ['eu/tim-plar'], mine).changed, false);   // déjà retiré
+  const c = applyClaim(r.registry, ['eu/tim-plar'], 'bnet:1', mine);
+  assert.deepEqual(c.registry.optout, []); assert.ok(c.registry.characters.includes('eu/tim-plar'));
+});

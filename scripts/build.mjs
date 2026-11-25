@@ -143,22 +143,58 @@ async function readJson(file, fallback) {
   return existsSync(file) ? JSON.parse(await readFile(file, 'utf8')) : fallback;
 }
 
+// Guildes suivies (data/guilds.json) → personnages à montrer en aperçu : niveau 10+, ni inscrits, ni retirés
+export function previewEntries(rosters, registered, optout) {
+  const out = new Map();
+  for (const { region, roster } of rosters) {
+    for (const m of roster?.members ?? []) {
+      const c = m.character, slug = c?.slug?.toLowerCase();
+      if (!slug || !slug.includes('-') || (c.level ?? 0) < 10) continue;
+      const key = `${region}/${slug}`;
+      if (registered.has(key) || optout.has(key) || out.has(key)) continue;
+      out.set(key, { region, slug, key, preview: true });
+    }
+  }
+  return [...out.values()];
+}
+
+// n tâches en parallèle au plus (limite d'appels Blizzard : 36 000 par heure)
+async function pool(items, n, fn) {
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) await fn(items[i++]); }));
+}
+
 async function main() {
   const registry = await readJson(join(ROOT, 'data/registry.json'), { characters: [] });
   const uploads = await readJson(join(ROOT, 'data/uploads.json'), {});
+  const guilds = (await readJson(join(ROOT, 'data/guilds.json'), { guilds: [] })).guilds ?? [];
   const tok = await token();
   const today = new Date().toISOString().slice(0, 10);
   const players = [];
 
+  const entries = [];
   for (const raw of registry.characters) {
     const e = parseEntry(raw);
-    if (!e) { console.warn(`· entrée ignorée : ${raw}`); continue; }
+    if (e) entries.push(e); else console.warn(`· entrée ignorée : ${raw}`);
+  }
+  const optout = new Set((registry.optout ?? []).map(k => String(k).toLowerCase()));
+  const rosters = [];
+  for (const g of guilds) {
+    const [region, slug] = String(g).toLowerCase().split('/');
+    const roster = await get(tok, region, `/data/wow/guild/${encodeURIComponent(slug)}/roster`).catch(err => { console.warn(`· guilde ${g} : ${err.message}`); return null; });
+    if (roster) { rosters.push({ region, roster }); console.log(`guilde ${g} : ${roster.members?.length ?? 0} membre(s)`); }
+  }
+  entries.push(...previewEntries(rosters, new Set(entries.map(e => e.key)), optout));
+  // un personnage retiré ne garde pas d'historique
+  for (const k of optout) { const [r, s] = k.split('/'); await rm(join(ROOT, 'data/history', r, `${s}.json`), { force: true }); }
+
+  await pool(entries, 6, async e => {
     const c = await fetchCharacter(tok, e.region, e.slug);
     if (!c) {
       // conditions Blizzard : un personnage qui n'existe plus n'est ni affiché ni conservé
       await rm(join(ROOT, 'data/history', e.region, `${e.slug}.json`), { force: true });
       console.warn(`· ${e.key} : introuvable (niveau < 10, pas encore visible ou supprimé)`);
-      continue;
+      return;
     }
     const s = score(c, uploads[e.key] ?? uploads[e.slug]);
     const asset = key => c.media?.assets?.find(a => a.key === key)?.value ?? null;
@@ -183,9 +219,10 @@ async function main() {
       ruleset: p.ruleset?.name ?? null, rulesetId: p.ruleset?.id ?? null,
       ...s, stats: pickStats(c.achStats), history: hist,
       render: asset('main-raw'), avatar: asset('avatar'),
+      ...(e.preview ? { preview: true } : {}),
     });
-    console.log(`✓ ${e.key} : ${s.total}${s.complete ? '' : ' (estimé)'}`);
-  }
+    console.log(`✓ ${e.key} : ${s.total}${s.complete ? '' : ' (estimé)'}${e.preview ? ' [aperçu]' : ''}`);
+  });
 
   players.sort((a, b) => b.total - a.total || a.key.localeCompare(b.key));
   await mkdir(join(ROOT, 'site/data'), { recursive: true });

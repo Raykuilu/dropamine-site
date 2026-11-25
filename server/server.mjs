@@ -190,7 +190,8 @@ const server = createServer(async (req, res) => {
       if (url.pathname === '/me' && req.method === 'GET') {
         const { registry } = await readRegistry();
         const reg = new Set((registry.characters ?? []).map(k => String(k).toLowerCase()));
-        const list = [...s.characters.values()].sort((a, b) => b.level - a.level).map(c => ({ ...c, registered: reg.has(c.key) }));
+        const out = new Set((registry.optout ?? []).map(k => String(k).toLowerCase()));
+        const list = [...s.characters.values()].sort((a, b) => b.level - a.level).map(c => ({ ...c, registered: reg.has(c.key), optout: out.has(c.key) }));
         return send(res, 200, { battletag: s.battletag, characters: list }, cors);
       }
       if ((url.pathname === '/claim' || url.pathname === '/release') && req.method === 'POST') {

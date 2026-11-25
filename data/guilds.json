@@ -1,0 +1,6 @@
+{
+  "_comment": "Guildes suivies, « région/slug-de-guilde ». Leurs membres niveau 10+ apparaissent en aperçu (non inscrits) ; un retrait (Battle.net ou formulaire) les ajoute à registry.optout.",
+  "guilds": [
+    "eu/everybody-knows"
+  ]
+}

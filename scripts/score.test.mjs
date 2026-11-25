@@ -65,3 +65,12 @@ test('formulaire GitHub → entrée', () => {
   assert.equal(entryFromForm(body.replace('Ray Kuilu', 'Ray')), null);      // nom incomplet
   assert.equal(entryFromForm('n\'importe quoi'), null);
 });
+
+import { previewEntries } from './build.mjs';
+test('aperçu de guilde : niveau 10+, sans les inscrits ni les retirés', () => {
+  const m = (slug, level) => ({ character: { slug, level } });
+  const roster = { members: [m('tim-plar', 36), m('low-guy', 9), m('ray-kuilu', 36), m('gone-away', 20), m('solo', 30)] };
+  const out = previewEntries([{ region: 'eu', roster }], new Set(['eu/ray-kuilu']), new Set(['eu/gone-away']));
+  assert.deepEqual(out.map(e => e.key), ['eu/tim-plar']);
+  assert.equal(out[0].preview, true);
+});
