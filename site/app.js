@@ -358,7 +358,7 @@ document.addEventListener('click', e => {
   const v = b.dataset.sk;
   if (v === 'spare') SHOW_SPARE = !SHOW_SPARE;
   else { SKVIEW = v; try { localStorage.setItem('skview', v); } catch (err) { /* choix gardé pour cette visite */ } }
-  Tip.hide(); renderChar(); Ribbon.swell(.35);
+  Tip.hide(); renderChar(); animate($('#char')); Ribbon.swell(.35);   // animate : remplit à nouveau la barre du total
 });
 // barre du bas du panneau : la goutte, le niveau total, la barre trois couleurs
 const dropBar = p => `<div class="dbar"><span class="logo"></span><span class="dn"><b data-n="${p.total}">${fmt(p.total)}</b><small> / ${fmt(p.max || 2460)}</small></span>${tri(p)}</div>`;
