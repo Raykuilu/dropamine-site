@@ -330,3 +330,10 @@ html[data-lang=en] [lang=fr],html[data-lang=fr] [lang=en]{display:none!important
 .pv-note a{color:var(--gold)}
 .bnet .tagged.pv{color:#b2c8ec}
 .bnet .tagged.off{color:var(--faint)}
+.acct{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border:1px solid var(--line-2);border-radius:999px;font-family:var(--display);font-weight:600;letter-spacing:.08em;font-size:14px;color:var(--muted);white-space:nowrap;transition:.25s var(--ease)}
+.acct:hover{color:var(--gold);border-color:var(--rim-lo)}
+.acct.on{color:#b2c8ec;border-color:rgba(106,136,192,.55);background:rgba(106,136,192,.1)}
+.mine-pick{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px}
+.mine-pick>span:first-child{font-family:var(--display);letter-spacing:.1em;font-size:13px;color:var(--faint);margin-right:4px}
+.mine-pick small{color:inherit;opacity:.7}
+.tabs button[hidden]{display:none}

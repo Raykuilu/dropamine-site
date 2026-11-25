@@ -45,7 +45,7 @@
     <div class="tabs" role="tablist">
       <button role="tab" data-view="home" aria-selected="true">Dropamine</button>
       <button role="tab" data-view="rank" aria-selected="false" data-t="tab.rank">Hiscores</button>
-      <button role="tab" data-view="char" aria-selected="false" data-t="tab.char">Character</button>
+      <button role="tab" data-view="char" aria-selected="false" data-t="tab.mine" hidden>My character</button>
       <button role="tab" data-view="guild" aria-selected="false" data-t="tab.guild">Guilds</button>
       <button role="tab" data-view="news" aria-selected="false" data-t="tab.news">What's new</button>
     </div>
@@ -57,6 +57,7 @@
           <input id="q" type="search" autocomplete="off" data-t-ph="search.ph"></label>
         <div class="suggest" id="suggest" role="listbox"></div>
       </div>
+      <a class="acct" id="acct" href="?p=join" data-view-link="join"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span data-t="acct.in">Sign in</span></a>
       <a class="btn gold" href="?p=get" data-view-link="get" data-t="btn.download">Download</a>
     </div>
   </div>

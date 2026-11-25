@@ -13,7 +13,8 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
    ====================================================================== */
 let LANG = document.documentElement.dataset.lang === 'fr' ? 'fr' : 'en';
 const I18N = {
-  'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.guild': ['Guilds', 'Guildes'],
+  'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'],
+  myChars: ['My characters', 'Mes personnages'], 'tab.guild': ['Guilds', 'Guildes'],
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
   'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source', 'Code du site'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
@@ -29,7 +30,7 @@ const I18N = {
   legend: ['Weapons estimated, waiting for the Dropamine file', 'Armes estimées, en attente du fichier Dropamine'], weaponsDef: ['Weapons & Defense', 'Armes et Défense'], professions: ['Professions', 'Métiers'],
   failedT: ['Data unavailable', 'Données indisponibles'], failed: ["The Hiscores couldn't be loaded. Try again in a moment.", "Le classement n'a pas pu être chargé. Réessaie dans un instant."],
   nobodyT: ['Nobody yet', "Personne pour l'instant"], nobody: ['No registered character in this region.', 'Aucun personnage inscrit dans cette région.'], registerYours: ['Register yours', 'Inscris le tien'],
-  noCharT: ['No character', 'Aucun personnage'], noChar: ['Search for a registered character, or pick one in the Hiscores.', 'Cherche un personnage inscrit, ou choisis-en un dans le classement.'],
+  noCharT: ['No character', 'Aucun personnage'], noChar: ['Search for a character, pick one in the Hiscores, or <a href="?p=join" data-view-link="join">sign in</a> to see yours.', 'Cherche un personnage, choisis-en un dans le classement, ou <a href="?p=join" data-view-link="join">connecte-toi</a> pour voir le tien.'],
   noSearch: ['No registered character matches.', 'Aucun personnage inscrit ne correspond.'],
   chartSoon: ['The chart will appear after a few days of tracking.', 'La courbe apparaîtra après quelques jours de suivi.'],
   levelN: ['level {n}', 'niveau {n}'], of60: ['out of 60', 'sur 60'], profCount: ['{n} profession{s}', '{n} métier{s}'], noProf: ['No profession learned.', 'Aucun métier appris.'],
@@ -247,7 +248,7 @@ function chartSvg(hist) {
 }
 function renderChar() {
   if (DATA.failed) { $('#char-panel').innerHTML = failed(); return; }
-  const p = DATA.players.find(x => pkey(x) === state.c || x.slug === state.c) || inRegion()[0];
+  const p = DATA.players.find(x => pkey(x) === state.c || x.slug === state.c) || DATA.players.find(x => pkey(x) === Bnet.best());
   if (!p) { $('#char-panel').innerHTML = `<div class="empty"><b>${t('noCharT')}</b>${t('noChar')}</div>`; return; }
   state.c = pkey(p);
   const peers = DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu'));
@@ -263,7 +264,10 @@ function renderChar() {
     ? `<div class="portrait"><div class="plinth"></div><div class="plinth2"></div><div class="fig" style="background-image:url('${esc(p.render)}')" role="img" aria-label="${full(p)}"></div></div>`
     : `<div class="vial" role="img" aria-label="Dropamine"></div>`;
   const desc = LANG === 'fr' ? `${esc(className(p))} ${esc(raceName(p))}` : `${esc(raceName(p))} ${esc(className(p))}`;
-  $('#char-panel').innerHTML = `
+  const mine = Bnet.mine();
+  const picker = mine.length > 1 && mine.includes(p)
+    ? `<div class="mine-pick"><span>${t('myChars')}</span>${mine.map(m => `<span class="chip ${m === p ? 'on' : ''}" data-c="${esc(pkey(m))}">${full(m)} <small>${m.level}</small></span>`).join('')}</div>` : '';
+  $('#char-panel').innerHTML = `${picker}
     <div class="who${p.render ? ' has-render' : ''}">
       ${portrait}
       <div><h2>${full(p)}</h2><p>${desc} · ${t('levelN', { n: p.level })}${p.guild ? ` · <a href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${esc(p.guild.name)}</a>` : ''} · ${esc((p.region || 'eu').toUpperCase())}${rulesetName(p) ? ' ' + esc(rulesetName(p)) : ''}</p>
@@ -424,12 +428,12 @@ const Bnet = (() => {
     if (!(await probe())) { draw(); return; }
     const q = new URLSearchParams(location.search);
     if (q.get('bnet') === 'error') msg = t('bnAuthError');
-    await load(); draw();
+    await load(); draw(); header();
   }
   document.addEventListener('click', async e => {
     const el = e.target.closest('[data-bn]'); if (!el) return;
     e.preventDefault(); const act = el.dataset.bn;
-    if (act === 'logout') { await call('/logout', {}).catch(() => {}); me = null; msg = ''; upMsg = ''; draw(); return; }
+    if (act === 'logout') { await call('/logout', {}).catch(() => {}); me = null; msg = ''; upMsg = ''; draw(); header(); return; }
     if (act === 'upload') {
       const line = $('#hsline')?.value.trim(); if (!line) return;
       el.setAttribute('disabled', '');
@@ -438,7 +442,7 @@ const Bnet = (() => {
         upMsg = r.ok ? t('upOk', { w: fmt(j.weapons), n: j.count }) : L2(I18N.upErr[j.error] || I18N.bnError);
         if (r.ok) Ribbon.swell(.8);
       } catch { upMsg = t('bnError'); }
-      await load(); draw(); return;
+      await load(); draw(); header(); return;
     }
     const checked = $$('#bnet input:checked').map(i => i.value), all = $$('#bnet input').map(i => i.value);
     const keys = act === 'claim' ? checked.filter(k => !me.characters.find(c => c.key === k)?.registered)
@@ -451,9 +455,23 @@ const Bnet = (() => {
       msg = r.ok ? t('bnDone', { n: (j.done || []).length }) : t('bnError');
       Ribbon.swell(.8);
     } catch { msg = t('bnError'); }
-    await load(); draw();
+    await load(); draw(); header();
   });
-  return { show };
+  // Compte connecté : bouton de l'en-tête, onglet « Mon personnage », fiches à soi
+  const mine = () => me ? DATA.players.filter(p => me.characters?.some(c => c.key === pkey(p)) && !p.optout) : [];
+  const best = () => [...mine()].sort((a, b) => b.total - a.total)[0] ? pkey([...mine()].sort((a, b) => b.total - a.total)[0]) : '';
+  const isMine = key => mine().some(p => pkey(p) === key);
+  function header() {
+    const a = $('#acct'); if (!a) return;
+    const tag = me?.battletag ? me.battletag.split('#')[0] : '';
+    a.classList.toggle('on', !!me);
+    a.querySelector('span').textContent = tag || t('acct.in');
+    a.title = me ? t('foot.join') : t('acct.in');
+    const tab = $('.tabs [data-view="char"]'); if (tab) tab.hidden = !mine().length;
+  }
+  async function init() { if (await probe()) await load(); }
+  async function refresh() { await load(); render(false); }
+  return { show, init, header, mine, best, isMine, refresh };
 })();
 
 /* ---------- Animations d'arrivée ---------- */
@@ -500,7 +518,8 @@ function render(push) {
   applyStatic();
   renderHome();
   (RENDER[state.view] || (() => {}))();
-  tabs.forEach(b => b.setAttribute('aria-selected', b.dataset.view === state.view));
+  tabs.forEach(b => b.setAttribute('aria-selected', b.dataset.view === state.view && (b.dataset.view !== 'char' || Bnet.isMine(state.c))));
+  Bnet.header();
   $$('.view').forEach(v => v.classList.toggle('on', v.id === state.view));
   $('#sub').textContent = `HISCORES · FOREVER ${state.region.toUpperCase()}`;
   $('#region').value = state.region;
@@ -519,7 +538,7 @@ function setLang(l) {
   try { localStorage.setItem('lang', l); } catch (e) { /* stockage indisponible : le choix vaut pour cette visite */ }
   render(false); Ribbon.swell(.6);
 }
-tabs.forEach(b => b.addEventListener('click', () => go({ view: b.dataset.view })));
+tabs.forEach(b => b.addEventListener('click', () => go(b.dataset.view === 'char' ? { view: 'char', c: Bnet.best() } : { view: b.dataset.view })));
 $('#region').addEventListener('change', e => go({ region: e.target.value, cls: 0, g: '' }));
 $('#lang').addEventListener('click', () => setLang(LANG === 'fr' ? 'en' : 'fr'));
 document.addEventListener('click', e => {
@@ -571,5 +590,6 @@ Promise.all([
     .catch(() => { DATA = { players: [], failed: true }; }),
   fetch('data/changelog.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { NEWS = d; })
     .catch(() => { NEWS = { versions: [] }; }),
+  Bnet.init(),
 ]).then(() => { Ribbon.load(false); return document.fonts.ready; })
   .then(() => { render(false); Ribbon.swell(.7); });
