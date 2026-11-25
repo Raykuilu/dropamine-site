@@ -1,0 +1,81 @@
+{
+ "updated": "2026-11-25T13:56:51.831Z",
+ "region": "eu",
+ "players": [
+  {
+   "slug": "ray-kuilu",
+   "name": "Ray",
+   "surname": "Kuilu",
+   "class": "Druide",
+   "race": "Elfe de la nuit",
+   "faction": "ALLIANCE",
+   "guild": {
+    "name": "Everybody Knows",
+    "slug": "everybody-knows"
+   },
+   "ruleset": "JcJ",
+   "level": 36,
+   "defense": 177,
+   "weapons": 180,
+   "weaponsSource": "estimate",
+   "professions": [
+    {
+     "id": 165,
+     "name": "Leatherworking",
+     "skill": 120,
+     "max": 150,
+     "recipes": 46
+    },
+    {
+     "id": 393,
+     "name": "Skinning",
+     "skill": 223,
+     "max": 300,
+     "recipes": 2
+    },
+    {
+     "id": 185,
+     "name": "Cooking",
+     "skill": 161,
+     "max": 225,
+     "recipes": 28
+    },
+    {
+     "id": 356,
+     "name": "Fishing",
+     "skill": 137,
+     "max": 225,
+     "recipes": 2
+    },
+    {
+     "id": 129,
+     "name": "First Aid",
+     "skill": 208,
+     "max": 225,
+     "recipes": 14
+    }
+   ],
+   "parts": {
+    "level": 36,
+    "combat": 357,
+    "professions": 849
+   },
+   "total": 1242,
+   "max": 2460,
+   "complete": false,
+   "stats": {
+    "kills": 4607,
+    "deaths": 46,
+    "quests": 439,
+    "flights": 116
+   },
+   "history": [
+    {
+     "d": "2026-11-25",
+     "t": 1242
+    }
+   ],
+   "rank": 1
+  }
+ ]
+}

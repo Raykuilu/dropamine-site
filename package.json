@@ -1,0 +1,11 @@
+{
+  "name": "dropamine-site",
+  "private": true,
+  "type": "module",
+  "description": "Dropamine website: addon showcase and WoW Forever hiscores",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test scripts/"
+  },
+  "engines": { "node": ">=20" }
+}
