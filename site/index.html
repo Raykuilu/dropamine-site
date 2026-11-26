@@ -42,15 +42,23 @@
   </div>
 </header>
 
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2.8c3.6 4.4 6.2 8 6.2 11.2a6.2 6.2 0 0 1-12.4 0c0-3.2 2.6-6.8 6.2-11.2z"/><path d="M6.6 13.2c1.8-.9 3.6.9 5.4 0s3.6-.9 5.4 0"/><path d="M6.4 16.2c1.9-.8 3.7.8 5.6 0s3.7-.8 5.6 0"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7.5 4h9v4.5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 5.5H5a2.5 2.5 0 0 0 2.6 3.6"/><path d="M16.5 5.5H19a2.5 2.5 0 0 1-2.6 3.6"/><path d="M12 13v3.5"/><path d="M8.5 20h7l-.8-3.5H9.3z"/></symbol>
+  <symbol id="i-banner" viewBox="0 0 24 24"><path d="M6 3v18"/><path d="M6 4h11l-2.2 3.5L17 11H6"/><path d="M9.5 6.5l1.2 1 1.8-2"/></symbol>
+  <symbol id="i-swords" viewBox="0 0 24 24"><path d="M4 4l9.5 9.5"/><path d="M4 4h3.2L15 11.8"/><path d="M20 4l-9.5 9.5"/><path d="M20 4h-3.2L9 11.8"/><path d="M6.2 15.8l2 2M15.8 17.8l2-2"/><path d="M5 19l2.2-2.2M19 19l-2.2-2.2"/></symbol>
+  <symbol id="i-scroll" viewBox="0 0 24 24"><path d="M7 4h10.5a2 2 0 0 1 0 4H17v10a2 2 0 0 1-2 2H6.5a2 2 0 0 1 0-4H7z"/><path d="M7 16V6"/><path d="M10 9h4.5M10 12h4.5"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20c1.4-3.6 4-5.4 7.2-5.4s5.8 1.8 7.2 5.4"/></symbol>
+</svg>
 <nav class="nav" aria-label="Navigation">
   <div class="wrap">
     <div class="tabs" role="tablist">
-      <button role="tab" data-view="home" aria-selected="true">Dropamine</button>
-      <button role="tab" data-view="rank" aria-selected="false" data-t="tab.rank">Hiscores</button>
-      <button role="tab" data-view="char" aria-selected="false" data-t="tab.mine" hidden>My character</button>
-      <button role="tab" data-view="guild" aria-selected="false" data-t="tab.guild">Guilds</button>
-      <button role="tab" data-view="runs" aria-selected="false" data-t="tab.runs">Group hunt</button>
-      <button role="tab" data-view="news" aria-selected="false" data-t="tab.news">What's new</button>
+      <button role="tab" data-view="home" aria-selected="true"><svg class="ti" aria-hidden="true"><use href="#i-drop"/></svg><span>Dropamine</span></button>
+      <button role="tab" data-view="rank" aria-selected="false"><svg class="ti" aria-hidden="true"><use href="#i-trophy"/></svg><span data-t="tab.rank">Hiscores</span></button>
+      <button role="tab" data-view="char" aria-selected="false" hidden><svg class="ti" aria-hidden="true"><use href="#i-user"/></svg><span data-t="tab.mine">My character</span></button>
+      <button role="tab" data-view="guild" aria-selected="false"><svg class="ti" aria-hidden="true"><use href="#i-banner"/></svg><span data-t="tab.guild">Guilds</span></button>
+      <button role="tab" data-view="runs" aria-selected="false"><svg class="ti" aria-hidden="true"><use href="#i-swords"/></svg><span data-t="tab.runs">Group hunt</span></button>
+      <button role="tab" data-view="news" aria-selected="false"><svg class="ti" aria-hidden="true"><use href="#i-scroll"/></svg><span data-t="tab.news">What's new</span></button>
     </div>
     <div class="tools">
       <button class="lang-btn" id="lang" type="button" aria-label="Langue / Language">FR</button>
@@ -69,6 +77,13 @@
   <div class="ribbon" aria-hidden="true"></div>
 </nav>
 
+<nav class="tabbar" aria-label="Navigation">
+  <button data-go="home"><svg class="ti" aria-hidden="true"><use href="#i-drop"/></svg><span data-t="tb.home">Home</span></button>
+  <button data-go="rank"><svg class="ti" aria-hidden="true"><use href="#i-trophy"/></svg><span>Hiscores</span></button>
+  <button data-go="runs"><svg class="ti" aria-hidden="true"><use href="#i-swords"/></svg><span data-t="tb.hunt">Hunt</span></button>
+  <button data-go="guild"><svg class="ti" aria-hidden="true"><use href="#i-banner"/></svg><span data-t="tab.guild">Guilds</span></button>
+  <button data-go="me"><svg class="ti" aria-hidden="true"><use href="#i-user"/></svg><span data-t="tb.me">Me</span></button>
+</nav>
 <main class="wrap">
 
 <!-- ============ HOME / ACCUEIL ============ -->
@@ -93,6 +108,7 @@
     </div>
     <div class="shot"><img src="img/grid.jpg" alt="Dropamine panel" width="1200" height="537"></div>
   </div>
+  <div id="live" class="lvbox" hidden></div>
 
   <article class="feature reveal">
     <div class="copy" lang="en"><p class="kicker">EVERY +1</p><h3>The +1 drop</h3><p class="tagline">Every point you earn gets its moment.</p>

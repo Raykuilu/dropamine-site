@@ -74,7 +74,16 @@ const I18N = {
   sortBy: ['Rank by', 'Classer par'], trustShort: ['based on trust', 'basé sur la confiance'],
   kills: ['Creatures killed', 'Créatures tuées'], killingBlows: ['Killing blows', 'Coups fatals'], dungeons: ['Dungeons entered', 'Donjons visités'],
   pvpDeaths: ['Killed by players', 'Tué par des joueurs'], duels: ['Duels (won / lost)', 'Duels (gagnés / perdus)'],
-  repsT: ['Reputations', 'Réputations'],
+  repsT: ['Reputations', 'Réputations'], 'tb.home': ['Home', 'Accueil'], 'tb.hunt': ['Hunt', 'Chasse'], 'tb.me': ['Me', 'Moi'],
+  lvTitle: ['Right now on Forever', 'En ce moment sur Forever'], lvSub: ['the last 7 days', 'les 7 derniers jours'],
+  lvUp: ['<b>{n}</b> +{d} {s} <em>→ {v}</em>', '<b>{n}</b> +{d} {s} <em>→ {v}</em>'],
+  lvFound: ['<b>{n}</b> got <em>{i}</em>', '<b>{n}</b> a eu <em>{i}</em>'],
+  lvRun: ['<b>{n}</b> plans {d} <em>· {w}</em>', '<b>{n}</b> propose {d} <em>· {w}</em>'],
+  lvToday: ['today', "aujourd'hui"], lvYesterday: ['yesterday', 'hier'], lvDays: ['{n} d ago', 'il y a {n} j'],
+  lvcDl: ['downloads', 'téléchargements'], lvcChars: ['characters', 'personnages'], lvcGuilds: ['guilds', 'guildes'], lvcRuns: ['planned outings', 'sorties prévues'], lvcItems: ['items logged', 'objets au carnet'],
+  lvRuns: ['Next outings', 'Prochaines sorties'], lvNoRun: ['No outing planned yet: be the first to propose one.', "Aucune sortie prévue pour l'instant : propose la première."],
+  lvWeek: ['This week', 'La semaine'], lvRising: ['Rising guilds', 'Les guildes qui montent'], lvMembers: ['{n} active', '{n} actif{s}'],
+  lvNoWeek: ['Nobody has moved yet this week.', "Personne n'a encore bougé cette semaine."], lvEmpty: ['Quiet for now: the next +1 will show up here.', 'Calme plat pour l’instant : le prochain +1 arrivera ici.'],
   dashHi: ['Hi {n}', 'Salut {n}'], dashSheet: ['My sheet', 'Ma fiche'], dashSend: ['Update my logbook', 'Mettre à jour mon carnet'], in7: ['in 7 days', 'en 7 jours'],
   dashNoLine: ['Your logbook is empty: type /drop hiscores in game and paste the export.', 'Ton carnet est vide : tape /drop hiscores en jeu et colle la ligne.'],
   dashOldLine: ['Your Dropamine export is {n} days old: paste it again to update collection log and hunt.', 'Ta ligne Dropamine date de {n} jours : renvoie-la pour mettre à jour collection log et chasse.'],
@@ -315,6 +324,83 @@ const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.comple
 let CF_DOWNLOADS = 593;   // valeur de secours ; le vrai chiffre vient du serveur (relevé CurseForge toutes les 3 h)
 let cfLoad = null;
 const loadCf = () => cfLoad ??= fetch(API + '/stats').then(r => r.json()).then(j => { const n = j?.curseforge?.downloads; if (n > CF_DOWNLOADS) { CF_DOWNLOADS = n; if (state.view === 'home') renderHome(); } }).catch(() => {});
+// une sortie prévue, en ligne compacte sur fond de donjon (accueil, accueil connecté)
+const runLine = r => { const dd = LOOT?.dungeons.find(x => x.key === r.dungeon), d0 = new Date(r.at);
+  return `<li class="drun"${dd ? artStyle(dd.key) : ''}><a href="?p=runs&run=${esc(r.id)}" data-runlink="${esc(r.id)}"><b>${esc(dd?.name || r.dungeon)}</b><span>${d0.toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short' })} · ${d0.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })} · ${relWhen(d0)}</span><small>${t('runCount', { n: r.members.length })}</small></a></li>`; };
+
+// ---------- Accueil visiteur : « En ce moment sur Forever » ----------
+// le fil : les +1 de la semaine (historique quotidien), les sorties proposées, les objets chassés trouvés
+function liveFeed() {
+  const out = [], today = new Date().setHours(0, 0, 0, 0), week = 7 * 864e5;
+  const label = (p, k) => k === 'l' ? t('level') : k === 'd' ? t('defense') : k[0] === 'p' ? profName(+k.slice(1), (p.professions || []).find(x => x.id === +k.slice(1))?.name) : '';
+  for (const p of inRegion()) {
+    const h = p.history || [];
+    for (let i = h.length - 1; i > 0 && today - new Date(h[i].d) <= week; i--) {
+      const a = h[i - 1], b = h[i]; if (!a.s || !b.s || new Date(b.d) - new Date(a.d) > 1.5 * 864e5) continue;
+      for (const k of Object.keys(b.s)) {
+        if (k[0] === 'w' || a.s[k] == null || b.s[k] <= a.s[k]) continue;
+        const name = label(p, k); if (!name) continue;
+        out.push({ at: new Date(b.d).getTime(), p, html: t('lvUp', { n: full(p), d: fmt(b.s[k] - a.s[k]), s: esc(name), v: fmt(b.s[k]) }), gain: b.s[k] - a.s[k] });
+      }
+    }
+    const at = p.dropamineAt ? Date.parse(p.dropamineAt) : 0;
+    if (at && Date.now() - at <= 2 * week) for (const x of (p.dropamine?.hunt || []).filter(x => x.drops > 0))
+      out.push({ at, p, html: t('lvFound', { n: full(p), i: esc(ITEMS?.[x.id]?.n?.[LANG === 'fr' ? 1 : 0] || x.name) }), item: x.id });
+  }
+  const byKey = new Map(DATA.players.map(p => [pkey(p), p]));
+  for (const r of RUNS || []) {
+    const at = Date.parse(r.created || ''), p = byKey.get(r.by), dd = LOOT?.dungeons.find(x => x.key === r.dungeon);
+    if (p && dd && Date.now() - at <= week) out.push({ at, p, html: t('lvRun', { n: full(p), d: esc(dd.name), w: esc(relWhen(new Date(r.at))) }), run: r.id });
+  }
+  // les plus récents d'abord ; le même jour, les plus gros gains devant
+  return out.sort((a, b) => b.at - a.at || (b.gain || 0) - (a.gain || 0));
+}
+const dayAgo = at => { const n = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(at).setHours(0, 0, 0, 0)) / 864e5);
+  return n <= 0 ? t('lvToday') : n === 1 ? t('lvYesterday') : t('lvDays', { n }); };
+let liveLoad = null, LIVE = [];
+function renderLive() {
+  const box = $('#live'); if (!box) return;
+  if (!liveLoad) liveLoad = Promise.all([loadLoot(), loadItems(), loadArt(), loadRuns()]).then(() => { if (state.view === 'home') { renderLive(); animate(box); } });
+  if (DATA.failed || !DATA.players.length) { box.hidden = true; return; }
+  box.hidden = false;
+  const region = inRegion(), now = Date.now();
+  LIVE = liveFeed();
+  const runs = (RUNS || []).filter(r => Date.parse(r.at) > now - 15 * 60e3);
+  const guildsN = new Set(DATA.players.filter(p => p.guild).map(p => (p.region || 'eu') + '/' + p.guild.slug)).size;
+  const found = DATA.players.reduce((n, p) => n + (p.dropamine?.collection?.x || 0), 0);
+  const counters = [[CF_DOWNLOADS, t('lvcDl')], [DATA.players.length, t('lvcChars')], [guildsN, t('lvcGuilds')], [runs.length, t('lvcRuns')], [found, t('lvcItems')]]
+    .map(([n, l]) => `<div><b data-n="${n}">${fmt(n)}</b><span>${l}</span></div>`).join('');
+  const feed = LIVE.slice(0, 8).map(e => `<li${e.run ? ` data-runlink="${esc(e.run)}"` : ` data-c="${esc(pkey(e.p))}"`}>${avatar(e.p)}<span>${e.html}</span><time>${dayAgo(e.at)}</time></li>`).join('');
+  // la semaine : le podium des gains et les guildes qui montent
+  const movers = region.map(p => ({ p, g: gain7(p) || 0 })).filter(x => x.g > 0).sort((a, b) => b.g - a.g).slice(0, 3);
+  const podium = movers.length ? `<ol class="podium">${[movers[1], movers[0], movers[2]].map((x, i) => x ? `<li class="pd${[2, 1, 3][i]}" data-c="${esc(pkey(x.p))}">${avatar(x.p)}<b>${full(x.p)}</b><span class="up">+${fmt(x.g)}</span><i>${[2, 1, 3][i]}</i></li>` : '<li class="pd-empty"></li>').join('')}</ol>` : `<p class="note">${t('lvNoWeek')}</p>`;
+  const gmap = new Map();
+  for (const p of region) if (p.guild && gain7(p) > 0) { const g = gmap.get(p.guild.slug) || { g: p.guild, n: 0, m: 0 }; g.n += gain7(p); g.m++; gmap.set(p.guild.slug, g); }
+  const rising = [...gmap.values()].sort((a, b) => b.n - a.n).slice(0, 3)
+    .map(x => `<li><a href="?p=guild&g=${esc(x.g.slug)}" data-g="${esc(x.g.slug)}"><b>${esc(x.g.name)}</b><small>${t('lvMembers', { n: x.m })}</small><span class="up">+${fmt(x.n)}</span></a></li>`).join('');
+  box.innerHTML = `<div class="lv-count">${counters}</div>
+    <div class="lv-grid">
+      <section class="panel lv-feed"><div class="cathead"><h3 class="sub"><i class="live"></i>${t('lvTitle')}</h3><span class="cx2">${t('lvSub')}</span></div>
+        ${feed ? `<ul>${feed}</ul>` : `<p class="note">${t('lvEmpty')}</p>`}</section>
+      <div class="lv-side">
+        <section class="panel"><div class="cathead"><h3 class="sub">${t('lvRuns')}</h3><a class="lnk cx2" href="?p=runs" data-view-link="runs">${t('dashAllRuns')}</a></div>
+          ${runs.length ? `<ul class="dlist">${runs.slice(0, 3).map(runLine).join('')}</ul>` : `<p class="note">${RUNS === null ? t('runsApiDown') : t('lvNoRun')}</p>`}</section>
+        <section class="panel"><div class="cathead"><h3 class="sub">${t('lvWeek')}</h3></div>${podium}
+          ${rising ? `<h4 class="lv-h4">${t('lvRising')}</h4><ul class="dlist lv-guilds">${rising}</ul>` : ''}</section>
+      </div>
+    </div>`;
+}
+// de temps en temps, un toast façon addon reprend une ligne du fil (accueil visiteur seulement)
+let toastN = 0;
+setInterval(() => {
+  if (reduce || state.view !== 'home' || document.hidden || $('#home').classList.contains('logged') || toastN >= 6 || !LIVE.length) return;
+  const e = LIVE[toastN % Math.min(LIVE.length, 8)]; toastN++;
+  let wrap = $('#ltoasts'); if (!wrap) { wrap = document.createElement('div'); wrap.id = 'ltoasts'; wrap.setAttribute('aria-hidden', 'true'); document.body.append(wrap); }
+  const el = document.createElement('div'); el.className = 'ltoast';
+  el.innerHTML = `${avatar(e.p)}<span>${e.html}</span>`;
+  wrap.append(el); setTimeout(() => el.classList.add('out'), 4800); setTimeout(() => el.remove(), 5400);
+}, 9000);
+
 // ---------- Accueil personnel (connecté) : tout ce qui sert au quotidien, en un coup d'œil ----------
 function renderDash() {
   const box = $('#dash'); if (!box) return false;
@@ -340,8 +426,6 @@ function renderDash() {
   const mineKeys = new Set(me.map(pkey));
   const myRuns = (RUNS || []).filter(r => r.members.some(m => mineKeys.has(m.key)));
   const openRuns = (RUNS || []).filter(r => !r.members.some(m => mineKeys.has(m.key)) && LOOT && (() => { const dd = LOOT.dungeons.find(x => x.key === r.dungeon); return dd && fitOf(p, dd) !== 'low'; })()).slice(0, 3);
-  const runLine = r => { const dd = LOOT?.dungeons.find(x => x.key === r.dungeon), d0 = new Date(r.at);
-    return `<li class="drun"${dd ? artStyle(dd.key) : ''}><a href="?p=runs&run=${esc(r.id)}" data-runlink="${esc(r.id)}"><b>${esc(dd?.name || r.dungeon)}</b><span>${d0.toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short' })} · ${d0.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })} · ${relWhen(d0)}</span><small>${t('runCount', { n: r.members.length })}</small></a></li>`; };
   const runsCard = `<section class="dcard"><h3>${t('dashRuns')}</h3>${myRuns.length ? `<ul class="dlist">${myRuns.slice(0, 4).map(runLine).join('')}</ul>` : `<p class="note">${t('dashNoRun')}</p>`}
       ${openRuns.length ? `<h4>${t('dashOpenRuns')}</h4><ul class="dlist">${openRuns.map(runLine).join('')}</ul>` : ''}
       <a class="lnk" href="?p=runs" data-view-link="runs">${t('dashAllRuns')}</a></section>`;
@@ -393,6 +477,7 @@ document.addEventListener('click', e => {
 function renderHome() {
   renderDash();
   loadCf();
+  renderLive();
   // les chiffres qui montrent que le projet vit (toutes régions)
   if (DATA.players.length) {
     const gs = new Set(DATA.players.filter(p => p.guild).map(p => (p.region || 'eu') + '/' + p.guild.slug));
@@ -412,7 +497,7 @@ function renderHome() {
   const me = all.find(x => pkey(x.p) === Bnet.best());
   const you = me && !top.includes(me) ? `<div class="you-sep">${t('youHere')}</div>${line(me, ' you')}` : '';
   $('#home-top').innerHTML = DATA.failed ? failed() : top.length
-    ? gainsHtml + top.map(x => line(x, pkey(x.p) === Bnet.best() ? ' you' : '')).join('') + you
+    ? top.map(x => line(x, pkey(x.p) === Bnet.best() ? ' you' : '')).join('') + you
     : nobody();
 }
 
@@ -1197,6 +1282,8 @@ document.addEventListener('click', e => { const x = e.target.closest('.release.m
 /* ---------- Texte fixe traduit (data-t) et pied de page ---------- */
 function applyStatic() {
   $$('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+  fitNav();
+  $('#install')?.setAttribute('title', t('install')); $('#install')?.setAttribute('aria-label', t('install'));
   $$('[data-t-title]').forEach(el => { el.title = t(el.dataset.tTitle); el.setAttribute('aria-label', t(el.dataset.tTitle)); });
   $$('[data-t-ph]').forEach(el => { el.placeholder = t(el.dataset.tPh); el.setAttribute('aria-label', t(el.dataset.tPh)); });
   $('#lang').textContent = LANG === 'fr' ? 'EN' : 'FR';
@@ -1376,6 +1463,8 @@ function render(push) {
   renderHome();
   (RENDER[state.view] || (() => {}))();
   tabs.forEach(b => b.setAttribute('aria-selected', b.dataset.view === state.view && (b.dataset.view !== 'char' || Bnet.isMine(state.c))));
+  const meView = (state.view === 'char' && Bnet.isMine(state.c)) || state.view === 'join';
+  $$('.tabbar [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === 'me' ? meView : b.dataset.go === state.view && !(state.view === 'char')));
   Bnet.header();
   $$('.view').forEach(v => v.classList.toggle('on', v.id === state.view));
   $('#sub').textContent = `HISCORES · FOREVER ${state.region.toUpperCase()}`;
@@ -1392,12 +1481,36 @@ function go(patch) {
   Ribbon.swell(changedView ? 1 : .45);
   if (changedView) scrollTo({ top: Math.min(scrollY, $('.nav').offsetTop), behavior: reduce ? 'auto' : 'smooth' });
 }
+// menu : une seule rangée si tout tient, sinon onglets puis outils (la largeur dépend de la langue et de la connexion)
+function fitNav() {
+  const nav = $('.nav'), wrap = $('.nav .wrap'), tabs = $('.tabs'), tools = $('.tools'); if (!nav || !wrap) return;
+  nav.classList.remove('rows2');
+  if (!nav.contains(tools)) return;
+  const kids = [...tools.children].filter(e => !e.hidden && e.offsetWidth);
+  const need = tabs.scrollWidth + kids.reduce((n, e) => n + (e.classList.contains('search') ? 130 : e.offsetWidth), 0) + 8 * kids.length + 10;
+  nav.classList.toggle('rows2', need > wrap.clientWidth);
+}
+// ordinateur large : langue, région, recherche, compte et téléchargement montent dans l'en-tête ; le menu ne garde que les onglets
+const wideMq = matchMedia('(min-width: 1221px)');
+function placeTools() {
+  const tools = $('.tools'), hero = $('.hero .wrap'), navWrap = $('.nav .wrap'); if (!tools || !hero || !navWrap) return;
+  if (wideMq.matches) { if (tools.parentNode !== hero) hero.append(tools); }
+  else if (tools.parentNode !== navWrap) navWrap.append(tools);
+  $('.hero').classList.toggle('has-tools', wideMq.matches);
+  fitNav();
+}
+wideMq.addEventListener?.('change', placeTools);
+placeTools();
+addEventListener('resize', () => { clearTimeout(fitNav.t); fitNav.t = setTimeout(fitNav, 120); });
 function setLang(l) {
   LANG = l; document.documentElement.lang = l; document.documentElement.dataset.lang = l;
   try { localStorage.setItem('lang', l); } catch (e) { /* stockage indisponible : le choix vaut pour cette visite */ }
   render(false); Ribbon.swell(.6);
 }
 tabs.forEach(b => b.addEventListener('click', () => go(b.dataset.view === 'char' ? { view: 'char', c: Bnet.best() } : { view: b.dataset.view })));
+// barre du bas : « Moi » = ma fiche si connecté, sinon la page d'inscription
+$$('.tabbar [data-go]').forEach(b => b.addEventListener('click', () => { const v = b.dataset.go;
+  go(v === 'me' ? (Bnet.best() ? { view: 'char', c: Bnet.best() } : { view: 'join' }) : { view: v }); }));
 $('#region').addEventListener('change', e => go({ region: e.target.value, cls: 0, g: '' }));
 $('#lang').addEventListener('click', () => setLang(LANG === 'fr' ? 'en' : 'fr'));
 document.addEventListener('click', e => {
@@ -1462,9 +1575,10 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 }
 // bouton « Installer l'app » quand le navigateur le propose (Android, Chrome, Edge) ; sur iPhone : Partager → Sur l'écran d'accueil
 let installEvt = null;
-addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; const b = $('#install'); if (b) b.hidden = false; });
-addEventListener('appinstalled', () => { installEvt = null; const b = $('#install'); if (b) b.hidden = true; });
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; const b = $('#install'); if (b) b.hidden = false; fitNav(); });
+addEventListener('appinstalled', () => { installEvt = null; const b = $('#install'); if (b) b.hidden = true; fitNav(); });
 document.addEventListener('click', async e => {
   if (!e.target.closest('#install')) return;
   if (installEvt) { installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; e.target.closest('#install').hidden = true; }
 });
+document.fonts?.ready.then(fitNav);

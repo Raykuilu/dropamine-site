@@ -782,3 +782,94 @@ html.static .pulse .live{animation:none}
 .dsteps .lbar{margin:0}
 .dash-more{text-align:center;margin:18px 0 0}
 @media (max-width:640px){.dhero::after{opacity:.35;width:60%}.dsteps li{grid-template-columns:28px minmax(0,1fr) auto}.dsteps .lbar{display:none}}
+
+/* ---------- Menu : icônes dorées, onglet actif en trait doré (ordinateur), barre du bas en lueur (téléphone) ---------- */
+.ti{width:19px;height:19px;flex:none}
+.ti *{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tabs button{display:inline-flex;align-items:center;gap:8px;position:relative}
+.tabs button .ti{color:#c49a5c;opacity:.85;transition:opacity .15s,color .15s}
+.tabs button:hover .ti{opacity:1}
+.tabs button[aria-selected=true] .ti{color:var(--gold);opacity:1}
+.tabs button[aria-selected=true]::after{content:"";position:absolute;left:12px;right:12px;bottom:2px;height:2px;border-radius:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.tabbar{display:none}
+@media (max-width:720px){
+  .nav .tabs{display:none}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:30;padding:6px 4px;border-radius:16px;background:rgba(18,13,8,.94);border:1px solid #3a2c1a;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.6)}
+  .tabbar button{all:unset;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:12px;cursor:pointer;font-family:var(--display);font-variant:small-caps;letter-spacing:.04em;font-size:12px;color:#b9a27a}
+  .tabbar .ti{width:22px;height:22px;color:#c49a5c}
+  .tabbar button.on{color:var(--gold);background:radial-gradient(120% 140% at 50% 120%,rgba(230,196,124,.22),transparent 70%);box-shadow:inset 0 0 0 1px rgba(230,196,124,.35)}
+  .tabbar button.on .ti{color:var(--gold)}
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+}
+
+/* ---------- Accueil visiteur : « En ce moment sur Forever » (mêmes panneaux, en-têtes et lignes que le reste du site) ---------- */
+.lvbox{margin:0 0 clamp(40px,6vw,80px)}
+.lv-count{display:grid;grid-template-columns:repeat(5,1fr);margin:0 0 18px;padding:14px 0;border-block:1px solid transparent;border-image:linear-gradient(90deg,transparent,rgba(196,154,92,.55),transparent) 1}
+.lv-count div{display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.lv-count div+div::before{content:"";position:absolute;left:0;top:18%;bottom:18%;width:1px;background:linear-gradient(transparent,rgba(196,154,92,.35),transparent)}
+.lv-count b{font-family:var(--num);font-weight:700;font-size:clamp(26px,3vw,38px);line-height:1;color:var(--gold);text-shadow:0 0 18px rgba(232,200,138,.18)}
+.lv-count span{font-family:var(--display);font-variant:small-caps;letter-spacing:.08em;font-size:14px;color:var(--muted);text-align:center}
+.lv-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+.lv-side{display:grid;gap:16px}
+.lvbox .panel{padding:16px 18px}
+.lvbox .cathead .sub{display:flex;align-items:center;gap:10px}
+.lv-feed .cathead i.live{width:8px;height:8px;border-radius:50%;background:#5f9a4a;animation:live 2.4s infinite;flex:none}
+.lv-feed ul{list-style:none;margin:0;padding:0}
+.lv-feed li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid rgba(196,154,92,.12);cursor:pointer;border-radius:4px;animation:enter .5s var(--ease) both}
+.lv-feed li:nth-child(2){animation-delay:.05s}.lv-feed li:nth-child(3){animation-delay:.1s}.lv-feed li:nth-child(4){animation-delay:.15s}.lv-feed li:nth-child(5){animation-delay:.2s}.lv-feed li:nth-child(n+6){animation-delay:.25s}
+.lv-feed li:last-child{border-bottom:0}
+.lv-feed li:hover{background:rgba(196,154,92,.07)}
+.lv-feed .ava,.ltoast .ava{width:28px;height:28px;border-radius:50%;border:1px solid var(--rim-lo)}
+.lv-feed li>span{color:var(--cream);font-size:16px;line-height:1.3}
+.lv-feed b,.ltoast b{color:var(--gold);font-weight:600}
+.lv-feed em,.ltoast em{color:#8cc472;font-style:italic}
+.lv-feed time{color:var(--faint);font-style:italic;font-size:14px;white-space:nowrap}
+.podium{list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);align-items:end;gap:8px}
+.podium li{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px 30px;border-radius:8px 8px 0 0;cursor:pointer;text-align:center;
+  background:linear-gradient(180deg,rgba(196,154,92,.16),rgba(196,154,92,.03));border:1px solid rgba(196,154,92,.3);border-bottom:0}
+.podium .pd1{padding-top:22px;padding-bottom:44px;background:linear-gradient(180deg,rgba(232,200,138,.26),rgba(196,154,92,.04));border-color:rgba(232,200,138,.55);box-shadow:0 -6px 24px rgba(232,200,138,.12)}
+.podium .pd-empty{visibility:hidden}
+.podium .ava{width:36px;height:36px;border-radius:50%;border:1px solid var(--rim)}
+.podium .pd1 .ava{width:46px;height:46px;border-color:var(--gold)}
+.podium b{font-family:var(--display);color:var(--gold);font-size:15px;line-height:1.1;overflow-wrap:anywhere}
+.podium .up{font-size:18px;text-align:center}
+.podium i{position:absolute;bottom:6px;font-family:var(--num);font-style:normal;font-weight:700;font-size:20px;color:var(--rim)}
+.podium .pd1 i{color:var(--gold);font-size:24px}
+.lv-h4{font-family:var(--display);font-variant:small-caps;letter-spacing:.06em;font-weight:600;color:var(--rim);margin:16px 0 8px;font-size:16px}
+.lv-guilds a{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 10px;padding:6px 10px;border-radius:6px;border:1px solid var(--line-2)}
+.lv-guilds a:hover{border-color:var(--rim-lo)}
+.lv-guilds b{font-family:var(--display);color:var(--gold)}
+.lv-guilds small{grid-column:1;color:var(--muted);font-style:italic}
+.lv-guilds .up{grid-row:1/3;grid-column:2;align-self:center}
+.lvbox .up{color:#8cc472}
+/* toasts : même vert que le toast de l'addon */
+#ltoasts{position:fixed;left:16px;bottom:16px;z-index:40;display:grid;gap:8px;pointer-events:none}
+.ltoast{display:flex;align-items:center;gap:10px;max-width:min(380px,calc(100vw - 32px));padding:8px 14px 8px 8px;border-radius:6px;background:linear-gradient(180deg,#1d3a14,#132a0d);border:1px solid #4f8a3a;box-shadow:0 0 18px rgba(30,255,0,.16),0 8px 24px rgba(0,0,0,.5);color:#d6f5c8;font-size:15px;animation:enter .45s var(--ease) both;transition:opacity .5s,transform .5s}
+.ltoast b{color:#fff3cf}
+.ltoast.out{opacity:0;transform:translateY(8px)}
+@media (max-width:900px){.lv-grid{grid-template-columns:1fr}}
+@media (max-width:720px){
+  .lv-count{grid-template-columns:repeat(3,1fr);row-gap:14px}
+  .lv-count div:nth-child(4)::before{display:none}
+  #ltoasts{bottom:calc(96px + env(safe-area-inset-bottom));left:12px}
+}
+@media (prefers-reduced-motion:reduce){.lv-feed li,.ltoast{animation:none}.lv-feed .cathead i.live{animation:none}}
+/* les icônes du menu prennent de la place : « Installer l'app » devient une icône tant que l'écran n'est pas très large */
+.acct.install{padding:0;width:36px;justify-content:center}
+.acct.install span{display:none}
+/* menu : deux rangées dès que onglets + outils ne tiennent pas sur une ligne (mesuré en JS, selon la langue et la connexion) */
+.tools>*{flex-shrink:0}
+.tools>.search{flex-shrink:1}
+.tabs button{padding-inline:clamp(8px,.85vw,12px)}
+.nav.rows2 .wrap{flex-wrap:wrap;height:auto;padding:6px 0 10px;row-gap:6px}
+.nav.rows2 .tabs{order:1;width:100%;overflow-x:auto;scrollbar-width:none}
+.nav.rows2 .tools{order:2;width:100%;margin-left:0}
+/* outils dans l'en-tête (ordinateur large) */
+.hero.has-tools .tag{display:none}
+.hero.has-tools .tools{margin-left:auto;flex:none}
+.hero.has-tools .search{flex:0 0 230px}
+.hero.has-tools{position:relative;z-index:21}
+/* rangée d'outils sous les onglets : rien ne sort de l'écran, la recherche se partage la place */
+@media (max-width:1220px){ .nav .tools{flex-wrap:wrap;row-gap:8px} .nav .search{flex:1 1 160px;min-width:0} }
+.nav.rows2 .tools{flex-wrap:wrap;row-gap:8px}
+.nav.rows2 .search{flex:1 1 160px;min-width:0}
