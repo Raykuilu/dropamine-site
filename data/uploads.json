@@ -129,7 +129,7 @@
     ],
     "version": "3.12.1",
     "at": "2026-11-26",
-    "played": 509032,
+    "played": 510086,
     "collection": {
       "x": 7,
       "y": 1499,
@@ -192,9 +192,9 @@
       "bestHour": 79,
       "bestDay": 116,
       "longestCombo": 41,
-      "sessions": 66,
+      "sessions": 68,
       "goalsHit": 5,
-      "playtime": 164947
+      "playtime": 165859
     },
     "hunt": [
       {
@@ -242,7 +242,7 @@
       {
         "id": 7754,
         "name": "",
-        "tries": 7,
+        "tries": 9,
         "drops": 0
       },
       {
@@ -266,17 +266,17 @@
       {
         "id": 252512,
         "name": "",
-        "tries": 7,
+        "tries": 9,
         "drops": 0
       }
     ],
     "pvp": {
       "hkWeek": 0,
       "honorWeek": 0,
-      "honor": 67,
+      "honor": 69,
       "dkLife": 0,
       "highest": 0,
-      "hkToday": 4,
+      "hkToday": 5,
       "honorToday": 0
     }
   }
