@@ -30,19 +30,19 @@ const I18N = {
   skillsT: ['Skills', 'Compétences'], statsT: ['Armory statistics', "Statistiques de l'armurerie"],
   tilesEst: ['hatched tiles: weapons estimated, waiting for the Dropamine export', "tuiles hachurées : armes estimées, en attente de la ligne Dropamine"],
   tipRank: ['Rank {r} / {m}', 'Rang {r} / {m}'], tipPlace: ['{r} in the Hiscores', '{r} au classement'],
-  tipEst: ['Estimated: equipped weapon counted at its maximum', 'Estimé : arme équipée comptée au maximum'], 'tab.guild': ['Guilds', 'Guildes'], 'tab.runs': ['Group hunt', 'Chasse en groupe'],
-  runsT: ['Group hunt', 'Chasse en groupe'],
+  tipEst: ['Estimated: equipped weapon counted at its maximum', 'Estimé : arme équipée comptée au maximum'], 'tab.guild': ['Guilds', 'Guildes'], 'tab.runs': ['Groups', 'Groupes'],
+  runsT: ['Find a group', 'Trouver un groupe'],
   runsPlanned: ['Planned outings', 'Sorties prévues'], runsNone: ['No outing planned yet: propose one below.', 'Aucune sortie prévue pour l’instant : propose-en une plus bas.'],
   runsApiDown: ['service unavailable', 'service indisponible'], runsIdeas: ['Worth running', 'À faire en groupe'],
-  runsIdeasNote: ['who hunts what, and what the collection logs miss', 'qui chasse quoi, et ce qui manque aux collection logs'],
-  runsMyLvl: ['At my level', 'À mon niveau'], runsInterested: ['interested', 'intéressés'], runsHuntersShort: ['hunting', 'en chasse'],
+  runsIdeasNote: ['who needs which dungeon: wanted items and collection gaps', 'qui a besoin de quel donjon : objets recherchés et trous du carnet'],
+  runsMyLvl: ['At my level', 'À mon niveau'], runsInterested: ['interested', 'intéressés'], runsHuntersShort: ['want an item', 'veulent un objet'],
   runsExpShort: ['wanted items / outing', 'objets recherchés / sortie'], runsMissShort: ['missing in logs', 'manquants aux logs'],
   runsMissing: ['{n} missing', '{n} manquants'], runsGroup: ['Suggested group', 'Groupe suggéré'], runsNobody: ['nobody', 'personne'],
   fitOk: ['right level', 'bon niveau'], fitHigh: ['over level', 'au-dessus'],
   'role.tank': ['Tank', 'Tank'], 'role.heal': ['Healer', 'Soigneur'], 'role.dps': ['Damage', 'Dégâts'],
   runPropose: ['Propose an outing', 'Proposer une sortie'], runWhen: ['When', 'Quand'], runChar: ['Character', 'Personnage'], runRole: ['Role', 'Rôle'],
   runNote: ['Note', 'Note'], runNotePh: ['e.g. full clear, Pummeler farm', 'ex. : full clear, farm du Faucheur'], runCreate: ['Create the outing', 'Créer la sortie'],
-  runJoin: ['Join', 'S’inscrire'], runIcsTitle: ['Group hunt: {d} (WoW Forever)', 'Chasse en groupe : {d} (WoW Forever)'], runMore: ['{n} more', '{n} de plus'], runWait: ['Waiting list ({n})', 'Liste d’attente ({n})'], runWaitN: ['{n} waiting', '{n} en attente'],
+  runJoin: ['Join', 'S’inscrire'], runIcsTitle: ['Group: {d} (WoW Forever)', 'Groupe : {d} (WoW Forever)'], runMore: ['{n} more', '{n} de plus'], runWait: ['Waiting list ({n})', 'Liste d’attente ({n})'], runWaitN: ['{n} waiting', '{n} en attente'],
   runFullHint: ['Group complete: you will be on the waiting list.', 'Groupe complet : tu passeras en liste d’attente.'],
   runMoreRuns: ['Show {n} more outings', 'Voir {n} sorties de plus'], runMoreDun: ['Show {n} more dungeons', 'Voir {n} donjons de plus'],
   pfAll: ['All', 'Tous'], pfMine: ['My outings', 'Mes sorties'], pfOpen: ['Open spots', 'Places libres'], pfAllDun: ['All dungeons', 'Tous les donjons'],
@@ -59,23 +59,31 @@ const I18N = {
   'runErr.date': ['Pick a date within the next 30 days.', 'Choisis une date dans les 30 prochains jours.'], 'runErr.not-yours': ['This character is not on your account.', 'Ce personnage n’est pas sur ton compte.'],
   'runErr.already': ['One of your characters is already in this outing.', 'Un de tes personnages est déjà dans cette sortie.'], 'runErr.too-many': ['You already organise 5 outings.', 'Tu organises déjà 5 sorties.'],
   'runErr.gone': ['This outing no longer exists.', 'Cette sortie n’existe plus.'], 'runErr.full': ['Full.', 'Complet.'], 'runErr.dungeon': ['Unknown dungeon.', 'Donjon inconnu.'],
-  'runErr.x': ['Something went wrong, try again.', 'Ça n’a pas marché, réessaie.'], runsNote: ['who hunts what, and where', 'qui chasse quoi, et où'],
-  runsGuild: ['My guild', 'Ma guilde'], runsAll: ['All players', 'Tous les joueurs'], runsHunters: ['{n} hunters', '{n} chasseurs'], runsHunter1: ['1 hunter', '1 chasseur'],
+  'runErr.x': ['Something went wrong, try again.', 'Ça n’a pas marché, réessaie.'], runsNote: ['players who need the same dungeons as you', 'les joueurs qui doivent faire les mêmes donjons que toi'],
+  runsGuild: ['My guild', 'Ma guilde'], runsAll: ['All players', 'Tous les joueurs'], runsHunters: ['{n} want an item', '{n} veulent un objet'], runsHunter1: ['1 wants an item', '1 veut un objet'],
   runsExp: ['≈ {n} wanted items per run', '≈ {n} objets recherchés par run'], runsLvl: ['level {a}–{b}', 'niveau {a}–{b}'], runsYou: ['you', 'toi'],
-  runsLow: ['too low', 'trop bas'], runsTrash: ['trash', 'monstres'], runsEmptyT: ['No hunt shared yet', 'Aucune chasse partagée pour l’instant'],
-  runsEmpty: ['In game, add items to your hunt list, type /drop hiscores (Hunt ticked) and paste the export on the Join page: your dungeons show up here.', 'En jeu, ajoute des objets à ta liste de chasse, tape /drop hiscores (case Chasse cochée) et colle la ligne sur la page Inscription : tes donjons apparaissent ici.'],
-  runsNoGuild: ['Nobody in your guild shares a hunt yet: showing all players.', 'Personne de ta guilde ne partage sa chasse pour l’instant : tous les joueurs sont affichés.'],
+  runsLow: ['too low', 'trop bas'], runsTrash: ['trash', 'monstres'], runsEmptyT: ['Nobody has shared yet', 'Personne n’a encore partagé'],
+  runsEmpty: ['In game, add the items you want (Hunt tab), type /drop hiscores and paste the line on the Join page: you then show up here with everyone who needs the same dungeons.', 'En jeu, ajoute les objets que tu veux (onglet Chasse), tape /drop hiscores et colle la ligne sur la page Inscription : tu apparais alors ici avec tous ceux qui ont besoin des mêmes donjons.'],
+  runsNoGuild: ['Nobody in your guild has shared yet: showing all players.', 'Personne de ta guilde n’a encore partagé : tous les joueurs sont affichés.'],
   runsSrc: ['Loot tables: AtlasLoot Forever (GPL-2.0).', 'Tables de butin : AtlasLoot Forever (GPL-2.0).'],
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
   'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source (open source, MIT)', 'Code du site (open source, MIT)'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
-  'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE LOGBOOK', 'CARNET DROPAMINE'],
+  'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE PROGRESS', 'PROGRESSION DROPAMINE'],
   trust: ['Sent by the players with their Dropamine export: based on trust.', 'Envoyé par les joueurs avec leur ligne Dropamine : basé sur la confiance.'],
   sortBy: ['Rank by', 'Classer par'], trustShort: ['based on trust', 'basé sur la confiance'],
   kills: ['Creatures killed', 'Créatures tuées'], killingBlows: ['Killing blows', 'Coups fatals'], dungeons: ['Dungeons entered', 'Donjons visités'],
   pvpDeaths: ['Killed by players', 'Tué par des joueurs'], duels: ['Duels (won / lost)', 'Duels (gagnés / perdus)'],
   repsT: ['Reputations', 'Réputations'],
-  runW: ['Copy the /w', 'Copier le /w'], runGame: ['In-game reminder', 'Rappel en jeu'], wAny: ['any role', 'n’importe quel rôle'],
+  stT: ['Get started', 'Bien démarrer'], stN: ['{n} / {m} done', '{n} / {m} fait'],
+  stLead: ['Four steps, and the site can match you with players who need the same dungeons.', 'Quatre étapes, et le site peut te mettre en relation avec ceux qui doivent faire les mêmes donjons.'],
+  st1: ['Sign in with Battle.net', 'Connexion Battle.net'], st1d: ['Done: the site knows your Forever characters.', 'C’est fait : le site connaît tes personnages Forever.'],
+  st2: ['Register your character', 'Inscrire ton personnage'], st2d: ['Level 10 or more, visible on the armory. It shows up after the next armory read.', 'Niveau 10 ou plus, visible sur l’armurerie. Il apparaît au relevé suivant.'], st2a: ['Register', 'Inscrire'],
+  st3: ['Send your game export', 'Envoyer ton export du jeu'], st3d: ['Install the addon, type /drop hiscores in game and paste the line.', 'Installe l’addon, tape /drop hiscores en jeu et colle la ligne.'], st3a: ['Paste my line', 'Coller ma ligne'],
+  st4: ['Show what you need', 'Montrer ce qu’il te manque'], st4d: ['Your collection log and wanted items: others who need the same dungeons can then find you.', 'Ton carnet et tes objets recherchés : ceux qui ont besoin des mêmes donjons te trouvent.'], st4a: ['See the same dungeons', 'Voir les mêmes donjons'],
+  agoLt1h: ['less than an hour ago', 'il y a moins d’une heure'], agoH: ['{n} h ago', 'il y a {n} h'], freshArm: ['Armory read {d} (once a day)', 'Armurerie relue {d} (une fois par jour)'],
+  freshExp: ['game export: {d}', 'export du jeu : {d}'], freshNoExp: ['no game export yet', 'pas encore d’export du jeu'],
+  runW: ['Copy the /w', 'Copier le /w'], runGame: ['Reminder in game', 'Rappel dans le jeu'], wAny: ['any role', 'n’importe quel rôle'],
   wMsg: ['Hi! I’d like to join your {d} outing ({h}), as {r}.', 'Salut ! Je viens pour ta sortie {d} ({h}), en {r}.'],
   nTitle: ['Notifications', 'Notifications'], nPushOff: ['Turn on on this device', 'Activer sur cet appareil'], nPushOn: ['On for this device', 'Activées sur cet appareil'],
   nSoundOff: ['Sound off', 'Son coupé'], nSoundOn: ['Sound on', 'Son activé'], nDenied: ['Blocked by the browser', 'Bloquées par le navigateur'],
@@ -84,7 +92,7 @@ const I18N = {
   nHint: ['Joins and departures on your outings, a freed spot, a full group, a reminder 30 min before.', 'Arrivées et départs dans tes sorties, place libérée, groupe complet, rappel 30 min avant.'],
   nJoin: ['joins your {d} outing', 'rejoint ta sortie {d}'], nLeave: ['leaves your {d} outing', 'quitte ta sortie {d}'], nCancel: [': outing cancelled', ' : sortie annulée'],
   nSoon: ['starts in {n} min', 'commence dans {n} min'],
-  rtabRuns: ['Planned outings', 'Sorties prévues'], rtabIdeas: ['Dungeon ideas', 'Idées de donjons'], pfAtLvl: ['{n} at your level', '{n} à ton niveau'], needT: ['needs {x}', 'cherche {x}'], needDps: ['{n} dps', '{n} dégât{s}'],
+  rtabRuns: ['Planned outings', 'Sorties prévues'], rtabIdeas: ['Same dungeons', 'Mêmes donjons'], pfAtLvl: ['{n} at your level', '{n} à ton niveau'], needT: ['needs {x}', 'cherche {x}'], needDps: ['{n} dps', '{n} dégât{s}'],
   runIn: ['Signed up', 'Inscrit'], runWaitBtn: ['Waitlist', 'Attente'], runSee: ['See', 'Voir'], runBy: ['by {n}', 'par {n}'],
   raidK: ['FOREVER · RAIDS', 'FOREVER · RAIDS'], raidT: ['Raids open soon', 'Les raids ouvrent bientôt'], raidSub: ['Barrow Deeps (10), Hyjal Summit (20) and Onyxia’s Lair (40, attunement) open on {d}, level 60. Time not announced yet.', 'Barrow Deeps (10), Hyjal Summit (20) et le Repaire d’Onyxia (40, harmonisation) ouvrent le {d}, niveau 60. Heure pas encore annoncée.'],
   raidOpenT: ['Raids are open!', 'Les raids sont ouverts !'], raidOpenSub: ['Barrow Deeps, Hyjal Summit and Onyxia’s Lair: get your group together.', 'Barrow Deeps, Hyjal Summit et le Repaire d’Onyxia : rassemble ton groupe.'],
@@ -97,32 +105,32 @@ const I18N = {
   'slot.HEAD': ['Head', 'Tête'], 'slot.NECK': ['Neck', 'Cou'], 'slot.SHOULDER': ['Shoulders', 'Épaules'], 'slot.BACK': ['Back', 'Dos'], 'slot.CHEST': ['Chest', 'Torse'],
   'slot.WRIST': ['Wrists', 'Poignets'], 'slot.HANDS': ['Hands', 'Mains'], 'slot.WAIST': ['Waist', 'Taille'], 'slot.LEGS': ['Legs', 'Jambes'], 'slot.FEET': ['Feet', 'Pieds'],
   'slot.FINGER': ['Finger', 'Doigt'], 'slot.TRINKET': ['Trinket', 'Bijou'], 'slot.MAIN': ['Weapon', 'Arme'], 'slot.OFF': ['Off hand', 'Main gauche'], 'slot.RANGED': ['Ranged', 'Distance'],
-  hsSub: ['what I hunt, slot by slot', 'ce que je chasse, emplacement par emplacement'], hsMore: ['+{n} more', '+{n} autre{s}'],
+  hsSub: ['the items I want, slot by slot', 'les objets que je veux, emplacement par emplacement'], hsMore: ['+{n} more', '+{n} autre{s}'],
   hsFound: ['items from the list found', 'objets de la liste trouvés'], hsTries: ['{n} tries in total', '{n} essais au total'], hsSlots: ['{n} slot{s} targeted', '{n} emplacement{s} visé{s}'],
-  hsOrganise: ['Plan an outing', 'Organiser une sortie'], hsRate: ['{r} per try', '{r} par essai'], hsRateNo: ['rate unknown', 'taux inconnu'], hsToTry: ['to try', 'à tenter'],
-  hsEmpty: ['Nothing hunted yet: pick items below, or add them in game with /drop hunt add.', 'Rien en chasse pour l’instant : choisis des objets ci-dessous, ou ajoute-les en jeu avec /drop chasse ajouter.'],
-  hsSugT: ['Suggestions for your hunt', 'Suggestions pour ta chasse'], hsSugSub: ['best items within reach, slot by slot · you choose', 'les meilleurs objets à ta portée, par emplacement · tu choisis'],
+  hsOrganise: ['Find a group', 'Trouver un groupe'], hsRate: ['{r} per try', '{r} par essai'], hsRateNo: ['rate unknown', 'taux inconnu'], hsToTry: ['to try', 'à tenter'],
+  hsEmpty: ['No wanted item yet: pick some below, or add them in game (Hunt tab).', 'Aucun objet recherché pour l’instant : choisis-en ci-dessous, ou ajoute-les en jeu (onglet Chasse).'],
+  hsSugT: ['Suggested items', 'Objets suggérés'], hsSugSub: ['best items within reach, slot by slot · you choose', 'les meilleurs objets à ta portée, par emplacement · tu choisis'],
   hsSugHow: ['Dungeon drops your class can use, at your level, better than what you wear (item level). Tick what you want, then paste the command in game.', 'Des objets de donjon que ta classe peut porter, à ton niveau, meilleurs que ce que tu portes (niveau d’objet). Coche ce que tu veux, puis colle la commande en jeu.'],
   hsSugNoGear: ['Dungeon drops your class can use, at your level. Your worn gear is read with the next daily armory update: suggestions will then only show upgrades.', 'Des objets de donjon que ta classe peut porter, à ton niveau. Ton équipement porté sera lu au prochain relevé quotidien de l’armurerie : les suggestions ne montreront alors que des améliorations.'],
   hsSugNone: ['No better dungeon drop found for your level right now.', 'Aucun meilleur objet de donjon trouvé à ton niveau pour l’instant.'],
   hsWorn: ['worn', 'porté'], hsIlvl: ['ilvl {n}', 'niv. {n}'], hsPicked: ['{n} picked', '{n} choisi{s}'], hsFree: ['{n} free spot{s} in game', '{n} place{s} libre{s} en jeu'],
-  hsCmdCopy: ['Copy the command', 'Copier la commande'], hsCodeHow: ['In game: paste it in the chat box and press Enter.', 'En jeu : colle-la dans le chat et valide.'], 'tb.home': ['Home', 'Accueil'], 'tb.hunt': ['Hunt', 'Chasse'], 'tb.me': ['Me', 'Moi'],
+  hsCmdCopy: ['Copy for the game', 'Copier pour le jeu'], hsCodeHow: ['In game: paste it in the chat box and press Enter.', 'En jeu : colle-la dans le chat et valide.'], 'tb.home': ['Home', 'Accueil'], 'tb.hunt': ['Groups', 'Groupes'], 'tb.me': ['Me', 'Moi'],
   lvTitle: ['Right now on Forever', 'En ce moment sur Forever'], lvSub: ['the last 7 days', 'les 7 derniers jours'],
   lvUp: ['<b>{n}</b> +{d} {s} <em>→ {v}</em>', '<b>{n}</b> +{d} {s} <em>→ {v}</em>'],
   lvFound: ['<b>{n}</b> got <em>{i}</em>', '<b>{n}</b> a obtenu <em>{i}</em>'], lvLoots: ['Latest loot', 'Derniers loots'], lvLootsSub: ['what players got, dated by their export', 'ce que les joueurs ont obtenu, daté par leur export'],
   lvRun: ['<b>{n}</b> plans {d} <em>· {w}</em>', '<b>{n}</b> propose {d} <em>· {w}</em>'],
   lvToday: ['today', "aujourd'hui"], lvYesterday: ['yesterday', 'hier'], lvDays: ['{n} d ago', 'il y a {n} j'],
-  lvcDl: ['downloads', 'téléchargements'], lvcChars: ['characters', 'personnages'], lvcGuilds: ['guilds', 'guildes'], lvcRuns: ['planned outings', 'sorties prévues'], lvcItems: ['items logged', 'objets au carnet'],
+  lvcDl: ['downloads', 'téléchargements'], lvcChars: ['characters', 'personnages'], lvcGuilds: ['guilds', 'guildes'], lvcRuns: ['planned outings', 'sorties prévues'], lvcItems: ['items in collection logs', 'objets dans les carnets'],
   lvRuns: ['Next outings', 'Prochaines sorties'], lvNoRun: ['No outing planned yet: be the first to propose one.', "Aucune sortie prévue pour l'instant : propose la première."],
   lvWeek: ['This week', 'La semaine'], lvRising: ['Rising guilds', 'Les guildes qui montent'], lvMembers: ['{n} active', '{n} actif{s}'],
   lvNoWeek: ['Nobody has moved yet this week.', "Personne n'a encore bougé cette semaine."], lvEmpty: ['Quiet for now: the next +1 will show up here.', 'Calme plat pour l’instant : le prochain +1 arrivera ici.'],
   dashHi: ['Hi {n}', 'Salut {n}'], dashSheet: ['My sheet', 'Ma fiche'], dashSend: ['Update from the game', 'Mettre à jour depuis le jeu'], in7: ['in 7 days', 'en 7 jours'],
-  dashLast: ['last sent {d}', 'dernier envoi : {d}'], dashNoLine: ['Your logbook is empty: type /drop hiscores in game and paste the export.', 'Ton carnet est vide : tape /drop hiscores en jeu et colle la ligne.'],
-  dashOldLine: ['Your Dropamine export is {n} days old: paste it again to update collection log and hunt.', 'Ta ligne Dropamine date de {n} jours : renvoie-la pour mettre à jour collection log et chasse.'],
+  dashLast: ['last sent {d}', 'dernier envoi : {d}'], dashNoLine: ['Nothing sent from the game yet: type /drop hiscores in game and paste the line.', 'Rien d’envoyé depuis le jeu : tape /drop hiscores en jeu et colle la ligne.'],
+  dashOldLine: ['Your game export is {n} days old: paste it again to update your collection log and wanted items.', 'Ton export du jeu date de {n} jours : recolle-le pour mettre à jour ton carnet et tes objets recherchés.'],
   dashRuns: ['My outings', 'Mes sorties'], dashNoRun: ['You are not in any outing yet.', 'Tu n’es inscrit à aucune sortie.'], dashOpenRuns: ['Open outings for you', 'Sorties ouvertes pour toi'],
-  dashAllRuns: ['Group hunt →', 'Chasse en groupe →'], dashHunt: ['My hunt', 'Ma chasse'], dashNoHunt: ['Nothing to hunt: add items in the addon (Hunt tab).', 'Rien en chasse : ajoute des objets dans l’addon (onglet Chasse).'],
-  dashAlso: ['{n} others hunt there', '{n} autres y chassent'], dashNear: ['Almost done', 'Presque finis'],
-  dashNoLog: ['Paste your Dropamine export to see your collection log.', 'Envoie ta ligne Dropamine pour voir ton collection log.'],
+  dashAllRuns: ['Find a group →', 'Trouver un groupe →'], dashHunt: ['My wanted items', 'Mes objets recherchés'], dashNoHunt: ['No wanted item yet: add some in the addon (Hunt tab) or from your sheet.', 'Aucun objet recherché : ajoute-en dans l’addon (onglet Chasse) ou depuis ta fiche.'],
+  dashAlso: ['{n} others need this dungeon', '{n} autres ont besoin de ce donjon'], dashNear: ['Almost done', 'Presque finis'],
+  dashNoLog: ['Paste your game export to see your collection log.', 'Colle ton export du jeu pour voir ton carnet de collection.'],
   dashGuildRank: ['{r} of {n} in the guild', '{r} sur {n} dans la guilde'], dashGuild: ['Guild page →', 'Page de la guilde →'],
   dashNext: ['Next steps', 'Prochaines marches'], dashLeft: ['{n} to go', 'encore {n}'], dashAbout: ['About the addon', 'Découvrir l’addon'], install: ['Install the app', 'Installer l’app'],
   clogResend: ['Paste your /drop hiscores export again to see each item as an icon.', 'Renvoie ta ligne /drop hiscores pour voir chaque objet en icône.'],
@@ -137,9 +145,9 @@ const I18N = {
   subHearth: ['{n} hearthstones', '{n} pierres de foyer'], subDungeonDeaths: ['{n} in dungeons', '{n} en donjon'], subKb: ['monsters and players', 'monstres et joueurs'],
   fish: ['Fish caught', 'Poissons pêchés'], mounts: ['Mounts', 'Montures'], potions: ['Potions', 'Potions'], subPotions: ['{h} health · {m} mana', '{h} soins · {m} mana'], armorySrc: ['from the armory', "d'après l'armurerie"], repsN: ['{n} factions', '{n} factions'], quests: ['Quests', 'Quêtes'], flights: ['Flights taken', 'Trajets aériens'], deaths: ['Deaths', 'Morts'],
   played: ['Played', 'Temps de jeu'],
-  dbTitle: ['Dropamine logbook', 'Carnet Dropamine'], dbWhen: ['sent by the player on {d}', 'envoyé par le joueur le {d}'],
-  dbLog: ['Collection log', 'Collection log'], dbAch: ['Dropamine achievements', 'Succès Dropamine'], dbRec: ['Records', 'Records'],
-  dbHunt: ['Hunt', 'Chasse'], dbPvp: ['PvP', 'JcJ'], hk: ['Honorable kills', 'Victoires honorables'],
+  dbTitle: ['Dropamine progress', 'Progression Dropamine'], dbWhen: ['sent by the player on {d}', 'envoyé par le joueur le {d}'],
+  dbLog: ['Collection log', 'Carnet de collection'], dbAch: ['Dropamine achievements', 'Succès Dropamine'], dbRec: ['Records', 'Records'],
+  dbHunt: ['Wanted items', 'Objets recherchés'], dbPvp: ['PvP', 'JcJ'], hk: ['Honorable kills', 'Victoires honorables'],
   recSession: ['Best session', 'Meilleure session'], recHour: ['Best hour', 'Meilleure heure'], recDay: ['Best day', 'Meilleur jour'],
   recCombo: ['Longest combo', 'Plus long combo'], recSessions: ['Sessions', 'Sessions'], recGoals: ['Goals reached', 'Objectifs atteints'],
   recTime: ['Time tracked', 'Temps suivi'], huTries: ['{n} tries', '{n} essais'], huFound: ['found', 'trouvé'],
@@ -446,12 +454,32 @@ setInterval(() => {
   wrap.append(el); setTimeout(() => el.classList.add('out'), 4800); setTimeout(() => el.remove(), 5400);
 }, 9000);
 
+// ---------- Bien démarrer : du téléchargement à la mise en relation, en 4 étapes qui se cochent toutes seules ----------
+function startCard(me) {
+  const exp = me.some(p => p.dropamineAt), shared = me.some(p => p.dropamine?.hunt?.length || p.dropamine?.collection?.items?.length);
+  const steps = [
+    [true, t('st1'), t('st1d'), ''],
+    [me.length > 0, t('st2'), t('st2d'), `<a class="btn ghost" href="?p=join" data-view-link="join">${t('st2a')}</a>`],
+    [exp, t('st3'), t('st3d'), `<a class="btn ghost" href="?p=join" data-view-link="join">${t('st3a')}</a>`],
+    [shared, t('st4'), t('st4d'), `<a class="btn ghost" href="?p=runs&tab=ideas" data-view-link="runs">${t('st4a')}</a>`],
+  ];
+  const done = steps.filter(x => x[0]).length;
+  if (done === steps.length) return '';
+  const next = steps.findIndex(x => !x[0]);
+  return `<section class="start"><div class="cathead"><h3 class="sub">${t('stT')}</h3><span class="cx2">${t('stN', { n: done, m: steps.length })}</span></div>
+    <p class="note">${t('stLead')}</p>
+    <ol>${steps.map(([ok, title, desc, act], i) => `<li class="${ok ? 'ok' : i === next ? 'now' : ''}"><i>${ok ? '✓' : i + 1}</i><div><b>${title}</b><small>${desc}</small></div>${!ok && i === next ? act : ''}</li>`).join('')}</ol></section>`;
+}
+
 // ---------- Accueil personnel (connecté) : tout ce qui sert au quotidien, en un coup d'œil ----------
 function renderDash() {
   const box = $('#dash'); if (!box) return false;
   const me = Bnet.mine();
   $('#home').classList.toggle('logged', !!me.length);
-  if (!me.length) { box.hidden = true; return false; }
+  if (!me.length) {
+    if (Bnet.logged?.()) { box.hidden = false; $('#home').classList.add('logged'); box.innerHTML = startCard(me); return true; }
+    box.hidden = true; return false;
+  }
   box.hidden = false;
   if (!LOOT || !ITEMS || !ART || !runsLoad) Promise.all([loadLoot(), loadItems(), loadArt(), loadRuns()]).then(() => { if (state.view === 'home') renderDash(); });
   const p = me.find(x => pkey(x) === state.dc) || [...me].sort((a, b) => b.total - a.total)[0];
@@ -466,7 +494,7 @@ function renderDash() {
         <div class="dh-n"><b data-n="${p.total}">${fmt(p.total)}</b><small> / ${fmt(p.max || 2460)}</small></div>
         <div class="dh-g">${rank ? `<span>${ord(rank)} · ${t('totalLevel')}</span>` : ''}${d1 > 0 ? `<span class="up">+${fmt(d1)} ${t('sinceY')}</span>` : ''}${d7 > 0 ? `<span class="up">+${fmt(d7)} ${t('in7')}</span>` : ''}</div>
         <div class="dh-a"><a class="btn gold" href="?p=char&c=${esc(pkey(p))}" data-c="${esc(pkey(p))}">${t('dashSheet')}</a><button class="btn ghost" data-hsimg="${esc(pkey(p))}">${t('hsBtn')}</button><a class="btn ghost" href="?p=join" data-view-link="join">${t('dashSend')}</a></div>
-        ${old == null ? `<p class="dh-warn">${t('dashNoLine')}</p>` : old > 7 ? `<p class="dh-warn">${t('dashOldLine', { n: Math.floor(old) })}</p>` : `<p class="dh-last">${[d.collection && t('dbLog'), d.hunt && t('dbHunt'), d.achievements && t('dbAch'), d.records && t('dbRec'), p.played && t('played')].filter(Boolean).join(', ')} · ${t('dashLast', { d: dayAgo(Date.parse(p.dropamineAt)) })}</p>`}</div></div>`;
+        ${old == null ? '' : old > 7 ? `<p class="dh-warn">${t('dashOldLine', { n: Math.floor(old) })}</p>` : `<p class="dh-last">${[d.collection && t('dbLog'), d.hunt && t('dbHunt'), d.achievements && t('dbAch'), d.records && t('dbRec'), p.played && t('played')].filter(Boolean).join(', ')} · ${t('dashLast', { d: dayAgo(Date.parse(p.dropamineAt)) })}</p>`}</div></div>`;
   // 2) mes runs, et ceux à ma portée
   const mineKeys = new Set(me.map(pkey));
   const myRuns = (RUNS || []).filter(r => r.members.some(m => mineKeys.has(m.key)));
@@ -509,7 +537,7 @@ function renderDash() {
     { n: t('defense'), v: p.defense || 0, m: 5 * p.level, ic: DEF_ICON }]
     .filter(x => x.v > 0 && x.v < x.m).sort((a, b) => (b.v / b.m) - (a.v / a.m)).slice(0, 4);
   const stepCard = steps.length ? `<section class="dcard"><h3>${t('dashNext')}</h3><ul class="dsteps">${steps.map(x => `<li><img src="${icon(x.ic)}" alt="" referrerpolicy="no-referrer"><span>${esc(x.n)}</span><i class="lbar"><i style="width:${(100 * x.v / x.m).toFixed(1)}%"></i></i><b>${x.v} / ${x.m}</b><small>${t('dashLeft', { n: x.m - x.v })}</small></li>`).join('')}</ul></section>` : '';
-  box.innerHTML = `${chooser}${hero}${raidBanner()}<div class="dgrid">${runsCard}${huntCard}${colCard}${stepCard}${guildCard}</div>
+  box.innerHTML = `${chooser}${hero}${startCard(me)}${raidBanner()}<div class="dgrid">${runsCard}${huntCard}${colCard}${stepCard}${guildCard}</div>
     <p class="dash-more"><a class="lnk" data-dash-intro>${t('dashAbout')}</a></p>`;
   return true;
 }
@@ -694,6 +722,9 @@ const Tip = (() => {
   return { hide };
 })();
 
+// fraîcheur : quand l'armurerie a été relue, et l'âge de l'export du jeu (sans lui, le site ne sait pas ce qu'il te manque)
+const hoursAgo = at => { const h = (Date.now() - at) / 36e5; return h < 1 ? t('agoLt1h') : h < 24 ? t('agoH', { n: Math.round(h) }) : dayAgo(at); };
+const freshLine = p => `<p class="fresh">${DATA.updated ? t('freshArm', { d: hoursAgo(Date.parse(DATA.updated)) }) : ''}${p.preview ? '' : ' · ' + (p.dropamineAt ? t('freshExp', { d: dayAgo(Date.parse(p.dropamineAt)) }) : t('freshNoExp'))}</p>`;
 function renderChar() {
   if (DATA.failed) { $('#char-panel').innerHTML = failed(); return; }
   const p = DATA.players.find(x => pkey(x) === state.c || x.slug === state.c) || DATA.players.find(x => pkey(x) === Bnet.best());
@@ -715,7 +746,7 @@ function renderChar() {
       ${portrait}
       <div><h2>${full(p)}</h2><p>${desc} · ${t('levelN', { n: p.level })}${p.guild ? ` · <a href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${esc(p.guild.name)}</a>` : ''} · ${esc((p.region || 'eu').toUpperCase())}${rulesetName(p) ? ' ' + esc(rulesetName(p)) : ''}</p>
         ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t('previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}
-        <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button><button class="share hsb" type="button" data-hsimg="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h8"/></svg><span>${t('hsBtn')}</span></button></div>
+        <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button><button class="share hsb" type="button" data-hsimg="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h8"/></svg><span>${t('hsBtn')}</span></button>${freshLine(p)}</div>
       <div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n" data-n="${p.total}">${fmt(p.total)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div></div>
     </div>
     ${secNav(p)}
@@ -760,16 +791,16 @@ function hsBook(p) {
   const book = { collection: d.collection, achievements: d.achievements, played: p.played, playedText: p.played ? playedText(p.played) : '',
     records: d.records, hunt: d.hunt?.map(h => ({ ...h, name: huntName(h) })), stats: { ...(p.stats || {}), hk: armoryStat(p, 'hk') }, reps: p.reps || [] };
   return { book, BL: fr
-    ? { locale: 'fr-FR', li: 1, sessionS: 'Session', dayS: 'Jour', hourS: 'Heure', kb: 'Coups fatals', pvpDeaths: 'Tué par joueurs', duels: 'Duels G / P', dungeons: 'Donjons', reps: 'Réputations', factions: 'factions', title: 'Carnet Dropamine', log: 'Collection log', ach: 'Succès', played: 'Temps de jeu', hk: 'Victoires honorables', week: 'cette sem.',
+    ? { locale: 'fr-FR', li: 1, sessionS: 'Session', dayS: 'Jour', hourS: 'Heure', kb: 'Coups fatals', pvpDeaths: 'Tué par joueurs', duels: 'Duels G / P', dungeons: 'Donjons', reps: 'Réputations', factions: 'factions', title: 'Progression Dropamine', log: 'Carnet de collection', ach: 'Succès', played: 'Temps de jeu', hk: 'Victoires honorables', week: 'cette sem.',
         rec: 'Records', sessions: 'sessions', session: 'Meilleure session', day: 'Meilleur jour', hour: 'Meilleure heure', combo: 'Plus long combo',
         pvp: 'JcJ', honorWeek: 'Honneur semaine', honor: "Points d'honneur", highest: 'Rang le plus haut', dk: 'Vict. déshonorantes',
-        hunt: 'Chasse', found: 'trouvé', tries: 'essais', kills: 'Créatures tuées', quests: 'Quêtes', deaths: 'Morts', flights: 'Trajets aériens', armory: 'Armurerie', inviteT: 'Remplis ton carnet',
-        invite1: 'Collection log, records, chasse : tape', invite2: '/drop hiscores en jeu, colle ta ligne sur le site.' }
-    : { locale: 'en-US', li: 0, sessionS: 'Session', dayS: 'Day', hourS: 'Hour', kb: 'Killing blows', pvpDeaths: 'Killed by players', duels: 'Duels W / L', dungeons: 'Dungeons', reps: 'Reputations', factions: 'factions', title: 'Dropamine logbook', log: 'Collection log', ach: 'Achievements', played: 'Played', hk: 'Honorable kills', week: 'this week',
+        hunt: 'Objets recherchés', found: 'trouvé', tries: 'essais', kills: 'Créatures tuées', quests: 'Quêtes', deaths: 'Morts', flights: 'Trajets aériens', armory: 'Armurerie', inviteT: 'Complète ta progression',
+        invite1: 'Carnet, records, objets recherchés : tape', invite2: '/drop hiscores en jeu, colle ta ligne sur le site.' }
+    : { locale: 'en-US', li: 0, sessionS: 'Session', dayS: 'Day', hourS: 'Hour', kb: 'Killing blows', pvpDeaths: 'Killed by players', duels: 'Duels W / L', dungeons: 'Dungeons', reps: 'Reputations', factions: 'factions', title: 'Dropamine progress', log: 'Collection log', ach: 'Achievements', played: 'Played', hk: 'Honorable kills', week: 'this week',
         rec: 'Records', sessions: 'sessions', session: 'Best session', day: 'Best day', hour: 'Best hour', combo: 'Longest combo',
         pvp: 'PvP', honorWeek: 'Honor this week', honor: 'Honor points', highest: 'Highest rank', dk: 'Dishonorable kills',
-        hunt: 'Hunt', found: 'found', tries: 'tries', kills: 'Creatures killed', quests: 'Quests', deaths: 'Deaths', flights: 'Flights taken', armory: 'Armory', inviteT: 'Fill your logbook',
-        invite1: 'Collection log, records, hunt: type', invite2: '/drop hiscores in game, paste your line on the site.' } };
+        hunt: 'Wanted items', found: 'found', tries: 'tries', kills: 'Creatures killed', quests: 'Quests', deaths: 'Deaths', flights: 'Flights taken', armory: 'Armory', inviteT: 'Complete your progress',
+        invite1: 'Collection log, records, wanted items: type', invite2: '/drop hiscores in game, paste your line on the site.' } };
 }
 function hsRows(p) {
   const peers = DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu'));
@@ -1033,7 +1064,7 @@ function huntBuilder(p, hunt) {
   return `<div class="hsug" data-free="${free}"><div class="cathead"><h3 class="sub">${t('hsSugT')}</h3><span class="cx2">${t('hsSugSub')}</span></div>
     <p class="note">${p.gear?.length ? t('hsSugHow') : t('hsSugNoGear')}${!raidsOpen() && p.level >= 55 ? ' ' + t('raidSugNote', { d: new Date(RAID_OPEN).toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) }) : ''}</p>
     ${groups ? `<div class="hsug-grid">${groups}</div>` : `<p class="note">${t('hsSugNone')}</p>`}
-    <div class="hcode"><span data-hcount>${t('hsPicked', { n: 0 })} · ${t('hsFree', { n: free })}</span><code data-hcode>/drop chasse import …</code>
+    <div class="hcode"><span data-hcount>${t('hsPicked', { n: 0 })} · ${t('hsFree', { n: free })}</span><code data-hcode>/drop …</code>
       <button class="btn gold" type="button" data-hcopy disabled>${t('hsCmdCopy')}</button><small>${t('hsCodeHow')}</small></div></div>`;
 }
 // coches → commande d'import (identifiants en base 36) ; jamais plus que les places libres de la liste en jeu
@@ -1042,7 +1073,7 @@ document.addEventListener('change', e => {
   const box = e.target.closest('.hsug'); if (!box || !e.target.matches('[data-hpick]')) return;
   const free = +box.dataset.free, picked = [...box.querySelectorAll('[data-hpick]:checked')];
   if (picked.length > free) { e.target.checked = false; picked.splice(picked.indexOf(e.target), 1); }
-  const ids = picked.map(x => +x.dataset.hpick), cmd = ids.length ? `/drop chasse import DROP-CH1:${ids.map(b36).join('.')}` : '/drop chasse import …';
+  const ids = picked.map(x => +x.dataset.hpick), cmd = ids.length ? `/drop DROP-CH1:${ids.map(b36).join('.')}` : '/drop …';
   box.querySelector('[data-hcount]').textContent = t('hsPicked', { n: ids.length }) + ' · ' + t('hsFree', { n: free });
   box.querySelector('[data-hcode]').textContent = cmd;
   box.querySelector('[data-hcopy]').disabled = !ids.length;
@@ -1312,7 +1343,7 @@ function runWhisper(run, role) {
 function runGameCode(run) {
   const d = LOOT.dungeons.find(x => x.key === run.dungeon), org = DATA.players.find(p => pkey(p) === run.by);
   const clean = x => String(x || '').replace(/[~|\n]/g, ' ').trim().replace(/\s+/g, '_').slice(0, 40);
-  return `/drop sortie DROP-RUN1:${Math.floor(Date.parse(run.at) / 1000).toString(36)}~${clean(d?.name || run.dungeon)}~${clean(org ? `${org.name} ${org.surname || ''}` : String(run.by).split('/')[1])}`;
+  return `/drop DROP-RUN1:${Math.floor(Date.parse(run.at) / 1000).toString(36)}~${clean(d?.name || run.dungeon)}~${clean(org ? `${org.name} ${org.surname || ''}` : String(run.by).split('/')[1])}`;
 }
 
 // ---------- Notifications des sorties ----------
@@ -1582,7 +1613,7 @@ function renderRuns() {
       <ul>${rows}</ul>
       <div class="rf"><span class="glabel">${t('runsGroup')}</span>${gp('tank', g.tank)}${gp('heal', g.heal)}${g.dps.map(p => gp('dps', p)).join('')}${form}</div></div>`;
   };
-  const rtab = state.rtab === 'ideas' ? 'ideas' : 'planned';
+  const rtab = state.rtab === 'ideas' || state.rtab === 'planned' ? state.rtab : (filtered.length ? 'planned' : 'ideas');
   box.innerHTML = `<div class="head"><h2>${t('runsT')}</h2><span class="note">${t('runsNote')} · Forever ${state.region.toUpperCase()}</span></div>
     <div class="rtabs" role="tablist"><button role="tab" data-rtab="planned" aria-selected="${rtab === 'planned'}">${t('rtabRuns')}<em>${filtered.length}</em></button><button role="tab" data-rtab="ideas" aria-selected="${rtab === 'ideas'}">${t('rtabIdeas')}<em>${runs.length}</em></button></div>
     ${Notif.panel()}${chips}${pfilters}${note}${rtab === 'planned' ? plannedBlock : `<p class="note rideas-n">${t('runsIdeasNote')}</p>
@@ -1840,7 +1871,7 @@ function readUrl() {
   state.region = ['eu', 'us', 'tw'].includes(q.get('r')) ? q.get('r') : 'eu';
   state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0;
   state.c = q.get('c') || state.c; state.g = q.get('g') || '';
-  if (state.view === 'runs') Object.assign(state, { rtab: q.get('tab') === 'ideas' ? 'ideas' : 'planned', hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
+  if (state.view === 'runs') Object.assign(state, { rtab: q.get('tab') === 'ideas' ? 'ideas' : q.get('tab') === 'planned' ? 'planned' : undefined, hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
 }
 function writeUrl(push) {
   if (SHOT) return;
