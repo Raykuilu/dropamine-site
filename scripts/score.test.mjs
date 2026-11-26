@@ -158,3 +158,14 @@ test('derniers loots : seulement ce qui est nouveau depuis le relevé précéden
   assert.deepEqual(newLoots(undefined, up, '2026-11-26'), [], 'premier export : rien de « nouveau »');
   assert.deepEqual(newLoots(prev, up, '2026-12-20'), [[3, '2026-11-26'], [9, '2026-11-26']], 'plus de 30 jours : oublié');
 });
+
+import { weaponFloor } from './build.mjs';
+test('arme : jamais plus bas que le meilleur rang de l’historique (ligne fausse, combat farouche à 1)', () => {
+  const up = { weapons: 300, weaponList: [{ id: 'feral', rank: 1 }, { id: 'staves', rank: 108 }] };
+  const hist = [{ d: '2026-11-25', s: { wferal: 178, wstaves: 103 } }, { d: '2026-11-26', s: { wferal: 179 } }];
+  const r = weaponFloor(up, hist);
+  assert.equal(r.weaponList.find(w => w.id === 'feral').rank, 179);
+  assert.equal(r.weaponList.find(w => w.id === 'staves').rank, 108, 'la ligne plus haute gagne');
+  assert.equal(r.weapons, 287);
+  assert.equal(weaponFloor(null, hist), null);
+});

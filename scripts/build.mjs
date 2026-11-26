@@ -72,6 +72,15 @@ export function parseEntry(raw, fallbackRegion = 'eu') {
 
 // ---------------------------------------------------------------------------
 // Calcul : niveau + métiers + Défense (API) + armes (fichier Dropamine, sinon estimées)
+// Une compétence d'arme ne baisse jamais en jeu : chaque arme de la ligne Dropamine garde au moins son meilleur rang
+// vu dans l'historique (une ligne fausse, ex. combat farouche à 1 avec Dropamine 3.12.1, ne fait plus rien baisser)
+export function weaponFloor(upload, hist = []) {
+  if (!upload || !Array.isArray(upload.weaponList)) return upload;
+  const best = {};
+  for (const h of hist) for (const [k, v] of Object.entries(h.s ?? {})) if (k[0] === 'w' && Number.isFinite(v)) best[k.slice(1)] = Math.max(best[k.slice(1)] ?? 0, v);
+  const weaponList = upload.weaponList.map(w => ({ ...w, rank: Math.max(+w.rank || 0, best[String(w.id)] ?? 0) }));
+  return { ...upload, weaponList, weapons: weaponList.reduce((n, w) => n + (+w.rank || 0), 0) };
+}
 export function score({ profile, professions, equipment, statistics }, upload) {
   const level = profile.level ?? 0;
   const profs = [];
@@ -298,7 +307,8 @@ async function main() {
       console.warn(`· ${e.key} : introuvable (niveau < 10, pas encore visible ou supprimé)`);
       return;
     }
-    const up = uploads[e.key] ?? uploads[e.slug];
+    const upRaw = uploads[e.key] ?? uploads[e.slug];
+    const up = weaponFloor(upRaw, await readJson(join(ROOT, 'data/history', e.region, `${e.slug}.json`), []));
     const s = score(c, up);
     const asset = key => c.media?.assets?.find(a => a.key === key)?.value ?? null;
 
