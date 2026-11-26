@@ -177,7 +177,7 @@ export function applyRunCreate(data, input, owner, characters, dungeons, now = D
   const at = Date.parse(input.at);
   if (!Number.isFinite(at) || at < now - 15 * 60e3 || at > now + 30 * 864e5) return { error: 'date' };
   if (runs.filter(r => r.owner === owner).length >= 5) return { error: 'too-many' };
-  if (runs.length >= 200) return { error: 'full' };
+  if (runs.length >= 1000) return { error: 'full' };
   const role = RUN_ROLES.includes(input.role) ? input.role : 'dps';
   const run = { id: Math.floor(now).toString(36) + Math.random().toString(36).slice(2, 6), dungeon: String(input.dungeon), at: new Date(at).toISOString(),
     note: cleanNote(input.note), by: key, owner, created: new Date(now).toISOString(), members: [{ key, role, owner }] };
@@ -204,4 +204,21 @@ export function applyRunLeave(data, input, owner, now = Date.now()) {
   const members = run.members.filter(m => m.owner !== owner);
   if (members.length === run.members.length) return { registry: { runs }, changed: false };
   return { registry: { runs: runs.map(r => r === run ? { ...run, members } : r) }, changed: true };
+}
+// l'organisateur modifie la date, l'heure, la note ou le donjon ; un inscrit change son rôle avec /runs/join (même personnage)
+export function applyRunEdit(data, input, owner, dungeons, now = Date.now()) {
+  const { runs } = pruneRuns(data, now);
+  const run = runs.find(r => r.id === input.id);
+  if (!run) return { error: 'gone' };
+  if (run.owner !== owner) return { error: 'not-yours' };
+  const upd = { ...run };
+  if (input.at != null) {
+    const at = Date.parse(input.at);
+    if (!Number.isFinite(at) || at < now - 15 * 60e3 || at > now + 30 * 864e5) return { error: 'date' };
+    upd.at = new Date(at).toISOString();
+  }
+  if (input.note != null) upd.note = cleanNote(input.note);
+  if (input.dungeon != null) { if (!dungeons.has(String(input.dungeon))) return { error: 'dungeon' }; upd.dungeon = String(input.dungeon); }
+  upd.edited = new Date(now).toISOString();
+  return { registry: { runs: runs.map(r => r === run ? upd : r) }, changed: true, run: upd };
 }

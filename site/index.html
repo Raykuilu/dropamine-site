@@ -2,12 +2,17 @@
 <html lang="en" data-lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Dropamine — the WoW Forever addon that celebrates every +1</title>
 <meta name="description" content="Dropamine, the Old School RuneScape-style addon for WoW Forever: every skill on screen, every +1 celebrated, collection log, BiS hunt, SkillUp Forever, Hardcore alerts. Plus Hiscores checked against the official armory.">
 <meta name="theme-color" content="#110d09">
 <link rel="icon" type="image/png" href="Dropamine-Logo.png">
-<link rel="apple-touch-icon" href="Dropamine-Logo.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dropamine">
 <link rel="canonical" href="https://dropamine.app/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Dropamine">
@@ -44,7 +49,7 @@
       <button role="tab" data-view="rank" aria-selected="false" data-t="tab.rank">Hiscores</button>
       <button role="tab" data-view="char" aria-selected="false" data-t="tab.mine" hidden>My character</button>
       <button role="tab" data-view="guild" aria-selected="false" data-t="tab.guild">Guilds</button>
-      <button role="tab" data-view="runs" aria-selected="false" data-t="tab.runs">Runs</button>
+      <button role="tab" data-view="runs" aria-selected="false" data-t="tab.runs">Group hunt</button>
       <button role="tab" data-view="news" aria-selected="false" data-t="tab.news">What's new</button>
     </div>
     <div class="tools">
@@ -55,6 +60,7 @@
           <input id="q" type="search" autocomplete="off" data-t-ph="search.ph"></label>
         <div class="suggest" id="suggest" role="listbox"></div>
       </div>
+      <button class="acct install" id="install" type="button" hidden><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg><span data-t="install">Install the app</span></button>
       <a class="acct" id="acct" href="?p=join" data-view-link="join"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span data-t="acct.in">Sign in</span></a>
       <button class="acct-out" id="acct-out" type="button" data-t-title="acct.out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg></button>
       <a class="btn gold" href="?p=get" data-view-link="get" data-t="btn.download">Download</a>
@@ -67,6 +73,7 @@
 
 <!-- ============ HOME / ACCUEIL ============ -->
 <section class="view on" id="home" aria-label="Dropamine">
+  <div id="dash" class="dash" hidden></div>
   <div class="intro">
     <div lang="en">
       <p class="kicker">FREE ADDON · WOW FOREVER</p>
@@ -197,7 +204,7 @@
 <section class="view" id="rank" aria-label="Hiscores"><div class="panel" id="rank-panel"><div class="empty">…</div></div></section>
 <section class="view" id="char" aria-label="Character"><div class="panel" id="char-panel"></div></section>
 <section class="view" id="guild" aria-label="Guilds"><div class="panel" id="guild-panel"></div></section>
-<section class="view" id="runs" aria-label="Runs"><div class="panel" id="runs-panel"></div></section>
+<section class="view" id="runs" aria-label="Group hunt"><div class="panel" id="runs-panel"></div></section>
 
 <!-- ============ NEWS / NOUVEAUTÉS ============ -->
 <section class="view" id="news" aria-label="What's new">

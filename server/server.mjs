@@ -14,10 +14,11 @@
 // par l'API GitHub, puis relance la mise à jour quotidienne du site.
 
 import { createServer } from 'node:http';
+import { gzipSync } from 'node:zlib';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload,
-  applyRunCreate, applyRunJoin, applyRunLeave, publicRuns } from './lib.mjs';
-import { readFileSync, existsSync } from 'node:fs';
+  applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns } from './lib.mjs';
+import { readFileSync, existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 // Secrets : variables d'environnement, ou à défaut un fichier server/.env privé (jamais versionné)
@@ -148,16 +149,60 @@ async function updateFile(path, fallback, fn, message) {
 }
 const updateRegistry = (fn, message) => updateFile('data/registry.json', undefined, fn, message);
 const updateUploads = (fn, message) => updateFile('data/uploads.json', {}, fn, message);
-const updateRuns = (fn, message) => updateFile('data/runs.json', { runs: [] }, fn, message);
-// donjons connus : les tables de butin du site (même dépôt)
-const LOOT_FILE = fileURLToPath(new URL('../site/data/loot.json', import.meta.url));
-const dungeonKeys = () => { try { return new Set(JSON.parse(readFileSync(LOOT_FILE, 'utf8')).dungeons.map(d => d.key)); } catch { return new Set(); } };
-// lecture publique des runs, gardée 20 s en mémoire
-let runsCache = { t: 0, data: null };
-async function currentRuns(fresh = false) {
-  if (fresh || !runsCache.data || Date.now() - runsCache.t > 20e3) runsCache = { t: Date.now(), data: (await readFile('data/runs.json', { runs: [] })).data };
-  return runsCache.data;
+// ---------------------------------------------------------------- runs : en mémoire, sauvegardés sur le disque du serveur
+// Beaucoup d'inscriptions possibles : pas un commit GitHub par clic. La mémoire fait foi, chaque changement est écrit
+// sur disque (fichier temporaire puis renommage), les écritures passent une par une (file), et une copie de secours
+// part sur GitHub (data/runs.json) au plus toutes les 15 minutes s'il y a eu du changement.
+const STATE_DIR = fileURLToPath(new URL('./.state/', import.meta.url));
+const RUNS_FILE = STATE_DIR + 'runs.json';
+let RUNS = null, runsDirty = false, runsQueue = Promise.resolve();
+async function runsLoad() {
+  if (RUNS) return RUNS;
+  try { RUNS = JSON.parse(readFileSync(RUNS_FILE, 'utf8')); }
+  catch { RUNS = (await readFile('data/runs.json', { runs: [] }).catch(() => ({ data: { runs: [] } }))).data; }   // premier démarrage : reprise de la copie GitHub
+  return RUNS;
 }
+let runsPub = null;
+function runsPublic() {
+  const slot = Math.floor(Date.now() / 900e3);
+  if (!runsPub || runsPub.slot !== slot) {
+    const text = JSON.stringify({ runs: publicRuns(RUNS ?? { runs: [] }) });
+    runsPub = { slot, text, gz: gzipSync(text), etag: '"' + createHmac('sha1', 'runs').update(text).digest('base64url').slice(0, 16) + '"' };
+  }
+  return runsPub;
+}
+function sendRuns(req, res) {
+  const p = runsPublic(), h = { ...cors, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache', ETag: p.etag };
+  if (req.headers['if-none-match'] === p.etag) { res.writeHead(304, h); return res.end(); }
+  if (/gzip/.test(String(req.headers['accept-encoding'] || ''))) { res.writeHead(200, { ...h, 'Content-Encoding': 'gzip' }); return res.end(p.gz); }
+  res.writeHead(200, h); res.end(p.text);
+}
+function runsSave() {
+  runsPub = null;
+  mkdirSync(STATE_DIR, { recursive: true });
+  writeFileSync(RUNS_FILE + '.tmp', JSON.stringify(RUNS));
+  renameSync(RUNS_FILE + '.tmp', RUNS_FILE);
+  runsDirty = true;
+}
+// une modification à la fois ; fn(données) → { registry, changed, … } ou { error }
+const updateRuns = fn => (runsQueue = runsQueue.then(async () => {
+  const cur = await runsLoad(), r = fn(cur);
+  if (!r.error && r.changed) { RUNS = r.registry; runsSave(); }
+  return r;
+}).catch(err => { console.error('runs :', err.message); return { error: 'x' }; }));
+setInterval(async () => {
+  if (!runsDirty || !RUNS) return;
+  runsDirty = false;
+  try { await updateFile('data/runs.json', { runs: [] }, () => ({ registry: RUNS, changed: true }), 'Runs: backup'); }
+  catch (err) { runsDirty = true; console.warn('copie des runs sur GitHub :', err.message); }
+}, 15 * 60e3).unref();
+// donjons connus : les tables de butin du site (même dépôt), relues au plus une fois par heure
+const LOOT_FILE = fileURLToPath(new URL('../site/data/loot.json', import.meta.url));
+let dunCache = { t: 0, set: new Set() };
+const dungeonKeys = () => {
+  if (Date.now() - dunCache.t > 3600e3) { try { dunCache = { t: Date.now(), set: new Set(JSON.parse(readFileSync(LOOT_FILE, 'utf8')).dungeons.map(d => d.key)) }; } catch { /* on garde l'ancienne liste */ } }
+  return dunCache.set;
+};
 
 // ---------------------------------------------------------------- HTTP
 function send(res, status, body, headers = {}) {
@@ -165,7 +210,7 @@ function send(res, status, body, headers = {}) {
   res.writeHead(status, { 'Content-Type': json ? 'application/json; charset=utf-8' : 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', ...headers });
   res.end(json ? JSON.stringify(body) : body);
 }
-const cors = { 'Access-Control-Allow-Origin': CFG.siteUrl, 'Access-Control-Allow-Credentials': 'true', Vary: 'Origin' };
+const cors = { 'Access-Control-Allow-Origin': CFG.siteUrl, 'Access-Control-Allow-Credentials': 'true', Vary: 'Origin, Accept-Encoding' };
 async function readBody(req) {
   let size = 0; const chunks = [];
   for await (const c of req) { size += c.length; if (size > 16e3) throw new Error('requête trop grosse'); chunks.push(c); }
@@ -176,11 +221,11 @@ const back = (status) => `${CFG.siteUrl}/?p=join&bnet=${status}`;
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, CFG.publicUrl);
   try {
-    if (limited(req)) return send(res, 429, { error: 'trop de requêtes' });
+    if (limited(req, url.pathname === '/runs' && req.method === 'GET' ? 120 : 40)) return send(res, 429, { error: 'trop de requêtes' }, { ...cors, 'Retry-After': '60' });
     if (req.method === 'OPTIONS') return send(res, 204, '', { ...cors, 'Access-Control-Allow-Methods': 'GET, POST', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600' });
 
     if (url.pathname === '/health') return send(res, 200, 'ok', cors);
-    if (url.pathname === '/runs' && req.method === 'GET') return send(res, 200, { runs: publicRuns(await currentRuns()) }, cors);
+    if (url.pathname === '/runs' && req.method === 'GET') { await runsLoad(); return sendRuns(req, res); }
 
     if (url.pathname === '/auth/login' && req.method === 'GET') {
       const state = randomBytes(18).toString('base64url');
@@ -201,7 +246,7 @@ const server = createServer(async (req, res) => {
     }
 
     // routes de session : appelées par dropamine.app (CORS avec cookie)
-    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave'].includes(url.pathname)) {
+    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit'].includes(url.pathname)) {
       if (req.method === 'POST' && req.headers.origin !== CFG.siteUrl) return send(res, 403, { error: 'origine refusée' }, cors);
       const s = session(req);
       if (url.pathname === '/logout') {
@@ -255,13 +300,11 @@ const server = createServer(async (req, res) => {
       if (url.pathname.startsWith('/runs/') && req.method === 'POST') {
         const body = await readBody(req), owner = ownerOf(s);
         const fn = url.pathname === '/runs/create' ? d => applyRunCreate(d, body, owner, s.characters, dungeonKeys())
+          : url.pathname === '/runs/edit' ? d => applyRunEdit(d, body, owner, dungeonKeys())
           : url.pathname === '/runs/join' ? d => applyRunJoin(d, body, owner, s.characters) : d => applyRunLeave(d, body, owner);
-        let err = null;
-        const r = await updateRuns(d => { const x = fn(d); if (x.error) { err = x.error; return { changed: false }; } return x; },
-          `Runs: ${url.pathname.slice(6)} ${String(body.dungeon ?? body.id ?? '').slice(0, 40)}`);
-        if (err) return send(res, 400, { error: err }, cors);
-        runsCache.t = 0;
-        return send(res, 200, { ok: true, id: r.run?.id ?? body.id, cancelled: !!r.cancelled, runs: publicRuns(await currentRuns(true)) }, cors);
+        const r = await updateRuns(fn);
+        if (r.error) return send(res, 400, { error: r.error }, cors);
+        return send(res, 200, { ok: true, id: r.run?.id ?? body.id, cancelled: !!r.cancelled, runs: publicRuns(RUNS) }, cors);
       }
     }
     return send(res, 404, { error: 'introuvable' });

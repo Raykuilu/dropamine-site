@@ -11,3 +11,6 @@ server/.env
 # images de cartes générées en local lors des essais (archivées dans design/cartes)
 site/cards/
 site/c/
+
+# runs du serveur (mémoire sauvegardée sur disque)
+server/.state/

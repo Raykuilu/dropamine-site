@@ -118,3 +118,19 @@ test('runs : créer, rejoindre, quitter, annuler, purger', () => {
   assert.equal(applyRunLeave(l.registry, { id: c.run.id }, 'A', now).cancelled, true);           // le créateur annule
   assert.equal(pruneRuns(j.registry, now + 12 * 3600e3).runs.length, 0);                          // 3 h après l'heure : disparu
 });
+
+import { applyRunEdit } from './lib.mjs';
+test('runs : modifier (organisateur seulement), changer de rôle', () => {
+  const now = Date.parse('2026-11-26T12:00:00Z');
+  const mine = new Map([['eu/ray-kuilu', { key: 'eu/ray-kuilu', level: 36 }]]), bob = new Map([['eu/bob-x', { key: 'eu/bob-x', level: 30 }]]);
+  const dungeons = new Set(['Gnomeregan', 'ShadowfangKeep']);
+  const c = applyRunCreate({}, { key: 'eu/ray-kuilu', dungeon: 'Gnomeregan', at: '2026-11-26T20:00:00Z' }, 'A', mine, dungeons, now);
+  const j = applyRunJoin(c.registry, { id: c.run.id, key: 'eu/bob-x', role: 'dps' }, 'B', bob, now);
+  assert.equal(applyRunEdit(j.registry, { id: c.run.id, note: 'x' }, 'B', dungeons, now).error, 'not-yours');
+  assert.equal(applyRunEdit(j.registry, { id: c.run.id, at: '2027-06-01T20:00:00Z' }, 'A', dungeons, now).error, 'date');
+  const e = applyRunEdit(j.registry, { id: c.run.id, at: '2026-11-27T21:00:00Z', note: 'Full clear', dungeon: 'ShadowfangKeep' }, 'A', dungeons, now);
+  assert.equal(e.run.at, '2026-11-27T21:00:00.000Z'); assert.equal(e.run.note, 'Full clear'); assert.equal(e.run.dungeon, 'ShadowfangKeep'); assert.equal(e.run.members.length, 2);
+  const r = applyRunJoin(e.registry, { id: c.run.id, key: 'eu/bob-x', role: 'heal' }, 'B', bob, now);   // même perso : change de rôle
+  assert.equal(r.run.members.find(m => m.key === 'eu/bob-x').role, 'heal');
+  assert.equal(r.run.members.length, 2);
+});

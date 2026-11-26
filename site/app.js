@@ -28,43 +28,63 @@ const I18N = {
   splitT: ['Split', 'Répartition'], bestByProf: ['Best by profession', 'Meilleurs par métier'], sinceY: ['since yesterday', 'depuis hier'],
   estSep: ['ESTIMATED · NOT RANKED UNTIL THE DROPAMINE LINE IS SENT', 'ESTIMÉS · SANS RANG JUSQU’À L’ENVOI DE LA LIGNE DROPAMINE'],
   skillsT: ['Skills', 'Compétences'], statsT: ['Armory statistics', "Statistiques de l'armurerie"],
-  tilesEst: ['hatched tiles: weapons estimated, waiting for the Dropamine line', "tuiles hachurées : armes estimées, en attente de la ligne Dropamine"],
+  tilesEst: ['hatched tiles: weapons estimated, waiting for the Dropamine export', "tuiles hachurées : armes estimées, en attente de la ligne Dropamine"],
   tipRank: ['Rank {r} / {m}', 'Rang {r} / {m}'], tipPlace: ['{r} in the Hiscores', '{r} au classement'],
-  tipEst: ['Estimated: equipped weapon counted at its maximum', 'Estimé : arme équipée comptée au maximum'], 'tab.guild': ['Guilds', 'Guildes'], 'tab.runs': ['Runs', 'Runs'],
-  runsT: ['Dungeon runs', 'Runs de donjon'],
-  runsPlanned: ['Planned runs', 'Runs prévus'], runsNone: ['No run planned yet: propose one below.', 'Aucun run prévu pour l’instant : propose-en un plus bas.'],
+  tipEst: ['Estimated: equipped weapon counted at its maximum', 'Estimé : arme équipée comptée au maximum'], 'tab.guild': ['Guilds', 'Guildes'], 'tab.runs': ['Group hunt', 'Chasse en groupe'],
+  runsT: ['Group hunt', 'Chasse en groupe'],
+  runsPlanned: ['Planned outings', 'Sorties prévues'], runsNone: ['No outing planned yet: propose one below.', 'Aucune sortie prévue pour l’instant : propose-en une plus bas.'],
   runsApiDown: ['service unavailable', 'service indisponible'], runsIdeas: ['Worth running', 'À faire en groupe'],
   runsIdeasNote: ['who hunts what, and what the collection logs miss', 'qui chasse quoi, et ce qui manque aux collection logs'],
   runsMyLvl: ['At my level', 'À mon niveau'], runsInterested: ['interested', 'intéressés'], runsHuntersShort: ['hunting', 'en chasse'],
-  runsExpShort: ['wanted items / run', 'objets recherchés / run'], runsMissShort: ['missing in logs', 'manquants aux logs'],
+  runsExpShort: ['wanted items / outing', 'objets recherchés / sortie'], runsMissShort: ['missing in logs', 'manquants aux logs'],
   runsMissing: ['{n} missing', '{n} manquants'], runsGroup: ['Suggested group', 'Groupe suggéré'], runsNobody: ['nobody', 'personne'],
   fitOk: ['right level', 'bon niveau'], fitHigh: ['over level', 'au-dessus'],
   'role.tank': ['Tank', 'Tank'], 'role.heal': ['Healer', 'Soigneur'], 'role.dps': ['Damage', 'Dégâts'],
-  runPropose: ['Propose a run', 'Proposer un run'], runWhen: ['When', 'Quand'], runChar: ['Character', 'Personnage'], runRole: ['Role', 'Rôle'],
-  runNote: ['Note', 'Note'], runNotePh: ['e.g. full clear, Pummeler farm', 'ex. : full clear, farm du Faucheur'], runCreate: ['Create the run', 'Créer le run'],
-  runJoin: ['Join', 'Rejoindre'], runLeave: ['Leave', 'Quitter'], runCancel: ['Cancel the run', 'Annuler le run'], runOrg: ['organiser', 'organise'],
-  runLogin: ['Sign in with Battle.net to join.', 'Connecte-toi avec Battle.net pour rejoindre.'],
-  runCreated: ['Run created.', 'Run créé.'], runJoined: ['You joined the run.', 'Tu as rejoint le run.'], runLeft: ['You left the run.', 'Tu as quitté le run.'], runCancelled: ['Run cancelled.', 'Run annulé.'],
+  runPropose: ['Propose an outing', 'Proposer une sortie'], runWhen: ['When', 'Quand'], runChar: ['Character', 'Personnage'], runRole: ['Role', 'Rôle'],
+  runNote: ['Note', 'Note'], runNotePh: ['e.g. full clear, Pummeler farm', 'ex. : full clear, farm du Faucheur'], runCreate: ['Create the outing', 'Créer la sortie'],
+  runJoin: ['Join', 'S’inscrire'], runIcsTitle: ['Group hunt: {d} (WoW Forever)', 'Chasse en groupe : {d} (WoW Forever)'], runMore: ['{n} more', '{n} de plus'], runWait: ['Waiting list ({n})', 'Liste d’attente ({n})'], runWaitN: ['{n} waiting', '{n} en attente'],
+  runFullHint: ['Group complete: you will be on the waiting list.', 'Groupe complet : tu passeras en liste d’attente.'],
+  runMoreRuns: ['Show {n} more outings', 'Voir {n} sorties de plus'], runMoreDun: ['Show {n} more dungeons', 'Voir {n} donjons de plus'],
+  pfAll: ['All', 'Tous'], pfMine: ['My outings', 'Mes sorties'], pfOpen: ['Open spots', 'Places libres'], pfAllDun: ['All dungeons', 'Tous les donjons'],
+  pfCount: ['{n} outings', '{n} sorties'], pfNone: ['No outing matches these filters.', 'Aucune sortie ne correspond à ces filtres.'],
+  dayToday: ['Today', 'Aujourd’hui'], dayTomorrow: ['Tomorrow', 'Demain'], runEdit: ['Edit', 'Modifier'], runSave: ['Save', 'Enregistrer'], runDungeon: ['Dungeon', 'Donjon'],
+  runSaved: ['Outing updated.', 'Sortie modifiée.'], runRoleChanged: ['Role changed.', 'Rôle changé.'], runEdited: ['edited', 'modifié'],
+  runFull: ['Group complete', 'Groupe complet'], runCount: ['{n} signed up', '{n} inscrit(s)'],
+  runCopy: ['Copy announcement', 'Copier l’annonce'], runLink: ['Copy link', 'Copier le lien'], runIcs: ['Add to calendar', 'Agenda'], runCopied: ['Copied ✓', 'Copié ✓'],
+  runCancelQ: ['Cancel this outing for everyone?', 'Annuler cette sortie pour tout le monde ?'],
+  runNow: ['in progress', 'en cours'], runInMin: ['in {n} min', 'dans {n} min'], runInH: ['in {n} h', 'dans {n} h'], runTomorrow: ['tomorrow', 'demain'], runInD: ['in {n} days', 'dans {n} jours'],
+  runAnn: ['Outing {d} · {w} · {n} signed up', 'Sortie {d} · {w} · {n} inscrit(s)'], runLeave: ['Leave', 'Quitter'], runCancel: ['Cancel the outing', 'Annuler la sortie'], runOrg: ['organiser', 'organise'],
+  runLogin: ['Sign in with Battle.net to join.', 'Connecte-toi avec Battle.net pour t’inscrire.'],
+  runCreated: ['Outing created.', 'Sortie créée.'], runJoined: ['You joined the outing.', 'Tu es inscrit à la sortie.'], runLeft: ['You left the outing.', 'Tu as quitté la sortie.'], runCancelled: ['Outing cancelled.', 'Sortie annulée.'],
   'runErr.date': ['Pick a date within the next 30 days.', 'Choisis une date dans les 30 prochains jours.'], 'runErr.not-yours': ['This character is not on your account.', 'Ce personnage n’est pas sur ton compte.'],
-  'runErr.already': ['One of your characters is already in this run.', 'Un de tes personnages est déjà dans ce run.'], 'runErr.too-many': ['You already organise 5 runs.', 'Tu organises déjà 5 runs.'],
-  'runErr.gone': ['This run no longer exists.', 'Ce run n’existe plus.'], 'runErr.full': ['Full.', 'Complet.'], 'runErr.dungeon': ['Unknown dungeon.', 'Donjon inconnu.'],
+  'runErr.already': ['One of your characters is already in this outing.', 'Un de tes personnages est déjà dans cette sortie.'], 'runErr.too-many': ['You already organise 5 outings.', 'Tu organises déjà 5 sorties.'],
+  'runErr.gone': ['This outing no longer exists.', 'Cette sortie n’existe plus.'], 'runErr.full': ['Full.', 'Complet.'], 'runErr.dungeon': ['Unknown dungeon.', 'Donjon inconnu.'],
   'runErr.x': ['Something went wrong, try again.', 'Ça n’a pas marché, réessaie.'], runsNote: ['who hunts what, and where', 'qui chasse quoi, et où'],
   runsGuild: ['My guild', 'Ma guilde'], runsAll: ['All players', 'Tous les joueurs'], runsHunters: ['{n} hunters', '{n} chasseurs'], runsHunter1: ['1 hunter', '1 chasseur'],
   runsExp: ['≈ {n} wanted items per run', '≈ {n} objets recherchés par run'], runsLvl: ['level {a}–{b}', 'niveau {a}–{b}'], runsYou: ['you', 'toi'],
   runsLow: ['too low', 'trop bas'], runsTrash: ['trash', 'monstres'], runsEmptyT: ['No hunt shared yet', 'Aucune chasse partagée pour l’instant'],
-  runsEmpty: ['In game, add items to your hunt list, type /drop hiscores (Hunt ticked) and paste the line on the Join page: your dungeons show up here.', 'En jeu, ajoute des objets à ta liste de chasse, tape /drop hiscores (case Chasse cochée) et colle la ligne sur la page Inscription : tes donjons apparaissent ici.'],
+  runsEmpty: ['In game, add items to your hunt list, type /drop hiscores (Hunt ticked) and paste the export on the Join page: your dungeons show up here.', 'En jeu, ajoute des objets à ta liste de chasse, tape /drop hiscores (case Chasse cochée) et colle la ligne sur la page Inscription : tes donjons apparaissent ici.'],
   runsNoGuild: ['Nobody in your guild shares a hunt yet: showing all players.', 'Personne de ta guilde ne partage sa chasse pour l’instant : tous les joueurs sont affichés.'],
   runsSrc: ['Loot tables: AtlasLoot Forever (GPL-2.0).', 'Tables de butin : AtlasLoot Forever (GPL-2.0).'],
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
   'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source (open source, MIT)', 'Code du site (open source, MIT)'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
   'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE LOGBOOK', 'CARNET DROPAMINE'],
-  trust: ['Sent by the players with their Dropamine line: based on trust.', 'Envoyé par les joueurs avec leur ligne Dropamine : basé sur la confiance.'],
+  trust: ['Sent by the players with their Dropamine export: based on trust.', 'Envoyé par les joueurs avec leur ligne Dropamine : basé sur la confiance.'],
   sortBy: ['Rank by', 'Classer par'], trustShort: ['based on trust', 'basé sur la confiance'],
   kills: ['Creatures killed', 'Créatures tuées'], killingBlows: ['Killing blows', 'Coups fatals'], dungeons: ['Dungeons entered', 'Donjons visités'],
   pvpDeaths: ['Killed by players', 'Tué par des joueurs'], duels: ['Duels (won / lost)', 'Duels (gagnés / perdus)'],
   repsT: ['Reputations', 'Réputations'],
-  clogResend: ['Send your /drop hiscores line again to see each item as an icon.', 'Renvoie ta ligne /drop hiscores pour voir chaque objet en icône.'],
+  dashHi: ['Hi {n}', 'Salut {n}'], dashSheet: ['My sheet', 'Ma fiche'], dashSend: ['Update my logbook', 'Mettre à jour mon carnet'], in7: ['in 7 days', 'en 7 jours'],
+  dashNoLine: ['Your logbook is empty: type /drop hiscores in game and paste the export.', 'Ton carnet est vide : tape /drop hiscores en jeu et colle la ligne.'],
+  dashOldLine: ['Your Dropamine export is {n} days old: paste it again to update collection log and hunt.', 'Ta ligne Dropamine date de {n} jours : renvoie-la pour mettre à jour collection log et chasse.'],
+  dashRuns: ['My outings', 'Mes sorties'], dashNoRun: ['You are not in any outing yet.', 'Tu n’es inscrit à aucune sortie.'], dashOpenRuns: ['Open outings for you', 'Sorties ouvertes pour toi'],
+  dashAllRuns: ['Group hunt →', 'Chasse en groupe →'], dashHunt: ['My hunt', 'Ma chasse'], dashNoHunt: ['Nothing to hunt: add items in the addon (Hunt tab).', 'Rien en chasse : ajoute des objets dans l’addon (onglet Chasse).'],
+  dashAlso: ['{n} others hunt there', '{n} autres y chassent'], dashNear: ['Almost done', 'Presque finis'],
+  dashNoLog: ['Paste your Dropamine export to see your collection log.', 'Envoie ta ligne Dropamine pour voir ton collection log.'],
+  dashGuildRank: ['{r} of {n} in the guild', '{r} sur {n} dans la guilde'], dashGuild: ['Guild page →', 'Page de la guilde →'],
+  dashNext: ['Next steps', 'Prochaines marches'], dashLeft: ['{n} to go', 'encore {n}'], dashAbout: ['About the addon', 'Découvrir l’addon'], install: ['Install the app', 'Installer l’app'],
+  clogResend: ['Paste your /drop hiscores export again to see each item as an icon.', 'Renvoie ta ligne /drop hiscores pour voir chaque objet en icône.'],
   clogNone: ['No dungeon item obtained yet.', 'Aucun objet de donjon obtenu pour l’instant.'],
   clogSrc: ['Loot tables: AtlasLoot Forever (GPL-2.0) · items: Blizzard API.', 'Tables de butin : AtlasLoot Forever (GPL-2.0) · objets : API Blizzard.'],
   obtained: ['Obtained', 'Obtenu'], notObtained: ['Not obtained yet', 'Pas encore obtenu'], itemForever: ['Forever item', 'Objet propre à Forever'], advT: ['Adventure', 'Aventure'], pvpT: ['PvP', 'JcJ'],
@@ -83,7 +103,7 @@ const I18N = {
   recCombo: ['Longest combo', 'Plus long combo'], recSessions: ['Sessions', 'Sessions'], recGoals: ['Goals reached', 'Objectifs atteints'],
   recTime: ['Time tracked', 'Temps suivi'], huTries: ['{n} tries', '{n} essais'], huFound: ['found', 'trouvé'],
   pvHkWeek: ['HK this week', 'VH cette semaine'], pvHonorWeek: ['Honor this week', 'Honneur cette semaine'], pvHonor: ['Honor points', "Points d'honneur"],
-  pvDk: ['Dishonorable kills', 'Victoires déshonorantes'], pvHighest: ['Highest rank', 'Rang le plus haut'], playedN: ['{t} played', '{t} de jeu'], playedTip: ['/played, sent by the player with their Dropamine line', '/played, envoyé par le joueur avec sa ligne Dropamine'],
+  pvDk: ['Dishonorable kills', 'Victoires déshonorantes'], pvHighest: ['Highest rank', 'Rang le plus haut'], playedN: ['{t} played', '{t} de jeu'], playedTip: ['/played, sent by the player with their Dropamine export', '/played, envoyé par le joueur avec sa ligne Dropamine'],
   rank: ['RANK', 'RANG'], character: ['CHARACTER', 'PERSONNAGE'], split: ['BREAKDOWN', 'RÉPARTITION'], value: ['VALUE', 'VALEUR'], totalH: ['TOTAL', 'TOTAL'],
   member: ['MEMBER', 'MEMBRE'], guildH: ['GUILD', 'GUILDE'], members: ['MEMBERS', 'INSCRITS'], d7: ['7 D', '7 J'],
   est: ['estimated', 'estimé'], preview: ['preview', 'aperçu'],
@@ -101,7 +121,7 @@ const I18N = {
   progress: ['Progress', 'Progression'], defW: ['Defense {d} · weapons {w}', 'Défense {d} · armes {w}'], estP: [' (estimated)', ' (estimées)'],
   sealOk: ['VERIFIED · ARMORY + DROPAMINE FILE', 'VÉRIFIÉ · ARMURERIE + FICHIER DROPAMINE'], sealEst: ['ARMORY · WEAPONS ESTIMATED', 'ARMURERIE · ARMES ESTIMÉES'],
   totalLevel: ['TOTAL LEVEL', 'NIVEAU TOTAL'],
-  ctaEst: ["<b>Estimated score.</b> Weapon skills are not in the armory, so each equipped weapon is counted at its maximum. Is it you? In game, type <code>/drop hiscores</code> and paste the line on the <a href=\"?p=join\" data-view-link=\"join\">Join page</a>: your real weapon skills replace the estimate.",
+  ctaEst: ["<b>Estimated score.</b> Weapon skills are not in the armory, so each equipped weapon is counted at its maximum. Is it you? In game, type <code>/drop hiscores</code> and paste the export on the <a href=\"?p=join\" data-view-link=\"join\">Join page</a>: your real weapon skills replace the estimate.",
     "<b>Score estimé.</b> Les compétences d'armes ne sont pas dans l'armurerie : elles sont comptées au maximum pour chaque arme équipée. C'est toi ? En jeu, tape <code>/drop hiscores</code> et colle la ligne sur la <a href=\"?p=join\" data-view-link=\"join\">page Inscription</a> : tes vraies compétences d'armes remplacent l'estimation."],
   guildsT: ['Guilds', 'Guildes'], guildsNote: ["ranked by their members' total · Forever {r}", 'classées par le total de leurs membres · Forever {r}'],
   noGuildT: ['No guild', 'Aucune guilde'], noGuild: ['Guilds appear as soon as one of their members is listed.', "Les guildes apparaissent dès qu'un de leurs membres est affiché."],
@@ -293,7 +313,83 @@ const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.comple
 /* ---------- Accueil : le pont vers les classements ---------- */
 // téléchargements CurseForge, mis à jour à la main (chiffre donné par l'auteur)
 const CF_DOWNLOADS = 529;
+// ---------- Accueil personnel (connecté) : tout ce qui sert au quotidien, en un coup d'œil ----------
+function renderDash() {
+  const box = $('#dash'); if (!box) return false;
+  const me = Bnet.mine();
+  $('#home').classList.toggle('logged', !!me.length);
+  if (!me.length) { box.hidden = true; return false; }
+  box.hidden = false;
+  if (!LOOT || !ITEMS || !ART || !runsLoad) Promise.all([loadLoot(), loadItems(), loadArt(), loadRuns()]).then(() => { if (state.view === 'home') renderDash(); });
+  const p = me.find(x => pkey(x) === state.dc) || [...me].sort((a, b) => b.total - a.total)[0];
+  const peers = DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu'));
+  const rank = rankBy(SKILLS[0], peers).find(x => x.p === p)?.r, d1 = dayGain(p), d7 = gain7(p);
+  const chooser = me.length > 1 ? `<div class="chips">${me.map(x => `<span class="chip ${x === p ? 'on' : ''}" data-dc="${esc(pkey(x))}">${full(x)} <small>${x.level}</small></span>`).join('')}</div>` : '';
+  const d = p.dropamine || {};
+  const old = p.dropamineAt ? (Date.now() - Date.parse(p.dropamineAt)) / 864e5 : null;
+  // 1) le personnage
+  const hero = `<div class="dhero"${p.render ? ` style="--fig:url('${esc(p.render)}')"` : ''}>
+      <div class="dh-l"><h2>${t('dashHi', { n: esc(p.name) })}</h2><p>${esc(className(p))} · ${t('levelN', { n: p.level })}${p.guild ? ' · ' + esc(p.guild.name) : ''}</p>
+        <div class="dh-n"><b data-n="${p.total}">${fmt(p.total)}</b><small> / ${fmt(p.max || 2460)}</small></div>
+        <div class="dh-g">${rank ? `<span>${ord(rank)} · ${t('totalLevel')}</span>` : ''}${d1 > 0 ? `<span class="up">+${fmt(d1)} ${t('sinceY')}</span>` : ''}${d7 > 0 ? `<span class="up">+${fmt(d7)} ${t('in7')}</span>` : ''}</div>
+        <div class="dh-a"><a class="btn gold" href="?p=char&c=${esc(pkey(p))}" data-c="${esc(pkey(p))}">${t('dashSheet')}</a><button class="btn ghost" data-hsimg="${esc(pkey(p))}">${t('hsBtn')}</button><a class="btn ghost" href="?p=join" data-view-link="join">${t('dashSend')}</a></div>
+        ${old == null ? `<p class="dh-warn">${t('dashNoLine')}</p>` : old > 7 ? `<p class="dh-warn">${t('dashOldLine', { n: Math.floor(old) })}</p>` : ''}</div></div>`;
+  // 2) mes runs, et ceux à ma portée
+  const mineKeys = new Set(me.map(pkey));
+  const myRuns = (RUNS || []).filter(r => r.members.some(m => mineKeys.has(m.key)));
+  const openRuns = (RUNS || []).filter(r => !r.members.some(m => mineKeys.has(m.key)) && LOOT && (() => { const dd = LOOT.dungeons.find(x => x.key === r.dungeon); return dd && fitOf(p, dd) !== 'low'; })()).slice(0, 3);
+  const runLine = r => { const dd = LOOT?.dungeons.find(x => x.key === r.dungeon), d0 = new Date(r.at);
+    return `<li class="drun"${dd ? artStyle(dd.key) : ''}><a href="?p=runs&run=${esc(r.id)}" data-runlink="${esc(r.id)}"><b>${esc(dd?.name || r.dungeon)}</b><span>${d0.toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short' })} · ${d0.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })} · ${relWhen(d0)}</span><small>${t('runCount', { n: r.members.length })}</small></a></li>`; };
+  const runsCard = `<section class="dcard"><h3>${t('dashRuns')}</h3>${myRuns.length ? `<ul class="dlist">${myRuns.slice(0, 4).map(runLine).join('')}</ul>` : `<p class="note">${t('dashNoRun')}</p>`}
+      ${openRuns.length ? `<h4>${t('dashOpenRuns')}</h4><ul class="dlist">${openRuns.map(runLine).join('')}</ul>` : ''}
+      <a class="lnk" href="?p=runs" data-view-link="runs">${t('dashAllRuns')}</a></section>`;
+  // 3) ma chasse : objets pas encore trouvés, et qui d'autre chasse au même endroit
+  const hunts = (d.hunt || []).filter(x => !x.drops);
+  const others = id => { const keys = new Set((LOOT?.idx.get(id) || []).map(x => x.d.key));
+    return DATA.players.filter(o => o !== p && (o.dropamine?.hunt || []).some(x => !x.drops && (LOOT?.idx.get(x.id) || []).some(y => keys.has(y.d.key)))).length; };
+  const huntCard = `<section class="dcard"><h3>${t('dashHunt')}</h3>${hunts.length ? `<ul class="dhunt">${hunts.slice(0, 6).map(x => { const src = (LOOT?.idx.get(x.id) || []).sort((a, b) => (b.rate || 0) - (a.rate || 0))[0];
+      const n = LOOT ? others(x.id) : 0;
+      return `<li><span class="ci" data-item="${x.id}" data-boss="${esc(src ? (L2(src.b.n) || src.b.n[0]) : '')}"${src?.rate ? ` data-rate="${src.rate}"` : ''} style="--q:${QCOL[ITEMS?.[x.id]?.q] || '#8a7a5a'}"><img src="${itemIcon(x.id)}" alt="" loading="lazy" referrerpolicy="no-referrer"></span>
+        <span><b>${esc(x.name)}</b><small>${src ? esc(src.d.name) + (src.rate ? ` · ${fmt(src.rate)} %` : '') : ''}${x.tries ? ` · ${t('huTries', { n: fmt(x.tries) })}` : ''}${n ? ` · <i class="also">${t('dashAlso', { n })}</i>` : ''}</small></span></li>`; }).join('')}</ul>` : `<p class="note">${t('dashNoHunt')}</p>`}</section>`;
+  // 4) collection log : où j'en suis, et les donjons presque finis
+  const col = d.collection;
+  let near = '';
+  if (col?.items?.length && LOOT) {
+    const g = new Set(col.items);
+    near = LOOT.dungeons.map(dd => { const all = dunItems(dd), have = [...all].filter(id => g.has(id)).length; return { dd, have, total: all.size }; })
+      .filter(x => x.have > 0 && x.have < x.total).sort((a, b) => b.have / b.total - a.have / a.total).slice(0, 3)
+      .map(x => `<li><span>${esc(x.dd.name)}</span><i class="lbar"><i style="width:${(100 * x.have / x.total).toFixed(1)}%"></i></i><b>${x.have} / ${x.total}</b></li>`).join('');
+  }
+  const colCard = `<section class="dcard"><h3>${t('dbLog')}</h3>${col ? `<div class="db-big">${fmt(col.x)}<small> / ${fmt(col.y)}</small></div><i class="lbar"><i style="width:${(100 * col.x / col.y).toFixed(2)}%"></i></i>
+      ${near ? `<h4>${t('dashNear')}</h4><ul class="db-list one">${near}</ul>` : ''}` : `<p class="note">${t('dashNoLog')}</p>`}</section>`;
+  // 5) ma guilde : mon rang, les plus forts de la semaine
+  let guildCard = '';
+  if (p.guild) {
+    const mates = DATA.players.filter(x => x.guild?.slug === p.guild.slug && (x.region || 'eu') === (p.region || 'eu'));
+    const gr = [...mates].sort((a, b) => b.total - a.total).indexOf(p) + 1;
+    const movers = mates.map(x => ({ x, g: gain7(x) })).filter(o => o.g > 0).sort((a, b) => b.g - a.g).slice(0, 3);
+    guildCard = `<section class="dcard"><h3>${esc(p.guild.name)}</h3><p class="dg">${t('dashGuildRank', { r: ord(gr), n: mates.length })}</p>
+      ${movers.length ? `<h4>${t('bestWeek')}</h4><ul class="dlist">${movers.map(o => `<li><a data-c="${esc(pkey(o.x))}" href="?p=char&c=${esc(pkey(o.x))}">${avatar(o.x)}<b>${full(o.x)}</b><span class="up">+${fmt(o.g)}</span></a></li>`).join('')}</ul>` : ''}
+      <a class="lnk" href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${t('dashGuild')}</a></section>`;
+  }
+  // 6) prochaines marches : les compétences les plus proches de leur maximum actuel
+  const steps = [...(p.professions || []).map(x => ({ n: profName(x.id, x.name), v: x.skill, m: x.max || 300, ic: PROF_ICON[x.id] })),
+    ...(p.weaponList || []).filter(w => !w.est && (p.equipped || []).includes(w.id)).map(w => ({ n: L2(WPN[w.id]), v: w.rank, m: 5 * p.level, ic: WPN[w.id]?.[2] })),
+    { n: t('defense'), v: p.defense || 0, m: 5 * p.level, ic: DEF_ICON }]
+    .filter(x => x.v > 0 && x.v < x.m).sort((a, b) => (b.v / b.m) - (a.v / a.m)).slice(0, 4);
+  const stepCard = steps.length ? `<section class="dcard"><h3>${t('dashNext')}</h3><ul class="dsteps">${steps.map(x => `<li><img src="${icon(x.ic)}" alt="" referrerpolicy="no-referrer"><span>${esc(x.n)}</span><i class="lbar"><i style="width:${(100 * x.v / x.m).toFixed(1)}%"></i></i><b>${x.v} / ${x.m}</b><small>${t('dashLeft', { n: x.m - x.v })}</small></li>`).join('')}</ul></section>` : '';
+  box.innerHTML = `${chooser}${hero}<div class="dgrid">${runsCard}${huntCard}${colCard}${stepCard}${guildCard}</div>
+    <p class="dash-more"><a class="lnk" data-dash-intro>${t('dashAbout')}</a></p>`;
+  return true;
+}
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-dc]'); if (c) { state.dc = c.dataset.dc; renderDash(); return; }
+  const rl = e.target.closest('[data-runlink]'); if (rl) { e.preventDefault(); state.runFocus = rl.dataset.runlink; state.runFocused = false; go({ view: 'runs' }); return; }
+  if (e.target.closest('[data-dash-intro]')) { $('#home').classList.toggle('show-intro'); }
+});
+
 function renderHome() {
+  renderDash();
   // les chiffres qui montrent que le projet vit (toutes régions)
   if (DATA.players.length) {
     const gs = new Set(DATA.players.filter(p => p.guild).map(p => (p.region || 'eu') + '/' + p.guild.slug));
@@ -839,7 +935,20 @@ const ItemTip = (() => {
 // ---------- Runs de donjon : qui chasse quoi, ce qui manque au collection log, groupes et runs prévus ----------
 let ART = null, artLoad = null, RUNS = null, runsLoad = null;
 const loadArt = () => artLoad ??= fetch('data/art.json').then(r => r.json()).then(j => { ART = j; }).catch(() => { ART = {}; });
-const loadRuns = (force) => (force || !runsLoad) ? (runsLoad = fetch(API + '/runs', { cache: 'no-store' }).then(r => r.json()).then(j => { RUNS = j.runs || []; }).catch(() => { RUNS = null; })) : runsLoad;
+let runsSig = '', runsBackoff = 0;
+const loadRuns = (force) => (force || !runsLoad) ? (runsLoad = fetch(API + '/runs', { cache: 'no-cache' })
+  .then(r => { if (r.status === 429) { runsBackoff = Math.min(4, runsBackoff + 1); throw new Error('429'); } runsBackoff = 0; return r.json(); })
+  .then(j => { RUNS = j.runs || []; }).catch(e => { if (e.message !== '429') RUNS = RUNS ?? null; })) : runsLoad;
+// rafraîchissement : toutes les 60 s (plus lent si le serveur demande de patienter), seulement page Runs visible,
+// et jamais pendant qu'on remplit un formulaire ; on ne redessine que si la liste a changé
+setInterval(async () => {
+  if (state.view !== 'runs' || document.hidden || !LOOT || (runsBackoff && Math.random() > 1 / (2 ** runsBackoff))) return;
+  const busy = document.activeElement?.closest?.('#runs-panel input, #runs-panel select, #runs-panel textarea') || $('#runs-panel details.propose[open], #runs-panel details.redit[open]');
+  if (busy) return;
+  const before = JSON.stringify(RUNS);
+  await loadRuns(true);
+  if (JSON.stringify(RUNS) !== before) renderRuns();
+}, 60e3);
 const isTrash = b => /^(Trash|Ennemis)/i.test(b.n[0]);
 const ROLE_OK = { tank: [1, 2, 11], heal: [5, 7, 2, 11] };   // par préférence : guerrier, paladin, druide / prêtre, chaman, paladin, druide
 const ROLE_IC = { tank: 'ability_defend', heal: 'spell_holy_flashheal', dps: 'ability_dualwield' };
@@ -887,6 +996,31 @@ const artStyle = key => ART?.[key] ? ` style="--art:url('https://render.worldofw
 const roleIcon = role => `<img class="role" src="${icon(ROLE_IC[role] || ROLE_IC.dps)}" alt="${t('role.' + (role || 'dps'))}" title="${t('role.' + (role || 'dps'))}" referrerpolicy="no-referrer">`;
 const whenText = iso => new Date(iso).toLocaleString(locale(), { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
+const localInput = d => { const z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`; };
+const nextEvening = () => { const d = new Date(); d.setDate(d.getDate() + (d.getHours() >= 20 ? 1 : 0)); d.setHours(21, 0, 0, 0); return d; };
+function relWhen(d) {
+  const ms = d - Date.now(), h = ms / 3600e3;
+  if (ms < 0) return t('runNow');
+  if (h < 1) return t('runInMin', { n: Math.max(1, Math.round(ms / 60e3)) });
+  if (h < 24) return t('runInH', { n: Math.round(h) });
+  const days = Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 864e5);
+  return days === 1 ? t('runTomorrow') : t('runInD', { n: days });
+}
+const runUrl = id => `${location.origin}/?p=runs&run=${encodeURIComponent(id)}`;
+function runText(run) {
+  const d = LOOT.dungeons.find(x => x.key === run.dungeon), byKey = new Map(DATA.players.map(p => [pkey(p), p]));
+  const who = run.members.map(m => { const p = byKey.get(m.key); return `${t('role.' + m.role)} ${p ? p.name : m.key.split('/')[1]}`; }).join(', ');
+  return `[Dropamine] ${t('runAnn', { d: d?.name || run.dungeon, w: whenText(run.at), n: run.members.length })}${run.note ? ` · « ${run.note} »` : ''} · ${who} · ${runUrl(run.id)}`;
+}
+function runIcs(run) {
+  const d = LOOT.dungeons.find(x => x.key === run.dungeon), st = new Date(run.at), en = new Date(st.getTime() + 2 * 3600e3);
+  const f = x => x.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Dropamine//Runs//FR', 'BEGIN:VEVENT', `UID:${run.id}@dropamine.app`, `DTSTAMP:${f(new Date())}`,
+    `DTSTART:${f(st)}`, `DTEND:${f(en)}`, `SUMMARY:${t('runIcsTitle', { d: (d?.name || run.dungeon).replace(/[,;]/g, ' ') })}`,
+    `DESCRIPTION:${(run.note || '').replace(/[,;\n]/g, ' ')}`, `URL:${runUrl(run.id)}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  const a = document.createElement('a'); a.download = `run-${run.dungeon}.ics`; a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })); a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
 function renderRuns() {
   const box = $('#runs-panel');
   if (!LOOT || !ITEMS || !ART) {
@@ -909,34 +1043,79 @@ function renderRuns() {
   const huntsIn = (p, d) => (p?.dropamine?.hunt || []).filter(h => !h.drops && (LOOT.idx.get(h.id) || []).some(x => x.d.key === d.key))
     .map(h => ({ h, boss: (LOOT.idx.get(h.id) || []).find(x => x.d.key === d.key).b, rate: (LOOT.idx.get(h.id) || []).find(x => x.d.key === d.key).rate }));
   const mineKeys = new Set(me.map(pkey));
-  const planned = (RUNS || []).map(run => {
+  const charSel = (sel) => `<select data-run-char>${me.map(p => `<option value="${esc(pkey(p))}"${pkey(p) === sel ? ' selected' : ''}>${full(p)} (${p.level})</option>`).join('')}</select>`;
+  const roleSel = (sel, attr = 'data-run-role') => `<select ${attr}>${['tank', 'heal', 'dps'].map(x => `<option value="${x}"${x === sel ? ' selected' : ''}>${t('role.' + x)}</option>`).join('')}</select>`;
+  const allRuns = RUNS || [];
+  const pf = state.pf || 'all', pd = state.pd || '';
+  const filtered = allRuns.filter(run => (pf !== 'mine' || run.members.some(m => mineKeys.has(m.key)))
+    && (pf !== 'open' || (() => { const l = { tank: 1, heal: 1, dps: 3 }; run.members.forEach(m => l[m.role]--); return l.tank > 0 || l.heal > 0 || l.dps > 0; })())
+    && (!pd || run.dungeon === pd));
+  const plimit = state.plimit || 10, page = filtered.slice(0, plimit);
+  const dayKey = iso => new Date(iso).toDateString();
+  const dayTitle = iso => { const d = new Date(iso), diff = Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 864e5);
+    return diff <= 0 ? t('dayToday') : diff === 1 ? t('dayTomorrow') : d.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' }); };
+  const dunsWithRuns = [...new Set(allRuns.map(x => x.dungeon))].map(k => LOOT.dungeons.find(d => d.key === k)).filter(Boolean);
+  const pfilters = allRuns.length > 1 ? `<div class="pfil chips">${[['all', 'pfAll'], ...(me.length ? [['mine', 'pfMine']] : []), ['open', 'pfOpen']].map(([k, l]) => `<span class="chip ${pf === k ? 'on' : ''}" data-pf="${k}">${t(l)}</span>`).join('')}
+    ${dunsWithRuns.length > 1 ? `<select data-pd><option value="">${t('pfAllDun')}</option>${dunsWithRuns.map(d => `<option value="${esc(d.key)}"${pd === d.key ? ' selected' : ''}>${esc(d.name)}</option>`).join('')}</select>` : ''}<span class="pcount">${t('pfCount', { n: filtered.length })}</span></div>` : '';
+  let lastDay = '';
+  const planned = page.map(run => {
+    const dk = dayKey(run.at), head = dk !== lastDay ? `<h4 class="day">${dayTitle(run.at)}</h4>` : ''; lastDay = dk;
+    return head + plannedCard(run);
+  }).join('') + (filtered.length > plimit ? `<button class="btn ghost more" data-pmore>${t('runMoreRuns', { n: filtered.length - plimit })}</button>` : '');
+  function plannedCard(run) {
     const d = LOOT.dungeons.find(x => x.key === run.dungeon); if (!d) return '';
-    const iJoined = run.members.some(m => mineKeys.has(m.key)), iOwn = mineKeys.has(run.by);
-    const counts = { tank: 0, heal: 0, dps: 0 }; run.members.forEach(m => counts[m.role] = (counts[m.role] || 0) + 1);
-    const members = run.members.map(m => { const p = byKey.get(m.key); const hs = huntsIn(p, d);
-      return `<li>${roleIcon(m.role)}<span class="nm" ${p ? `data-c="${esc(m.key)}"` : ''}>${p ? avatar(p) : ''}<span><b>${p ? full(p) : esc(m.key.split('/')[1])}${m.key === run.by ? ` <em>${t('runOrg')}</em>` : ''}</b><small>${p ? `${esc(className(p))} ${p.level}` : ''}</small></span></span><span class="its">${itemIcons(hs)}</span></li>`; }).join('');
-    const joinForm = me.length && !iJoined ? `<span class="joinf"><select data-run-char>${me.map(p => `<option value="${esc(pkey(p))}">${full(p)} (${p.level})</option>`).join('')}</select>
-        <select data-run-role>${['dps', 'tank', 'heal'].map(x => `<option value="${x}">${t('role.' + x)}</option>`).join('')}</select><button class="btn gold" data-run-join="${esc(run.id)}">${t('runJoin')}</button></span>` : '';
-    return `<div class="prun"${artStyle(d.key)}><div class="prh"><div><h3>${esc(d.name)}</h3><span class="when">${whenText(run.at)}</span></div>
-        <span class="cnt">${roleIcon('tank')}${counts.tank || 0} ${roleIcon('heal')}${counts.heal || 0} ${roleIcon('dps')}${counts.dps || 0}</span></div>
-      ${run.note ? `<p class="pnote">« ${esc(run.note)} »</p>` : ''}<ul>${members}</ul>
-      <div class="pact">${joinForm}${iJoined ? `<button class="btn ghost" data-run-leave="${esc(run.id)}">${iOwn ? t('runCancel') : t('runLeave')}</button>` : ''}${!me.length ? `<small>${t('runLogin')}</small>` : ''}</div></div>`;
-  }).join('');
+    const myMember = run.members.find(m => mineKeys.has(m.key)), iOwn = mineKeys.has(run.by);
+    const raid = /Raid|Core|Lair|Naxx|Qiraj|Gurub|Hyjal|Blackwing|Onyxia|WorldBosses/i.test(d.key);
+    const left = { tank: 1, heal: 1, dps: 3 }, group = [], wait = [];
+    for (const m of run.members) { if (raid) { group.push(m); continue; } if (left[m.role] > 0) { left[m.role]--; group.push(m); } else wait.push(m); }
+    const counts = { tank: 0, heal: 0, dps: 0 }; group.forEach(m => counts[m.role] = (counts[m.role] || 0) + 1);
+    // composition d'un groupe de 5 : 1 tank, 1 soigneur, 3 dégâts
+    const slots = raid ? '' : ['tank', 'heal', 'dps', 'dps', 'dps'].map((role, i) => {
+      const filled = role === 'dps' ? counts.dps > i - 2 : counts[role] > 0;
+      return `<i class="slot ${role}${filled ? ' on' : ''}" title="${t('role.' + role)}"></i>`; }).join('');
+    const full5 = !raid && counts.tank >= 1 && counts.heal >= 1 && counts.dps >= 3;
+    const memberRow = m => { const p = byKey.get(m.key); const hs = huntsIn(p, d), me1 = mineKeys.has(m.key);
+      return `<li class="${me1 ? 'me' : ''}">${roleIcon(m.role)}<span class="nm" ${p ? `data-c="${esc(m.key)}"` : ''}>${p ? avatar(p) : ''}<span><b>${p ? full(p) : esc(m.key.split('/')[1])}${m.key === run.by ? ` <em>${t('runOrg')}</em>` : ''}</b><small>${p ? `${esc(className(p))} ${p.level} ${fitTag(fitOf(p, d))}` : ''}</small></span></span><span class="its">${itemIcons(hs)}</span>
+        ${me1 ? `<span class="myrole">${roleSel(m.role, `data-run-role-change="${esc(run.id)}" data-key="${esc(m.key)}"`)}</span>` : ''}</li>`; };
+    // beaucoup de monde : les 8 premiers visibles, le reste replié ; la liste d'attente à part
+    const shown = group.slice(0, 8), more = group.slice(8);
+    const members = shown.map(memberRow).join('')
+      + (more.length ? `<li class="morewrap"><details><summary class="lnk">${t('runMore', { n: more.length })}</summary><ul>${more.map(memberRow).join('')}</ul></details></li>` : '')
+      + (wait.length ? `<li class="morewrap"><details class="wl"${wait.some(m => mineKeys.has(m.key)) ? ' open' : ''}><summary class="lnk">${t('runWait', { n: wait.length })}</summary><ul>${wait.map(memberRow).join('')}</ul></details></li>` : '');
+    const d0 = new Date(run.at);
+    const dateBlock = `<div class="dblock"><span class="dw">${d0.toLocaleDateString(locale(), { weekday: 'short' })}</span><b>${d0.getDate()}</b><span class="dm">${d0.toLocaleDateString(locale(), { month: 'short' })}</span><span class="dt">${d0.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })}</span></div>`;
+    const joinForm = me.length && !myMember ? `<span class="joinf">${charSel()}${roleSel(left.tank ? 'tank' : left.heal ? 'heal' : 'dps')}<button class="btn gold" data-run-join="${esc(run.id)}">${t('runJoin')}</button>${!raid && !left.tank && !left.heal && !left.dps ? `<small>${t('runFullHint')}</small>` : ''}</span>` : '';
+    const edit = iOwn ? `<details class="redit"><summary class="btn ghost">${t('runEdit')}</summary><div class="pform" data-edit="${esc(run.id)}">
+        <label>${t('runWhen')}<input type="datetime-local" data-run-at value="${localInput(d0)}" min="${localInput(new Date())}"></label>
+        <label>${t('runDungeon')}<select data-run-dun>${[...LOOT.dungeons].sort((a, b) => a.name.localeCompare(b.name)).map(x => `<option value="${esc(x.key)}"${x.key === d.key ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
+        <label class="wide">${t('runNote')}<input type="text" maxlength="140" data-run-note value="${esc(run.note || '')}" placeholder="${t('runNotePh')}"></label>
+        <button class="btn gold" data-run-save>${t('runSave')}</button></div></details>` : '';
+    return `<div class="prun${myMember ? ' mine' : ''}${state.runFocus === run.id ? ' focus' : ''}" id="run-${esc(run.id)}"${artStyle(d.key)}>
+      <div class="prh">${dateBlock}<div class="pti"><h3>${esc(d.name)}</h3><span class="when">${relWhen(d0)}${run.edited ? ` · <i>${t('runEdited')}</i>` : ''}</span>
+        ${run.note ? `<p class="pnote">« ${esc(run.note)} »</p>` : ''}</div>
+        <div class="comp">${slots ? `<div class="slots">${slots}</div>` : ''}<span class="cnt">${full5 ? `<b class="full">${t('runFull')}</b>${wait.length ? ` · ${t('runWaitN', { n: wait.length })}` : ''}` : t('runCount', { n: run.members.length })}</span></div></div>
+      <ul>${members}</ul>
+      <div class="pact">${joinForm}${myMember ? `<button class="btn ghost" data-run-leave="${esc(run.id)}">${iOwn ? t('runCancel') : t('runLeave')}</button>` : ''}${edit}
+        <span class="tools"><button class="lnk" data-run-copy="${esc(run.id)}">${t('runCopy')}</button><button class="lnk" data-run-link="${esc(run.id)}">${t('runLink')}</button><button class="lnk" data-run-ics="${esc(run.id)}">${t('runIcs')}</button></span>
+        ${!me.length ? `<small>${t('runLogin')}</small>` : ''}</div></div>`;
+  }
   const plannedBlock = `<section class="planned"><div class="cathead"><h3 class="sub">${t('runsPlanned')}</h3>${RUNS === null ? `<span class="cx2">${t('runsApiDown')}</span>` : ''}</div>
-    ${planned || `<p class="note">${t('runsNone')}</p>`}${state.runMsg ? `<p class="msg">${state.runMsg}</p>` : ''}</section>`;
+    ${state.runMsg ? `<p class="msg">${state.runMsg}</p>` : ''}${pfilters}${planned || `<p class="note">${allRuns.length ? t('pfNone') : t('runsNone')}</p>`}</section>`;
 
   const card = run => {
     const [lo, , hi] = run.d.lvl || [];
     const ppl = [...run.people], hunters = ppl.filter(([, x]) => x.hunts.length).length;
     const g = suggestGroup(ppl);
-    const rows = ppl.sort(([, a], [, b]) => b.hunts.length - a.hunts.length || (b.missing || 0) - (a.missing || 0)).map(([p, x]) => {
+    const sorted = ppl.sort(([, a], [, b]) => b.hunts.length - a.hunts.length || (b.missing || 0) - (a.missing || 0));
+    const rowOf = ([p, x]) => {
       const mine = me.includes(p);
       return `<li class="${mine ? 'me' : ''}"><span class="nm" data-c="${esc(pkey(p))}">${avatar(p)}<span><b>${full(p)}${mine ? ` <em>${t('runsYou')}</em>` : ''}</b><small>${esc(className(p))} ${p.level} ${fitTag(x.fit)}${p.guild ? ' · ' + esc(p.guild.name) : ''}</small></span></span>
         <span class="its">${itemIcons(x.hunts)}</span><span class="miss">${x.missing != null ? t('runsMissing', { n: x.missing }) : ''}</span></li>`;
-    }).join('');
+    };
+    const rows = sorted.slice(0, 6).map(rowOf).join('') + (sorted.length > 6 ? `<li class="morewrap"><details><summary class="lnk">${t('runMore', { n: sorted.length - 6 })}</summary><ul>${sorted.slice(6).map(rowOf).join('')}</ul></details></li>` : '');
     const gp = (role, p) => p ? `<span class="gp">${roleIcon(role)}${esc(p.name)}</span>` : `<span class="gp off">${roleIcon(role)}${t('runsNobody')}</span>`;
     const form = me.length ? `<details class="propose"><summary class="btn ghost">${t('runPropose')}</summary><div class="pform" data-dun="${esc(run.d.key)}">
-        <label>${t('runWhen')}<input type="datetime-local" data-run-at></label>
+        <label>${t('runWhen')}<input type="datetime-local" data-run-at value="${localInput(nextEvening())}" min="${localInput(new Date())}"></label>
         <label>${t('runChar')}<select data-run-char>${me.map(p => `<option value="${esc(pkey(p))}">${full(p)} (${p.level})</option>`).join('')}</select></label>
         <label>${t('runRole')}<select data-run-role>${['dps', 'tank', 'heal'].map(x => `<option value="${x}">${t('role.' + x)}</option>`).join('')}</select></label>
         <label class="wide">${t('runNote')}<input type="text" maxlength="140" data-run-note placeholder="${t('runNotePh')}"></label>
@@ -949,14 +1128,16 @@ function renderRuns() {
   box.innerHTML = `<div class="head"><h2>${t('runsT')}</h2><span class="note">${t('runsNote')} · Forever ${state.region.toUpperCase()}</span></div>
     ${chips}${note}${plannedBlock}
     <div class="cathead" style="margin-top:22px"><h3 class="sub">${t('runsIdeas')}</h3><span class="cx2">${t('runsIdeasNote')}</span></div>
-    ${runs.length ? `<div class="runs">${runs.map(card).join('')}</div>` : `<div class="empty"><b>${t('runsEmptyT')}</b>${t('runsEmpty')}</div>`}
+    ${runs.length ? `<div class="runs">${runs.slice(0, state.ilimit || 8).map(card).join('')}</div>${runs.length > (state.ilimit || 8) ? `<button class="btn ghost more" data-imore>${t('runMoreDun', { n: runs.length - (state.ilimit || 8) })}</button>` : ''}` : `<div class="empty"><b>${t('runsEmptyT')}</b>${t('runsEmpty')}</div>`}
     <p class="runs-src">${t('runsSrc')}</p>`;
+  if (state.runFocus && !state.runFocused) { const el = document.getElementById('run-' + state.runFocus); if (el) { state.runFocused = true; el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } }
 }
 // actions : filtres, proposer, rejoindre, quitter
 async function runAction(path, body) {
   try {
     const r = await Bnet.call(path, body), j = await r.json();
-    state.runMsg = r.ok ? t(path === '/runs/create' ? 'runCreated' : path === '/runs/join' ? 'runJoined' : j.cancelled ? 'runCancelled' : 'runLeft') : t('runErr.' + (j.error || 'x'));
+    state.runMsg = r.ok ? t(path === '/runs/create' ? 'runCreated' : path === '/runs/edit' ? 'runSaved' : path === '/runs/join' ? (body.change ? 'runRoleChanged' : 'runJoined') : j.cancelled ? 'runCancelled' : 'runLeft') : t('runErr.' + (j.error || 'x'));
+    if (r.ok && j.id) state.runFocus = j.id;
     if (r.ok) { RUNS = j.runs || RUNS; Ribbon.swell(.7); }
   } catch { state.runMsg = t('runErr.x'); }
   renderRuns();
@@ -964,6 +1145,9 @@ async function runAction(path, body) {
 document.addEventListener('click', e => {
   const c = e.target.closest('[data-rscope]'); if (c) { state.rscope = c.dataset.rscope; renderRuns(); return; }
   if (e.target.closest('[data-rlvl]')) { state.rlvl = !state.rlvl; renderRuns(); return; }
+  const pfc = e.target.closest('[data-pf]'); if (pfc) { state.pf = pfc.dataset.pf; state.plimit = 10; renderRuns(); return; }
+  if (e.target.closest('[data-pmore]')) { state.plimit = (state.plimit || 10) + 10; renderRuns(); return; }
+  if (e.target.closest('[data-imore]')) { state.ilimit = (state.ilimit || 8) + 8; renderRuns(); return; }
   const cr = e.target.closest('[data-run-create]');
   if (cr) { const f = cr.closest('.pform'), at = $('[data-run-at]', f).value;
     if (!at) { state.runMsg = t('runErr.date'); renderRuns(); return; }
@@ -971,7 +1155,22 @@ document.addEventListener('click', e => {
     return; }
   const jn = e.target.closest('[data-run-join]');
   if (jn) { const f = jn.closest('.joinf'); runAction('/runs/join', { id: jn.dataset.runJoin, key: $('[data-run-char]', f).value, role: $('[data-run-role]', f).value }); return; }
-  const lv = e.target.closest('[data-run-leave]'); if (lv) runAction('/runs/leave', { id: lv.dataset.runLeave });
+  const lv = e.target.closest('[data-run-leave]');
+  if (lv) { if (lv.textContent === t('runCancel') && !confirm(t('runCancelQ'))) return; runAction('/runs/leave', { id: lv.dataset.runLeave }); return; }
+  const sv = e.target.closest('[data-run-save]');
+  if (sv) { const f = sv.closest('.pform'), at = $('[data-run-at]', f).value;
+    runAction('/runs/edit', { id: f.dataset.edit, ...(at ? { at: new Date(at).toISOString() } : {}), dungeon: $('[data-run-dun]', f).value, note: $('[data-run-note]', f).value }); return; }
+  const run = id => (RUNS || []).find(x => x.id === id);
+  const cp = e.target.closest('[data-run-copy]');
+  if (cp) { const x = run(cp.dataset.runCopy); if (x) navigator.clipboard?.writeText(runText(x)).then(() => { cp.textContent = t('runCopied'); setTimeout(() => cp.textContent = t('runCopy'), 1800); }); return; }
+  const ln = e.target.closest('[data-run-link]');
+  if (ln) { navigator.clipboard?.writeText(runUrl(ln.dataset.runLink)).then(() => { ln.textContent = t('runCopied'); setTimeout(() => ln.textContent = t('runLink'), 1800); }); return; }
+  const ic = e.target.closest('[data-run-ics]'); if (ic) { const x = run(ic.dataset.runIcs); if (x) runIcs(x); }
+});
+document.addEventListener('change', e => {
+  const pds = e.target.closest('[data-pd]'); if (pds) { state.pd = pds.value; state.plimit = 10; renderRuns(); return; }
+  const sel = e.target.closest('[data-run-role-change]');
+  if (sel) runAction('/runs/join', { id: sel.dataset.runRoleChange, key: sel.dataset.key, role: sel.value, change: true });
 });
 
 
@@ -1026,14 +1225,14 @@ Object.assign(I18N, {
   bnDown: ['Battle.net sign-in is unavailable right now. Try again later, or use the GitHub form below.',
     'La connexion Battle.net est indisponible pour le moment. Réessaie plus tard, ou utilise le formulaire GitHub ci-dessous.'],
   upTitle: ['Exact score with Dropamine', 'Score exact avec Dropamine'],
-  upPitch: ['In game, type /drop hiscores, copy the line (Ctrl+C) and paste it here. Your real weapon skills replace the estimate.',
+  upPitch: ['In game, type /drop hiscores, copy the export (Ctrl+C) and paste it here. Your real weapon skills replace the estimate.',
     'En jeu, tape /drop hiscores, copie la ligne (Ctrl+C) et colle-la ici. Tes vraies compétences d\'armes remplacent l\'estimation.'],
-  upSend: ['Send my line', 'Envoyer ma ligne'], upPh: ['DROPAMINE-HS1:…', 'DROPAMINE-HS1:…'],
+  upSend: ['Update my logbook', 'Mettre à jour mon carnet'], upPh: ['DROPAMINE-HS1:…', 'DROPAMINE-HS1:…'],
   upOk: ['Received: {w} weapon skill points ({n} weapons). The Hiscores refresh within a few minutes.',
     'Reçu : {w} points de compétences d\'armes ({n} armes). Les classements se rafraîchissent d\'ici quelques minutes.'],
   upErr: {
-    format: ['This is not a Dropamine line. Copy the whole first line of the /drop hiscores window.', 'Ce n\'est pas une ligne Dropamine. Copie toute la première ligne de la fenêtre /drop hiscores.'],
-    checksum: ['This line was cut or modified. Copy it again from the game.', 'Cette ligne est tronquée ou modifiée. Recopie-la depuis le jeu.'],
+    format: ['This is not a Dropamine export. Copy the whole first row of the /drop hiscores window.', 'Ce n\'est pas une ligne Dropamine. Copie toute la première ligne de la fenêtre /drop hiscores.'],
+    checksum: ['This export was cut or modified. Copy it again from the game.', 'Cette ligne est tronquée ou modifiée. Recopie-la depuis le jeu.'],
     values: ['These values are not possible for this level.', 'Ces valeurs sont impossibles pour ce niveau.'],
     'not-yours': ['This character is not on your Battle.net account (same region and first name).', 'Ce personnage n\'est pas sur ton compte Battle.net (même région et même prénom).'],
     level: ['Level 10 is required.', 'Le niveau 10 est requis.'],
@@ -1239,6 +1438,8 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
 })();
 
 /* ---------- Démarrage ---------- */
+const BOOT_RUN = new URLSearchParams(location.search).get('run');   // lien direct vers un run prévu
+if (BOOT_RUN) state.runFocus = BOOT_RUN;
 const BOOT_HSIMG = new URLSearchParams(location.search).get('hsimg');   // lien direct vers l'image Hiscores (lu avant que l'adresse soit réécrite)
 readUrl();
 render(false);
@@ -1251,3 +1452,16 @@ Promise.all([
   Bnet.init(),
 ]).then(() => { Ribbon.load(false); return document.fonts.ready; })
   .then(() => { render(false); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });
+
+/* ---------- Application installable (PWA) ---------- */
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+// bouton « Installer l'app » quand le navigateur le propose (Android, Chrome, Edge) ; sur iPhone : Partager → Sur l'écran d'accueil
+let installEvt = null;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; const b = $('#install'); if (b) b.hidden = false; });
+addEventListener('appinstalled', () => { installEvt = null; const b = $('#install'); if (b) b.hidden = true; });
+document.addEventListener('click', async e => {
+  if (!e.target.closest('#install')) return;
+  if (installEvt) { installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; e.target.closest('#install').hidden = true; }
+});
