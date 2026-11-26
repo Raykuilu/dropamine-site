@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Maquettes BiS</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{background:#0b0806;margin:0;padding:26px;font-family:var(--body,Georgia,serif)}
+.q-RARE{--q:#0070dd}.q-EPIC{--q:#a335ee}.q-UNCOMMON{--q:#1eff00}.q-none{--q:#8a7a5a}
+.wrap{display:grid;grid-template-columns:170px minmax(0,1fr) 170px;gap:18px;align-items:start}
+.colS{display:grid;gap:9px}
+.sl{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px;align-items:center}
+.colS.r .sl{grid-template-columns:minmax(0,1fr) 48px;text-align:right}.colS.r .sl .sq{grid-column:2;grid-row:1}
+.sq{width:48px;height:48px;border-radius:6px;background:center/cover no-repeat;position:relative}
+.lab{font-family:var(--display);font-variant:small-caps;letter-spacing:.05em;font-size:13px;line-height:1.1}
+.lab b{display:block;font-family:var(--body);font-variant:normal;letter-spacing:0;font-size:13px}
+.bottom{display:flex;justify-content:center;gap:22px;margin-top:14px}
+.bottom .sl{grid-template-columns:48px auto}
+.mid{display:grid;gap:12px;justify-items:center;text-align:center;padding-top:6px}
+.big{font-family:var(--num);font-size:46px;line-height:1}
+.rows{margin-top:18px;display:grid;gap:0}
+.row{display:grid;grid-template-columns:30px minmax(0,1.4fr) minmax(0,1.4fr) 120px 110px;gap:12px;align-items:center;padding:7px 8px}
+.row .ic{width:30px;height:30px;border-radius:4px;background:center/cover}
+.lb{height:6px;border-radius:3px;overflow:hidden}.lb>i{display:block;height:100%}
+.btn-or{display:inline-block;padding:9px 18px;border-radius:999px;background:linear-gradient(180deg,#f0d79a,#c49a5c);color:#2a1a08;font-family:var(--display);font-variant:small-caps;letter-spacing:.08em;font-weight:700}
+/* D parchemin */
+.D{position:relative;padding:34px 28px 22px;border-radius:6px;background:linear-gradient(180deg,#ecdfb6,#cdb684);color:#2a1a08;box-shadow:inset 0 0 60px rgba(90,58,16,.25)}
+.D .rib{position:absolute;left:0;right:0;top:0;height:16px;background:linear-gradient(#b85a46 0 33%,#6a88c0 33% 66%,#5f9a4a 66%)}
+.D h1{font-family:var(--display);font-variant:small-caps;color:#3a2410;margin:0;font-size:34px}
+.D .s{color:#5a4020;font-style:italic;margin:2px 0 16px}
+.D .seal{position:absolute;right:26px;top:26px;width:86px;transform:rotate(-8deg);filter:drop-shadow(0 4px 6px rgba(58,36,16,.5))}
+.D .sq{border:2px solid var(--q);box-shadow:inset 0 0 0 1px #000,0 2px 4px rgba(58,36,16,.35)}
+.D .sq.empty{border:2px dashed rgba(90,63,30,.45);background:rgba(90,58,16,.08);box-shadow:none}
+.D .lab{color:#7a5a30}.D .lab b{color:#2a1a08}
+.D .mid .big{color:#3a2410}.D .mid small{color:#5a4020;font-style:italic}
+.D .row{border-bottom:1px solid rgba(90,63,30,.25)}.D .row:nth-child(odd){background:rgba(90,58,16,.06)}
+.D .row .nm{font-weight:700;color:var(--q);filter:brightness(.75)}
+.D .lb{background:rgba(90,58,16,.18)}.D .lb>i{background:linear-gradient(90deg,#a07a3c,#d9b066)}
+.D .ok{color:#2f6a1a;font-weight:700}
+/* E sombre doré */
+.E{position:relative;padding:22px 24px;border-radius:14px;background:linear-gradient(180deg,#2a2a1c,#141209);border:1px solid #050302;box-shadow:inset 0 0 0 1px rgba(196,154,92,.35),inset 0 0 50px rgba(0,0,0,.5);color:#e8d9b0}
+.E h1{font-family:var(--display);font-variant:small-caps;color:#e6c47c;margin:0;font-size:30px}
+.E .s{color:#a08c6a;font-style:italic;margin:2px 0 16px}
+.E .sq{border:2px solid var(--q);box-shadow:0 0 10px color-mix(in srgb,var(--q) 45%,transparent),inset 0 0 0 1px #000}
+.E .sq.empty{border:1px solid rgba(196,154,92,.35);background:rgba(0,0,0,.35) url(https://render.worldofwarcraft.com/eu/icons/56/inv_misc_questionmark.jpg) center/70% no-repeat;opacity:.35;box-shadow:none}
+.E .lab{color:#a08c6a}.E .lab b{color:#e8d9b0}
+.E .mid .big{color:#e6c47c}.E .mid small{color:#a08c6a;font-style:italic}
+.E .row{border-bottom:1px dotted rgba(196,154,92,.25)}
+.E .row .nm{font-weight:700;color:var(--q)}
+.E .lb{background:rgba(0,0,0,.45)}.E .lb>i{background:linear-gradient(90deg,#a07a3c,#e6c47c)}
+.E .ok{color:#8cc472;font-weight:700}
+.drop{width:64px;height:64px;background:url(Dropamine-Logo.png) center/contain no-repeat}
+</style></head>
+<body><div id="out">…</div>
+<script>
+const V = new URLSearchParams(location.search).get('v') || 'd';
+const SLOTS_L = [['HEAD', 'Tête'], ['NECK', 'Cou'], ['SHOULDER', 'Épaules'], ['BACK', 'Dos'], ['CHEST', 'Torse'], ['WRIST', 'Poignets']];
+const SLOTS_R = [['HANDS', 'Mains'], ['WAIST', 'Taille'], ['LEGS', 'Jambes'], ['FEET', 'Pieds'], ['FINGER', 'Doigt'], ['TRINKET', 'Bijou']];
+const SLOTS_B = [['MAIN', 'Arme'], ['OFF', 'Main gauche'], ['RANGED', 'Distance']];
+const EN = { Head: 'HEAD', Neck: 'NECK', Shoulder: 'SHOULDER', Back: 'BACK', Chest: 'CHEST', Wrist: 'WRIST', Hands: 'HANDS', Waist: 'WAIST', Legs: 'LEGS', Feet: 'FEET', Finger: 'FINGER', Trinket: 'TRINKET',
+  'One-Hand': 'MAIN', 'Two-Hand': 'MAIN', 'Main Hand': 'MAIN', 'Off Hand': 'OFF', 'Held In Off-hand': 'OFF', Ranged: 'RANGED' };
+(async () => {
+  const [hs, loot, items] = await Promise.all(['data/hiscores.json', 'data/loot.json', 'data/items.json'].map(u => fetch(u).then(r => r.json())));
+  const p = hs.players.find(x => x.name === 'Ray');
+  const idx = new Map(); for (const d of loot.dungeons) for (const b of d.bosses) for (const e of b.i) { const [id, rate] = Array.isArray(e) ? e : [e, null]; (idx.get(id) || idx.set(id, []).get(id)).push({ d, b, rate }); }
+  const slotOf = (it, name) => { for (const l of it.t || []) { const k = EN[l[0].split(' · ')[0]]; if (k) return k; }
+    const m = /\((\w[\w -]*?),/.exec(name || ''); return m ? EN[m[1][0].toUpperCase() + m[1].slice(1)] || null : null; };
+  const H = p.dropamine.hunt.map(h => { const it = items[h.id] || {}; const src = (idx.get(h.id) || []).sort((a, b) => (b.rate || 0) - (a.rate || 0))[0];
+    const raw = (it.n && it.n[1]) || h.name, name = raw.replace(/\s*\([^)]*\)\s*$/, '');
+    const rate = src?.rate, luck = rate && h.tries ? Math.round(100 * (1 - Math.pow(1 - rate / 100, h.tries))) : null;
+    return { h, q: it.q || 'none', name, icon: it.ic ? 'https://render.worldofwarcraft.com/' + it.ic : '', slot: slotOf(it, raw), boss: src ? (src.b.n[1] || src.b.n[0]) : '', dun: src ? src.d.name : '', rate, luck }; });
+  const bySlot = {}; H.forEach(x => { if (x.slot && !bySlot[x.slot]) bySlot[x.slot] = x; });
+  const found = H.filter(x => x.h.drops).length;
+  const slot = ([k, label], right) => { const x = bySlot[k];
+    return `<div class="sl ${x ? 'q-' + x.q : ''}"><span class="sq${x ? '' : ' empty'}" ${x ? `style="background-image:url('${x.icon}')"` : ''}></span><span class="lab">${label}${x ? `<b>${x.name}</b>` : ''}</span></div>`; };
+  const src = x => /^(Trash|Ennemis)/i.test(x.boss) ? `Monstres · ${x.dun}` : `${x.boss} · ${x.dun}`;
+  const row = x => `<div class="row q-${x.q}"><span class="ic" style="background-image:url('${x.icon}')"></span><span class="nm">${x.name}</span><span style="font-style:italic;font-size:14px">${src(x)}${x.rate ? ` · ${String(x.rate).replace('.', ',')} %` : ''}</span>
+      <span>${x.luck != null ? `<span class="lb"><i style="width:${x.luck}%"></i></span>` : `<span style="font-size:13px;opacity:.7">${x.rate ? x.rate + ' % par essai' : 'taux inconnu'}</span>`}</span>
+      <span style="text-align:right">${x.h.drops ? '<span class="ok">✓ trouvé</span>' : x.h.tries ? x.h.tries + ' essais' : 'à tenter'}</span></div>`;
+  const body = `<div class="wrap"><div class="colS">${SLOTS_L.map(s => slot(s)).join('')}</div>
+      <div class="mid">${V === 'd' ? '' : '<span class="drop"></span>'}<span class="big">${found} / ${H.length}</span><small>objets de ta liste trouvés</small>
+        <small>${H.reduce((a, x) => a + (x.h.tries || 0), 0)} essais au total · ${Object.keys(bySlot).length} emplacements visés</small><span class="btn-or">Organiser une sortie</span></div>
+      <div class="colS r">${SLOTS_R.map(s => slot(s)).join('')}</div></div>
+    <div class="bottom">${SLOTS_B.map(s => slot(s)).join('')}</div>
+    <div class="rows">${H.map(row).join('')}</div>`;
+  document.getElementById('out').innerHTML = V === 'd'
+    ? `<div class="D"><div class="rib"></div><img class="seal" src="Dropamine-Logo.png" alt=""><h1>Liste BiS · Ray Kuilu</h1><p class="s">Druide 36 · ce que je chasse, emplacement par emplacement</p>${body}</div>`
+    : `<div class="E"><h1>Liste BiS</h1><p class="s">Ray Kuilu · Druide 36 · ce que je chasse, emplacement par emplacement</p>${body}</div>`;
+})();
+</script></body></html>

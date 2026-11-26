@@ -312,7 +312,9 @@ const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.comple
 
 /* ---------- Accueil : le pont vers les classements ---------- */
 // téléchargements CurseForge, mis à jour à la main (chiffre donné par l'auteur)
-const CF_DOWNLOADS = 529;
+let CF_DOWNLOADS = 593;   // valeur de secours ; le vrai chiffre vient du serveur (relevé CurseForge toutes les 3 h)
+let cfLoad = null;
+const loadCf = () => cfLoad ??= fetch(API + '/stats').then(r => r.json()).then(j => { const n = j?.curseforge?.downloads; if (n > CF_DOWNLOADS) { CF_DOWNLOADS = n; if (state.view === 'home') renderHome(); } }).catch(() => {});
 // ---------- Accueil personnel (connecté) : tout ce qui sert au quotidien, en un coup d'œil ----------
 function renderDash() {
   const box = $('#dash'); if (!box) return false;
@@ -390,6 +392,7 @@ document.addEventListener('click', e => {
 
 function renderHome() {
   renderDash();
+  loadCf();
   // les chiffres qui montrent que le projet vit (toutes régions)
   if (DATA.players.length) {
     const gs = new Set(DATA.players.filter(p => p.guild).map(p => (p.region || 'eu') + '/' + p.guild.slug));

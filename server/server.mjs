@@ -196,6 +196,16 @@ setInterval(async () => {
   try { await updateFile('data/runs.json', { runs: [] }, () => ({ registry: RUNS, changed: true }), 'Runs: backup'); }
   catch (err) { runsDirty = true; console.warn('copie des runs sur GitHub :', err.message); }
 }, 15 * 60e3).unref();
+// téléchargements CurseForge : relevés toutes les 3 h via cfwidget (la page CurseForge refuse les robots)
+let cfStats = { downloads: 593, at: null };
+async function cfRefresh() {
+  try {
+    const res = await fetch('https://api.cfwidget.com/wow/addons/dropamine', { headers: { 'User-Agent': 'dropamine-api' }, signal: AbortSignal.timeout(15e3) });
+    const j = res.ok ? await res.json() : null, n = Number(j?.downloads?.total);
+    if (Number.isFinite(n) && n >= cfStats.downloads) cfStats = { downloads: n, at: new Date().toISOString() };
+  } catch (err) { console.warn('téléchargements CurseForge :', err.message); }
+}
+cfRefresh(); setInterval(cfRefresh, 3 * 3600e3).unref();
 // donjons connus : les tables de butin du site (même dépôt), relues au plus une fois par heure
 const LOOT_FILE = fileURLToPath(new URL('../site/data/loot.json', import.meta.url));
 let dunCache = { t: 0, set: new Set() };
@@ -226,6 +236,7 @@ const server = createServer(async (req, res) => {
 
     if (url.pathname === '/health') return send(res, 200, 'ok', cors);
     if (url.pathname === '/runs' && req.method === 'GET') { await runsLoad(); return sendRuns(req, res); }
+    if (url.pathname === '/stats' && req.method === 'GET') return send(res, 200, { curseforge: cfStats }, { ...cors, 'Cache-Control': 'public, max-age=900' });
 
     if (url.pathname === '/auth/login' && req.method === 'GET') {
       const state = randomBytes(18).toString('base64url');
