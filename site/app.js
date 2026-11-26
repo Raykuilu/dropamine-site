@@ -1304,14 +1304,15 @@ function runText(run) {
 // /w à l'organisateur, prêt à coller dans le chat du jeu
 function runWhisper(run, role) {
   const d = LOOT.dungeons.find(x => x.key === run.dungeon), org = DATA.players.find(p => pkey(p) === run.by), at = new Date(run.at);
-  const who = org ? org.name : String(run.by).split('/')[1]?.split('-')[0] || '';
+  // Forever : le /w demande le prénom et le nom (« /w Ray Kuilu … »)
+  const who = org ? `${org.name} ${org.surname || ''}`.trim() : (String(run.by).split('/')[1] || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   return `/w ${who} ${t('wMsg', { d: d?.name || run.dungeon, h: at.toLocaleString(locale(), { weekday: 'short', hour: '2-digit', minute: '2-digit' }), r: role ? t('role.' + role).toLowerCase() : t('wAny') })}`;
 }
 // rappel en jeu : l'addon garde la sortie et prévient 15 min avant (/drop sortie DROP-RUN1:<heure en base 36>~<donjon>~<organisateur>)
 function runGameCode(run) {
   const d = LOOT.dungeons.find(x => x.key === run.dungeon), org = DATA.players.find(p => pkey(p) === run.by);
   const clean = x => String(x || '').replace(/[~|\n]/g, ' ').trim().replace(/\s+/g, '_').slice(0, 40);
-  return `/drop sortie DROP-RUN1:${Math.floor(Date.parse(run.at) / 1000).toString(36)}~${clean(d?.name || run.dungeon)}~${clean(org ? org.name : String(run.by).split('/')[1])}`;
+  return `/drop sortie DROP-RUN1:${Math.floor(Date.parse(run.at) / 1000).toString(36)}~${clean(d?.name || run.dungeon)}~${clean(org ? `${org.name} ${org.surname || ''}` : String(run.by).split('/')[1])}`;
 }
 
 // ---------- Notifications des sorties ----------

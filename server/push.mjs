@@ -105,7 +105,7 @@ export function dueReminders(runs, sent, now = Date.now(), dungeonName = k => k)
     if (left <= 0 || left > 30 * 60e3 || sent.has(r.id + '@' + r.at)) continue;
     sent.add(r.id + '@' + r.at);
     const min = Math.max(1, Math.round(left / 60e3));
-    for (const m of r.members) out.push({ owner: m.owner, msg: { title: `${dungeonName(r.dungeon)} dans ${min} min`, body: `Organisée par ${nice(r.by)} · /w ${nice(r.by).split(' ')[0]}`, url: `/?p=runs&run=${encodeURIComponent(r.id)}`, tag: 'run-' + r.id } });
+    for (const m of r.members) out.push({ owner: m.owner, msg: { title: `${dungeonName(r.dungeon)} dans ${min} min`, body: `Organisée par ${nice(r.by)} · /w ${nice(r.by)}`, url: `/?p=runs&run=${encodeURIComponent(r.id)}`, tag: 'run-' + r.id } });
   }
   return out;
 }
