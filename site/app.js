@@ -246,8 +246,12 @@ function rankBy(skill, list) {
 const failed = () => `<div class="empty"><b>${t('failedT')}</b>${t('failed')}</div>`;
 const nobody = () => `<div class="empty"><b>${t('nobodyT')}</b>${t('nobody')} <a href="?p=join" data-view-link="join">${t('registerYours')}</a>.</div>`;
 // gain depuis la veille (deux derniers points de l'historique, à un jour d'écart)
+function histDiff(p, a, b) {
+  if (p.complete || !a.s || !b.s) return b.t - a.t;
+  return Object.keys(b.s).filter(k => k[0] !== 'w' && a.s[k] != null).reduce((n, k) => n + (b.s[k] - a.s[k]), 0);
+}
 const dayGain = p => { const h = p.history || []; if (h.length < 2) return 0; const a = h[h.length - 2], b = h[h.length - 1];
-  return new Date(b.d) - new Date(a.d) <= 1.5 * 864e5 ? b.t - a.t : 0; };
+  return new Date(b.d) - new Date(a.d) <= 1.5 * 864e5 ? histDiff(p, a, b) : 0; };
 const plus = p => { const d = dayGain(p); return d > 0 ? `<span class="plus" title="${t('sinceY')}">+${fmt(d)}</span>` : ''; };
 const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.complete ? '' : `<em>${t('est')}</em>`;
 
@@ -485,6 +489,7 @@ function weekGain(p, key) {
   const last = h[h.length - 1], cut = new Date(new Date(last.d) - 7 * 864e5).toISOString().slice(0, 10);
   const base = [...h].reverse().find(x => x.d <= cut) || h[0];
   const val = e => key === 't' ? e.t : e.s?.[key];
+  if (key === 't') return base === last ? null : histDiff(p, base, last);
   return base === last || val(base) == null || val(last) == null ? null : val(last) - val(base);
 }
 // les lignes de l'image : le total puis les 9 cases comptées par l'addon
@@ -562,7 +567,8 @@ const HsImage = (() => {
       cols: [t('hsSkill'), t('hsRank'), t('hsLevel'), t('hsWeek')],
       date: DATA.updated ? new Date(DATA.updated).toLocaleDateString(locale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '' },
       ...hsBook(p) };
-    await DropShare.draw($('canvas', dlg), p, { ...opts, preview: true });
+    // l'invitation « Remplis ton carnet » : seulement dans l'aperçu de ses propres personnages
+    await DropShare.draw($('canvas', dlg), p, { ...opts, preview: Bnet.mine().includes(p) });
     final();   // prépare l'image finale pendant que le joueur regarde
   }
   document.addEventListener('click', e => {
@@ -625,7 +631,7 @@ function guilds() {
 function gain7(p) {
   const h = p.history || []; if (h.length < 2) return null;
   const last = h[h.length - 1], cut = new Date(new Date(last.d) - 7 * 864e5).toISOString().slice(0, 10);
-  return last.t - ([...h].reverse().find(x => x.d <= cut) || h[0]).t;
+  return histDiff(p, [...h].reverse().find(x => x.d <= cut) || h[0], last);
 }
 function renderGuild() {
   if (DATA.failed) { $('#guild-panel').innerHTML = failed(); return; }
@@ -641,9 +647,12 @@ function renderGuild() {
   const gsk = skillById(state.gs), avail = SKILLS.filter(s => s.id === 'total' || members.some(p => s.get(p) && !(s.est && s.est(p))));
   const ranked = gsk.id === 'total' ? members.map((p, i) => ({ p, v: p.total, r: i + 1 })) : rankBy(gsk, members);
   let og = '', grp0;
-  avail.forEach(s => { if (s.group !== grp0) { if (grp0 !== undefined) og += '</optgroup>'; grp0 = s.group; og += `<optgroup label="${s.group ? t('g.' + s.group) : t('total')}">`; }
-    og += `<option value="${s.id}"${s.id === gsk.id ? ' selected' : ''}>${esc(s.label())}</option>`; });
-  og += '</optgroup>';
+  avail.forEach(s => {
+    const opt = `<option value="${s.id}"${s.id === gsk.id ? ' selected' : ''}>${esc(s.label())}</option>`;
+    if (!s.group) { og += opt; return; }   // « Niveau total » seul, hors groupe
+    if (s.group !== grp0) { if (grp0) og += '</optgroup>'; grp0 = s.group; og += `<optgroup label="${t('g.' + s.group)}">`; }
+    og += opt; });
+  if (grp0) og += '</optgroup>';
   let best = null; members.forEach(p => p.professions?.forEach(pr => { if (!best || pr.skill > best.pr.skill) best = { p, pr }; }));
   const gains = members.map(p => ({ p, d: gain7(p) })).filter(x => x.d > 0).sort((a, b) => b.d - a.d);
   const feat = (k, v, s) => `<div class="feat"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
@@ -696,7 +705,7 @@ function renderNews() {
     </div>`).join('') +
     `<p style="margin:18px 0 0;color:var(--faint);font-style:italic">${t('fullHistory')} <a href="https://github.com/Raykuilu/Dropamine/blob/main/CHANGELOG.md" rel="noopener">GitHub</a>.</p>`;
 }
-document.addEventListener('change', e => { const sel = e.target.closest('[data-gs]'); if (!sel) return; state.gs = sel.value; renderGuild(); });
+document.addEventListener('change', e => { const sel = e.target.closest('[data-gs]'); if (!sel) return; state.gs = sel.value; renderGuild(); animate($('#guild-panel')); });
 document.addEventListener('click', e => { const x = e.target.closest('.release.more .toggle'); if (x) { x.closest('.release').classList.remove('more'); x.remove(); } });
 
 /* ---------- Texte fixe traduit (data-t) et pied de page ---------- */
