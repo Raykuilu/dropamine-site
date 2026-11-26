@@ -75,6 +75,10 @@ const I18N = {
   kills: ['Creatures killed', 'Créatures tuées'], killingBlows: ['Killing blows', 'Coups fatals'], dungeons: ['Dungeons entered', 'Donjons visités'],
   pvpDeaths: ['Killed by players', 'Tué par des joueurs'], duels: ['Duels (won / lost)', 'Duels (gagnés / perdus)'],
   repsT: ['Reputations', 'Réputations'],
+  raidK: ['FOREVER · RAIDS', 'FOREVER · RAIDS'], raidT: ['Raids open soon', 'Les raids ouvrent bientôt'], raidSub: ['Barrow Deeps (10), Hyjal Summit (20) and Onyxia’s Lair (40, attunement) open on {d}, level 60. Time not announced yet.', 'Barrow Deeps (10), Hyjal Summit (20) et le Repaire d’Onyxia (40, harmonisation) ouvrent le {d}, niveau 60. Heure pas encore annoncée.'],
+  raidOpenT: ['Raids are open!', 'Les raids sont ouverts !'], raidOpenSub: ['Barrow Deeps, Hyjal Summit and Onyxia’s Lair: get your group together.', 'Barrow Deeps, Hyjal Summit et le Repaire d’Onyxia : rassemble ton groupe.'],
+  cdD: ['days', 'jours'], cdH: ['hours', 'heures'], cdM: ['min', 'min'], cdS: ['sec', 's'],
+  raidSugNote: ['Raids are left out until they open on {d}; only Onyxia will then be suggested (the other raids are not in the loot tables yet).', 'Les raids sont écartés jusqu’à leur ouverture le {d} ; seul Onyxia sera alors suggéré (les autres raids ne sont pas encore dans les tables de butin).'],
   hsQ: ['Dungeon, boss, item, player…', 'Donjon, boss, objet, joueur…'], hsLvl: ['Level', 'Niveau'], hsLvlAll: ['All levels', 'Tous niveaux'], hsLvlMe: ['My level', 'À mon niveau'], hsLvlBand: ['Level {a}–{b}', 'Niveau {a}–{b}'],
   hsType: ['Type', 'Type'], hsDun: ['Dungeon', 'Donjon'], hsDunAll: ['All dungeons', 'Tous les donjons'], hsTypeAll: ['All types', 'Tous types'], hsTypeDun: ['Dungeons', 'Donjons'], hsTypeFor: ['Forever dungeons', 'Donjons Forever'], hsTypeRaid: ['Raids', 'Raids'],
   hsRole: ['Missing role', 'Rôle manquant'], hsRoleAll: ['Any role', 'Tous rôles'], 'hsNeed.tank': ['Needs a tank', 'Cherche un tank'], 'hsNeed.heal': ['Needs a healer', 'Cherche un soigneur'], 'hsNeed.dps': ['Needs damage', 'Cherche des dégâts'], hsWhen: ['When', 'Quand'], hsWhenAll: ['Any time', 'Tout le temps'], hsWhenWeek: ['Next 7 days', '7 prochains jours'],
@@ -408,7 +412,7 @@ function renderLive() {
   const loots = region.flatMap(p => (p.loots || []).map(([id, d]) => ({ p, id, at: Date.parse(d) }))).sort((a, b) => b.at - a.at).slice(0, 10);
   const lootRow = loots.length ? `<section class="panel lv-loots"><div class="cathead"><h3 class="sub">${t('lvLoots')}</h3><span class="cx2">${t('lvLootsSub')}</span></div>
     <div class="lootrow">${loots.map(x => `<a class="loot" href="?p=char&c=${esc(encodeURIComponent(pkey(x.p)))}" data-c="${esc(pkey(x.p))}">${itemChip(x.id)}<b style="color:${QCOL[ITEMS?.[x.id]?.q] || 'var(--cream)'}">${esc(lootName(x.p, x.id))}</b><small>${esc(x.p.name)} · ${dayAgo(x.at)}</small></a>`).join('')}</div></section>` : '';
-  box.innerHTML = `<div class="lv-count">${counters}</div>${lootRow}
+  box.innerHTML = `${raidBanner()}<div class="lv-count">${counters}</div>${lootRow}
     <div class="lv-grid">
       <section class="panel lv-feed"><div class="cathead"><h3 class="sub"><i class="live"></i>${t('lvTitle')}</h3><span class="cx2">${t('lvSub')}</span></div>
         ${feed ? `<ul>${feed}</ul>` : `<p class="note">${t('lvEmpty')}</p>`}</section>
@@ -494,7 +498,7 @@ function renderDash() {
     { n: t('defense'), v: p.defense || 0, m: 5 * p.level, ic: DEF_ICON }]
     .filter(x => x.v > 0 && x.v < x.m).sort((a, b) => (b.v / b.m) - (a.v / a.m)).slice(0, 4);
   const stepCard = steps.length ? `<section class="dcard"><h3>${t('dashNext')}</h3><ul class="dsteps">${steps.map(x => `<li><img src="${icon(x.ic)}" alt="" referrerpolicy="no-referrer"><span>${esc(x.n)}</span><i class="lbar"><i style="width:${(100 * x.v / x.m).toFixed(1)}%"></i></i><b>${x.v} / ${x.m}</b><small>${t('dashLeft', { n: x.m - x.v })}</small></li>`).join('')}</ul></section>` : '';
-  box.innerHTML = `${chooser}${hero}<div class="dgrid">${runsCard}${huntCard}${colCard}${stepCard}${guildCard}</div>
+  box.innerHTML = `${chooser}${hero}${raidBanner()}<div class="dgrid">${runsCard}${huntCard}${colCard}${stepCard}${guildCard}</div>
     <p class="dash-more"><a class="lnk" data-dash-intro>${t('dashAbout')}</a></p>`;
   return true;
 }
@@ -888,6 +892,36 @@ function repsPanel(p) {
 
 // Carnet Dropamine : tout ce que l'armurerie n'a pas, envoyé par le joueur avec sa ligne /drop hiscores
 // (chaque groupe n'existe que si sa case était cochée dans l'addon)
+/* ---------- Ouverture des raids sur Forever : le 9 décembre 2026 (heure pas encore annoncée : minuit, heure de Paris) ----------
+   Ouvrent ce jour-là : Barrow Deeps (10), Hyjal Summit (20), Repaire d'Onyxia (40, harmonisation). Pas le Cœur du Magma ni les autres.
+   Dans les tables de butin, seul Onyxia existe : c'est le seul raid suggéré, et seulement après l'ouverture. */
+const RAID_OPEN = Date.parse('2026-12-09T00:00:00+01:00');
+const OPEN_RAIDS = new Set(['Onyxia']);
+const raidsOpen = () => Date.now() >= RAID_OPEN;
+const raidAvailable = d => raidsOpen() && OPEN_RAIDS.has(d.key);
+function raidBanner() {
+  const left = RAID_OPEN - Date.now();
+  if (left < -3 * 864e5) return '';   // trois jours après l'ouverture, le bandeau s'efface
+  const date = new Date(RAID_OPEN).toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' });
+  return `<section class="raidb${left <= 0 ? ' open' : ''}" style="--art:url('https://render.worldofwarcraft.com/eu/zones/onyxias-lair-small.jpg')">
+    <div class="rb-t"><p class="kicker">${t('raidK')}</p><h3>${left > 0 ? t('raidT') : t('raidOpenT')}</h3><p>${left > 0 ? t('raidSub', { d: date }) : t('raidOpenSub')}</p></div>
+    ${left > 0 ? `<div class="rb-c" data-countdown="${RAID_OPEN}">${countdownHtml(left)}</div>` : ''}</section>`;
+}
+function countdownHtml(ms) {
+  const d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5), m = Math.floor(ms % 36e5 / 6e4), sec = Math.floor(ms % 6e4 / 1e3);
+  const cell = (n, k) => `<div><b>${String(n).padStart(2, '0')}</b><span>${t(k)}</span></div>`;
+  return cell(d, 'cdD') + cell(h, 'cdH') + cell(m, 'cdM') + cell(sec, 'cdS');
+}
+// le compte à rebours avance chaque seconde, seulement quand il est à l'écran
+setInterval(() => {
+  if (document.hidden) return;
+  for (const el of document.querySelectorAll('[data-countdown]')) {
+    const left = +el.dataset.countdown - Date.now();
+    if (left <= 0) { if (state.view === 'home') renderHome(); return; }
+    el.innerHTML = countdownHtml(left);
+  }
+}, 1000);
+
 /* ---------- Ma chasse : la liste de chasse emplacement par emplacement, et des suggestions pour la remplir ---------- */
 // emplacement de l'objet (type d'inventaire de l'API) → case de la silhouette
 const SLOT_OF = { HEAD: 'HEAD', NECK: 'NECK', SHOULDER: 'SHOULDER', CLOAK: 'BACK', CHEST: 'CHEST', ROBE: 'CHEST', WRIST: 'WRIST', HAND: 'HANDS', WAIST: 'WAIST',
@@ -930,7 +964,7 @@ function huntSuggest(p) {
   const worn = wornBySlot(p), out = {};
   const wornLv = k => { const ids = worn[k] || []; return ids.length ? Math.min(...ids.map(id => ITEMS?.[id]?.lv || 0)) : 0; };
   for (const d of LOOT.dungeons) {
-    if (fitOf(p, d) === 'low') continue;
+    if (fitOf(p, d) === 'low' || (isRaid(d) && !raidAvailable(d))) continue;
     for (const b of d.bosses) for (const e of b.i) {
       const id = Array.isArray(e) ? e[0] : e, rate = Array.isArray(e) ? e[1] : null, it = ITEMS?.[id];
       if (!it?.s || !it.lv || !['UNCOMMON', 'RARE', 'EPIC'].includes(it.q)) continue;
@@ -985,7 +1019,7 @@ function huntBuilder(p, hunt) {
       ${sug[k].map(x => `<label class="hopt"><input type="checkbox" data-hpick="${x.id}">${itemChip(x.id)}<span><b style="color:${QCOL[x.it.q]}">${esc(itemName(x.id))}</b>
         <small>${esc(bossName(x.b))} · ${esc(x.d.name)}${x.rate ? ' · ' + rateTxt(x.rate) : ''}</small></span><i class="gain">${x.gain ? '+' + x.gain : t('hsIlvl', { n: x.it.lv })}</i></label>`).join('')}</section>`; }).join('');
   return `<div class="hsug" data-free="${free}"><div class="cathead"><h3 class="sub">${t('hsSugT')}</h3><span class="cx2">${t('hsSugSub')}</span></div>
-    <p class="note">${p.gear?.length ? t('hsSugHow') : t('hsSugNoGear')}</p>
+    <p class="note">${p.gear?.length ? t('hsSugHow') : t('hsSugNoGear')}${!raidsOpen() && p.level >= 55 ? ' ' + t('raidSugNote', { d: new Date(RAID_OPEN).toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) }) : ''}</p>
     ${groups ? `<div class="hsug-grid">${groups}</div>` : `<p class="note">${t('hsSugNone')}</p>`}
     <div class="hcode"><span data-hcount>${t('hsPicked', { n: 0 })} · ${t('hsFree', { n: free })}</span><code data-hcode>/drop chasse import …</code>
       <button class="btn gold" type="button" data-hcopy disabled>${t('hsCmdCopy')}</button><small>${t('hsCodeHow')}</small></div></div>`;
