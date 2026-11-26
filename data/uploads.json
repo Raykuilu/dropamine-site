@@ -128,6 +128,91 @@
       }
     ],
     "version": "3.11.0",
-    "at": "2026-11-26"
+    "at": "2026-11-26",
+    "played": 470393,
+    "collection": {
+      "x": 7,
+      "y": 1499,
+      "dungeons": [
+        {
+          "name": "Gnomeregan",
+          "x": 5,
+          "y": 29
+        },
+        {
+          "name": "Scarlet Monastery Library",
+          "x": 1,
+          "y": 28
+        },
+        {
+          "name": "Shadowfang Keep",
+          "x": 1,
+          "y": 39
+        }
+      ]
+    },
+    "achievements": {
+      "n": 16,
+      "total": 38,
+      "ids": [
+        "goal1",
+        "sess25",
+        "sess50",
+        "hour10",
+        "combo10",
+        "streak5",
+        "total100",
+        "total500",
+        "total1000",
+        "prof150",
+        "gather2",
+        "explorer",
+        "run30",
+        "run60",
+        "night",
+        "firstfind"
+      ]
+    },
+    "records": {
+      "bestSession": 88,
+      "bestHour": 79,
+      "bestDay": 116,
+      "longestCombo": 41,
+      "sessions": 52,
+      "goalsHit": 2,
+      "playtime": 126455
+    },
+    "hunt": [
+      {
+        "id": 5254,
+        "name": "Spallières robustes",
+        "tries": 0,
+        "drops": 0
+      },
+      {
+        "id": 274599,
+        "name": "Brassards féaux",
+        "tries": 0,
+        "drops": 0
+      },
+      {
+        "id": 274602,
+        "name": "Jambières de pansaumâtre",
+        "tries": 0,
+        "drops": 0
+      },
+      {
+        "id": 2262,
+        "name": "Marque de Kern",
+        "tries": 54,
+        "drops": 0
+      },
+      {
+        "id": 9449,
+        "name": "Roueur manuel",
+        "tries": 0,
+        "drops": 1
+      }
+    ]
   }
 }
