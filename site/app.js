@@ -69,7 +69,7 @@ const I18N = {
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
   'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.about': ['About', 'À propos'], newsEnOnly: ['', 'en anglais'], 'foot.code': ['Site source (open source, MIT)', 'Code du site (open source, MIT)'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
-  'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE PROGRESS', 'PROGRESSION DROPAMINE'],
+  'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.pvp': ['PVP', 'JCJ'], duelsWonT: ['Duels won', 'Duels gagnés'], duelsNote: ['won – lost', 'gagnés – perdus'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE PROGRESS', 'PROGRESSION DROPAMINE'],
   trust: ['Sent by the players with their Dropamine export: based on trust.', 'Envoyé par les joueurs avec leur ligne Dropamine : basé sur la confiance.'],
   sortBy: ['Rank by', 'Classer par'], trustShort: ['based on trust', 'basé sur la confiance'],
   kills: ['Creatures killed', 'Créatures tuées'], killingBlows: ['Killing blows', 'Coups fatals'], dungeons: ['Dungeons entered', 'Donjons visités'],
@@ -211,7 +211,7 @@ const className = p => L2(CLASS[p.classId]) || p.class || '';
 const raceName = p => L2(RACE[p.raceId]) || (p.race || '').toLowerCase();
 const rulesetName = p => L2((RULESETS.find(([id]) => id === p.rulesetId) || [])[1]) || p.ruleset || '';
 const PROF_ORDER = [393, 186, 182, 171, 164, 333, 202, 165, 197, 185, 356, 129];
-const STAT_KEYS = ['hk', 'killingBlows', 'kills', 'quests', 'dungeons', 'flights'];
+const STAT_KEYS = ['killingBlows', 'kills', 'quests', 'dungeons', 'flights'];   // les VH sont dans la catégorie JcJ
 const armoryStat = (p, k) => k === 'hk' ? (p.stats?.hk ?? p.pvpArmory?.hk ?? null) : (p.stats?.[k] ?? null);
 // Même référentiel que l'addon (Catalog.lua de Dropamine) : noms, icônes et ordre des armes
 const WPN = { axes: ['One-Handed Axes', 'Haches', 'inv_axe_01'], axes2h: ['Two-Handed Axes', 'Haches à deux mains', 'inv_axe_09'],
@@ -238,14 +238,20 @@ const SKILLS = [
   { id: 'defense', group: 'wpn', label: () => t('defense'), max: '300', get: p => p.defense || null, icon: DEF_ICON },
   ...PROF_ORDER.map(id => ({ id: 'p' + id, group: 'prf', label: () => profName(id), max: '300', prof: id, icon: PROF_ICON[id],
     get: p => p.professions?.find(x => x.id === id)?.skill ?? null })),
-  ...STAT_KEYS.map(k => ({ id: k, group: 'stat', label: () => t(k), max: '', get: p => armoryStat(p, k) })),
+  // JcJ (armurerie) : victoires honorables, K/D, duels, rang
+  { id: 'hk', group: 'pvp', label: () => t('hk'), max: '', icon: 'inv_bannerpvp_02', get: p => armoryStat(p, 'hk') },
   // K/D : victoires honorables ÷ morts face aux joueurs (armurerie) ; seulement si les deux chiffres sont connus
   // et au moins 20 combats (VH + morts), pour qu'un 12 / 0 ne passe pas devant un 420 / 60
-  { id: 'kd', group: 'stat', label: () => t('kd'), max: '', icon: 'ability_dualwield',
+  { id: 'kd', group: 'pvp', label: () => t('kd'), max: '', icon: 'ability_dualwield',
     note: () => t('kdMin'),
     get: p => { const k = armoryStat(p, 'hk'), d = p.stats?.pvpDeaths; return k && d != null && k + d >= 20 ? (d ? k / d : k) : null; },
     show: (v, p) => `${v.toLocaleString(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<small class="kdd"> · ${fmt(armoryStat(p, 'hk'))} / ${fmt(p.stats.pvpDeaths)}</small>`,
     ratio: (v, p) => armoryStat(p, 'hk') / (armoryStat(p, 'hk') + p.stats.pvpDeaths) },
+  { id: 'duels', group: 'pvp', label: () => t('duelsWonT'), max: '', icon: 'ability_warrior_challange', note: () => t('duelsNote'),
+    get: p => p.stats?.duelsWon ?? null, show: (v, p) => `${fmt(v)}<small> – ${fmt(p.stats.duelsLost || 0)}</small>`,
+    ratio: (v, p) => v / ((v + (p.stats.duelsLost || 0)) || 1) },
+  { id: 'pvprank', group: 'pvp', label: () => t('pvpRank'), max: '', icon: 'inv_misc_tabardpvp_01', get: p => p.pvpArmory?.rank || null },
+  ...STAT_KEYS.map(k => ({ id: k, group: 'stat', label: () => t(k), max: '', get: p => armoryStat(p, k) })),
   // carnet Dropamine : déclaré par le joueur avec sa ligne /drop hiscores (sur la confiance), sauf les VH (armurerie)
   { id: 'clog', group: 'book', label: () => t('dbLog'), max: '', icon: 'inv_box_02', get: p => p.dropamine?.collection?.x ?? null,
     show: (v, p) => `${fmt(v)}<small> / ${fmt(p.dropamine.collection.y)}</small>`, ratio: (v, p) => v / p.dropamine.collection.y },
@@ -258,7 +264,7 @@ const SKILLS = [
   { id: 'rcombo', group: 'book', label: () => t('recCombo'), max: '', icon: 'inv_misc_note_01', get: p => p.dropamine?.records?.longestCombo ?? null, show: v => 'x' + v },
 ];
 const showVal = (sk, v, p) => sk.show ? sk.show(v, p) : fmt(v);
-const GROUP_COLOR = { lvl: 'var(--lvl)', wpn: 'var(--wpn)', prf: 'var(--prf)', stat: 'var(--rim)', book: 'var(--gold)' };
+const GROUP_COLOR = { lvl: 'var(--lvl)', wpn: 'var(--wpn)', prf: 'var(--prf)', pvp: '#a874d6', stat: 'var(--rim)', book: 'var(--gold)' };
 const VIEWS = ['home', 'rank', 'char', 'guild', 'runs', 'news', 'get', 'join', 'privacy', 'about'];
 
 let DATA = { players: [] }, NEWS = null;
@@ -594,7 +600,7 @@ function renderRank() {
   let nav = '', grp;
   // comme la grille de l'addon : chaque compétence avec son icône ; une arme n'apparaît que si quelqu'un la pratique
   // groupes pliables (Armes, Métiers…) : le groupe de la compétence affichée reste ouvert, les autres suivent le choix du joueur
-  const shown = SKILLS.filter(s => !(s.wpn || s.group === 'book') || s.id === sk.id || region.some(p => s.get(p)));
+  const shown = SKILLS.filter(s => !(s.wpn || s.group === 'book' || s.group === 'pvp') || s.id === sk.id || region.some(p => s.get(p)));
   shown.forEach(s => {
     if (s.group !== grp) {
       if (grp) nav += '</div>';
