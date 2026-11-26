@@ -1035,6 +1035,7 @@ function huntSuggest(p) {
   for (const d of LOOT.dungeons) {
     if (fitOf(p, d) === 'low' || (isRaid(d) && !raidAvailable(d))) continue;
     for (const b of d.bosses) for (const e of b.i) {
+      if (noDrop(b)) continue;
       const id = Array.isArray(e) ? e[0] : e, rate = Array.isArray(e) ? e[1] : null, it = ITEMS?.[id];
       if (!it?.s || !it.lv || !['UNCOMMON', 'RARE', 'EPIC'].includes(it.q)) continue;
       const k = SLOT_OF[it.s];
@@ -1222,7 +1223,7 @@ function loadLoot() {
     // nom du donjon dans la langue du site (noms officiels du Journal Blizzard) : d.name suit la langue partout
     for (const d of j.dungeons) { const en = d.name, n = names[d.key]; Object.defineProperty(d, 'name', { get: () => (n ? n[LANG === 'fr' ? 1 : 0] : en) || en, enumerable: true }); d.names = n || [en, en]; }
     const idx = new Map();
-    for (const d of j.dungeons) for (const b of d.bosses) for (const it of b.i) {
+    for (const d of j.dungeons) for (const b of d.bosses) if (!noDrop(b)) for (const it of b.i) {
       const [id, rate] = Array.isArray(it) ? it : [it, null];
       if (!idx.has(id)) idx.set(id, []);
       idx.get(id).push({ d, b, rate });
@@ -1295,6 +1296,8 @@ setInterval(async () => {
   if (JSON.stringify(RUNS) !== before) renderRuns();
 }, 60e3);
 const isTrash = b => /^(Trash|Ennemis)/i.test(b.n[0]);
+// tables d'AtlasLoot qui ne sont pas du butin : clés (le Maillet de Zul'Farrak rangé avec le Monastère), récompenses de quête, ensembles
+const noDrop = b => /^keys$|quest rewards|\((horde|alliance) quest\)|^aq opening$|^tier \d sets$|heirlooms/i.test(b.n[0]);
 const ROLE_OK = { tank: [1, 2, 11], heal: [5, 7, 2, 11] };   // par préférence : guerrier, paladin, druide / prêtre, chaman, paladin, druide
 const ROLE_IC = { tank: 'ability_defend', heal: 'spell_holy_flashheal', dps: 'ability_dualwield' };
 function dunItems(d) { const all = new Set(); d.bosses.forEach(b => b.i.forEach(e => all.add(Array.isArray(e) ? e[0] : e))); return all; }
@@ -2076,7 +2079,7 @@ if (DEMO) {
     const dun = loot.dungeons.find(d => d.key === DKEY) || loot.dungeons.find(d => d.key === 'ScarletMonasteryCathedral');
     const dIds = dun.bosses.flatMap(b => b.i.map(e => Array.isArray(e) ? e[0] : e));
     // objets à chasser : armes et armures du donjon (pas les récompenses de quête ni les clés)
-    const huntIds = [...new Set(dun.bosses.filter(b => !/quest|key/i.test(b.n[0])).flatMap(b => b.i.map(e => Array.isArray(e) ? e[0] : e)))]
+    const huntIds = [...new Set(dun.bosses.filter(b => !noDrop(b)).flatMap(b => b.i.map(e => Array.isArray(e) ? e[0] : e)))]
       .filter(id => items[id] && [2, 4].includes(items[id].c?.[0]) && items[id].q !== 'COMMON');
     const taken = new Set(), entry = (id, tries) => ({ id, name: items[id].n[1] || items[id].n[0], tries: Math.floor(rnd() * tries), drops: 0 });
     // le groupe : des objets que sa classe peut porter, jamais deux fois le même (personne ne se bat pour un besoin)
