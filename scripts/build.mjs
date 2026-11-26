@@ -31,6 +31,7 @@ const WEAPON_ID = { 0: 'axes', 1: 'axes2h', 2: 'bows', 3: 'guns', 4: 'maces', 5:
   8: 'swords2h', 10: 'staves', 13: 'fist', 15: 'daggers', 16: 'thrown', 18: 'crossbows', 19: 'wands' };
 const HISTORY_DAYS = 30;         // points gardés par personnage (conditions Blizzard : 30 jours maximum)
 const CHANGELOG_URL = 'https://raw.githubusercontent.com/Raykuilu/Dropamine/main/CHANGELOG.md';
+const CHANGELOG_FR_URL = 'https://raw.githubusercontent.com/Raykuilu/Dropamine/main/CHANGELOG.fr.md';   // traduction (versions récentes)
 
 // ---------------------------------------------------------------------------
 export async function token() {
@@ -348,7 +349,9 @@ async function main() {
     const res = await fetch(CHANGELOG_URL);
     if (!res.ok) throw new Error(res.status);
     const versions = parseChangelog(await res.text());
-    await writeFile(join(ROOT, 'site/data/changelog.json'), JSON.stringify({ updated: new Date().toISOString(), versions }, null, 1));
+    const fr = await fetch(CHANGELOG_FR_URL).then(r => r.ok ? r.text() : '').catch(() => '');
+    const versionsFr = fr ? parseChangelog(fr) : [];
+    await writeFile(join(ROOT, 'site/data/changelog.json'), JSON.stringify({ updated: new Date().toISOString(), versions, versionsFr }, null, 1));
     console.log(`changelog : ${versions.length} version(s)`);
   } catch (err) { console.warn(`· changelog non mis à jour (${err.message})`); }
 

@@ -67,7 +67,7 @@ const I18N = {
   runsNoGuild: ['Nobody in your guild has shared yet: showing all players.', 'Personne de ta guilde n’a encore partagé : tous les joueurs sont affichés.'],
   runsSrc: ['Loot tables: AtlasLoot Forever (GPL-2.0).', 'Tables de butin : AtlasLoot Forever (GPL-2.0).'],
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
-  'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.about': ['About', 'À propos'], 'foot.code': ['Site source (open source, MIT)', 'Code du site (open source, MIT)'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
+  'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.about': ['About', 'À propos'], newsEnOnly: ['', 'en anglais'], 'foot.code': ['Site source (open source, MIT)', 'Code du site (open source, MIT)'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
   'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE PROGRESS', 'PROGRESSION DROPAMINE'],
   trust: ['Sent by the players with their Dropamine export: based on trust.', 'Envoyé par les joueurs avec leur ligne Dropamine : basé sur la confiance.'],
@@ -1192,7 +1192,9 @@ function renderGuild() {
 // Tables de butin d'AtlasLoot Forever (GPL-2.0), chargées à la première visite : objet → donjon, boss, taux de drop
 let LOOT = null, lootLoad = null;
 function loadLoot() {
-  return lootLoad ??= fetch('data/loot.json').then(r => r.json()).then(j => {
+  return lootLoad ??= Promise.all([fetch('data/loot.json').then(r => r.json()), fetch('data/dnames.json').then(r => r.ok ? r.json() : {}).catch(() => ({}))]).then(([j, names]) => {
+    // nom du donjon dans la langue du site (noms officiels du Journal Blizzard) : d.name suit la langue partout
+    for (const d of j.dungeons) { const en = d.name, n = names[d.key]; Object.defineProperty(d, 'name', { get: () => (n ? n[LANG === 'fr' ? 1 : 0] : en) || en, enumerable: true }); d.names = n || [en, en]; }
     const idx = new Map();
     for (const d of j.dungeons) for (const b of d.bosses) for (const it of b.i) {
       const [id, rate] = Array.isArray(it) ? it : [it, null];
@@ -1468,7 +1470,7 @@ function lvlMatch(d, me) {
 }
 // tous les mots cherchés doivent se trouver quelque part dans le texte de la carte
 const textMatch = hay => { const q = fold(state.hq).split(/\s+/).filter(Boolean); if (!q.length) return true; const h = fold(hay); return q.every(w => h.includes(w)); };
-const dunText = d => [d.name, ...d.bosses.map(b => b.n.join(' '))].join(' ');
+const dunText = d => [...(d.names || [d.name]), ...d.bosses.map(b => b.n.join(' '))].join(' ');   // recherche dans les deux langues
 const huntsText = p => (p?.dropamine?.hunt || []).map(h => huntName(h) + ' ' + itemName(h.id)).join(' ');
 const searchActive = () => !!(state.hq || state.hl || state.ht || state.hd || state.hr || state.hw || (state.pf && state.pf !== 'all'));
 // liste des donjons pour la recherche : donjons, donjons Forever, raids ; chacun par niveau
@@ -1693,13 +1695,14 @@ function renderNews() {
   const box = $('#news-list');
   if (!NEWS) { box.innerHTML = loadingBox(); return; }
   if (!NEWS.versions?.length) { box.innerHTML = `<div class="empty"><b>${t('newsFailT')}</b>${t('newsFail')}</div>`; return; }
-  box.innerHTML = NEWS.versions.map((v, i) => `
+  const fr = LANG === 'fr' ? new Map((NEWS.versionsFr || []).map(v => [v.version, v])) : null;
+  box.innerHTML = NEWS.versions.map(v0 => fr?.get(v0.version) || (fr ? { ...v0, enOnly: true } : v0)).map((v, i) => `
     <div class="release${i > 1 ? ' folded' : ''}">
-      <div class="ver">${esc(v.version)}${i === 0 ? `<small>${t('latest')}</small>` : ''}</div>
+      <div class="ver">${esc(v.version)}${i === 0 ? `<small>${t('latest')}</small>` : ''}${v.enOnly ? `<small class="en-only">${t('newsEnOnly')}</small>` : ''}</div>
       <div>${v.sections.map(s => `${s.title ? `<h4>${esc(s.title.toUpperCase())}</h4>` : ''}<ul>${s.items.map(x => `<li>${x}</li>`).join('')}</ul>`).join('')}
         ${i > 1 ? `<span class="toggle">${t('showMore')}</span>` : ''}</div>
     </div>`).join('') +
-    `<p style="margin:18px 0 0;color:var(--faint);font-style:italic">${t('fullHistory')} <a href="https://github.com/Raykuilu/Dropamine/blob/main/CHANGELOG.md" rel="noopener">GitHub</a>.</p>`;
+    `<p style="margin:18px 0 0;color:var(--faint);font-style:italic">${t('fullHistory')} <a href="https://github.com/Raykuilu/Dropamine/blob/main/${LANG === 'fr' ? 'CHANGELOG.fr.md' : 'CHANGELOG.md'}" rel="noopener">GitHub</a>.</p>`;
 }
 document.addEventListener('click', e => { const a = e.target.closest('[data-sec]'); if (!a) return; e.preventDefault(); document.getElementById(a.dataset.sec)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); });
 document.addEventListener('change', e => { const sel = e.target.closest('[data-gs]'); if (!sel) return; state.gs = sel.value; renderGuild(); animate($('#guild-panel')); });
@@ -1728,10 +1731,11 @@ function freshenNews() {
   const known = NEWS?.versions?.[0]?.version;
   if (!LATEST_VER || !NEWS || freshenNews.done || !known || newerVersion(LATEST_VER, known) === known) return;
   freshenNews.done = true;
-  fetch('https://raw.githubusercontent.com/Raykuilu/Dropamine/main/CHANGELOG.md').then(x => x.ok ? x.text() : null).then(md => {
+  const raw = f => fetch('https://raw.githubusercontent.com/Raykuilu/Dropamine/main/' + f).then(x => x.ok ? x.text() : null).catch(() => null);
+  Promise.all([raw('CHANGELOG.md'), raw('CHANGELOG.fr.md')]).then(([md, mdFr]) => {
     const vs = md && parseChangelogMd(md);
     if (!vs?.length || newerVersion(vs[0].version, known) === known) return;
-    NEWS = { ...NEWS, versions: vs };
+    NEWS = { ...NEWS, versions: vs, versionsFr: mdFr ? parseChangelogMd(mdFr) : NEWS.versionsFr };
     if (state.view === 'news') renderNews();
     applyStatic();
   }).catch(() => {});

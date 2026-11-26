@@ -214,7 +214,14 @@ cfRefresh(); setInterval(cfRefresh, 3 * 3600e3).unref();
 const LOOT_FILE = fileURLToPath(new URL('../site/data/loot.json', import.meta.url));
 let dunCache = { t: 0, set: new Set(), names: new Map() };
 const dungeonKeys = () => {
-  if (Date.now() - dunCache.t > 3600e3) { try { const ds = JSON.parse(readFileSync(LOOT_FILE, 'utf8')).dungeons; dunCache = { t: Date.now(), set: new Set(ds.map(d => d.key)), names: new Map(ds.map(d => [d.key, d.name])) }; } catch { /* on garde l'ancienne liste */ } }
+  if (Date.now() - dunCache.t > 3600e3) {
+    try {
+      const ds = JSON.parse(readFileSync(LOOT_FILE, 'utf8')).dungeons;
+      // notifications en français : noms officiels du Journal Blizzard (site/data/dnames.json), sinon le nom anglais
+      let fr = {}; try { fr = JSON.parse(readFileSync(LOOT_FILE.replace('loot.json', 'dnames.json'), 'utf8')); } catch { /* noms anglais */ }
+      dunCache = { t: Date.now(), set: new Set(ds.map(d => d.key)), names: new Map(ds.map(d => [d.key, fr[d.key]?.[1] || d.name])) };
+    } catch { /* on garde l'ancienne liste */ }
+  }
   return dunCache.set;
 };
 
