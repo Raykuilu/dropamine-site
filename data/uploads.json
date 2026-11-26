@@ -1,6 +1,6 @@
 {
   "eu/ray-kuilu": {
-    "weapons": 693,
+    "weapons": 519,
     "weaponList": [
       {
         "id": "axes",
@@ -32,7 +32,7 @@
       },
       {
         "id": "staves",
-        "rank": 104
+        "rank": 108
       },
       {
         "id": "fist",
@@ -48,7 +48,7 @@
       },
       {
         "id": "feral",
-        "rank": 179
+        "rank": 1
       },
       {
         "id": "bows",
@@ -71,8 +71,8 @@
         "rank": 0
       }
     ],
-    "defense": 179,
-    "level": 36,
+    "defense": 180,
+    "level": 37,
     "professions": [
       {
         "id": "alchemy",
@@ -96,7 +96,7 @@
       },
       {
         "id": "leatherworking",
-        "rank": 120
+        "rank": 150
       },
       {
         "id": "mining",
@@ -104,7 +104,7 @@
       },
       {
         "id": "skinning",
-        "rank": 223
+        "rank": 226
       },
       {
         "id": "tailoring",
@@ -112,7 +112,7 @@
       },
       {
         "id": "cooking",
-        "rank": 161
+        "rank": 218
       },
       {
         "id": "fishing",
@@ -120,16 +120,16 @@
       },
       {
         "id": "firstaid",
-        "rank": 208
+        "rank": 211
       },
       {
         "id": "riding",
         "rank": 0
       }
     ],
-    "version": "3.11.0",
+    "version": "3.12.1",
     "at": "2026-11-26",
-    "played": 470393,
+    "played": 509032,
     "collection": {
       "x": 7,
       "y": 1499,
@@ -149,15 +149,28 @@
           "x": 1,
           "y": 39
         }
+      ],
+      "items": [
+        3230,
+        7710,
+        9446,
+        9449,
+        9453,
+        9461,
+        251352,
+        253976,
+        274049,
+        274068
       ]
     },
     "achievements": {
-      "n": 16,
+      "n": 18,
       "total": 38,
       "ids": [
         "goal1",
         "sess25",
         "sess50",
+        "sess100",
         "hour10",
         "combo10",
         "streak5",
@@ -165,6 +178,7 @@
         "total500",
         "total1000",
         "prof150",
+        "prof225",
         "gather2",
         "explorer",
         "run30",
@@ -174,45 +188,96 @@
       ]
     },
     "records": {
-      "bestSession": 88,
+      "bestSession": 218,
       "bestHour": 79,
       "bestDay": 116,
       "longestCombo": 41,
-      "sessions": 52,
-      "goalsHit": 2,
-      "playtime": 126455
+      "sessions": 66,
+      "goalsHit": 5,
+      "playtime": 164947
     },
     "hunt": [
       {
         "id": 5254,
-        "name": "Spallières robustes",
+        "name": "",
         "tries": 0,
         "drops": 0
       },
       {
         "id": 274599,
-        "name": "Brassards féaux",
+        "name": "",
         "tries": 0,
         "drops": 0
       },
       {
         "id": 274602,
-        "name": "Jambières de pansaumâtre",
+        "name": "",
         "tries": 0,
         "drops": 0
       },
       {
         "id": 2262,
-        "name": "Marque de Kern",
-        "tries": 54,
+        "name": "",
+        "tries": 0,
         "drops": 0
       },
       {
-        "id": 9449,
-        "name": "Roueur manuel",
+        "id": 19508,
+        "name": "",
         "tries": 0,
-        "drops": 1
+        "drops": 0
+      },
+      {
+        "id": 7756,
+        "name": "",
+        "tries": 1,
+        "drops": 0
+      },
+      {
+        "id": 7690,
+        "name": "",
+        "tries": 0,
+        "drops": 0
+      },
+      {
+        "id": 7754,
+        "name": "",
+        "tries": 7,
+        "drops": 0
+      },
+      {
+        "id": 7686,
+        "name": "",
+        "tries": 0,
+        "drops": 0
+      },
+      {
+        "id": 9408,
+        "name": "",
+        "tries": 0,
+        "drops": 0
+      },
+      {
+        "id": 9420,
+        "name": "",
+        "tries": 0,
+        "drops": 0
+      },
+      {
+        "id": 252512,
+        "name": "",
+        "tries": 7,
+        "drops": 0
       }
-    ]
+    ],
+    "pvp": {
+      "hkWeek": 0,
+      "honorWeek": 0,
+      "honor": 67,
+      "dkLife": 0,
+      "highest": 0,
+      "hkToday": 4,
+      "honorToday": 0
+    }
   }
 }
