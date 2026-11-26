@@ -500,7 +500,8 @@
   "trfbRight": "Richtiger Text:",
   "pendTitle": "Aus deiner /drop hiscores-Zeile, wartet auf das Arsenal",
   "pendTip": "{v} in deiner Zeile, wartet auf das Arsenal",
-  "pendTotal": "+{n} aus deiner Zeile, wartet auf das Arsenal"
+  "pendTotal": "+{n} aus deiner Zeile, wartet auf das Arsenal",
+  "pendTotal2": "offiziell: {o} · +{n} aus deiner Zeile, wartet auf das Arsenal"
  },
  "names": {
   "Leatherworking": "Lederverarbeitung",

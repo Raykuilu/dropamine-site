@@ -87,6 +87,7 @@ const I18N = {
   pendTitle: ['From your /drop hiscores line, waiting for the armory', 'De ta ligne /drop hiscores, en attente de l’armurerie'],
   pendTip: ['{v} in your line, waiting for the armory', '{v} dans ta ligne, en attente de l’armurerie'],
   pendTotal: ['+{n} from your line, waiting for the armory', '+{n} de ta ligne, en attente de l’armurerie'],
+  pendTotal2: ['official: {o} · +{n} from your line, waiting for the armory', 'officiel : {o} · +{n} de ta ligne, en attente de l’armurerie'],
   hpkOk: ['armory', 'armurerie'], hpkOkTip: ['Kills checked against the Blizzard armory (last 7 days)', 'Victoires recoupées avec l’armurerie Blizzard (7 derniers jours)'],
   hpkPend: ['not checked yet', 'pas encore vérifié'], hpkPendTip: ['Checked against the Blizzard armory after a few days of history', 'Recoupé avec l’armurerie Blizzard après quelques jours d’historique'], duelsNote: ['won – lost', 'gagnés – perdus'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE PROGRESS', 'PROGRESSION DROPAMINE'],
   trust: ['Sent by the players with their Dropamine export: based on trust.', 'Envoyé par les joueurs avec leur ligne Dropamine : basé sur la confiance.'],
@@ -860,8 +861,14 @@ function renderChar() {
       <div><h2>${full(p)}</h2><p>${desc} · ${t('levelN', { n: p.level })}${p.guild ? ` · <a href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${esc(p.guild.name)}</a>` : ''} · ${esc((p.region || 'eu').toUpperCase())}${rulesetName(p) ? ' ' + esc(rulesetName(p)) : ''}</p>
         ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t('previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}
         <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button><button class="share hsb" type="button" data-hsimg="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h8"/></svg><span>${t('hsBtn')}</span></button>${freshLine(p)}</div>
-      <div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n" data-n="${p.total}">${fmt(p.total)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div>${(() => { const its = Bnet.isMine(pkey(p)) ? skillItems(p, []) : []; const d = its.reduce((n, it) => n + (it.pend ? it.pend - it.rank : 0), 0);
-    return d > 0 ? `<div class="pendnote">${t('pendTotal', { n: fmt(d) })}</div>` : ''; })()}</div>
+      ${(() => {
+        // ligne collée en attente : le total simulé en grand, discret ; l'officiel (armurerie) dessous.
+        // Ne comptent que ce qui compte dans le total : niveau, Défense, les 2 armes en main, les métiers.
+        const its = Bnet.isMine(pkey(p)) ? skillItems(p, []) : [];
+        const d = its.filter(it => it.pend && !it.spare).reduce((n, it) => n + it.pend - it.rank, 0);
+        const shown = p.total + d;
+        return `<div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n${d > 0 ? ' pend' : ''}" data-n="${shown}"${d > 0 ? ` title="${esc(t('pendTitle'))}"` : ''}>${fmt(shown)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div>${d > 0 ? `<div class="pendnote">${t('pendTotal2', { o: fmt(p.total), n: fmt(d) })}</div>` : ''}</div>`;
+      })()}
     </div>
     ${secNav(p)}
     <div id="sec-skills">${skillsBlock(p, peers)}</div>
