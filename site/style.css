@@ -1114,3 +1114,9 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .npanel button.chip{appearance:none;-webkit-appearance:none;font:inherit;font-family:var(--display);letter-spacing:.04em;line-height:1.2}
 .npanel button.chip:not(.on){background:transparent;color:var(--muted)}
 .npanel button.chip:hover{color:var(--gold);border-color:var(--rim-lo)}
+/* téléphone : les outils tiennent sur une ligne (la recherche rétrécit, le bouton de déconnexion reste à côté du compte) */
+@media (max-width:720px){
+  .nav .tools{flex-wrap:nowrap}
+  .nav .search{flex:1 1 0;min-width:0}
+  .nav .tools .acct-out{width:36px;height:36px}
+}
