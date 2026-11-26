@@ -561,3 +561,61 @@ html.static .pulse .live{animation:none}
 /* réputations (armurerie) */
 .db-list.reps li{grid-template-columns:minmax(0,1fr) 110px 90px}
 .lbar.rep{height:6px}
+
+/* ---------- Fiche par catégories ---------- */
+.secnav{position:sticky;top:var(--navh,78px);z-index:5;display:flex;gap:6px;flex-wrap:wrap;margin:clamp(16px,2vw,22px) 0 0;padding:8px 10px;border:1px solid var(--rim-lo);border-radius:999px;background:rgba(18,13,8,.88);backdrop-filter:blur(6px);width:max-content;max-width:100%}
+.secnav a{font-family:var(--display);font-variant:small-caps;letter-spacing:.08em;font-size:15px;color:var(--muted);padding:5px 12px;border-radius:999px;text-decoration:none}
+.secnav a:hover{color:var(--cream);background:rgba(196,154,92,.12)}
+.cat{margin-top:clamp(22px,3vw,34px);padding:18px 20px 16px;border-radius:var(--radius);background:linear-gradient(180deg,#2a2a1c,#1b1a12);border:1px solid #050302;box-shadow:inset 0 0 0 1px rgba(196,154,92,.28),inset 0 0 40px rgba(0,0,0,.5);scroll-margin-top:120px}
+.cathead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(196,154,92,.22)}
+.cathead .sub{margin:0}
+.cathead .src{font-family:var(--display);font-variant:small-caps;letter-spacing:.08em;font-size:13px;padding:2px 10px;border-radius:999px;border:1px solid}
+.cathead .src.arm{color:#9cc3e6;border-color:rgba(106,136,192,.5);background:rgba(106,136,192,.12)}
+.cathead .src.decl{color:#e6c47c;border-color:rgba(196,154,92,.45);background:rgba(196,154,92,.1)}
+.cathead .cx2{margin-left:auto;font-style:italic;color:var(--muted);font-size:14px}
+.minor{margin:0 0 8px;font-family:var(--display);font-variant:small-caps;letter-spacing:.06em;color:var(--muted);font-size:16px;font-weight:600}
+.minor span{color:#8cc472;font-family:var(--num)}
+.advgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:clamp(16px,2.4vw,28px);align-items:start}
+.stiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.stile{display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto auto;column-gap:10px;padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:linear-gradient(180deg,rgba(196,154,92,.07),transparent)}
+.stile .sti{grid-row:1/4;width:34px;height:34px;border-radius:6px;border:1px solid #000;box-shadow:0 0 0 1px rgba(196,154,92,.35)}
+.stile .sti.logo{background:url(Dropamine-Logo.png) center/contain no-repeat;border:0;box-shadow:none}
+.stile .stl{font-family:var(--display);font-variant:small-caps;letter-spacing:.05em;color:var(--muted);font-size:13px;line-height:1.2}
+.stile .stv{font-family:var(--num);font-weight:700;font-size:24px;color:var(--gold);line-height:1.15}
+.stile small{color:var(--faint);font-style:italic;font-size:13px}
+.pvpgrid{display:grid;grid-template-columns:minmax(200px,.8fr) minmax(0,2fr);gap:clamp(14px,2vw,24px);align-items:stretch}
+.kd{display:flex;flex-direction:column;justify-content:center;padding:16px 18px;border-radius:12px;border:1px solid rgba(196,154,92,.4);background:radial-gradient(120% 120% at 0% 0%,rgba(184,90,70,.18),transparent 60%),linear-gradient(180deg,rgba(196,154,92,.1),transparent)}
+.kd .tl{font-family:var(--display);font-variant:small-caps;letter-spacing:.08em;color:var(--muted)}
+.kd b{font-family:var(--num);font-size:clamp(40px,5vw,56px);line-height:1;color:var(--gold);margin:4px 0}
+.kd small{color:var(--faint);font-style:italic;font-size:14px}
+.kdbar{display:block;height:6px;margin-top:10px;border-radius:3px;background:rgba(184,90,70,.45);overflow:hidden}
+.kdbar>i{display:block;height:100%;background:linear-gradient(90deg,#5f9a4a,#8cc472)}
+.tiers{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tier{font-size:14px;padding:3px 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c) 55%,transparent);color:var(--c);background:color-mix(in srgb,var(--c) 10%,transparent)}
+.tier b{font-family:var(--num)}
+.cat.dbook .db-grid{margin-top:0}
+@media (max-width:820px){.advgrid,.pvpgrid{grid-template-columns:1fr}.secnav{border-radius:14px}}
+.pvpgrid .stiles{align-content:start}
+
+/* Runs de donjon */
+.runs{display:grid;gap:14px;margin-top:16px}
+.run{border:1px solid var(--line-2);border-radius:var(--radius);background:linear-gradient(180deg,rgba(196,154,92,.06),transparent);padding:14px 16px}
+.run .rh{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--rim-lo);padding-bottom:8px}
+.run h3{margin:0;font-family:var(--display);font-variant:small-caps;letter-spacing:.04em;color:var(--gold);font-size:22px}
+.run .lv{color:var(--muted);font-style:italic}
+.run .sc{margin-left:auto;color:var(--cream)}
+.run .sc b{color:var(--gold)}
+.run ul{list-style:none;margin:6px 0 0;padding:0}
+.run li{display:grid;grid-template-columns:minmax(200px,280px) minmax(0,1fr);gap:14px;align-items:center;padding:8px 4px;border-bottom:1px dotted var(--line-2)}
+.run li:last-child{border-bottom:0}
+.run li.me{background:rgba(196,154,92,.08);border-radius:6px}
+.run .nm{display:flex;gap:10px;align-items:center;cursor:pointer}
+.run .nm small{display:block;color:var(--muted);font-style:italic}
+.run .nm em{font-style:normal;font-size:12px;color:var(--gold);border:1px solid var(--rim-lo);border-radius:9px;padding:0 6px;margin-left:4px}
+.run .low{font-style:normal;color:#e0682a}
+.run .its{display:flex;flex-wrap:wrap;gap:6px 14px}
+.run .it{color:var(--cream)}
+.run .it small{color:var(--muted)}
+.runs-note{margin:10px 0 0}
+.runs-src{margin:18px 0 0;color:var(--faint);font-style:italic;font-size:13px}
+@media (max-width:720px){.run li{grid-template-columns:1fr}.run .sc{margin-left:0}}

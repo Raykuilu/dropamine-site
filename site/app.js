@@ -30,7 +30,14 @@ const I18N = {
   skillsT: ['Skills', 'Compétences'], statsT: ['Armory statistics', "Statistiques de l'armurerie"],
   tilesEst: ['hatched tiles: weapons estimated, waiting for the Dropamine line', "tuiles hachurées : armes estimées, en attente de la ligne Dropamine"],
   tipRank: ['Rank {r} / {m}', 'Rang {r} / {m}'], tipPlace: ['{r} in the Hiscores', '{r} au classement'],
-  tipEst: ['Estimated: equipped weapon counted at its maximum', 'Estimé : arme équipée comptée au maximum'], 'tab.guild': ['Guilds', 'Guildes'],
+  tipEst: ['Estimated: equipped weapon counted at its maximum', 'Estimé : arme équipée comptée au maximum'], 'tab.guild': ['Guilds', 'Guildes'], 'tab.runs': ['Runs', 'Runs'],
+  runsT: ['Dungeon runs', 'Runs de donjon'], runsNote: ['who hunts what, and where', 'qui chasse quoi, et où'],
+  runsGuild: ['My guild', 'Ma guilde'], runsAll: ['All players', 'Tous les joueurs'], runsHunters: ['{n} hunters', '{n} chasseurs'], runsHunter1: ['1 hunter', '1 chasseur'],
+  runsExp: ['≈ {n} wanted items per run', '≈ {n} objets recherchés par run'], runsLvl: ['level {a}–{b}', 'niveau {a}–{b}'], runsYou: ['you', 'toi'],
+  runsLow: ['too low', 'trop bas'], runsTrash: ['trash', 'monstres'], runsEmptyT: ['No hunt shared yet', 'Aucune chasse partagée pour l’instant'],
+  runsEmpty: ['In game, add items to your hunt list, type /drop hiscores (Hunt ticked) and paste the line on the Join page: your dungeons show up here.', 'En jeu, ajoute des objets à ta liste de chasse, tape /drop hiscores (case Chasse cochée) et colle la ligne sur la page Inscription : tes donjons apparaissent ici.'],
+  runsNoGuild: ['Nobody in your guild shares a hunt yet: showing all players.', 'Personne de ta guilde ne partage sa chasse pour l’instant : tous les joueurs sont affichés.'],
+  runsSrc: ['Loot tables: AtlasLoot Forever (GPL-2.0).', 'Tables de butin : AtlasLoot Forever (GPL-2.0).'],
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
   'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source (open source, MIT)', 'Code du site (open source, MIT)'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
@@ -39,7 +46,14 @@ const I18N = {
   sortBy: ['Rank by', 'Classer par'], trustShort: ['based on trust', 'basé sur la confiance'],
   kills: ['Creatures killed', 'Créatures tuées'], killingBlows: ['Killing blows', 'Coups fatals'], dungeons: ['Dungeons entered', 'Donjons visités'],
   pvpDeaths: ['Killed by players', 'Tué par des joueurs'], duels: ['Duels (won / lost)', 'Duels (gagnés / perdus)'],
-  repsT: ['Reputations', 'Réputations'], armorySrc: ['from the armory', "d'après l'armurerie"], repsN: ['{n} factions', '{n} factions'], quests: ['Quests', 'Quêtes'], flights: ['Flights taken', 'Trajets aériens'], deaths: ['Deaths', 'Morts'],
+  repsT: ['Reputations', 'Réputations'], advT: ['Adventure', 'Aventure'], pvpT: ['PvP', 'JcJ'],
+  srcArm: ['Armory', 'Armurerie'], srcDecl: ['Dropamine · on trust', 'Dropamine · sur la confiance'],
+  kd: ['K/D ratio', 'Ratio K/D'], kdHow: ['{k} honorable kills for {d} deaths to players', '{k} victoires honorables pour {d} morts face aux joueurs'],
+  duelsT: ['Duels won – lost', 'Duels gagnés – perdus'], pvpRank: ['PvP rank', 'Rang JcJ'],
+  subWinRate: ['{n}% won', '{n} % de victoires'], subFaction: ['{n} by the opposite faction', '{n} par la faction adverse'],
+  subCritters: ['+ {n} critters', '+ {n} bestioles'], subAbandoned: ['{n} abandoned', '{n} abandonnées'], subBosses: ['{n} bosses defeated', '{n} boss vaincus'],
+  subHearth: ['{n} hearthstones', '{n} pierres de foyer'], subDungeonDeaths: ['{n} in dungeons', '{n} en donjon'], subKb: ['monsters and players', 'monstres et joueurs'],
+  fish: ['Fish caught', 'Poissons pêchés'], mounts: ['Mounts', 'Montures'], potions: ['Potions', 'Potions'], subPotions: ['{h} health · {m} mana', '{h} soins · {m} mana'], armorySrc: ['from the armory', "d'après l'armurerie"], repsN: ['{n} factions', '{n} factions'], quests: ['Quests', 'Quêtes'], flights: ['Flights taken', 'Trajets aériens'], deaths: ['Deaths', 'Morts'],
   played: ['Played', 'Temps de jeu'],
   dbTitle: ['Dropamine logbook', 'Carnet Dropamine'], dbWhen: ['sent by the player on {d}', 'envoyé par le joueur le {d}'],
   dbLog: ['Collection log', 'Collection log'], dbAch: ['Dropamine achievements', 'Succès Dropamine'], dbRec: ['Records', 'Records'],
@@ -145,10 +159,10 @@ const SKILLS = [
 ];
 const showVal = (sk, v, p) => sk.show ? sk.show(v, p) : fmt(v);
 const GROUP_COLOR = { lvl: 'var(--lvl)', wpn: 'var(--wpn)', prf: 'var(--prf)', stat: 'var(--rim)', book: 'var(--gold)' };
-const VIEWS = ['home', 'rank', 'char', 'guild', 'news', 'get', 'join', 'privacy'];
+const VIEWS = ['home', 'rank', 'char', 'guild', 'runs', 'news', 'get', 'join', 'privacy'];
 
 let DATA = { players: [] }, NEWS = null;
-const state = { view: 'home', region: 'eu', skill: 'total', cls: 0, rs: 0, c: '', g: '', gs: 'total' };
+const state = { view: 'home', region: 'eu', skill: 'total', cls: 0, rs: 0, c: '', g: '', gs: 'total', rscope: '' };
 const inRegion = () => DATA.players.filter(p => (p.region || 'eu') === state.region);
 
 /* ======================================================================
@@ -385,7 +399,7 @@ let SHOW_SPARE = false;
 function skillsBlock(p, peers) {
   const items = skillItems(p, peers), spare = items.filter(i => i.spare);
   const shown = SHOW_SPARE ? items : items.filter(i => !i.spare);
-  const body = SKVIEW === 'grid' ? `<div class="tiles">${shown.map(tileOf).join('')}</div>` : `<div class="slist">${shown.map(lineOf).join('')}</div>`;
+  const body = SKVIEW === 'grid' ? `<div class="stiles">${shown.map(tileOf).join('')}</div>` : `<div class="slist">${shown.map(lineOf).join('')}</div>`;
   const more = spare.length ? `<button class="more" type="button" data-sk="spare">${SHOW_SPARE ? t('lessW') : t('moreW', { n: spare.length })}</button>` : '';
   return `<div class="dpanel">
       <div class="dhead"><h3 class="sub">${t('skillsT')}</h3>
@@ -439,10 +453,6 @@ function renderChar() {
   const totalRank = rankBy(SKILLS[0], peers).find(x => x.p === p)?.r;
   const hist = p.history || [], gained = hist.length > 1 ? hist[hist.length - 1].t - hist[0].t : 0;
   const nProf = p.professions?.length || 0;
-  const st = p.stats || {}, duel = st.duelsWon != null || st.duelsLost != null ? `${fmt(st.duelsWon || 0)} / ${fmt(st.duelsLost || 0)}` : null;
-  const stats = [['hk', armoryStat(p, 'hk')], ['killingBlows', st.killingBlows], ['pvpDeaths', st.pvpDeaths], ['duels', duel],
-    ['kills', st.kills], ['quests', st.quests], ['dungeons', st.dungeons], ['flights', st.flights], ['deaths', st.deaths]]
-    .filter(([, v]) => v != null).map(([k, v]) => `<div>${t(k)}<b>${typeof v === 'number' ? fmt(v) : v}</b></div>`).join('');
   const portrait = p.render
     ? `<div class="portrait"><div class="plinth"></div><div class="plinth2"></div><div class="fig" style="background-image:url('${esc(p.render)}')" role="img" aria-label="${full(p)}"></div></div>`
     : `<div class="vial" role="img" aria-label="Dropamine"></div>`;
@@ -458,11 +468,10 @@ function renderChar() {
         <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button><button class="share hsb" type="button" data-hsimg="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h8"/></svg><span>${t('hsBtn')}</span></button></div>
       <div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n" data-n="${p.total}">${fmt(p.total)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div></div>
     </div>
-    ${skillsBlock(p, peers)}
-    <div class="two">
-      <div><h3 class="sub">${t('progress')}${gained ? ` <span>+${fmt(gained)}</span>` : ''}</h3>${chartSvg(hist)}</div>
-      <div><h3 class="sub">${t('statsT')}</h3>${stats ? `<div class="ledger">${stats}</div>` : `<div class="empty">—</div>`}</div>
-    </div>
+    ${secNav(p)}
+    <div id="sec-skills">${skillsBlock(p, peers)}</div>
+    ${advPanel(p, hist, gained)}
+    ${pvpPanel(p)}
     ${repsPanel(p)}
     ${dropBook(p)}
     ${p.complete ? '' : `<div class="cta">${t('ctaEst')}</div>`}`;
@@ -578,12 +587,64 @@ const HsImage = (() => {
   return { open };
 })();
 
+// ---------- Fiche par catégories : Compétences · Aventure · JcJ · Réputations · Carnet ----------
+// en-tête de catégorie : titre, source (armurerie ou déclaré), extra à droite
+const catHead = (id, title, src, extra = '') => `<div class="cathead"><h3 class="sub">${title}</h3><span class="src ${src}">${t(src === 'arm' ? 'srcArm' : 'srcDecl')}</span>${extra ? `<span class="cx2">${extra}</span>` : ''}</div>`;
+// tuile : icône du jeu, intitulé, grand chiffre, précision
+const tile = (ic, label, value, sub = '', cls = '') => value == null ? '' :
+  `<div class="stile ${cls}">${ic ? `<img class="sti" src="${icon(ic)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<i class="sti logo"></i>'}<span class="stl">${label}</span><b class="stv">${typeof value === 'number' ? fmt(value) : value}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
+const kdOf = st => st.hk == null ? null : st.pvpDeaths ? st.hk / st.pvpDeaths : st.hk;
+function secNav(p) {
+  const st = p.stats || {}, d = p.dropamine || {};
+  const items = [['sec-skills', t('skillsT')], ['sec-adv', t('advT')], [armoryStat(p, 'hk') != null || st.pvpDeaths != null ? 'sec-pvp' : null, t('pvpT')],
+    [p.reps?.length ? 'sec-reps' : null, t('repsT')], [Object.keys(d).length || p.played ? 'sec-book' : null, t('dbTitle')]].filter(([id]) => id);
+  return `<nav class="secnav">${items.map(([id, l]) => `<a href="#${id}" data-sec="${id}">${l}</a>`).join('')}</nav>`;
+}
+function advPanel(p, hist, gained) {
+  const st = p.stats || {};
+  const tiles = [
+    tile('ability_warrior_rampage', t('kills'), st.kills, st.critters ? t('subCritters', { n: fmt(st.critters) }) : ''),
+    tile('inv_misc_book_08', t('quests'), st.quests, st.questsAbandoned ? t('subAbandoned', { n: fmt(st.questsAbandoned) }) : ''),
+    tile('inv_misc_key_03', t('dungeons'), st.dungeons, st.bosses ? t('subBosses', { n: fmt(st.bosses) }) : ''),
+    tile('ability_mount_gryphon_01', t('flights'), st.flights, st.hearth ? t('subHearth', { n: fmt(st.hearth) }) : ''),
+    tile('spell_holy_resurrection', t('deaths'), st.deaths, st.dungeonDeaths ? t('subDungeonDeaths', { n: fmt(st.dungeonDeaths) }) : ''),
+    tile('ability_backstab', t('killingBlows'), st.killingBlows, t('subKb')),
+    tile('inv_misc_fish_02', t('fish'), st.fish),
+    tile('ability_mount_whitetiger', t('mounts'), st.mounts),
+    tile('inv_potion_51', t('potions'), st.healthPotions != null || st.manaPotions != null ? (st.healthPotions || 0) + (st.manaPotions || 0) : null,
+      st.manaPotions != null ? t('subPotions', { h: fmt(st.healthPotions || 0), m: fmt(st.manaPotions || 0) }) : ''),
+  ].join('');
+  return `<section class="cat" id="sec-adv">${catHead('adv', t('advT'), 'arm')}
+    <div class="advgrid"><div class="prog"><h4 class="minor">${t('progress')}${gained ? ` <span>+${fmt(gained)}</span>` : ''}</h4>${chartSvg(hist)}</div>
+    <div class="stiles">${tiles || `<div class="empty">—</div>`}</div></div></section>`;
+}
+function pvpPanel(p) {
+  const st = { ...(p.stats || {}), hk: armoryStat(p, 'hk') };
+  if (st.hk == null && st.pvpDeaths == null) return '';
+  const kd = kdOf(st), duels = (st.duelsWon || 0) + (st.duelsLost || 0), rate = duels ? Math.round(100 * (st.duelsWon || 0) / duels) : null;
+  const rank = p.pvpArmory?.rank || 0;
+  return `<section class="cat pvp" id="sec-pvp">${catHead('pvp', t('pvpT'), 'arm')}
+    <div class="pvpgrid">
+      <div class="kd"><span class="tl">${t('kd')}</span><b>${kd == null ? '—' : kd.toLocaleString(locale(), { maximumFractionDigits: 2, minimumFractionDigits: kd % 1 ? 2 : 0 })}</b>
+        <small>${t('kdHow', { k: fmt(st.hk || 0), d: fmt(st.pvpDeaths || 0) })}</small>
+        <i class="kdbar"><i style="width:${st.hk || st.pvpDeaths ? (100 * (st.hk || 0) / ((st.hk || 0) + (st.pvpDeaths || 0))).toFixed(1) : 0}%"></i></i></div>
+      <div class="stiles">
+        ${tile(p.faction === 'HORDE' ? 'inv_bannerpvp_01' : 'inv_bannerpvp_02', t('hk'), st.hk)}
+        ${tile('ability_rogue_feigndeath', t('pvpDeaths'), st.pvpDeaths, st.factionDeaths != null ? t('subFaction', { n: fmt(st.factionDeaths) }) : '')}
+        ${tile('ability_dualwield', t('duelsT'), duels || st.duelsWon != null ? `${fmt(st.duelsWon || 0)} – ${fmt(st.duelsLost || 0)}` : null, rate != null ? t('subWinRate', { n: rate }) : '')}
+        ${rank ? tile('inv_misc_tabardpvp_01', t('pvpRank'), rank) : ''}
+      </div></div></section>`;
+}
+
 // Réputations de l'armurerie : palier (couleurs du jeu) et avancement dans le palier
 const REP_COL = ['#cc3322', '#cc3322', '#e0682a', '#e6c84c', '#6fbf4a', '#4cc9a0', '#3fb8c9', '#5aa6e6'];
 function repsPanel(p) {
   if (!p.reps?.length) return '';
   const rows = p.reps.map(x => `<li><span>${esc(L2(x.n) || x.n[0])}</span><i class="lbar rep"><i style="width:${x.m ? (100 * x.v / x.m).toFixed(1) : 100}%;background:${REP_COL[x.t] || REP_COL[3]}"></i></i><b style="color:${REP_COL[x.t] || REP_COL[3]}">${esc(L2(x.s) || x.s[0])}</b></li>`).join('');
-  return `<div class="dpanel reps"><div class="dhead"><h3 class="sub">${t('repsT')}</h3><span class="db-when">${t('repsN', { n: p.reps.length })} · ${t('armorySrc')}</span></div><ul class="db-list reps">${rows}</ul></div>`;
+  const tiers = {}; p.reps.forEach(x => { tiers[x.t] = (tiers[x.t] || 0) + 1; });
+  const summary = Object.keys(tiers).map(Number).sort((a, b) => b - a).map(k => { const x = p.reps.find(y => y.t === k);
+    return `<span class="tier" style="--c:${REP_COL[k] || REP_COL[3]}"><b>${tiers[k]}</b> ${esc(L2(x.s) || x.s[0])}</span>`; }).join('');
+  return `<section class="cat" id="sec-reps">${catHead('reps', t('repsT'), 'arm', t('repsN', { n: p.reps.length }))}<div class="tiers">${summary}</div><ul class="db-list reps">${rows}</ul></section>`;
 }
 
 // Carnet Dropamine : tout ce que l'armurerie n'a pas, envoyé par le joueur avec sa ligne /drop hiscores
@@ -615,8 +676,8 @@ function dropBook(p) {
   }
   if (!parts.length) return '';
   const when = p.dropamineAt ? new Date(p.dropamineAt).toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) : '';
-  return `<div class="dpanel dbook"><div class="dhead"><h3 class="sub">${t('dbTitle')}</h3>${when ? `<span class="db-when">${t('dbWhen', { d: when })} · ${t('trustShort')}</span>` : ''}</div>
-    <div class="db-grid">${parts.join('')}</div></div>`;
+  return `<section class="cat dbook" id="sec-book">${catHead('book', t('dbTitle'), 'decl', when ? t('dbWhen', { d: when }) : '')}
+    <div class="db-grid">${parts.join('')}</div></section>`;
 }
 
 const playedText = s => { const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
@@ -692,6 +753,66 @@ function renderGuild() {
     </div>`;
 }
 
+/* ---------- Runs : les joueurs qui chassent dans le même donjon ---------- */
+// Tables de butin d'AtlasLoot Forever (GPL-2.0), chargées à la première visite : objet → donjon, boss, taux de drop
+let LOOT = null, lootLoad = null;
+function loadLoot() {
+  return lootLoad ??= fetch('data/loot.json').then(r => r.json()).then(j => {
+    const idx = new Map();
+    for (const d of j.dungeons) for (const b of d.bosses) for (const it of b.i) {
+      const [id, rate] = Array.isArray(it) ? it : [it, null];
+      if (!idx.has(id)) idx.set(id, []);
+      idx.get(id).push({ d, b, rate });
+    }
+    LOOT = { ...j, idx };
+  }).catch(() => { LOOT = { failed: true }; });
+}
+function runsData(players) {
+  const runs = new Map();
+  for (const p of players) for (const h of p.dropamine?.hunt || []) {
+    if (h.drops > 0) continue;                                   // déjà trouvé
+    const src = LOOT.idx.get(h.id) || [];
+    const byD = new Map();
+    for (const x of src) { const cur = byD.get(x.d.key); if (!cur || (x.rate || 0) > (cur.rate || 0)) byD.set(x.d.key, x); }   // meilleur boss du donjon
+    for (const x of byD.values()) {
+      if (!runs.has(x.d.key)) runs.set(x.d.key, { d: x.d, hunters: new Map(), exp: 0 });
+      const run = runs.get(x.d.key);
+      if (!run.hunters.has(p)) run.hunters.set(p, []);
+      run.hunters.get(p).push({ h, boss: x.b, rate: x.rate });
+      run.exp += (x.rate ?? 5) / 100;                             // sans taux connu (monstres) : 5 %
+    }
+  }
+  return [...runs.values()].sort((a, b) => b.hunters.size - a.hunters.size || b.exp - a.exp);
+}
+function renderRuns() {
+  const box = $('#runs-panel');
+  if (!LOOT) { box.innerHTML = `<div class="empty">${t('loading')}</div>`; loadLoot().then(() => { if (state.view === 'runs') { renderRuns(); animate($('#runs')); } }); return; }
+  if (LOOT.failed || DATA.failed) { box.innerHTML = failed(); return; }
+  const me = Bnet.mine(), myGuild = me.find(p => p.guild)?.guild;
+  const all = inRegion().filter(p => p.dropamine?.hunt?.length);
+  const scope = state.rscope || (myGuild ? 'guild' : 'all');
+  let list = scope === 'guild' && myGuild ? all.filter(p => p.guild?.slug === myGuild.slug) : all, note = '';
+  if (scope === 'guild' && myGuild && !list.length) { list = all; note = `<p class="note runs-note">${t('runsNoGuild')}</p>`; }
+  const runs = runsData(list);
+  const chips = myGuild ? `<div class="chips" role="group"><span class="chip ${scope === 'guild' ? 'on' : ''}" data-rscope="guild">${t('runsGuild')} · ${esc(myGuild.name)}</span><span class="chip ${scope === 'all' ? 'on' : ''}" data-rscope="all">${t('runsAll')}</span></div>` : '';
+  const card = run => {
+    const [lo, , hi] = run.d.lvl || [];
+    const n = run.hunters.size;
+    const rows = [...run.hunters].map(([p, its]) => {
+      const mine = me.includes(p), low = lo && p.level < lo;
+      const items = its.map(x => `<span class="it">${esc(x.h.name)} <small>${/^(Trash|Ennemis)/i.test(x.boss.n[0]) || /^Trash/i.test(x.boss.n[0]) ? t('runsTrash') : esc(L2(x.boss.n) || x.boss.n[0]) + (x.rate ? ` · ${fmt(x.rate)} %` : '')}</small></span>`).join('');
+      return `<li class="${mine ? 'me' : ''}"><span class="nm" data-c="${esc(pkey(p))}">${avatar(p)}<span><b>${full(p)}${mine ? ` <em>${t('runsYou')}</em>` : ''}</b><small>${esc(className(p))} ${p.level}${low ? ` · <i class="low">${t('runsLow')}</i>` : ''}${p.guild ? ' · ' + esc(p.guild.name) : ''}</small></span></span><span class="its">${items}</span></li>`;
+    }).join('');
+    return `<div class="run"><div class="rh"><h3>${esc(run.d.name)}</h3>${lo ? `<span class="lv">${t('runsLvl', { a: lo, b: hi })}</span>` : ''}
+      <span class="sc"><b>${n === 1 ? t('runsHunter1') : t('runsHunters', { n })}</b> · ${t('runsExp', { n: run.exp.toLocaleString(locale(), { maximumFractionDigits: 1 }) })}</span></div><ul>${rows}</ul></div>`;
+  };
+  box.innerHTML = `<div class="head"><h2>${t('runsT')}</h2><span class="note">${t('runsNote')} · Forever ${state.region.toUpperCase()}</span></div>
+    ${chips}${note}
+    ${runs.length ? `<div class="runs">${runs.map(card).join('')}</div>` : `<div class="empty"><b>${t('runsEmptyT')}</b>${t('runsEmpty')}</div>`}
+    <p class="runs-src">${t('runsSrc')}</p>`;
+}
+document.addEventListener('click', e => { const c = e.target.closest('[data-rscope]'); if (c) { state.rscope = c.dataset.rscope; renderRuns(); } });
+
 /* ---------- Nouveautés ---------- */
 function renderNews() {
   const box = $('#news-list');
@@ -705,6 +826,7 @@ function renderNews() {
     </div>`).join('') +
     `<p style="margin:18px 0 0;color:var(--faint);font-style:italic">${t('fullHistory')} <a href="https://github.com/Raykuilu/Dropamine/blob/main/CHANGELOG.md" rel="noopener">GitHub</a>.</p>`;
 }
+document.addEventListener('click', e => { const a = e.target.closest('[data-sec]'); if (!a) return; e.preventDefault(); document.getElementById(a.dataset.sec)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); });
 document.addEventListener('change', e => { const sel = e.target.closest('[data-gs]'); if (!sel) return; state.gs = sel.value; renderGuild(); animate($('#guild-panel')); });
 document.addEventListener('click', e => { const x = e.target.closest('.release.more .toggle'); if (x) { x.closest('.release').classList.remove('more'); x.remove(); } });
 
@@ -883,8 +1005,8 @@ function writeUrl(push) {
   if (state.view === 'guild' && state.g) q.set('g', state.g);
   history[push ? 'pushState' : 'replaceState'](null, '', q.toString() ? '?' + q : location.pathname);
 }
-const RENDER = { rank: renderRank, char: renderChar, guild: renderGuild, news: renderNews, join: () => Bnet.show() };
-const TITLES = { rank: 'tab.rank', char: 'tab.char', guild: 'tab.guild', news: 'tab.news', get: 'btn.download', join: 'foot.join', privacy: 'foot.privacy' };
+const RENDER = { rank: renderRank, char: renderChar, guild: renderGuild, runs: renderRuns, news: renderNews, join: () => Bnet.show() };
+const TITLES = { rank: 'tab.rank', char: 'tab.char', guild: 'tab.guild', runs: 'tab.runs', news: 'tab.news', get: 'btn.download', join: 'foot.join', privacy: 'foot.privacy' };
 function render(push) {
   applyStatic();
   renderHome();

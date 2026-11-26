@@ -143,3 +143,9 @@ test('réputations de l\'armurerie : deux langues, triées par avancement', () =
   assert.deepEqual(r.map(x => x.id), [69, 72]);
   assert.deepEqual(r[1], { id: 72, n: ['Stormwind', 'Hurlevent'], t: 5, s: ['Honored', 'Honoré'], v: 5378, m: 12000 });
 });
+
+test('boss vaincus : la sous-catégorie Boss compte les boss différents et le total', () => {
+  const s = pickStats({ categories: [{ name: 'Donjons et raids', statistics: [{ id: 932, quantity: 18 }], sub_categories: [{ name: 'Boss', statistics: [
+    { id: 63570, name: 'VanCleef', quantity: 2 }, { id: 6140, name: 'Thermojoncteur', quantity: 1 }, { id: 1, name: 'x', quantity: 0 }] }] }] });
+  assert.deepEqual(s, { dungeons: 18, bosses: 2, bossKills: 3 });
+});

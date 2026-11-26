@@ -133,7 +133,9 @@ export function skillSnapshot(s) {
 
 // statistiques de l'armurerie, par identifiant (stables quelle que soit la langue)
 export const STAT_IDS = { 107: 'kills', 98: 'quests', 60: 'deaths', 349: 'flights', 932: 'dungeons',
-  588: 'hk', 1487: 'killingBlows', 1501: 'pvpDeaths', 319: 'duelsWon', 320: 'duelsLost' };
+  588: 'hk', 1487: 'killingBlows', 1501: 'pvpDeaths', 318: 'factionDeaths', 319: 'duelsWon', 320: 'duelsLost',
+  108: 'critters', 94: 'questsAbandoned', 918: 'dungeonDeaths', 114: 'fallDeaths', 113: 'fatigueDeaths',
+  353: 'hearth', 1518: 'fish', 339: 'mounts', 345: 'healthPotions', 922: 'manaPotions', 347: 'food', 346: 'drinks', 1045: 'cheers' };
 // réputations : [{ id, n: [en, fr], t: palier 0-7, s: [en, fr], v, m }] de la plus avancée à la moins avancée
 export function pickReps(reps) {
   return (reps?.reputations ?? []).filter(r => r.faction?.id && r.standing)
@@ -146,9 +148,11 @@ export function pickStats(achStats) {
   const want = { 'Créatures tuées': 'kills', 'Creatures killed': 'kills', 'Quêtes achevées': 'quests', 'Quests completed': 'quests',
     'Nombre total de morts': 'deaths', 'Total deaths': 'deaths', 'Trajets aériens empruntés': 'flights', 'Flight paths taken': 'flights' };
   const out = {};
-  const walk = cats => cats?.forEach(c => {
-    c.statistics?.forEach(s => { const k = STAT_IDS[s.id] || want[s.name]; if (k && out[k] == null) out[k] = Math.round(s.quantity); });
-    walk(c.sub_categories);
+  const walk = (cats, boss) => cats?.forEach(c => {
+    const inBoss = boss || /^boss/i.test(c.name ?? '');
+    if (inBoss) c.statistics?.forEach(s => { if (s.quantity > 0) { out.bosses = (out.bosses || 0) + 1; out.bossKills = (out.bossKills || 0) + Math.round(s.quantity); } });
+    else c.statistics?.forEach(s => { const k = STAT_IDS[s.id] || want[s.name]; if (k && out[k] == null) out[k] = Math.round(s.quantity); });
+    walk(c.sub_categories, inBoss);
   });
   walk(achStats?.categories);
   return out;
