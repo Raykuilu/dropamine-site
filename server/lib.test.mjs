@@ -156,3 +156,8 @@ test('liste d’objets recherchés modifiée sur le site', () => {
   assert.equal(keepSiteHunt({ at: 'x', hunt: [{ id: 9 }] }, e).hunt.length, 1);
   assert.equal(keepSiteHunt({ at: 'x' }, { hunt: [{ id: 1 }] }).hunt, undefined, 'liste du jeu d’avant : pas gardée');
 });
+test('chasse en codes seuls (Dropamine 3.12.0)', () => {
+  const BODY = 'n=Ray;l=36;r=eu;d=177;w=staves:104;p=393:224;v=3.12.0;t=1;ct=1~2;cl=Gnomeregan~1~2;hu=9449~42~1,2262~0~0';
+  const sum = hsChecksum(BODY), p = parseHiscoresLine(HS_PREFIX + BODY + ';c=' + sum);
+  assert.deepEqual(p.hunt, [{ id: 9449, name: '', tries: 42, drops: 1 }, { id: 2262, name: '', tries: 0, drops: 0 }]);
+});

@@ -117,9 +117,11 @@ export function extras(f) {
     }
   }
   if (f.hu) {                                   // chasse : objets recherchés
+    // Dropamine 3.12.0+ : numéro~essais~drops (codes seuls, le site met le nom) ; avant : numéro~nom~essais~drops
     const hunt = String(f.hu).split(',').slice(0, 20).map(p => {
-      const [id, name, tries, drops] = tilde(p); return { id: num(id, 1e7), name: txt(name), tries: num(tries, 1e6), drops: num(drops, 1e4) };
-    }).filter(h => h.id && h.name && h.tries != null && h.drops != null);
+      const v = tilde(p), [id, name, tries, drops] = v.length === 3 ? [v[0], '', v[1], v[2]] : v;
+      return { id: num(id, 1e7), name: txt(name), tries: num(tries, 1e6), drops: num(drops, 1e4) };
+    }).filter(h => h.id && h.tries != null && h.drops != null);
     if (hunt.length) o.hunt = hunt;
   }
   if (f.pv) {                                   // JcJ : ce que l'armurerie n'a pas

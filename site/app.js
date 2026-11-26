@@ -11,7 +11,15 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
    Langue : le texte fixe est en double dans la page (lang="en" / lang="fr"),
    le texte calculé passe par t(). Choix gardé dans le navigateur.
    ====================================================================== */
-let LANG = document.documentElement.dataset.lang === 'fr' ? 'fr' : 'en';
+// 7 langues. Anglais et français sont dans le code et dans la page ; les autres viennent de data/i18n/<langue>.json
+// (textes du site par clé, petits noms par leur texte anglais, blocs de la page) et data/i18n/items.<langue>.json,
+// chargés seulement pour la langue choisie. Ce qui manque s'affiche en anglais.
+const LANGS = ['en', 'fr', 'de', 'es', 'it', 'pt', 'ru'];
+const LANG_NAMES = { en: 'English', fr: 'Français', de: 'Deutsch', es: 'Español', it: 'Italiano', pt: 'Português', ru: 'Русский' };
+let LANG = LANGS.includes(document.documentElement.dataset.lang) ? document.documentElement.dataset.lang : 'en';
+const li = () => Math.max(0, LANGS.indexOf(LANG));
+let I18X = null, ITEMX = null;   // langue en plus : textes et noms, puis ses objets
+const extra = () => LANG !== 'en' && LANG !== 'fr';
 const I18N = {
   'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'], 'acct.out': ['Sign out', 'Se déconnecter'],
   myChars: ['My characters', 'Mes personnages'],
@@ -184,21 +192,26 @@ const I18N = {
   inWeek: ['+{n} in 7 days', '+{n} en 7 jours'], notEnough: ['not enough tracking yet', 'pas encore assez de suivi'],
   latest: ['LATEST VERSION', 'DERNIÈRE VERSION'], showMore: ['Show details', 'Afficher le détail'], fullHistory: ['Full history on', 'Historique complet sur'],
   newsFailT: ['Unavailable', 'Indisponible'], newsFail: ["The changelog couldn't be loaded.", "Le journal des versions n'a pas pu être chargé."],
-  updated: ['Hiscores updated {d}.', 'Hiscores mis à jour le {d}.'], meta: ['Version {v} · free · open source (MIT) · English and French', 'Version {v} · gratuit · open source (MIT) · français et anglais'],
+  updated: ['Hiscores updated {d}.', 'Hiscores mis à jour le {d}.'], meta: ['Version {v} · free · open source (MIT) · 7 languages', 'Version {v} · gratuit · open source (MIT) · 7 langues'],
   loading: ['Loading…', 'Chargement…'],
   title: ['Dropamine — the WoW Forever addon that celebrates every +1', "Dropamine — l'addon WoW Forever qui fête chaque +1"],
+  dgSort: ["Today's best gains", 'Meilleurs gains du jour'], dgTip: ['Who gained the most since yesterday, in this ranking', 'Qui a le plus progressé depuis hier, dans ce classement'],
+  dgNone: ['Nobody has gained here since yesterday yet.', "Personne n'a encore progressé ici depuis hier."],
+  durDH: ['{d}d {h}h', '{d} j {h} h'], durHM: ['{h}h {m}m', '{h} h {m} min'],
 };
 const t = (k, vars = {}) => {
-  let s = (I18N[k] || [k, k])[LANG === 'fr' ? 1 : 0];
+  const e = I18N[k];
+  let s = (extra() && I18X?.ui?.[k]) || (e ? (LANG === 'fr' ? e[1] : e[0]) : k);
   for (const [a, b] of Object.entries(vars)) s = s.replaceAll(`{${a}}`, b);
   return s.replaceAll('{s}', +vars.n > 1 ? 's' : '');
 };
 // petite goutte animée à la place des « Chargement… »
 let dropN = 0;
 const loadingBox = () => `<div class="empty dload"><svg class="dropsvg" viewBox="0 0 100 130" width="40" height="52" aria-hidden="true"><defs><clipPath id="${"dl" + (++dropN)}"><path d="M50 6C68 34 90 58 90 84a40 40 0 0 1-80 0C10 58 32 34 50 6z"/></clipPath></defs><g clip-path="url(#${"dl" + (++dropN)})"><rect width="100" height="130" fill="#120d08"/><g class="sp-fill"><path class="sp-w r" d="M-100 66q25-8 50 0t50 0t50 0t50 0t50 0V130H-100z" fill="#b85a46"/><path class="sp-w b" d="M-100 86q25-7 50 0t50 0t50 0t50 0t50 0V130H-100z" fill="#6a88c0"/><path class="sp-w g" d="M-100 103q25-6 50 0t50 0t50 0t50 0t50 0V130H-100z" fill="#5f9a4a"/></g><ellipse cx="36" cy="60" rx="7" ry="13" fill="#fff" opacity=".12"/></g><path d="M50 6C68 34 90 58 90 84a40 40 0 0 1-80 0C10 58 32 34 50 6z" fill="none" stroke="#c49a5c" stroke-width="4"/></svg><span>${t('loading')}</span></div>`;
-const locale = () => LANG === 'fr' ? 'fr-FR' : 'en-GB';
+const LOCALES = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES', it: 'it-IT', pt: 'pt-BR', ru: 'ru-RU' };
+const locale = () => LOCALES[LANG] || 'en-GB';
 const fmt = n => Math.round(n).toLocaleString(locale());
-const ord = n => LANG === 'fr' ? (n === 1 ? '1ᵉʳ' : n + 'ᵉ') : n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+const ord = n => LANG === 'fr' ? (n === 1 ? '1ᵉʳ' : n + 'ᵉ') : LANG === 'de' ? n + '.' : LANG === 'ru' ? n + '-й' : extra() ? n + 'º' : n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
 
 /* ---------- Référentiels (identifiants de l'API → noms dans les deux langues) ---------- */
 const PROF = { 165: ['Leatherworking', 'Travail du cuir'], 393: ['Skinning', 'Dépeçage'], 185: ['Cooking', 'Cuisine'], 356: ['Fishing', 'Pêche'],
@@ -209,7 +222,9 @@ const CLASS = { 1: ['Warrior', 'Guerrier'], 2: ['Paladin', 'Paladin'], 3: ['Hunt
 const RACE = { 1: ['Human', 'humain'], 2: ['Orc', 'orc'], 3: ['Dwarf', 'nain'], 4: ['Night Elf', 'elfe de la nuit'], 5: ['Undead', 'mort-vivant'],
   6: ['Tauren', 'tauren'], 7: ['Gnome', 'gnome'], 8: ['Troll', 'troll'] };
 const RULESETS = [[2, ['Normal', 'Normal']], [1, ['PvP', 'JcJ']], [3, ['RP', 'Jeu de rôle']], [15, ['RP-PvP', 'Jeu de rôle JcJ']]];
-const L2 = pair => pair ? pair[LANG === 'fr' ? 1 : 0] : '';
+// [anglais, français] (ou les 7 langues) ; autre langue : la traduction du texte anglais, sinon l'anglais
+const L2 = pair => { if (!pair) return ''; if (LANG === 'fr') return pair[1] ?? pair[0]; if (LANG === 'en') return pair[0];
+  return (pair.length === 7 && pair[li()]) || I18X?.names?.[pair[0]] || pair[0]; };
 const profName = (id, fallback) => L2(PROF[id]) || fallback || '';
 const className = p => L2(CLASS[p.classId]) || p.class || '';
 const raceName = p => L2(RACE[p.raceId]) || (p.race || '').toLowerCase();
@@ -377,7 +392,15 @@ function histDiff(p, a, b) {
 }
 const dayGain = p => { const h = p.history || []; if (h.length < 2) return 0; const a = h[h.length - 2], b = h[h.length - 1];
   return new Date(b.d) - new Date(a.d) <= 1.5 * 864e5 ? histDiff(p, a, b) : 0; };
-const plus = p => { const d = dayGain(p); return d > 0 ? `<span class="plus" title="${t('sinceY')}">+${fmt(d)}</span>` : ''; };
+const plus = (p, g) => { const d = g ?? dayGain(p); return d > 0 ? `<span class="plus" title="${t('sinceY')}">+${fmt(d)}</span>` : ''; };
+// gain du jour pour la compétence affichée (instantané de la veille) ; niveau total et statistiques sans instantané : le gain total
+function skillGain(p, sk) {
+  const key = sk.id === 'level' ? 'l' : sk.id === 'defense' ? 'd' : /^[pw]\d/.test(sk.id) ? sk.id : null;
+  const h = p.history || []; if (!key || h.length < 2) return dayGain(p);
+  const a = h[h.length - 2], b = h[h.length - 1];
+  if (new Date(b.d) - new Date(a.d) > 1.5 * 864e5 || a.s?.[key] == null || b.s?.[key] == null) return key ? 0 : dayGain(p);
+  return b.s[key] - a.s[key];
+}
 const estTag = p => p.preview ? `<em class="pv">${t('preview')}</em>` : p.complete ? '' : `<em>${t('est')}</em>`;
 
 /* ---------- Accueil : le pont vers les classements ---------- */
@@ -600,7 +623,9 @@ function renderRank() {
   if (DATA.failed) { $('#rank-panel').innerHTML = failed(); return; }
   const sk = skillById(state.skill), region = inRegion();
   const byRs = state.rs ? region.filter(p => p.rulesetId === state.rs) : region;
-  const list = rankBy(sk, state.cls ? byRs.filter(p => p.classId === state.cls) : byRs);
+  let list = rankBy(sk, state.cls ? byRs.filter(p => p.classId === state.cls) : byRs);
+  // tri par meilleur gain du jour (les + verts) : seuls ceux qui ont progressé, rangés par gain
+  if (state.dg) list = list.map(x => ({ ...x, g: skillGain(x.p, sk) })).filter(x => x.g > 0).sort((a, b) => b.g - a.g || b.v - a.v).map((x, i) => ({ ...x, r: i + 1 }));
   const classes = [...new Set(byRs.map(p => p.classId).filter(Boolean))].sort((a, b) => L2(CLASS[a]).localeCompare(L2(CLASS[b])));
   let nav = '', grp;
   // comme la grille de l'addon : chaque compétence avec son icône ; une arme n'apparaît que si quelqu'un la pratique
@@ -619,23 +644,25 @@ function renderRank() {
   });
   const count = id => region.filter(p => p.rulesetId === id).length;
   const rsChips = `<span class="chip ${state.rs ? '' : 'on'}" data-rs="0">${t('allModes')}<span class="n">${region.length}</span></span>` +
-    RULESETS.map(([id, names]) => `<span class="chip ${state.rs === id ? 'on' : ''}" data-rs="${id}">${L2(names)}<span class="n">${count(id)}</span></span>`).join('');
+    RULESETS.map(([id, names]) => `<span class="chip ${state.rs === id ? 'on' : ''}" data-rs="${id}">${L2(names)}<span class="n">${count(id)}</span></span>`).join('')
+    + `<span class="chip dg${state.dg ? ' on' : ''}" data-dg role="button" tabindex="0" title="${t('dgTip')}">▲ ${t('dgSort')}</span>`;
   const clsChips = `<span class="chip ${state.cls ? '' : 'on'}" data-cls="0">${t('allClasses')}</span>` +
     classes.map(c => `<span class="chip ${state.cls === c ? 'on' : ''}" data-cls="${c}">${esc(L2(CLASS[c]))}</span>`).join('');
   const isTotal = sk.id === 'total';
   // armes estimées : affichées sous le classement, sans rang
   const pool = state.cls ? byRs.filter(p => p.classId === state.cls) : byRs;
   const estRows = sk.wpn ? pool.filter(p => sk.est(p) && sk.get(p)).sort((a, b) => sk.get(b) - sk.get(a)).map(p => ({ p, v: sk.get(p), r: 0 })) : [];
-  const row = ({ p, v, r }) => `
+  const row = ({ p, v, r, g }) => `
     <div class="row${r && r <= 3 ? ' top' : ''}${r ? '' : ' unranked'}" data-c="${esc(pkey(p))}" role="row">
       <span class="rk">${r || '–'}</span>
-      <span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p)}<small>${who(p)}${rulesetName(p) ? ' · ' + esc(rulesetName(p)) : ''}</small></span></span>
+      <span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p, g)}<small>${who(p)}${rulesetName(p) ? ' · ' + esc(rulesetName(p)) : ''}</small></span></span>
       ${isTotal ? tri(p) : sk.prof ? `<span class="mbar"><i style="--w:${(100 * v / (p.professions.find(x => x.id === sk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
         : sk.wpn ? `<span class="mbar w${sk.est(p) ? ' est' : ''}"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>`
         : sk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, sk.ratio(v, p))).toFixed(1)}%"></i></span>` : '<span class="c3"></span>'}
       <span class="tot">${showVal(sk, v, p)}${isTotal ? estTag(p) : sk.wpn && sk.est(p) ? `<em>${t('est')}</em>` : ''}</span>
     </div>`;
-  const rows = (list.length || estRows.length)
+  const rows = state.dg ? (list.length ? list.map(row).join('') : `<div class="empty">${t('dgNone')}</div>`)
+    : (list.length || estRows.length)
     ? list.map(row).join('') + (estRows.length ? `<div class="you-sep est-sep">${t('estSep')}</div>` + estRows.map(row).join('') : '')
     : nobody();
   $('#rank-panel').innerHTML = `
@@ -766,7 +793,7 @@ function renderChar() {
   const portrait = p.render
     ? `<div class="portrait"><div class="plinth"></div><div class="plinth2"></div><div class="fig" style="background-image:url('${esc(p.render)}')" role="img" aria-label="${full(p)}"></div></div>`
     : `<div class="vial" role="img" aria-label="Dropamine"></div>`;
-  const desc = LANG === 'fr' ? `${esc(className(p))} ${esc(raceName(p))}` : `${esc(raceName(p))} ${esc(className(p))}`;
+  const desc = ['fr', 'es', 'it', 'pt'].includes(LANG) ? `${esc(className(p))} ${esc(raceName(p))}` : `${esc(raceName(p))} ${esc(className(p))}`;
   const mine = Bnet.mine();
   const picker = mine.length > 1 && mine.includes(p)
     ? `<div class="mine-pick"><span>${t('myChars')}</span>${mine.map(m => `<span class="chip ${m === p ? 'on' : ''}" data-c="${esc(pkey(m))}">${full(m)} <small>${m.level}</small></span>`).join('')}</div>` : '';
@@ -881,7 +908,7 @@ const HsImage = (() => {
     let files = false; try { files = !!navigator.canShare?.({ files: [new File([''], 'x.png', { type: 'image/png' })] }) && matchMedia('(pointer:coarse)').matches; } catch (e) { /* pas de partage de fichier */ }
     $('.sh', dlg).hidden = !files;
     dlg.showModal();
-    const desc = LANG === 'fr' ? `${className(p)} ${raceName(p)}` : `${raceName(p)} ${className(p)}`;
+    const desc = ['fr', 'es', 'it', 'pt'].includes(LANG) ? `${className(p)} ${raceName(p)}` : `${raceName(p)} ${className(p)}`;
     await document.fonts.ready;
     finalCv = null;
     opts = { rows: hsRows(p), L: {
@@ -1025,7 +1052,7 @@ function canUse(p, it) {
 }
 const cleanName = s => String(s || '').replace(/\s*\([^)]*\)\s*$/, '');
 // nom de la fiche officielle s'il existe ; sinon (objet propre à Forever) le nom envoyé par le jeu, en français sur le site français
-const huntName = h => { const x = ITEMS?.[h.id], own = cleanName(h.name); if (x?.q) return itemName(h.id); return (LANG === 'fr' ? own : x?.n?.[0]) || own || x?.n?.[0] || '#' + h.id; };
+const huntName = h => { const x = ITEMS?.[h.id], own = cleanName(h.name); if (x?.q) return itemName(h.id); return (LANG === 'fr' ? own : extra() ? ITEMX?.[h.id]?.[0] || x?.n?.[0] : x?.n?.[0]) || own || x?.n?.[0] || '#' + h.id; };
 const bestSrc = id => (LOOT?.idx?.get(id) || []).slice().sort((a, b) => (b.rate || 0) - (a.rate || 0))[0];
 const bossName = b => isTrash(b) ? t('runsTrash') : (L2(b.n) || b.n[0]);
 const rateTxt = r => r ? r.toLocaleString(locale(), { maximumFractionDigits: r < 10 ? 1 : 0 }) + ' %' : '';
@@ -1169,7 +1196,7 @@ function dropBook(p) {
 }
 
 const playedText = s => { const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
-  return d ? (LANG === 'fr' ? `${d} j ${h} h` : `${d}d ${h}h`) : (LANG === 'fr' ? `${h} h ${m} min` : `${h}h ${m}m`); };
+  return d ? t('durDH', { d, h }) : t('durHM', { h, m }); };
 
 /* ---------- Guildes ---------- */
 function guilds() {
@@ -1247,7 +1274,7 @@ let LOOT = null, lootLoad = null;
 function loadLoot() {
   return lootLoad ??= Promise.all([fetch('data/loot.json').then(r => r.json()), fetch('data/dnames.json').then(r => r.ok ? r.json() : {}).catch(() => ({}))]).then(([j, names]) => {
     // nom du donjon dans la langue du site (noms officiels du Journal Blizzard) : d.name suit la langue partout
-    for (const d of j.dungeons) { const en = d.name, n = names[d.key]; Object.defineProperty(d, 'name', { get: () => (n ? n[LANG === 'fr' ? 1 : 0] : en) || en, enumerable: true }); d.names = n || [en, en]; }
+    for (const d of j.dungeons) { const en = d.name, n = names[d.key]; Object.defineProperty(d, 'name', { get: () => (n ? n[li()] : en) || en, enumerable: true }); d.names = n || [en, en]; }
     const idx = new Map();
     for (const d of j.dungeons) for (const b of d.bosses) if (!noDrop(b)) for (const it of b.i) {
       const [id, rate] = Array.isArray(it) ? it : [it, null];
@@ -1261,7 +1288,7 @@ function loadLoot() {
 let ITEMS = null, itemsLoad = null;
 const loadItems = () => itemsLoad ??= fetch('data/items.json').then(r => r.json()).then(j => { ITEMS = j; }).catch(() => { ITEMS = {}; });
 const QCOL = { POOR: '#9d9d9d', COMMON: '#ffffff', UNCOMMON: '#1eff00', RARE: '#0070dd', EPIC: '#a335ee', LEGENDARY: '#ff8000' };
-const itemName = id => { const x = ITEMS?.[id]; return x ? (L2(x.n) || x.n[0]) : '#' + id; };
+const itemName = id => { const x = ITEMS?.[id]; if (extra() && ITEMX?.[id]?.[0]) return ITEMX[id][0]; return x ? ((LANG === 'fr' ? x.n[1] : x.n[0]) || x.n[0]) : '#' + id; };
 const itemIcon = id => ITEMS?.[id]?.ic ? 'https://render.worldofwarcraft.com/' + ITEMS[id].ic : icon('inv_misc_questionmark');
 function clogData(p) {
   const got = new Set(p.dropamine.collection.items);
@@ -1291,7 +1318,8 @@ const ItemTip = (() => {
   const show = (t0, x, y) => {
     const id = +t0.dataset.item, it = ITEMS?.[id];
     if (!el) { el = document.createElement('div'); el.className = 'itip'; document.body.append(el); }
-    const lines = (it?.t || []).map(l => `<div${l[2] ? ` style="color:${l[2]}"` : ''}>${esc(LANG === 'fr' ? l[1] || l[0] : l[0])}</div>`).join('');
+    const lx = extra() && ITEMX?.[id]?.[1];
+    const lines = (it?.t || []).map((l, i) => `<div${l[2] ? ` style="color:${l[2]}"` : ''}>${esc(lx?.[i] || (LANG === 'fr' ? l[1] || l[0] : l[0]))}</div>`).join('');
     el.innerHTML = `<b style="color:${QCOL[it?.q] || '#e8d9b0'}">${esc(itemName(id))}</b>${lines || `<div class="dim">${t('itemForever')}</div>`}
       <div class="src">${esc(t0.dataset.boss || '')}${t0.dataset.rate ? ` · ${(+t0.dataset.rate).toLocaleString(locale())} %` : ''}</div>
       <div class="${t0.classList.contains('got') ? 'ok' : 'no'}">${t0.classList.contains('got') ? t('obtained') : t('notObtained')}</div>`;
@@ -1706,6 +1734,7 @@ async function runAction(path, body) {
   renderRuns();
 }
 document.addEventListener('click', e => {
+  const dgb = e.target.closest('[data-dg]'); if (dgb) { state.dg = !state.dg; renderRank(); writeUrl(false); return; }
   const c = e.target.closest('[data-rscope]'); if (c) { state.rscope = c.dataset.rscope; renderRuns(); return; }
   if (e.target.closest('[data-rlvl]')) { state.rlvl = !state.rlvl; renderRuns(); return; }
   const pfc = e.target.closest('[data-pf]'); if (pfc) { state.pf = pfc.dataset.pf; state.plimit = 30; renderRuns(); return; }
@@ -1812,13 +1841,13 @@ function applyStatic() {
   $('#install')?.setAttribute('title', t('install')); $('#install')?.setAttribute('aria-label', t('install'));
   $$('[data-t-title]').forEach(el => { el.title = t(el.dataset.tTitle); el.setAttribute('aria-label', t(el.dataset.tTitle)); });
   $$('[data-t-ph]').forEach(el => { el.placeholder = t(el.dataset.tPh); el.setAttribute('aria-label', t(el.dataset.tPh)); });
-  $('#lang').textContent = LANG === 'fr' ? 'EN' : 'FR';
-  $('#lang').title = LANG === 'fr' ? 'English' : 'Français';
+  if ($('#lang')) $('#lang').value = LANG;
+  applyBlocks();
   if (DATA.updated) $('#updated').textContent = t('updated', { d: new Date(DATA.updated).toLocaleDateString(locale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) });
   const v = newerVersion(LATEST_VER, NEWS?.versions?.[0]?.version);
   if (v) $$('[data-meta]').forEach(el => {
     const link = el.querySelector('a');   // le lien « café » survit à la mise à jour du numéro de version
-    el.textContent = (el.closest('[lang]').lang === 'fr' ? I18N.meta[1] : I18N.meta[0]).replace('{v}', v) + (link ? ' · ' : '');
+    el.textContent = (el.closest('[lang]').lang === 'fr' ? I18N.meta[1] : el.closest('[lang]').lang === 'en' && !extra() ? I18N.meta[0] : t('meta')).replace('{v}', v) + (link ? ' · ' : '');
     if (link) el.append(link);
   });
 }
@@ -1971,7 +2000,7 @@ function readUrl() {
   const v = q.get('p');
   state.view = VIEWS.includes(v) ? v : (q.get('bnet') ? 'join' : q.get('c') ? 'char' : q.get('g') ? 'guild' : 'home');
   state.region = ['eu', 'us', 'tw'].includes(q.get('r')) ? q.get('r') : 'eu';
-  state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0;
+  state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0; state.dg = q.get('dg') === '1';
   state.c = q.get('c') || state.c; state.g = q.get('g') || '';
   if (state.view === 'runs') Object.assign(state, { rtab: q.get('tab') === 'ideas' ? 'ideas' : q.get('tab') === 'planned' ? 'planned' : undefined, hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
 }
@@ -1981,7 +2010,7 @@ function writeUrl(push) {
   if (DEMO) q.set('demo', DEMO);
   if (state.view !== 'home') q.set('p', state.view);
   if (state.region !== 'eu') q.set('r', state.region);
-  if (state.view === 'rank') { if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
+  if (state.view === 'rank') { if (state.dg) q.set('dg', '1'); if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
   if (state.view === 'char' && state.c) q.set('c', state.c);
   if (state.view === 'guild' && state.g) q.set('g', state.g);
   if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['d', 'hd'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.rtab === 'ideas') q.set('tab', 'ideas'); if (state.runFocus) q.set('run', state.runFocus); }
@@ -2034,17 +2063,36 @@ function placeTools() {
 wideMq.addEventListener?.('change', placeTools);
 placeTools();
 addEventListener('resize', () => { clearTimeout(fitNav.t); fitNav.t = setTimeout(fitNav, 120); });
+// langue en plus : ses textes et ses objets, une seule fois par langue
+const i18nCache = {};
+function loadLang(l) {
+  if (l === 'en' || l === 'fr') { I18X = ITEMX = null; return Promise.resolve(); }
+  i18nCache[l] ??= Promise.all([
+    fetch('data/i18n/' + l + '.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+    fetch('data/i18n/items.' + l + '.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+  ]);
+  return i18nCache[l].then(([x, items]) => { if (LANG === l) { I18X = x; ITEMX = items; } });
+}
+// blocs fixes de la page (lang="en" avec data-k) : remplacés par leur traduction, l'anglais d'origine gardé pour revenir
+function applyBlocks() {
+  $$('[lang="en"][data-k]').forEach(el => {
+    el._en ??= el.innerHTML;
+    const tr = extra() && I18X?.html?.[el.dataset.k];
+    if (tr) el.innerHTML = tr; else if (el.innerHTML !== el._en) el.innerHTML = el._en;
+  });
+}
 function setLang(l) {
+  if (!LANGS.includes(l)) l = 'en';
   LANG = l; document.documentElement.lang = l; document.documentElement.dataset.lang = l;
   try { localStorage.setItem('lang', l); } catch (e) { /* stockage indisponible : le choix vaut pour cette visite */ }
-  render(false); Ribbon.swell(.6);
+  loadLang(l).then(() => { if (LANG === l) { render(false); Ribbon.swell(.6); } });
 }
 tabs.forEach(b => b.addEventListener('click', () => go(b.dataset.view === 'char' ? { view: 'char', c: Bnet.best() } : { view: b.dataset.view })));
 // barre du bas : « Moi » = ma fiche si connecté, sinon la page d'inscription
 $$('.tabbar [data-go]').forEach(b => b.addEventListener('click', () => { const v = b.dataset.go;
   go(v === 'me' ? (Bnet.best() ? { view: 'char', c: Bnet.best() } : { view: 'join' }) : { view: v }); }));
 $('#region').addEventListener('change', e => go({ region: e.target.value, cls: 0, g: '' }));
-$('#lang').addEventListener('click', () => setLang(LANG === 'fr' ? 'en' : 'fr'));
+$('#lang').addEventListener('change', e => setLang(e.target.value));
 document.addEventListener('click', e => {
   if (e.button || e.ctrlKey || e.metaKey || e.shiftKey) return;
   const el = e.target.closest('[data-view-link],[data-skill],[data-cls],[data-rs],[data-c],[data-g]');
@@ -2195,6 +2243,7 @@ Promise.all([
   fetch('data/changelog.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { NEWS = d; })
     .catch(() => { NEWS = { versions: [] }; }),
   Bnet.init(),
+  loadLang(LANG),
 ]).then(() => { Ribbon.load(false); return document.fonts.ready; })
   .then(() => { render(false); freshenNews(); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });
 

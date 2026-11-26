@@ -1,170 +1,380 @@
 {
  "BlackfathomDeeps": [
   "Blackfathom Deeps",
-  "Profondeurs de Brassenoire"
+  "Profondeurs de Brassenoire",
+  "Tiefschwarze Grotte",
+  "Cavernas de Brazanegra",
+  "Abissi di Fondocupo",
+  "Profundezas Negras",
+  "Непроглядная Пучина"
  ],
  "BlackrockDepths": [
   "Blackrock Depths",
-  "Profondeurs de Rochenoire"
+  "Profondeurs de Rochenoire",
+  "Schwarzfelstiefen",
+  "Profundidades de Roca Negra",
+  "Sotterranei di Roccianera",
+  "Abismo Rocha Negra",
+  "Глубины Черной горы"
  ],
  "BlackwingLair": [
   "Blackwing Lair",
-  "Repaire de l’Aile noire"
+  "Repaire de l’Aile noire",
+  "Pechschwingenhort",
+  "Guarida de Alanegra",
+  "Fortezza dell'Ala Nera",
+  "Covil Asa Negra",
+  "Логово Крыла Тьмы"
  ],
  "DireMaulEast": [
   "Dire Maul East",
-  "Hache-Tripes – Quartier de Crochebois"
+  "Hache-Tripes – Quartier de Crochebois",
+  "Düsterbruch - Wucherborkenviertel",
+  "La Masacre: Barrio Alabeo",
+  "Maglio Infausto - Quartiere di Legnotorto",
+  "Gládio Cruel - Distrito Lenhatorta",
+  "Забытый город – квартал Криводревов"
  ],
  "DireMaulNorth": [
   "Dire Maul North",
-  "Hache-Tripes – Communs gordok"
+  "Hache-Tripes – Communs gordok",
+  "Düsterbruch - Gordokhallen",
+  "La Masacre: Ágora de Gordok",
+  "Maglio Infausto - Sale di Gordok",
+  "Gládio Cruel - Pátio Gordok",
+  "Забытый город – палаты Гордока"
  ],
  "DireMaulWest": [
   "Dire Maul West",
-  "Hache-Tripes – Grands jardins"
+  "Hache-Tripes – Grands jardins",
+  "Düsterbruch - Hauptstadtgärten",
+  "La Masacre: Jardines de la Capital",
+  "Maglio Infausto - Giardini della Capitale",
+  "Gládio Cruel - Jardins Capitais",
+  "Забытый город – центральный сад"
  ],
  "ExcavationSiteWetlands": [
   "Excavation Site Wetlands",
-  "Site de fouilles des Paluns"
+  "Site de fouilles des Paluns",
+  "Ausgrabungsstätte im Sumpfland",
+  "Excavación de los Humedales",
+  "Scavi delle Paludi",
+  "Escavação dos Pantanais",
+  "Раскопки в Болотине"
  ],
  "Gnomeregan": [
   "Gnomeregan",
-  "Gnomeregan"
+  "Gnomeregan",
+  "Gnomeregan",
+  "Gnomeregan",
+  "Gnomeregan",
+  "Gnomeregan",
+  "Гномреган"
  ],
  "LowerBlackrockSpire": [
   "Lower Blackrock Spire",
-  "Bas du pic Rochenoire"
+  "Bas du pic Rochenoire",
+  "Untere Schwarzfelsspitze",
+  "Cumbre de Roca Negra Inferior",
+  "Bastioni di Roccianera Inferiori",
+  "Pico da Rocha Negra Inferior",
+  "Нижняя часть пика Черной горы"
  ],
  "Maraudon": [
   "Maraudon",
-  "Maraudon"
+  "Maraudon",
+  "Maraudon",
+  "Maraudon",
+  "Maraudon",
+  "Maraudon",
+  "Мародон"
  ],
  "MoltenCore": [
   "Molten Core",
-  "Cœur du Magma"
+  "Cœur du Magma",
+  "Der Geschmolzene Kern",
+  "Núcleo de magma",
+  "Nucleo Ardente",
+  "Núcleo Derretido",
+  "Огненные недра"
  ],
  "Naxxramas": [
   "Naxxramas",
-  "Naxxramas"
+  "Naxxramas",
+  "Naxxramas",
+  "Naxxramas",
+  "Naxxramas",
+  "Naxxramas",
+  "Наксрамас"
  ],
  "Onyxia": [
   "Onyxia's Lair",
-  "Repaire d’Onyxia"
+  "Repaire d’Onyxia",
+  "Onyxias Hort",
+  "Guarida de Onyxia",
+  "Antro di Onyxia",
+  "Covil de Onyxia",
+  "Логово Ониксии"
  ],
  "Ragefire": [
   "Ragefire Chasm",
-  "Gouffre de Ragefeu"
+  "Gouffre de Ragefeu",
+  "Der Flammenschlund",
+  "Sima Ígnea",
+  "Baratro di Fiamma Furente",
+  "Cavernas Ígneas",
+  "Огненная Пропасть"
  ],
  "RazorfenDowns": [
   "Razorfen Downs",
-  "Souilles de Tranchebauge"
+  "Souilles de Tranchebauge",
+  "Hügel der Klingenhauer",
+  "Zahúrda Rajacieno",
+  "Sotterranei di Lamaspina",
+  "Urzal dos Mortos",
+  "Курганы Иглошкурых"
  ],
  "RazorfenKraul": [
   "Razorfen Kraul",
-  "Kraal de Tranchebauge"
+  "Kraal de Tranchebauge",
+  "Kral der Klingenhauer",
+  "Horado Rajacieno",
+  "Gallerie di Lamaspina",
+  "Urzal dos Tuscos",
+  "Лабиринты Иглошкурых"
  ],
  "ScarletMonasteryArmory": [
   "Scarlet Monastery Armory",
-  "Monastère Écarlate – Armurerie"
+  "Monastère Écarlate – Armurerie",
+  "Das Scharlachrote Kloster – Waffenkammer",
+  "Monasterio Escarlata – Armería",
+  "Monastero Scarlatto – Armeria",
+  "Monastério Escarlate – Arsenal",
+  "Монастырь Алого ордена – Оружейная"
  ],
  "ScarletMonasteryCathedral": [
   "Scarlet Monastery Cathedral",
-  "Monastère Écarlate – Cathédrale"
+  "Monastère Écarlate – Cathédrale",
+  "Das Scharlachrote Kloster – Kathedrale",
+  "Monasterio Escarlata – Catedral",
+  "Monastero Scarlatto – Cattedrale",
+  "Monastério Escarlate – Catedral",
+  "Монастырь Алого ордена – Собор"
  ],
  "ScarletMonasteryGraveyard": [
   "Scarlet Monastery Graveyard",
-  "Monastère Écarlate – Cimetière"
+  "Monastère Écarlate – Cimetière",
+  "Das Scharlachrote Kloster – Friedhof",
+  "Monasterio Escarlata – Cementerio",
+  "Monastero Scarlatto – Cimitero",
+  "Monastério Escarlate – Cemitério",
+  "Монастырь Алого ордена – Кладбище"
  ],
  "ScarletMonasteryLibrary": [
   "Scarlet Monastery Library",
-  "Monastère Écarlate – Bibliothèque"
+  "Monastère Écarlate – Bibliothèque",
+  "Das Scharlachrote Kloster – Bibliothek",
+  "Monasterio Escarlata – Biblioteca",
+  "Monastero Scarlatto – Biblioteca",
+  "Monastério Escarlate – Biblioteca",
+  "Монастырь Алого ордена – Библиотека"
  ],
  "Scholomance": [
   "Scholomance",
-  "Scholomance"
+  "Scholomance",
+  "Scholomance",
+  "Scholomance",
+  "Scholomance",
+  "Scolomântia",
+  "Некроситет"
  ],
  "ShadowfangKeep": [
   "Shadowfang Keep",
-  "Donjon d’Ombrecroc"
+  "Donjon d’Ombrecroc",
+  "Burg Schattenfang",
+  "Castillo de Colmillo Oscuro",
+  "Forte di Zannascura",
+  "Bastilha da Presa Negra",
+  "Крепость Темного Клыка"
  ],
  "ShapersTerrace": [
   "Shapers Terrace",
-  "Terrasse des Façonneurs"
+  "Terrasse des Façonneurs",
+  "Terrasse der Former",
+  "Terraza de los Creadores",
+  "Terrazza dei Plasmatori",
+  "Terraço dos Moldadores",
+  "Терраса Творцов"
  ],
  "Stratholme": [
   "Stratholme",
-  "Stratholme"
+  "Stratholme",
+  "Stratholme",
+  "Stratholme",
+  "Stratholme",
+  "Stratholme",
+  "Стратхольм"
  ],
  "TheAlcazPrison": [
   "The Alcaz Prison",
-  "La prison d’Alcaz"
+  "La prison d’Alcaz",
+  "Das Gefängnis von Alcaz",
+  "La Prisión de Alcaz",
+  "La Prigione di Alcaz",
+  "A Prisão de Alcaz",
+  "Тюрьма Алькаса"
  ],
  "TheBlackmawHold": [
   "The Blackmaw Hold",
-  "Le fort de Noiregueule"
+  "Le fort de Noiregueule",
+  "Die Feste der Schwarzschlund",
+  "El Bastión Faucenegra",
+  "La Rocca di Faucenera",
+  "A Fortaleza Bocanegra",
+  "Крепость Черной Пасти"
  ],
  "TheCityOfDalaran": [
   "The City of Dalaran",
-  "La cité de Dalaran"
+  "La cité de Dalaran",
+  "Die Stadt Dalaran",
+  "La Ciudad de Dalaran",
+  "La Città di Dalaran",
+  "A Cidade de Dalaran",
+  "Город Даларан"
  ],
  "TheDeadmines": [
   "The Deadmines",
-  "Les Mortemines"
+  "Les Mortemines",
+  "Todesminen",
+  "Minas de la Muerte",
+  "Miniere della Morte",
+  "Minas Mortas",
+  "Мертвые копи"
  ],
  "TheDrownedCity": [
   "The Drowned City",
-  "La cité engloutie"
+  "La cité engloutie",
+  "Die versunkene Stadt",
+  "La Ciudad Sumergida",
+  "La Città Sommersa",
+  "A Cidade Submersa",
+  "Затонувший город"
  ],
  "TheHallOfThanes": [
   "The Hall of Thanes",
-  "La salle des Thanes"
+  "La salle des Thanes",
+  "Die Halle der Thane",
+  "La Sala de los Thanes",
+  "La Sala dei Thane",
+  "O Salão dos Thanes",
+  "Зал Танов"
  ],
  "TheKrolDokStronghold": [
   "The Krol Dok Stronghold",
-  "Le bastion de Krol Dok"
+  "Le bastion de Krol Dok",
+  "Die Festung Krol Dok",
+  "El Bastión de Krol Dok",
+  "La Roccaforte di Krol Dok",
+  "A Fortaleza de Krol Dok",
+  "Цитадель Крол Док"
  ],
  "TheRuinsOfLordaeron": [
   "The Ruins of Lordaeron",
-  "Les ruines de Lordaeron"
+  "Les ruines de Lordaeron",
+  "Die Ruinen von Lordaeron",
+  "Las Ruinas de Lordaeron",
+  "Le Rovine di Lordaeron",
+  "As Ruínas de Lordaeron",
+  "Руины Лордерона"
  ],
  "TheRuinsofAhnQiraj": [
   "Ruins of Ahn'Qiraj",
-  "Ruines d’Ahn’Qiraj"
+  "Ruines d’Ahn’Qiraj",
+  "Ruinen von Ahn'Qiraj",
+  "Ruinas de Ahn'Qiraj",
+  "Rovine di Ahn'qiraj",
+  "Ruínas de Ahn'Qiraj",
+  "Руины Ан'Киража"
  ],
  "TheStockade": [
   "The Stockade",
-  "La Prison"
+  "La Prison",
+  "Das Verlies",
+  "Las Mazmorras",
+  "Segrete di Roccavento",
+  "O Cárcere",
+  "Тюрьма"
  ],
  "TheTempleOfAtal'Hakkar": [
   "The Temple of Atal'Hakkar",
-  "Le temple d’Atal’Hakkar"
+  "Le temple d’Atal’Hakkar",
+  "Der Tempel von Atal'Hakkar",
+  "El Templo de Atal'Hakkar",
+  "Tempio di Atal'Hakkar",
+  "O Templo de Atal'hakkar",
+  "Храм Атал'Хаккар"
  ],
  "TheTempleofAhnQiraj": [
   "Temple of Ahn'Qiraj",
-  "Temple d’Ahn’Qiraj"
+  "Temple d’Ahn’Qiraj",
+  "Tempel von Ahn'Qiraj",
+  "Templo de Ahn'Qiraj",
+  "Tempio di Ahn'qiraj",
+  "Templo de Ahn'Qiraj",
+  "Храм Ан'Киража"
  ],
  "Uldaman": [
   "Uldaman",
-  "Uldaman"
+  "Uldaman",
+  "Uldaman",
+  "Uldaman",
+  "Uldaman",
+  "Uldaman",
+  "Ульдаман"
  ],
  "UpperBlackrockSpire": [
   "Upper Blackrock Spire",
-  "Sommet du pic Rochenoire"
+  "Sommet du pic Rochenoire",
+  "Obere Schwarzfelsspitze",
+  "Cumbre de Roca Negra Superior",
+  "Bastioni di Roccianera Superiori",
+  "Pico da Rocha Negra Superior",
+  "Верхняя часть пика Черной горы"
  ],
  "WailingCaverns": [
   "Wailing Caverns",
-  "Cavernes des Lamentations"
+  "Cavernes des Lamentations",
+  "Höhlen des Wehklagens",
+  "Cuevas de los Lamentos",
+  "Caverna dei Lamenti",
+  "Caverna Ululante",
+  "Пещеры Стенаний"
  ],
  "WorldBosses": [
   "World Bosses",
-  "Boss mondiaux"
+  "Boss mondiaux",
+  "Weltbosse",
+  "Jefes del mundo",
+  "Boss del mondo",
+  "Chefes mundiais",
+  "Мировые боссы"
  ],
  "Zul'Farrak": [
   "Zul'Farrak",
-  "Zul’Farrak"
+  "Zul’Farrak",
+  "Zul'Farrak",
+  "Zul'Farrak",
+  "Zul'farrak",
+  "Zul'Farrak",
+  "Зул'Фаррак"
  ],
  "Zul'Gurub": [
   "Zul'Gurub",
-  "Zul’Gurub"
+  "Zul’Gurub",
+  "Zul'Gurub",
+  "Zul'Gurub",
+  "Zul'gurub",
+  "Zul'Gurub",
+  "Зул'Гуруб"
  ]
 }

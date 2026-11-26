@@ -9,15 +9,20 @@ import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-export const ITEMS_FILE = join(ROOT, 'site/data/items.json');
+export const ITEMS_FILE = join(ROOT, 'site/data/items.json');          // publié : noms et infobulles en anglais et en français
+export const ITEMS_CACHE = join(ROOT, 'data/items-cache.json');      // cache complet, 7 langues (pas publié tel quel)
+export const I18N_DIR = join(ROOT, 'site/data/i18n');                // une langue de plus par fichier, chargé à la demande
+// ordre des langues du site : [en, fr, de, es, it, pt, ru]
+export const SITE_LANGS = ['en', 'fr', 'de', 'es', 'it', 'pt', 'ru'];
+export const API_LOCALES = ['en_US', 'fr_FR', 'de_DE', 'es_ES', 'it_IT', 'pt_BR', 'ru_RU'];
 const MAX_AGE_DAYS = 25;   // marge sous les 30 jours
-export const ITEM_V = 2;   // 2 : emplacement, type d'armure et niveaux (pour les suggestions de « Ma chasse »)
+export const ITEM_V = 3;   // 2 : emplacement, type d'armure et niveaux ; 3 : noms et infobulles dans les 7 langues du site
 
-const L = o => o ? [o.en_US ?? '', o.fr_FR ?? o.en_US ?? ''] : null;
+const L = o => o ? (typeof o === 'string' ? API_LOCALES.map(() => o) : API_LOCALES.map(k => o[k] ?? o.en_US ?? '')) : null;
 const line = (o, c) => { const v = L(o); return v && v[0] ? (c ? [...v, c] : v) : null; };
 const hex = c => c ? '#' + [c.r, c.g, c.b].map(x => Math.round(x).toString(16).padStart(2, '0')).join('') : null;
 
-// une fiche compacte : { n: [en, fr], q: 'RARE', ic: 'chemin d'icône', t: [[en, fr, couleur?], …], d: 'AAAA-MM-JJ',
+// une fiche compacte : { n: [en, fr, de, es, it, pt, ru], q: 'RARE', ic: 'chemin d'icône', t: [[en, fr, couleur?], …], d: 'AAAA-MM-JJ',
 //   s: emplacement ('HEAD'…), c: [classe, sous-classe], lv: niveau d'objet, rl: niveau requis, v: version de la fiche }
 export function compact(item, iconPath, today) {
   const p = item?.preview_item ?? {};
@@ -25,18 +30,18 @@ export function compact(item, iconPath, today) {
   const push = x => { if (x) t.push(x); };
   push(line(p.binding?.name));
   const slot = L(p.inventory_type?.name), sub = L(p.item_subclass?.name);
-  if (slot?.[0] || sub?.[0]) t.push([[slot?.[0], sub?.[0]].filter(Boolean).join(' · '), [slot?.[1], sub?.[1]].filter(Boolean).join(' · ')]);
+  if (slot?.[0] || sub?.[0]) t.push(API_LOCALES.map((_, i) => [slot?.[i], sub?.[i]].filter(Boolean).join(' · ')));
   push(line(p.armor?.display?.display_string));
   if (p.weapon) {
     const w = [L(p.weapon.damage?.display_string), L(p.weapon.attack_speed?.display_string)].filter(Boolean);
-    if (w.length) t.push([w.map(x => x[0]).join(' · '), w.map(x => x[1]).join(' · ')]);
+    if (w.length) t.push(API_LOCALES.map((_, i) => w.map(x => x[i]).join(' · ')));
     push(line(p.weapon.dps?.display_string));
   }
   for (const s of p.stats ?? []) push(line(s.display?.display_string, s.is_negated ? '#ff2020' : hex(s.display?.color) === '#ffffff' ? null : hex(s.display?.color)));
   for (const s of p.spells ?? []) push(line(s.description, '#1eff00'));
   push(line(p.requirements?.level?.display_string));
   if (p.description) push(line(p.description, '#ffd100'));
-  const out = { n: L(item?.name ?? p.name) ?? ['', ''], q: item?.quality?.type ?? p.quality?.type ?? null, ic: iconPath ?? null, t, d: today, v: ITEM_V };
+  const out = { n: L(item?.name ?? p.name) ?? API_LOCALES.map(() => ''), q: item?.quality?.type ?? p.quality?.type ?? null, ic: iconPath ?? null, t, d: today, v: ITEM_V };
   const inv = item?.inventory_type?.type ?? p.inventory_type?.type;
   if (inv && inv !== 'NON_EQUIP') out.s = inv;
   if (item?.item_class) out.c = [item.item_class.id, item.item_subclass?.id ?? 0];
@@ -85,7 +90,7 @@ export async function fetchItem(tok, id, today, names = {}) {
   const c = compact(item, icon, today);
   if (!item && names[id]) {   // objet propre à Forever sans fiche : nom anglais, emplacement et type d'AtlasLoot
     const x = parseAtlasName(names[id]);
-    c.n = [x.name, x.name]; if (x.s) c.s = x.s; if (x.c) c.c = x.c;
+    c.n = API_LOCALES.map(() => x.name); if (x.s) c.s = x.s; if (x.c) c.c = x.c;
   }
   return c;
 }
@@ -111,7 +116,8 @@ export async function wantedIds(players = []) {
 // met à jour le cache : objets absents d'abord, puis les plus anciens ; « limit » appels d'objets au plus par passage
 export async function updateItems(tok, players = [], limit = 800) {
   const today = new Date().toISOString().slice(0, 10);
-  const cache = existsSync(ITEMS_FILE) ? JSON.parse(await readFile(ITEMS_FILE, 'utf8')) : {};
+  // cache complet (7 langues) ; au premier passage, reprise de l'ancien fichier publié (fiches v2 rafraîchies peu à peu)
+  const cache = existsSync(ITEMS_CACHE) ? JSON.parse(await readFile(ITEMS_CACHE, 'utf8')) : existsSync(ITEMS_FILE) ? JSON.parse(await readFile(ITEMS_FILE, 'utf8')) : {};
   const { ids, names } = await wantedIds(players);
   const cutoff = new Date(Date.now() - MAX_AGE_DAYS * 864e5).toISOString().slice(0, 10);
   const todo = [...ids.filter(id => !cache[id] || (cache[id].v ?? 1) < ITEM_V), ...ids.filter(id => cache[id] && cache[id].d < cutoff).sort((a, b) => cache[a].d.localeCompare(cache[b].d))].slice(0, limit);
@@ -123,11 +129,31 @@ export async function updateItems(tok, players = [], limit = 800) {
   // on garde seulement ce qui sert encore, et rien de plus vieux que 30 jours
   const keep = new Set(ids.map(String)), hard = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
   for (const k of Object.keys(cache)) if (!keep.has(k) || cache[k].d < hard) delete cache[k];
-  await writeFile(ITEMS_FILE, JSON.stringify(cache));
+  await writeFile(ITEMS_CACHE, JSON.stringify(cache));
+  await writeItemFiles(cache);
   console.log(`objets : ${done} mis à jour, ${missing} introuvables, ${Object.keys(cache).length} en cache (${ids.length} voulus)`);
   return cache;
 }
 
+// fichiers publiés : items.json (anglais, français : le site d'avant continue de marcher) et i18n/items.<langue>.json
+// (nom et lignes d'infobulle seulement, dans l'ordre du cache ; absent si la fiche n'a que l'anglais)
+const pick = (arr, i) => Array.isArray(arr) ? (i < arr.length ? arr[i] : arr[0]) : arr;
+export function splitItems(cache) {
+  const base = {}, extra = Object.fromEntries(SITE_LANGS.slice(2).map(l => [l, {}]));
+  for (const [id, c] of Object.entries(cache)) {
+    base[id] = { ...c, n: [pick(c.n, 0), pick(c.n, 1)], t: (c.t ?? []).map(l => [pick(l, 0), pick(l, 1), ...(typeof l[l.length - 1] === 'string' && l[l.length - 1].startsWith('#') ? [l[l.length - 1]] : [])]) };
+    if ((c.n?.length ?? 0) < 7) continue;
+    SITE_LANGS.slice(2).forEach((lang, k) => { const i = k + 2; extra[lang][id] = [c.n[i] || c.n[0], (c.t ?? []).map(l => l[i] || l[0])]; });
+  }
+  return { base, extra };
+}
+async function writeItemFiles(cache) {
+  const { mkdir } = await import('node:fs/promises');
+  const { base, extra } = splitItems(cache);
+  await writeFile(ITEMS_FILE, JSON.stringify(base));
+  await mkdir(I18N_DIR, { recursive: true });
+  for (const [lang, m] of Object.entries(extra)) await writeFile(join(I18N_DIR, `items.${lang}.json`), JSON.stringify(m));
+}
 
 // Illustrations des donjons : le journal des donjons de l'API Blizzard (Retail) a une vignette par donjon.
 // On l'associe aux tables d'AtlasLoot par le nom (« Scarlet Monastery Library » → « Scarlet Monastery »).

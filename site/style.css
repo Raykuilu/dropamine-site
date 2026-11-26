@@ -310,7 +310,7 @@ html.static .reveal{opacity:1;transform:none}
 }
 
 /* ============ Langues : un seul bloc visible (FR ou EN) ============ */
-html[data-lang=en] [lang=fr],html[data-lang=fr] [lang=en]{display:none!important}
+html:not([data-lang=fr]) [lang=fr],html[data-lang=fr] [lang=en]{display:none!important}
 .lang-btn{all:unset;cursor:pointer;font-family:var(--display);font-weight:700;letter-spacing:.12em;font-size:13px;color:var(--muted);height:36px;padding:0 12px;border:1px solid var(--line-2);border-radius:999px;transition:.25s var(--ease)}
 .lang-btn:hover{color:var(--gold);border-color:var(--rim-lo)}
 .lang-btn:focus-visible{outline:2px solid var(--rim);outline-offset:2px}
@@ -1190,3 +1190,10 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .hlist .hdel{all:unset;cursor:pointer;width:22px;height:22px;display:inline-grid;place-items:center;border-radius:50%;color:var(--faint);font-size:16px;line-height:1;flex:none;transition:color .2s,background .2s}
 .hlist .hdel:hover,.hlist .hdel:focus-visible{color:#e07060;background:rgba(224,112,96,.12)}
 .hcode [data-hsave]{margin-right:6px}
+
+/* sélecteur de langue (7 langues) : même allure que la région */
+.lang-sel{min-width:62px}
+
+/* tri par meilleur gain du jour */
+.chip.dg{color:#7fd06a;border-color:rgba(127,208,106,.35)}
+.chip.dg.on{color:#0d1a09;background:#7fd06a;border-color:#7fd06a}
