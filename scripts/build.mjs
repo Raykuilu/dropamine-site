@@ -120,7 +120,28 @@ export function score({ profile, professions, equipment, statistics }, upload) {
     level, defense, weapons, weaponsSource, weaponList, equipped, professions: profs,
     parts: { level, combat: defense + weapons, professions: profTotal },
     total, max: TOTAL_MAX, complete: weaponsSource === 'dropamine',
+    // équipement porté (emplacement, objet) : base des suggestions de « Ma chasse »
+    gear: (equipment?.equipped_items ?? []).filter(i => i.slot?.type && i.item?.id).map(i => [i.slot.type, i.item.id]),
   };
+}
+
+// derniers loots datés : ce qui apparaît dans le carnet (ou devient « trouvé » dans la chasse) depuis l'export précédent.
+// Le premier export d'un joueur ne compte pas (tout serait « nouveau »). Rien de plus vieux que 30 jours.
+export function newLoots(prev, up, today) {
+  const old = prev?.loots ?? [], fresh = [];
+  const before = prev?.dropamine?.collection?.items;
+  if (Array.isArray(up?.collection?.items) && Array.isArray(before) && before.length) {
+    const b = new Set(before);
+    for (const id of up.collection.items) if (!b.has(id)) fresh.push(id);
+  }
+  if (Array.isArray(prev?.dropamine?.hunt)) {
+    const was = new Set(prev.dropamine.hunt.filter(h => h.drops > 0).map(h => h.id));
+    for (const h of up?.hunt ?? []) if (h.drops > 0 && !was.has(h.id) && !fresh.includes(h.id)) fresh.push(h.id);
+  }
+  const day = String(up?.at ?? today).slice(0, 10) || today;
+  const cutoff = new Date(Date.parse(today) - 29 * 864e5).toISOString().slice(0, 10);
+  const seen = new Set(old.map(x => x[0]));
+  return [...fresh.filter(id => !seen.has(id)).map(id => [id, day]), ...old].filter(x => x[1] >= cutoff).slice(0, 30);
 }
 
 // valeurs du jour, en clés courtes : l = niveau, d = Défense, p{id} = métier, w{arme} = arme (sauf estimations)
@@ -266,6 +287,8 @@ async function main() {
   // un personnage retiré ne garde pas d'historique
   for (const k of optout) { const [r, s] = k.split('/'); await rm(join(ROOT, 'data/history', r, `${s}.json`), { force: true }); }
 
+  // relevé précédent : pour dater les nouveaux loots
+  const prevPlayers = new Map(((await readJson(join(ROOT, 'site/data/hiscores.json'), { players: [] })).players ?? []).map(p => [p.key, p]));
   await pool(entries, 6, async e => {
     const c = await fetchCharacter(tok, e.region, e.slug);
     if (!c) {
@@ -305,6 +328,7 @@ async function main() {
       ...(up?.played > 0 ? { played: up.played, playedAt: up.at ?? null } : {}),
       // JcJ de l'armurerie (pour tous) ; le reste vient de la ligne Dropamine, groupe par groupe (cases de l'addon)
       ...(c.pvp ? { pvpArmory: { hk: c.pvp.honorable_kills ?? 0, rank: c.pvp.pvp_rank ?? 0 } } : {}),
+      ...(() => { const l = newLoots(prevPlayers.get(e.key), up, today); return l.length ? { loots: l } : {}; })(),
       ...(up ? { dropamine: Object.fromEntries(['collection', 'achievements', 'records', 'hunt'].filter(k => up[k]).map(k => [k, up[k]])), dropamineAt: up.at ?? null } : {}),
     });
     console.log(`✓ ${e.key} : ${s.total}${s.complete ? '' : ' (estimé)'}${e.preview ? ' [aperçu]' : ''}`);

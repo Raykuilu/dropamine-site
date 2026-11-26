@@ -123,9 +123,22 @@
     const arm = [[BL.hk, n(st.hk)], [BL.kb, n(st.killingBlows)], [BL.pvpDeaths, n(st.pvpDeaths)],
       [BL.duels, st.duelsWon != null || st.duelsLost != null ? `${st.duelsWon || 0} / ${st.duelsLost || 0}` : null],
       [BL.kills, n(st.kills)], [BL.quests, n(st.quests)], [BL.dungeons, n(st.dungeons)], [BL.deaths, n(st.deaths)]].filter(([, v]) => v != null);
-    if (arm.length) S.push([24 + Math.ceil(arm.length / 2) * 19, y => { head(x, w, y + 14, BI.pvp, BL.armory, null); ledger(arm, y + 37); }]);
+    // K/D (victoires honorables ÷ morts face aux joueurs), dès 20 combats : mis en avant à droite du titre, comme sur la fiche
+    const kd = st.hk != null && st.pvpDeaths != null && st.hk + st.pvpDeaths >= 20 ? (st.pvpDeaths ? st.hk / st.pvpDeaths : st.hk) : null;
+    if (arm.length) S.push([24 + Math.ceil(arm.length / 2) * 19, y => {
+      head(x, w, y + 14, BI.pvp, BL.armory, null);
+      if (kd != null) {
+        const v = kd.toLocaleString(loc || undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        T(v, x + w, y + 12, 22, kd >= 1 ? GREEN : INK, { f: NARROW, w: 700, a: 'right' });
+        g.font = '700 22px ' + NARROW; const vw = g.measureText(v).width;
+        T('K/D', x + w - vw - 8, y + 12, 13, SOFT, { f: NARROW, w: 700, a: 'right' });
+      }
+      ledger(arm, y + 37);
+    }]);
     // 2) réputations (armurerie)
-    const reps = (B.reps || []).slice(0, B.repMax ?? 3);
+    // sans carnet Dropamine, les réputations ont la place de s'étendre
+    const bare = !B.collection && !B.achievements && !B.played && !B.records && !B.hunt?.length;
+    const reps = (B.reps || []).slice(0, B.repMax ?? (bare ? 10 : 3));
     if (reps.length) S.push([24 + reps.length * 19, y => {
       const hon = (B.reps || []).filter(r => r.t >= 5).length;
       head(x, w, y + 14, BI.rep, BL.reps, `${B.reps.length} ${BL.factions}`);
@@ -190,10 +203,12 @@
       const k = (B0.fitStep ?? -1) + 1;
       if (k < steps.length) return book({ ...B0, ...steps.slice(0, k + 1).reduce((a, o) => ({ ...a, ...o }), {}), fitStep: k }, BL, BI, logo, preview);
     }
-    const [title, ...body] = S, top = PAGE.top + title[0] + 10, avail = PAGE.bottom - top;
-    title[1](PAGE.top);
+    // image finale sans carnet : pas de titre « carnet » au-dessus d'un vide, l'armurerie part du haut de la page
+    const noTitle = sparse && !preview;
+    const [title, ...body] = S, top = noTitle ? PAGE.top + 4 : PAGE.top + title[0] + 10, avail = PAGE.bottom - top;
+    if (!noTitle) title[1](PAGE.top);
     const used = body.reduce((a, [h]) => a + h, 0), gap = Math.max(8, Math.min(26, (avail - used) / Math.max(1, body.length)));
-    let y = top + (sparse ? Math.max(0, (avail - used - gap * (body.length - 1)) / 2) : 0);
+    let y = top + (sparse && !noTitle ? Math.max(0, (avail - used - gap * (body.length - 1)) / 2) : 0);
     body.forEach(([h, fn]) => { fn(y); y += h + gap; });
   }
 
@@ -209,7 +224,9 @@
     g.imageSmoothingQuality = 'high';
     const L = o.L, rows = o.rows, B = o.book || {}, BL = o.BL || {};
     const NAMES = { ...BOOK_ICONS, pvp: p.faction === 'HORDE' ? 'inv_bannerpvp_01' : 'inv_bannerpvp_02' }, bi = Object.keys(NAMES);
-    const [portrait, logo, bg, ...rest] = await Promise.all([load(p.render), load('Dropamine-Logo.png'), load(bgUrl(p)), ...rows.map(r => load(r.img)), ...bi.map(k => load(iconUrl(NAMES[k])))]);
+    // adresse distincte : la page personnage a déjà mis ces images en cache sans en-tête CORS, et le canvas les refuserait
+    const cors = u => u ? u + (u.includes('?') ? '&' : '?') + 'cors=1' : u;
+    const [portrait, logo, bg, ...rest] = await Promise.all([load(cors(p.render)), load('Dropamine-Logo.png'), load(cors(bgUrl(p))), ...rows.map(r => load(r.img)), ...bi.map(k => load(iconUrl(NAMES[k])))]);
     const icons = rest.slice(0, rows.length), BI = Object.fromEntries(bi.map((k, i) => [k, rest[rows.length + i]]));
     // fond et portrait
     g.fillStyle = '#0b0806'; g.fillRect(0, 0, W, H);

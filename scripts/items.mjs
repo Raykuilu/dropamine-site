@@ -11,12 +11,14 @@ import { join, dirname } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const ITEMS_FILE = join(ROOT, 'site/data/items.json');
 const MAX_AGE_DAYS = 25;   // marge sous les 30 jours
+export const ITEM_V = 2;   // 2 : emplacement, type d'armure et niveaux (pour les suggestions de « Ma chasse »)
 
 const L = o => o ? [o.en_US ?? '', o.fr_FR ?? o.en_US ?? ''] : null;
 const line = (o, c) => { const v = L(o); return v && v[0] ? (c ? [...v, c] : v) : null; };
 const hex = c => c ? '#' + [c.r, c.g, c.b].map(x => Math.round(x).toString(16).padStart(2, '0')).join('') : null;
 
-// une fiche compacte : { n: [en, fr], q: 'RARE', ic: 'chemin d'icône', t: [[en, fr, couleur?], …], d: 'AAAA-MM-JJ' }
+// une fiche compacte : { n: [en, fr], q: 'RARE', ic: 'chemin d'icône', t: [[en, fr, couleur?], …], d: 'AAAA-MM-JJ',
+//   s: emplacement ('HEAD'…), c: [classe, sous-classe], lv: niveau d'objet, rl: niveau requis, v: version de la fiche }
 export function compact(item, iconPath, today) {
   const p = item?.preview_item ?? {};
   const t = [];
@@ -34,7 +36,32 @@ export function compact(item, iconPath, today) {
   for (const s of p.spells ?? []) push(line(s.description, '#1eff00'));
   push(line(p.requirements?.level?.display_string));
   if (p.description) push(line(p.description, '#ffd100'));
-  return { n: L(item?.name ?? p.name) ?? ['', ''], q: item?.quality?.type ?? p.quality?.type ?? null, ic: iconPath ?? null, t, d: today };
+  const out = { n: L(item?.name ?? p.name) ?? ['', ''], q: item?.quality?.type ?? p.quality?.type ?? null, ic: iconPath ?? null, t, d: today, v: ITEM_V };
+  const inv = item?.inventory_type?.type ?? p.inventory_type?.type;
+  if (inv && inv !== 'NON_EQUIP') out.s = inv;
+  if (item?.item_class) out.c = [item.item_class.id, item.item_subclass?.id ?? 0];
+  if (item?.level) out.lv = item.level;
+  if (item?.required_level) out.rl = item.required_level;
+  return out;
+}
+
+// objets propres à Forever sans fiche API : AtlasLoot donne « Nom (emplacement, type) » → nom propre, emplacement, classe d'objet
+const SUF_SLOT = { head: 'HEAD', neck: 'NECK', shoulder: 'SHOULDER', back: 'CLOAK', chest: 'CHEST', wrist: 'WRIST', hands: 'HAND', waist: 'WAIST', legs: 'LEGS',
+  feet: 'FEET', finger: 'FINGER', trinket: 'TRINKET', 'one-hand': 'WEAPON', 'main hand': 'WEAPONMAINHAND', 'two-hand': 'TWOHWEAPON', 'off hand': 'WEAPONOFFHAND',
+  'held in off-hand': 'HOLDABLE', ranged: 'RANGED' };
+const SUF_ARMOR = { cloth: 1, leather: 2, mail: 3, plate: 4 };
+const SUF_WPN = { axe: [0, 1], mace: [4, 5], sword: [7, 8], staff: [10, 10], polearm: [6, 6], dagger: [15, 15], 'fist weapon': [13, 13], bow: [2, 2], gun: [3, 3], crossbow: [18, 18], wand: [19, 19] };
+export function parseAtlasName(raw) {
+  const m = String(raw).match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+  if (!m) return { name: String(raw) };
+  const [slotW, typeW] = m[2].toLowerCase().split(',').map(x => x.trim());
+  const out = { name: m[1] }, sl = SUF_SLOT[slotW];
+  if (typeW === 'shield') { out.s = 'SHIELD'; out.c = [4, 6]; return out; }
+  if (sl) out.s = sl;
+  if (SUF_ARMOR[typeW]) out.c = [4, SUF_ARMOR[typeW]];
+  else if (SUF_WPN[typeW]) out.c = [2, SUF_WPN[typeW][slotW === 'two-hand' ? 1 : 0]];
+  else if (sl && !typeW) out.c = [4, 0];   // cou, doigt, bijou
+  return out;
 }
 
 async function api(tok, path, ns) {
@@ -50,11 +77,16 @@ async function api(tok, path, ns) {
 }
 
 export async function fetchItem(tok, id, today, names = {}) {
-  const [item, media] = await Promise.all([api(tok, `/data/wow/item/${id}`, 'static-classic-eu'), api(tok, `/data/wow/media/item/${id}`, 'static-forever-eu')]);
+  // objets d'origine : catalogue Classic ; objets propres à Forever : catalogue Forever
+  const [classic, media] = await Promise.all([api(tok, `/data/wow/item/${id}`, 'static-classic-eu'), api(tok, `/data/wow/media/item/${id}`, 'static-forever-eu')]);
+  const item = classic ?? await api(tok, `/data/wow/item/${id}`, 'static-forever-eu');
   const icon = media?.assets?.find(a => a.key === 'icon')?.value?.replace(/^https:\/\/render\.worldofwarcraft\.com\//, '') ?? null;
   if (!item && !icon && !names[id]) return null;
   const c = compact(item, icon, today);
-  if (!item && names[id]) c.n = [names[id], names[id]];   // objet propre à Forever : nom anglais d'AtlasLoot
+  if (!item && names[id]) {   // objet propre à Forever sans fiche : nom anglais, emplacement et type d'AtlasLoot
+    const x = parseAtlasName(names[id]);
+    c.n = [x.name, x.name]; if (x.s) c.s = x.s; if (x.c) c.c = x.c;
+  }
   return c;
 }
 
@@ -71,6 +103,7 @@ export async function wantedIds(players = []) {
   for (const p of players) {
     for (const id of p.dropamine?.collection?.items ?? []) ids.add(id);
     for (const h of p.dropamine?.hunt ?? []) if (h.id) ids.add(h.id);
+    for (const g of p.gear ?? []) if (g[1]) ids.add(g[1]);   // équipement porté : pour comparer les suggestions
   }
   return { ids: [...ids].filter(n => Number.isInteger(n) && n > 0).sort((a, b) => a - b), names: loot.names ?? {} };
 }
@@ -81,7 +114,7 @@ export async function updateItems(tok, players = [], limit = 800) {
   const cache = existsSync(ITEMS_FILE) ? JSON.parse(await readFile(ITEMS_FILE, 'utf8')) : {};
   const { ids, names } = await wantedIds(players);
   const cutoff = new Date(Date.now() - MAX_AGE_DAYS * 864e5).toISOString().slice(0, 10);
-  const todo = [...ids.filter(id => !cache[id]), ...ids.filter(id => cache[id] && cache[id].d < cutoff).sort((a, b) => cache[a].d.localeCompare(cache[b].d))].slice(0, limit);
+  const todo = [...ids.filter(id => !cache[id] || (cache[id].v ?? 1) < ITEM_V), ...ids.filter(id => cache[id] && cache[id].d < cutoff).sort((a, b) => cache[a].d.localeCompare(cache[b].d))].slice(0, limit);
   let done = 0, missing = 0;
   await pool(todo, 8, async id => {
     try { const c = await fetchItem(tok, id, today, names); if (c) { cache[id] = c; done++; } else missing++; }

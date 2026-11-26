@@ -28,11 +28,26 @@
     try { s = localStorage.getItem('lang'); } catch (e) {}
     var l = (q === 'fr' || q === 'en') ? q : (s === 'fr' || s === 'en') ? s : (/^fr\b/i.test(navigator.language || '') ? 'fr' : 'en');
     document.documentElement.lang = l; document.documentElement.dataset.lang = l;
+    // goutte d'ouverture : une fois par session, jamais si l'animation est réduite ni pour les captures
+    try {
+      if (sessionStorage.getItem('splash') || matchMedia('(prefers-reduced-motion: reduce)').matches || /[?&]shot=1/.test(location.search)) document.documentElement.classList.add('nosplash');
+      else sessionStorage.setItem('splash', '1');
+    } catch (e) { document.documentElement.classList.add('nosplash'); }
   })();
 </script>
 <link rel="stylesheet" href="style.css?v=6ad5f24c">
 </head>
 <body>
+<div id="splash" aria-hidden="true"><svg class="dropsvg" viewBox="0 0 100 130" width="92" height="120" aria-hidden="true">
+  <defs><clipPath id="sp-clip"><path d="M50 6C68 34 90 58 90 84a40 40 0 0 1-80 0C10 58 32 34 50 6z"/></clipPath></defs>
+  <g clip-path="url(#sp-clip)"><rect width="100" height="130" fill="#120d08"/>
+    <g class="sp-fill">
+      <path class="sp-w r" d="M-100 66q25-8 50 0t50 0t50 0t50 0t50 0V130H-100z" fill="#b85a46"/>
+      <path class="sp-w b" d="M-100 86q25-7 50 0t50 0t50 0t50 0t50 0V130H-100z" fill="#6a88c0"/>
+      <path class="sp-w g" d="M-100 103q25-6 50 0t50 0t50 0t50 0t50 0V130H-100z" fill="#5f9a4a"/>
+    </g>
+    <ellipse cx="36" cy="60" rx="7" ry="13" fill="#fff" opacity=".12"/></g>
+  <path d="M50 6C68 34 90 58 90 84a40 40 0 0 1-80 0C10 58 32 34 50 6z" fill="none" stroke="#c49a5c" stroke-width="4"/></svg><span class="sp-name">Dropamine</span></div>
 
 <header class="hero">
   <div class="wrap">

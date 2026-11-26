@@ -149,3 +149,12 @@ test('boss vaincus : la sous-catégorie Boss compte les boss différents et le t
     { id: 63570, name: 'VanCleef', quantity: 2 }, { id: 6140, name: 'Thermojoncteur', quantity: 1 }, { id: 1, name: 'x', quantity: 0 }] }] }] });
   assert.deepEqual(s, { dungeons: 18, bosses: 2, bossKills: 3 });
 });
+
+test('derniers loots : seulement ce qui est nouveau depuis le relevé précédent', async () => {
+  const { newLoots } = await import('./build.mjs');
+  const prev = { dropamine: { collection: { items: [1, 2] }, hunt: [{ id: 9, drops: 0 }] }, loots: [[5, '2026-11-01']] };
+  const up = { at: '2026-11-26T10:00:00Z', collection: { items: [1, 2, 3] }, hunt: [{ id: 9, drops: 1 }] };
+  assert.deepEqual(newLoots(prev, up, '2026-11-26'), [[3, '2026-11-26'], [9, '2026-11-26'], [5, '2026-11-01']]);
+  assert.deepEqual(newLoots(undefined, up, '2026-11-26'), [], 'premier export : rien de « nouveau »');
+  assert.deepEqual(newLoots(prev, up, '2026-12-20'), [[3, '2026-11-26'], [9, '2026-11-26']], 'plus de 30 jours : oublié');
+});

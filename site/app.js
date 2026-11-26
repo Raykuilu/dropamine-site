@@ -74,18 +74,35 @@ const I18N = {
   sortBy: ['Rank by', 'Classer par'], trustShort: ['based on trust', 'basé sur la confiance'],
   kills: ['Creatures killed', 'Créatures tuées'], killingBlows: ['Killing blows', 'Coups fatals'], dungeons: ['Dungeons entered', 'Donjons visités'],
   pvpDeaths: ['Killed by players', 'Tué par des joueurs'], duels: ['Duels (won / lost)', 'Duels (gagnés / perdus)'],
-  repsT: ['Reputations', 'Réputations'], 'tb.home': ['Home', 'Accueil'], 'tb.hunt': ['Hunt', 'Chasse'], 'tb.me': ['Me', 'Moi'],
+  repsT: ['Reputations', 'Réputations'],
+  hsQ: ['Dungeon, boss, item, player…', 'Donjon, boss, objet, joueur…'], hsLvl: ['Level', 'Niveau'], hsLvlAll: ['All levels', 'Tous niveaux'], hsLvlMe: ['My level', 'À mon niveau'], hsLvlBand: ['Level {a}–{b}', 'Niveau {a}–{b}'],
+  hsType: ['Type', 'Type'], hsTypeAll: ['All types', 'Tous types'], hsTypeDun: ['Dungeons', 'Donjons'], hsTypeFor: ['Forever dungeons', 'Donjons Forever'], hsTypeRaid: ['Raids', 'Raids'],
+  hsRole: ['Missing role', 'Rôle manquant'], hsRoleAll: ['Any role', 'Tous rôles'], 'hsNeed.tank': ['Needs a tank', 'Cherche un tank'], 'hsNeed.heal': ['Needs a healer', 'Cherche un soigneur'], 'hsNeed.dps': ['Needs damage', 'Cherche des dégâts'], hsWhen: ['When', 'Quand'], hsWhenAll: ['Any time', 'Tout le temps'], hsWhenWeek: ['Next 7 days', '7 prochains jours'],
+  hsReset: ['Reset', 'Tout effacer'], hsNone: ['Nothing matches this search.', 'Rien ne correspond à cette recherche.'],
+  'slot.HEAD': ['Head', 'Tête'], 'slot.NECK': ['Neck', 'Cou'], 'slot.SHOULDER': ['Shoulders', 'Épaules'], 'slot.BACK': ['Back', 'Dos'], 'slot.CHEST': ['Chest', 'Torse'],
+  'slot.WRIST': ['Wrists', 'Poignets'], 'slot.HANDS': ['Hands', 'Mains'], 'slot.WAIST': ['Waist', 'Taille'], 'slot.LEGS': ['Legs', 'Jambes'], 'slot.FEET': ['Feet', 'Pieds'],
+  'slot.FINGER': ['Finger', 'Doigt'], 'slot.TRINKET': ['Trinket', 'Bijou'], 'slot.MAIN': ['Weapon', 'Arme'], 'slot.OFF': ['Off hand', 'Main gauche'], 'slot.RANGED': ['Ranged', 'Distance'],
+  hsSub: ['what I hunt, slot by slot', 'ce que je chasse, emplacement par emplacement'], hsMore: ['+{n} more', '+{n} autre{s}'],
+  hsFound: ['items from the list found', 'objets de la liste trouvés'], hsTries: ['{n} tries in total', '{n} essais au total'], hsSlots: ['{n} slot{s} targeted', '{n} emplacement{s} visé{s}'],
+  hsOrganise: ['Plan an outing', 'Organiser une sortie'], hsRate: ['{r} per try', '{r} par essai'], hsRateNo: ['rate unknown', 'taux inconnu'], hsToTry: ['to try', 'à tenter'],
+  hsEmpty: ['Nothing hunted yet: pick items below, or add them in game with /drop hunt add.', 'Rien en chasse pour l’instant : choisis des objets ci-dessous, ou ajoute-les en jeu avec /drop chasse ajouter.'],
+  hsSugT: ['Suggestions for your hunt', 'Suggestions pour ta chasse'], hsSugSub: ['best items within reach, slot by slot · you choose', 'les meilleurs objets à ta portée, par emplacement · tu choisis'],
+  hsSugHow: ['Dungeon drops your class can use, at your level, better than what you wear (item level). Tick what you want, then paste the command in game.', 'Des objets de donjon que ta classe peut porter, à ton niveau, meilleurs que ce que tu portes (niveau d’objet). Coche ce que tu veux, puis colle la commande en jeu.'],
+  hsSugNoGear: ['Dungeon drops your class can use, at your level. Your worn gear is read with the next daily armory update: suggestions will then only show upgrades.', 'Des objets de donjon que ta classe peut porter, à ton niveau. Ton équipement porté sera lu au prochain relevé quotidien de l’armurerie : les suggestions ne montreront alors que des améliorations.'],
+  hsSugNone: ['No better dungeon drop found for your level right now.', 'Aucun meilleur objet de donjon trouvé à ton niveau pour l’instant.'],
+  hsWorn: ['worn', 'porté'], hsIlvl: ['ilvl {n}', 'niv. {n}'], hsPicked: ['{n} picked', '{n} choisi{s}'], hsFree: ['{n} free spot{s} in game', '{n} place{s} libre{s} en jeu'],
+  hsCmdCopy: ['Copy the command', 'Copier la commande'], hsCodeHow: ['In game: paste it in the chat box and press Enter.', 'En jeu : colle-la dans le chat et valide.'], 'tb.home': ['Home', 'Accueil'], 'tb.hunt': ['Hunt', 'Chasse'], 'tb.me': ['Me', 'Moi'],
   lvTitle: ['Right now on Forever', 'En ce moment sur Forever'], lvSub: ['the last 7 days', 'les 7 derniers jours'],
   lvUp: ['<b>{n}</b> +{d} {s} <em>→ {v}</em>', '<b>{n}</b> +{d} {s} <em>→ {v}</em>'],
-  lvFound: ['<b>{n}</b> got <em>{i}</em>', '<b>{n}</b> a eu <em>{i}</em>'],
+  lvFound: ['<b>{n}</b> got <em>{i}</em>', '<b>{n}</b> a obtenu <em>{i}</em>'], lvLoots: ['Latest loot', 'Derniers loots'], lvLootsSub: ['what players got, dated by their export', 'ce que les joueurs ont obtenu, daté par leur export'],
   lvRun: ['<b>{n}</b> plans {d} <em>· {w}</em>', '<b>{n}</b> propose {d} <em>· {w}</em>'],
   lvToday: ['today', "aujourd'hui"], lvYesterday: ['yesterday', 'hier'], lvDays: ['{n} d ago', 'il y a {n} j'],
   lvcDl: ['downloads', 'téléchargements'], lvcChars: ['characters', 'personnages'], lvcGuilds: ['guilds', 'guildes'], lvcRuns: ['planned outings', 'sorties prévues'], lvcItems: ['items logged', 'objets au carnet'],
   lvRuns: ['Next outings', 'Prochaines sorties'], lvNoRun: ['No outing planned yet: be the first to propose one.', "Aucune sortie prévue pour l'instant : propose la première."],
   lvWeek: ['This week', 'La semaine'], lvRising: ['Rising guilds', 'Les guildes qui montent'], lvMembers: ['{n} active', '{n} actif{s}'],
   lvNoWeek: ['Nobody has moved yet this week.', "Personne n'a encore bougé cette semaine."], lvEmpty: ['Quiet for now: the next +1 will show up here.', 'Calme plat pour l’instant : le prochain +1 arrivera ici.'],
-  dashHi: ['Hi {n}', 'Salut {n}'], dashSheet: ['My sheet', 'Ma fiche'], dashSend: ['Update my logbook', 'Mettre à jour mon carnet'], in7: ['in 7 days', 'en 7 jours'],
-  dashNoLine: ['Your logbook is empty: type /drop hiscores in game and paste the export.', 'Ton carnet est vide : tape /drop hiscores en jeu et colle la ligne.'],
+  dashHi: ['Hi {n}', 'Salut {n}'], dashSheet: ['My sheet', 'Ma fiche'], dashSend: ['Update from the game', 'Mettre à jour depuis le jeu'], in7: ['in 7 days', 'en 7 jours'],
+  dashLast: ['last sent {d}', 'dernier envoi : {d}'], dashNoLine: ['Your logbook is empty: type /drop hiscores in game and paste the export.', 'Ton carnet est vide : tape /drop hiscores en jeu et colle la ligne.'],
   dashOldLine: ['Your Dropamine export is {n} days old: paste it again to update collection log and hunt.', 'Ta ligne Dropamine date de {n} jours : renvoie-la pour mettre à jour collection log et chasse.'],
   dashRuns: ['My outings', 'Mes sorties'], dashNoRun: ['You are not in any outing yet.', 'Tu n’es inscrit à aucune sortie.'], dashOpenRuns: ['Open outings for you', 'Sorties ouvertes pour toi'],
   dashAllRuns: ['Group hunt →', 'Chasse en groupe →'], dashHunt: ['My hunt', 'Ma chasse'], dashNoHunt: ['Nothing to hunt: add items in the addon (Hunt tab).', 'Rien en chasse : ajoute des objets dans l’addon (onglet Chasse).'],
@@ -98,7 +115,7 @@ const I18N = {
   clogSrc: ['Loot tables: AtlasLoot Forever (GPL-2.0) · items: Blizzard API.', 'Tables de butin : AtlasLoot Forever (GPL-2.0) · objets : API Blizzard.'],
   obtained: ['Obtained', 'Obtenu'], notObtained: ['Not obtained yet', 'Pas encore obtenu'], itemForever: ['Forever item', 'Objet propre à Forever'], advT: ['Adventure', 'Aventure'], pvpT: ['PvP', 'JcJ'],
   srcArm: ['Armory', 'Armurerie'], srcDecl: ['Dropamine · on trust', 'Dropamine · sur la confiance'],
-  kd: ['K/D ratio', 'Ratio K/D'], kdHow: ['{k} honorable kills for {d} deaths to players', '{k} victoires honorables pour {d} morts face aux joueurs'],
+  kd: ['K/D ratio', 'Ratio K/D'], kdMin: ['from 20 fights (honorable kills + deaths)', 'dès 20 combats (VH + morts)'], kdHow: ['{k} honorable kills for {d} deaths to players', '{k} victoires honorables pour {d} morts face aux joueurs'],
   duelsT: ['Duels won – lost', 'Duels gagnés – perdus'], pvpRank: ['PvP rank', 'Rang JcJ'],
   subWinRate: ['{n}% won', '{n} % de victoires'], subFaction: ['{n} by the opposite faction', '{n} par la faction adverse'],
   subCritters: ['+ {n} critters', '+ {n} bestioles'], subAbandoned: ['{n} abandoned', '{n} abandonnées'], subBosses: ['{n} bosses defeated', '{n} boss vaincus'],
@@ -149,6 +166,9 @@ const t = (k, vars = {}) => {
   for (const [a, b] of Object.entries(vars)) s = s.replaceAll(`{${a}}`, b);
   return s.replaceAll('{s}', +vars.n > 1 ? 's' : '');
 };
+// petite goutte animée à la place des « Chargement… »
+let dropN = 0;
+const loadingBox = () => `<div class="empty dload"><svg class="dropsvg" viewBox="0 0 100 130" width="40" height="52" aria-hidden="true"><defs><clipPath id="${"dl" + (++dropN)}"><path d="M50 6C68 34 90 58 90 84a40 40 0 0 1-80 0C10 58 32 34 50 6z"/></clipPath></defs><g clip-path="url(#${"dl" + (++dropN)})"><rect width="100" height="130" fill="#120d08"/><g class="sp-fill"><path class="sp-w r" d="M-100 66q25-8 50 0t50 0t50 0t50 0t50 0V130H-100z" fill="#b85a46"/><path class="sp-w b" d="M-100 86q25-7 50 0t50 0t50 0t50 0t50 0V130H-100z" fill="#6a88c0"/><path class="sp-w g" d="M-100 103q25-6 50 0t50 0t50 0t50 0t50 0V130H-100z" fill="#5f9a4a"/></g><ellipse cx="36" cy="60" rx="7" ry="13" fill="#fff" opacity=".12"/></g><path d="M50 6C68 34 90 58 90 84a40 40 0 0 1-80 0C10 58 32 34 50 6z" fill="none" stroke="#c49a5c" stroke-width="4"/></svg><span>${t('loading')}</span></div>`;
 const locale = () => LANG === 'fr' ? 'fr-FR' : 'en-GB';
 const fmt = n => Math.round(n).toLocaleString(locale());
 const ord = n => LANG === 'fr' ? (n === 1 ? '1ᵉʳ' : n + 'ᵉ') : n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
@@ -196,6 +216,13 @@ const SKILLS = [
   ...PROF_ORDER.map(id => ({ id: 'p' + id, group: 'prf', label: () => profName(id), max: '300', prof: id, icon: PROF_ICON[id],
     get: p => p.professions?.find(x => x.id === id)?.skill ?? null })),
   ...STAT_KEYS.map(k => ({ id: k, group: 'stat', label: () => t(k), max: '', get: p => armoryStat(p, k) })),
+  // K/D : victoires honorables ÷ morts face aux joueurs (armurerie) ; seulement si les deux chiffres sont connus
+  // et au moins 20 combats (VH + morts), pour qu'un 12 / 0 ne passe pas devant un 420 / 60
+  { id: 'kd', group: 'stat', label: () => t('kd'), max: '', icon: 'ability_dualwield',
+    note: () => t('kdMin'),
+    get: p => { const k = armoryStat(p, 'hk'), d = p.stats?.pvpDeaths; return k && d != null && k + d >= 20 ? (d ? k / d : k) : null; },
+    show: (v, p) => `${v.toLocaleString(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<small class="kdd"> · ${fmt(armoryStat(p, 'hk'))} / ${fmt(p.stats.pvpDeaths)}</small>`,
+    ratio: (v, p) => armoryStat(p, 'hk') / (armoryStat(p, 'hk') + p.stats.pvpDeaths) },
   // carnet Dropamine : déclaré par le joueur avec sa ligne /drop hiscores (sur la confiance), sauf les VH (armurerie)
   { id: 'clog', group: 'book', label: () => t('dbLog'), max: '', icon: 'inv_box_02', get: p => p.dropamine?.collection?.x ?? null,
     show: (v, p) => `${fmt(v)}<small> / ${fmt(p.dropamine.collection.y)}</small>`, ratio: (v, p) => v / p.dropamine.collection.y },
@@ -343,18 +370,18 @@ function liveFeed() {
         out.push({ at: new Date(b.d).getTime(), p, html: t('lvUp', { n: full(p), d: fmt(b.s[k] - a.s[k]), s: esc(name), v: fmt(b.s[k]) }), gain: b.s[k] - a.s[k] });
       }
     }
-    const at = p.dropamineAt ? Date.parse(p.dropamineAt) : 0;
-    if (at && Date.now() - at <= 2 * week) for (const x of (p.dropamine?.hunt || []).filter(x => x.drops > 0))
-      out.push({ at, p, html: t('lvFound', { n: full(p), i: esc(ITEMS?.[x.id]?.n?.[LANG === 'fr' ? 1 : 0] || x.name) }), item: x.id });
+    for (const [id, d] of p.loots || []) { const at = Date.parse(d);
+      if (today - at <= week) out.push({ at, p, html: t('lvFound', { n: full(p), i: esc(lootName(p, id)) }), item: id }); }
   }
   const byKey = new Map(DATA.players.map(p => [pkey(p), p]));
   for (const r of RUNS || []) {
     const at = Date.parse(r.created || ''), p = byKey.get(r.by), dd = LOOT?.dungeons.find(x => x.key === r.dungeon);
     if (p && dd && Date.now() - at <= week) out.push({ at, p, html: t('lvRun', { n: full(p), d: esc(dd.name), w: esc(relWhen(new Date(r.at))) }), run: r.id });
   }
-  // les plus récents d'abord ; le même jour, les plus gros gains devant
-  return out.sort((a, b) => b.at - a.at || (b.gain || 0) - (a.gain || 0));
+  // les plus récents d'abord ; le même jour, les loots puis les plus gros gains
+  return out.sort((a, b) => b.at - a.at || (b.item ? 1 : 0) - (a.item ? 1 : 0) || (b.gain || 0) - (a.gain || 0));
 }
+const lootName = (p, id) => { const h = (p.dropamine?.hunt || []).find(x => x.id === id); return h ? huntName(h) : itemName(id); };
 const dayAgo = at => { const n = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(at).setHours(0, 0, 0, 0)) / 864e5);
   return n <= 0 ? t('lvToday') : n === 1 ? t('lvYesterday') : t('lvDays', { n }); };
 let liveLoad = null, LIVE = [];
@@ -378,7 +405,10 @@ function renderLive() {
   for (const p of region) if (p.guild && gain7(p) > 0) { const g = gmap.get(p.guild.slug) || { g: p.guild, n: 0, m: 0 }; g.n += gain7(p); g.m++; gmap.set(p.guild.slug, g); }
   const rising = [...gmap.values()].sort((a, b) => b.n - a.n).slice(0, 3)
     .map(x => `<li><a href="?p=guild&g=${esc(x.g.slug)}" data-g="${esc(x.g.slug)}"><b>${esc(x.g.name)}</b><small>${t('lvMembers', { n: x.m })}</small><span class="up">+${fmt(x.n)}</span></a></li>`).join('');
-  box.innerHTML = `<div class="lv-count">${counters}</div>
+  const loots = region.flatMap(p => (p.loots || []).map(([id, d]) => ({ p, id, at: Date.parse(d) }))).sort((a, b) => b.at - a.at).slice(0, 10);
+  const lootRow = loots.length ? `<section class="panel lv-loots"><div class="cathead"><h3 class="sub">${t('lvLoots')}</h3><span class="cx2">${t('lvLootsSub')}</span></div>
+    <div class="lootrow">${loots.map(x => `<a class="loot" href="?p=char&c=${esc(encodeURIComponent(pkey(x.p)))}" data-c="${esc(pkey(x.p))}">${itemChip(x.id)}<b style="color:${QCOL[ITEMS?.[x.id]?.q] || 'var(--cream)'}">${esc(lootName(x.p, x.id))}</b><small>${esc(x.p.name)} · ${dayAgo(x.at)}</small></a>`).join('')}</div></section>` : '';
+  box.innerHTML = `<div class="lv-count">${counters}</div>${lootRow}
     <div class="lv-grid">
       <section class="panel lv-feed"><div class="cathead"><h3 class="sub"><i class="live"></i>${t('lvTitle')}</h3><span class="cx2">${t('lvSub')}</span></div>
         ${feed ? `<ul>${feed}</ul>` : `<p class="note">${t('lvEmpty')}</p>`}</section>
@@ -421,7 +451,7 @@ function renderDash() {
         <div class="dh-n"><b data-n="${p.total}">${fmt(p.total)}</b><small> / ${fmt(p.max || 2460)}</small></div>
         <div class="dh-g">${rank ? `<span>${ord(rank)} · ${t('totalLevel')}</span>` : ''}${d1 > 0 ? `<span class="up">+${fmt(d1)} ${t('sinceY')}</span>` : ''}${d7 > 0 ? `<span class="up">+${fmt(d7)} ${t('in7')}</span>` : ''}</div>
         <div class="dh-a"><a class="btn gold" href="?p=char&c=${esc(pkey(p))}" data-c="${esc(pkey(p))}">${t('dashSheet')}</a><button class="btn ghost" data-hsimg="${esc(pkey(p))}">${t('hsBtn')}</button><a class="btn ghost" href="?p=join" data-view-link="join">${t('dashSend')}</a></div>
-        ${old == null ? `<p class="dh-warn">${t('dashNoLine')}</p>` : old > 7 ? `<p class="dh-warn">${t('dashOldLine', { n: Math.floor(old) })}</p>` : ''}</div></div>`;
+        ${old == null ? `<p class="dh-warn">${t('dashNoLine')}</p>` : old > 7 ? `<p class="dh-warn">${t('dashOldLine', { n: Math.floor(old) })}</p>` : `<p class="dh-last">${[d.collection && t('dbLog'), d.hunt && t('dbHunt'), d.achievements && t('dbAch'), d.records && t('dbRec'), p.played && t('played')].filter(Boolean).join(', ')} · ${t('dashLast', { d: dayAgo(Date.parse(p.dropamineAt)) })}</p>`}</div></div>`;
   // 2) mes runs, et ceux à ma portée
   const mineKeys = new Set(me.map(pkey));
   const myRuns = (RUNS || []).filter(r => r.members.some(m => mineKeys.has(m.key)));
@@ -537,7 +567,7 @@ function renderRank() {
     ? list.map(row).join('') + (estRows.length ? `<div class="you-sep est-sep">${t('estSep')}</div>` + estRows.map(row).join('') : '')
     : nobody();
   $('#rank-panel').innerHTML = `
-    <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
+    <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
     <div class="chips" role="group">${rsChips}</div>
     <div class="board">
       <nav class="skills">${nav}</nav>
@@ -675,10 +705,11 @@ function renderChar() {
     </div>
     ${secNav(p)}
     <div id="sec-skills">${skillsBlock(p, peers)}</div>
-    ${advPanel(p, hist, gained)}
-    ${pvpPanel(p)}
-    ${repsPanel(p)}
     ${dropBook(p)}
+    ${huntPanel(p)}
+    ${pvpPanel(p)}
+    ${advPanel(p, hist, gained)}
+    ${repsPanel(p)}
     ${p.complete ? '' : `<div class="cta">${t('ctaEst')}</div>`}`;
   if (p.dropamine?.collection?.items?.length) fillClog(p);
 }
@@ -802,8 +833,10 @@ const tile = (ic, label, value, sub = '', cls = '') => value == null ? '' :
 const kdOf = st => st.hk == null ? null : st.pvpDeaths ? st.hk / st.pvpDeaths : st.hk;
 function secNav(p) {
   const st = p.stats || {}, d = p.dropamine || {};
-  const items = [['sec-skills', t('skillsT')], ['sec-adv', t('advT')], [armoryStat(p, 'hk') != null || st.pvpDeaths != null ? 'sec-pvp' : null, t('pvpT')],
-    [p.reps?.length ? 'sec-reps' : null, t('repsT')], [Object.keys(d).length || p.played ? 'sec-book' : null, t('dbTitle')]].filter(([id]) => id);
+  const book = ['collection', 'achievements', 'records'].some(k => d[k]) || p.played;
+  const items = [['sec-skills', t('skillsT')], [book ? 'sec-book' : null, t('dbTitle')], [d.hunt?.length || Bnet.isMine(p) ? 'sec-hunt' : null, t('dbHunt')],
+    [armoryStat(p, 'hk') != null || st.pvpDeaths != null ? 'sec-pvp' : null, t('pvpT')], ['sec-adv', t('advT')],
+    [p.reps?.length ? 'sec-reps' : null, t('repsT')]].filter(([id]) => id);
   return `<nav class="secnav">${items.map(([id, l]) => `<a href="#${id}" data-sec="${id}">${l}</a>`).join('')}</nav>`;
 }
 function advPanel(p, hist, gained) {
@@ -855,6 +888,123 @@ function repsPanel(p) {
 
 // Carnet Dropamine : tout ce que l'armurerie n'a pas, envoyé par le joueur avec sa ligne /drop hiscores
 // (chaque groupe n'existe que si sa case était cochée dans l'addon)
+/* ---------- Ma chasse : la liste de chasse emplacement par emplacement, et des suggestions pour la remplir ---------- */
+// emplacement de l'objet (type d'inventaire de l'API) → case de la silhouette
+const SLOT_OF = { HEAD: 'HEAD', NECK: 'NECK', SHOULDER: 'SHOULDER', CLOAK: 'BACK', CHEST: 'CHEST', ROBE: 'CHEST', WRIST: 'WRIST', HAND: 'HANDS', WAIST: 'WAIST',
+  LEGS: 'LEGS', FEET: 'FEET', FINGER: 'FINGER', TRINKET: 'TRINKET', WEAPON: 'MAIN', TWOHWEAPON: 'MAIN', WEAPONMAINHAND: 'MAIN', WEAPONOFFHAND: 'OFF',
+  SHIELD: 'OFF', HOLDABLE: 'OFF', RANGED: 'RANGED', RANGEDRIGHT: 'RANGED', THROWN: 'RANGED', RELIC: 'RANGED' };
+// emplacement de l'équipement porté (armurerie) → même case
+const GEAR_SLOT = { HEAD: 'HEAD', NECK: 'NECK', SHOULDER: 'SHOULDER', BACK: 'BACK', CHEST: 'CHEST', WRIST: 'WRIST', HANDS: 'HANDS', WAIST: 'WAIST', LEGS: 'LEGS',
+  FEET: 'FEET', FINGER_1: 'FINGER', FINGER_2: 'FINGER', TRINKET_1: 'TRINKET', TRINKET_2: 'TRINKET', MAIN_HAND: 'MAIN', OFF_HAND: 'OFF', RANGED: 'RANGED' };
+const DOLL_L = ['HEAD', 'NECK', 'SHOULDER', 'BACK', 'CHEST', 'WRIST'], DOLL_R = ['HANDS', 'WAIST', 'LEGS', 'FEET', 'FINGER', 'TRINKET'], DOLL_B = ['MAIN', 'OFF', 'RANGED'];
+const ARMOR_SLOTS = new Set(['HEAD', 'SHOULDER', 'CHEST', 'WRIST', 'HANDS', 'WAIST', 'LEGS', 'FEET']);
+const WPN_SUB = { 0: 'axes', 1: 'axes2h', 2: 'bows', 3: 'guns', 4: 'maces', 5: 'maces2h', 6: 'polearms', 7: 'swords', 8: 'swords2h', 10: 'staves', 13: 'fist', 15: 'daggers', 16: 'thrown', 18: 'crossbows', 19: 'wands' };
+// armes que chaque classe peut apprendre (Classic)
+const CLASS_WPN = { 1: 'axes axes2h bows crossbows guns maces maces2h polearms swords swords2h staves fist daggers thrown', 2: 'axes axes2h maces maces2h polearms swords swords2h',
+  3: 'axes axes2h bows crossbows guns polearms swords swords2h staves fist daggers thrown', 4: 'bows crossbows guns maces swords fist daggers thrown',
+  5: 'maces staves daggers wands', 7: 'axes axes2h maces maces2h staves fist daggers', 8: 'swords staves daggers wands', 9: 'swords staves daggers wands', 11: 'maces maces2h staves fist daggers' };
+// la meilleure armure portable : plaques et mailles à partir du niveau 40
+const armorFor = p => { const c = p.classId, hi = p.level >= 40; return [1, 2].includes(c) ? (hi ? 4 : 3) : [3, 7].includes(c) ? (hi ? 3 : 2) : [4, 11].includes(c) ? 2 : 1; };
+function canUse(p, it) {
+  const [cls, sub] = it.c || [];
+  if (cls === 4) {
+    if (it.s === 'SHIELD') return [1, 2, 7].includes(p.classId);
+    if (it.s === 'HOLDABLE') return [2, 5, 7, 8, 9, 11].includes(p.classId);
+    if (!ARMOR_SLOTS.has(SLOT_OF[it.s])) return true;   // cou, dos, doigt, bijou : tout le monde
+    return sub === armorFor(p);
+  }
+  if (cls === 2) return (CLASS_WPN[p.classId] || '').split(' ').includes(WPN_SUB[sub]);
+  return false;
+}
+const cleanName = s => String(s || '').replace(/\s*\([^)]*\)\s*$/, '');
+// nom de la fiche officielle s'il existe ; sinon (objet propre à Forever) le nom envoyé par le jeu, en français sur le site français
+const huntName = h => { const x = ITEMS?.[h.id], own = cleanName(h.name); if (x?.q) return itemName(h.id); return (LANG === 'fr' ? own : x?.n?.[0]) || own || x?.n?.[0] || '#' + h.id; };
+const bestSrc = id => (LOOT?.idx?.get(id) || []).slice().sort((a, b) => (b.rate || 0) - (a.rate || 0))[0];
+const bossName = b => isTrash(b) ? t('runsTrash') : (L2(b.n) || b.n[0]);
+const rateTxt = r => r ? r.toLocaleString(locale(), { maximumFractionDigits: r < 10 ? 1 : 0 }) + ' %' : '';
+const itemChip = id => `<span class="ci lit" data-item="${id}" style="--q:${QCOL[ITEMS?.[id]?.q] || '#8a7a5a'}"><img src="${itemIcon(id)}" alt="" loading="lazy" referrerpolicy="no-referrer"></span>`;
+function wornBySlot(p) { const w = {}; for (const [s, id] of p.gear || []) { const k = GEAR_SLOT[s]; if (k) (w[k] ||= []).push(id); } return w; }
+// suggestions : objets de donjon utilisables, à ton niveau, meilleurs que ce que tu portes (niveau d'objet), ni obtenus ni déjà chassés
+function huntSuggest(p) {
+  const owned = new Set(p.dropamine?.collection?.items || []), hunted = new Set((p.dropamine?.hunt || []).map(h => h.id));
+  const worn = wornBySlot(p), out = {};
+  const wornLv = k => { const ids = worn[k] || []; return ids.length ? Math.min(...ids.map(id => ITEMS?.[id]?.lv || 0)) : 0; };
+  for (const d of LOOT.dungeons) {
+    if (fitOf(p, d) === 'low') continue;
+    for (const b of d.bosses) for (const e of b.i) {
+      const id = Array.isArray(e) ? e[0] : e, rate = Array.isArray(e) ? e[1] : null, it = ITEMS?.[id];
+      if (!it?.s || !it.lv || !['UNCOMMON', 'RARE', 'EPIC'].includes(it.q)) continue;
+      const k = SLOT_OF[it.s];
+      if (!k || owned.has(id) || hunted.has(id) || (worn[k] || []).includes(id)) continue;
+      const rl = it.rl || Math.max(1, it.lv - 5);   // niveau requis absent : estimé d'après le niveau d'objet
+      if (rl > p.level + 3 || rl < p.level - 12 || !canUse(p, it)) continue;
+      const base = wornLv(k), gain = it.lv - base;
+      if (base && gain <= 0) continue;
+      const score = (base ? gain : it.lv / 4) + (it.q === 'EPIC' ? 6 : it.q === 'RARE' ? 3 : 0) + (rate ? Math.min(rate, 40) / 8 : 0);
+      const m = (out[k] ||= new Map()), prev = m.get(id);
+      if (!prev || (rate || 0) > (prev.rate || 0)) m.set(id, { id, it, d, b, rate, gain: base ? gain : null, score });
+    }
+  }
+  return Object.fromEntries(Object.entries(out).map(([k, m]) => [k, [...m.values()].sort((a, b) => b.score - a.score).slice(0, 3)]));
+}
+let huntWait = null;
+function huntPanel(p) {
+  const hunt = p.dropamine?.hunt || [], mine = Bnet.isMine(p);
+  if (!hunt.length && !mine) return '';
+  if (!LOOT || !ITEMS) {
+    huntWait ??= Promise.all([loadLoot(), loadItems()]).then(() => { if (state.view === 'char') renderChar(); });
+    return `<section class="cat hunt" id="sec-hunt">${catHead('hunt', t('dbHunt'), 'decl')}${loadingBox()}</section>`;
+  }
+  const bySlot = {};
+  for (const h of hunt) { const k = SLOT_OF[ITEMS[h.id]?.s]; if (k) (bySlot[k] ||= []).push(h); }
+  const tile = (k, side) => { const hs = bySlot[k] || [], h = hs[0];
+    return `<div class="hslot ${side}${h ? ' on' : ''}${h?.drops ? ' got' : ''}">${h ? itemChip(h.id) : '<span class="ci none" aria-hidden="true"></span>'}
+      <span class="hs-t"><small>${t('slot.' + k)}</small>${h ? `<b>${esc(huntName(h))}</b>${hs.length > 1 ? `<em>${t('hsMore', { n: hs.length - 1 })}</em>` : ''}` : ''}</span></div>`; };
+  const found = hunt.filter(h => h.drops > 0).length, tries = hunt.reduce((n, h) => n + (h.tries || 0), 0), slots = Object.keys(bySlot).length;
+  const doll = `<div class="hdoll">
+      <div class="hcol">${DOLL_L.map(k => tile(k, 'l')).join('')}</div>
+      <div class="hmid"><img src="Dropamine-Logo.png" alt="" width="64" height="64"><div class="hbig"><b>${found}</b> / ${hunt.length}</div><p>${t('hsFound')}</p>
+        <p class="hsm">${t('hsTries', { n: fmt(tries) })} · ${t('hsSlots', { n: slots })}</p>
+        <a class="btn gold" href="?p=runs" data-view-link="runs">${t('hsOrganise')}</a></div>
+      <div class="hcol r">${DOLL_R.map(k => tile(k, 'r')).join('')}</div>
+      <div class="hbot">${DOLL_B.map(k => tile(k, 'l')).join('')}</div></div>`;
+  const rows = hunt.map(h => { const s = bestSrc(h.id);
+    return `<li class="${h.drops ? 'got' : ''}">${itemChip(h.id)}<b style="color:${QCOL[ITEMS[h.id]?.q] || 'var(--cream)'}">${esc(huntName(h))}</b>
+      <span class="src">${s ? `${esc(bossName(s.b))} · ${esc(s.d.name)}` : ''}</span><span class="rt">${s?.rate ? t('hsRate', { r: rateTxt(s.rate) }) : t('hsRateNo')}</span>
+      <span class="st">${h.drops ? '✓ ' + t('huFound') : h.tries ? t('huTries', { n: fmt(h.tries) }) : t('hsToTry')}</span></li>`; }).join('');
+  const list = hunt.length ? `<ul class="hlist">${rows}</ul>` : `<p class="note">${t('hsEmpty')}</p>`;
+  return `<section class="cat hunt" id="sec-hunt">${catHead('hunt', t('dbHunt'), 'decl', t('hsSub'))}${doll}${list}${mine ? huntBuilder(p, hunt) : ''}</section>`;
+}
+function huntBuilder(p, hunt) {
+  const sug = huntSuggest(p), worn = wornBySlot(p), free = Math.max(0, 20 - hunt.length);
+  const order = [...DOLL_L, ...DOLL_R, ...DOLL_B].filter(k => sug[k]?.length);
+  const groups = order.map(k => { const w = (worn[k] || [])[0];
+    return `<section class="hsg"><h4>${t('slot.' + k)}${w ? `<small>${t('hsWorn')} ${itemChip(w)}${ITEMS?.[w]?.lv ? ' ' + t('hsIlvl', { n: ITEMS[w].lv }) : ''}</small>` : ''}</h4>
+      ${sug[k].map(x => `<label class="hopt"><input type="checkbox" data-hpick="${x.id}">${itemChip(x.id)}<span><b style="color:${QCOL[x.it.q]}">${esc(itemName(x.id))}</b>
+        <small>${esc(bossName(x.b))} · ${esc(x.d.name)}${x.rate ? ' · ' + rateTxt(x.rate) : ''}</small></span><i class="gain">${x.gain ? '+' + x.gain : t('hsIlvl', { n: x.it.lv })}</i></label>`).join('')}</section>`; }).join('');
+  return `<div class="hsug" data-free="${free}"><div class="cathead"><h3 class="sub">${t('hsSugT')}</h3><span class="cx2">${t('hsSugSub')}</span></div>
+    <p class="note">${p.gear?.length ? t('hsSugHow') : t('hsSugNoGear')}</p>
+    ${groups ? `<div class="hsug-grid">${groups}</div>` : `<p class="note">${t('hsSugNone')}</p>`}
+    <div class="hcode"><span data-hcount>${t('hsPicked', { n: 0 })} · ${t('hsFree', { n: free })}</span><code data-hcode>/drop chasse import …</code>
+      <button class="btn gold" type="button" data-hcopy disabled>${t('hsCmdCopy')}</button><small>${t('hsCodeHow')}</small></div></div>`;
+}
+// coches → commande d'import (identifiants en base 36) ; jamais plus que les places libres de la liste en jeu
+const b36 = n => Number(n).toString(36);
+document.addEventListener('change', e => {
+  const box = e.target.closest('.hsug'); if (!box || !e.target.matches('[data-hpick]')) return;
+  const free = +box.dataset.free, picked = [...box.querySelectorAll('[data-hpick]:checked')];
+  if (picked.length > free) { e.target.checked = false; picked.splice(picked.indexOf(e.target), 1); }
+  const ids = picked.map(x => +x.dataset.hpick), cmd = ids.length ? `/drop chasse import DROP-CH1:${ids.map(b36).join('.')}` : '/drop chasse import …';
+  box.querySelector('[data-hcount]').textContent = t('hsPicked', { n: ids.length }) + ' · ' + t('hsFree', { n: free });
+  box.querySelector('[data-hcode]').textContent = cmd;
+  box.querySelector('[data-hcopy]').disabled = !ids.length;
+});
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-hcopy]'); if (!b) return;
+  try { await navigator.clipboard.writeText(b.closest('.hsug').querySelector('[data-hcode]').textContent); b.textContent = t('copied'); setTimeout(() => { b.textContent = t('hsCmdCopy'); }, 1600); }
+  catch (err) { /* copie refusée : la commande reste lisible et sélectionnable */ }
+});
+
 function dropBook(p) {
   const d = p.dropamine || {}, parts = [];
   const bar = (x, y) => `<i class="lbar"><i style="width:${Math.min(100, 100 * x / Math.max(1, y)).toFixed(1)}%"></i></i>`;
@@ -876,7 +1026,7 @@ function dropBook(p) {
       .map(([k, v]) => `<div>${t(k)}<b>${typeof v === 'number' ? fmt(v) : v}</b></div>`).join('');
     parts.push(`<section class="db-card db-wide"><h4>${t('dbRec')}</h4><div class="ledger">${L}<div>${t('recTime')}<b>${playedText(r.playtime)}</b></div></div></section>`);
   }
-  if (d.hunt?.length) {
+  if (false) {
     const rows = d.hunt.map(h => `<li><span>${esc(h.name)}</span><em>${h.tries ? t('huTries', { n: fmt(h.tries) }) : ''}</em><b class="${h.drops ? 'ok' : ''}">${h.drops ? '✓ ' + (h.drops > 1 ? '×' + h.drops : t('huFound')) : '—'}</b></li>`).join('');
     parts.push(`<section class="db-card"><h4>${t('dbHunt')}</h4><ul class="db-list hunt">${rows}</ul></section>`);
   }
@@ -1109,10 +1259,27 @@ function runIcs(run) {
   const a = document.createElement('a'); a.download = `run-${run.dungeon}.ics`; a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })); a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
+// ---------- Chasse en groupe : recherche (texte, niveau, type, rôle manquant, moment), gardée dans le lien ----------
+const FOREVER_DUN = new Set(['ExcavationSiteWetlands', 'ShapersTerrace', 'TheAlcazPrison', 'TheBlackmawHold', 'TheCityOfDalaran', 'TheDrownedCity', 'TheHallOfThanes', 'TheKrolDokStronghold', 'TheRuinsOfLordaeron']);
+const isRaid = d => !(d.lvl || [])[0] || /Raid|Core|Lair|Naxx|Qiraj|Gurub|Hyjal|Blackwing|Onyxia|WorldBosses/i.test(d.key);
+const dunType = d => isRaid(d) ? 'raid' : FOREVER_DUN.has(d.key) ? 'forever' : 'dungeon';
+const fold = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const LV_BANDS = [10, 20, 30, 40, 50];
+function lvlMatch(d, me) {
+  const hl = state.hl; if (!hl) return true;
+  if (hl === 'me') return me.some(p => fitOf(p, d) === 'ok');
+  const [lo, , hi] = d.lvl || [], b = +hl;
+  return lo ? lo <= b + 9 && hi >= b : b >= 50;   // raids : avec la tranche 50-60
+}
+// tous les mots cherchés doivent se trouver quelque part dans le texte de la carte
+const textMatch = hay => { const q = fold(state.hq).split(/\s+/).filter(Boolean); if (!q.length) return true; const h = fold(hay); return q.every(w => h.includes(w)); };
+const dunText = d => [d.name, ...d.bosses.map(b => b.n.join(' '))].join(' ');
+const huntsText = p => (p?.dropamine?.hunt || []).map(h => huntName(h) + ' ' + itemName(h.id)).join(' ');
+const searchActive = () => !!(state.hq || state.hl || state.ht || state.hr || state.hw || (state.pf && state.pf !== 'all'));
 function renderRuns() {
   const box = $('#runs-panel');
   if (!LOOT || !ITEMS || !ART) {
-    box.innerHTML = `<div class="empty">${t('loading')}</div>`;
+    box.innerHTML = loadingBox();
     Promise.all([loadLoot(), loadItems(), loadArt(), loadRuns()]).then(() => { if (state.view === 'runs') { renderRuns(); animate($('#runs')); } });
     return;
   }
@@ -1123,8 +1290,10 @@ function renderRuns() {
   let list = scope === 'guild' && myGuild ? all.filter(p => p.guild?.slug === myGuild.slug) : all, note = '';
   if (scope === 'guild' && myGuild && !list.length) { list = all; note = `<p class="note runs-note">${t('runsNoGuild')}</p>`; }
   let runs = runsData(list);
-  if (state.rlvl && me.length) runs = runs.filter(x => me.some(p => fitOf(p, x.d) === 'ok'));
-  const chips = `<div class="chips" role="group">${myGuild ? `<span class="chip ${scope === 'guild' ? 'on' : ''}" data-rscope="guild">${t('runsGuild')} · ${esc(myGuild.name)}</span>` : ''}<span class="chip ${scope === 'all' ? 'on' : ''}" data-rscope="all">${t('runsAll')}</span>${me.length ? `<span class="chip ${state.rlvl ? 'on' : ''}" data-rlvl>${t('runsMyLvl')}</span>` : ''}</div>`;
+  if (state.rlvl && me.length && !state.hl) runs = runs.filter(x => me.some(p => fitOf(p, x.d) === 'ok'));
+  runs = runs.filter(x => lvlMatch(x.d, me) && (!state.ht || dunType(x.d) === state.ht)
+    && textMatch(dunText(x.d) + ' ' + [...x.people.keys()].map(p => p.name + ' ' + (p.guild?.name || '') + ' ' + huntsText(p)).join(' ')));
+  const chips = `<div class="chips" role="group">${myGuild ? `<span class="chip ${scope === 'guild' ? 'on' : ''}" data-rscope="guild">${t('runsGuild')} · ${esc(myGuild.name)}</span>` : ''}<span class="chip ${scope === 'all' ? 'on' : ''}" data-rscope="all">${t('runsAll')}</span></div>`;
 
   // runs prévus (API) : ce que chaque inscrit chasse dans ce donjon
   const byKey = new Map(DATA.players.map(p => [pkey(p), p]));
@@ -1137,14 +1306,29 @@ function renderRuns() {
   const pf = state.pf || 'all', pd = state.pd || '';
   const filtered = allRuns.filter(run => (pf !== 'mine' || run.members.some(m => mineKeys.has(m.key)))
     && (pf !== 'open' || (() => { const l = { tank: 1, heal: 1, dps: 3 }; run.members.forEach(m => l[m.role]--); return l.tank > 0 || l.heal > 0 || l.dps > 0; })())
-    && (!pd || run.dungeon === pd));
+    && (!pd || run.dungeon === pd)
+    && (() => { const d = LOOT.dungeons.find(x => x.key === run.dungeon); if (!d) return false;
+      if (!lvlMatch(d, me) || (state.ht && dunType(d) !== state.ht)) return false;
+      if (state.hr) { if (isRaid(d)) return false; const l = { tank: 1, heal: 1, dps: 3 }; run.members.forEach(m => l[m.role]--); if (l[state.hr] <= 0) return false; }
+      if (state.hw) { const at = Date.parse(run.at), end = new Date(); end.setHours(23, 59, 59, 999); if (at > (state.hw === 'today' ? end.getTime() : Date.now() + 7 * 864e5)) return false; }
+      return textMatch(dunText(d) + ' ' + (run.note || '') + ' ' + run.members.map(m => { const p = byKey.get(m.key); return (p ? p.name + ' ' + huntsText(p) : m.key); }).join(' ')); })());
   const plimit = state.plimit || 10, page = filtered.slice(0, plimit);
   const dayKey = iso => new Date(iso).toDateString();
   const dayTitle = iso => { const d = new Date(iso), diff = Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 864e5);
     return diff <= 0 ? t('dayToday') : diff === 1 ? t('dayTomorrow') : d.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' }); };
   const dunsWithRuns = [...new Set(allRuns.map(x => x.dungeon))].map(k => LOOT.dungeons.find(d => d.key === k)).filter(Boolean);
-  const pfilters = allRuns.length > 1 ? `<div class="pfil chips">${[['all', 'pfAll'], ...(me.length ? [['mine', 'pfMine']] : []), ['open', 'pfOpen']].map(([k, l]) => `<span class="chip ${pf === k ? 'on' : ''}" data-pf="${k}">${t(l)}</span>`).join('')}
+  const pfiltersOld = allRuns.length > 1 ? `<div class="pfil chips">${[['all', 'pfAll'], ...(me.length ? [['mine', 'pfMine']] : []), ['open', 'pfOpen']].map(([k, l]) => `<span class="chip ${pf === k ? 'on' : ''}" data-pf="${k}">${t(l)}</span>`).join('')}
     ${dunsWithRuns.length > 1 ? `<select data-pd><option value="">${t('pfAllDun')}</option>${dunsWithRuns.map(d => `<option value="${esc(d.key)}"${pd === d.key ? ' selected' : ''}>${esc(d.name)}</option>`).join('')}</select>` : ''}<span class="pcount">${t('pfCount', { n: filtered.length })}</span></div>` : '';
+  const opt = (k, v, label) => `<option value="${v}"${(state[k] || '') === v ? ' selected' : ''}>${label}</option>`;
+  const pfilters = `<div class="hsearch" role="search">
+      <label class="hs-q"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" data-hq value="${esc(state.hq || '')}" placeholder="${t('hsQ')}" aria-label="${t('hsQ')}"></label>
+      <select data-hf="hl" aria-label="${t('hsLvl')}">${opt('hl', '', t('hsLvlAll'))}${me.length ? opt('hl', 'me', t('hsLvlMe')) : ''}${LV_BANDS.map(b => opt('hl', String(b), t('hsLvlBand', { a: b, b: b + 10 }))).join('')}</select>
+      <select data-hf="ht" aria-label="${t('hsType')}">${opt('ht', '', t('hsTypeAll'))}${opt('ht', 'dungeon', t('hsTypeDun'))}${opt('ht', 'forever', t('hsTypeFor'))}${opt('ht', 'raid', t('hsTypeRaid'))}</select>
+      <select data-hf="hr" aria-label="${t('hsRole')}">${opt('hr', '', t('hsRoleAll'))}${['tank', 'heal', 'dps'].map(x => opt('hr', x, t('hsNeed.' + x))).join('')}</select>
+      <select data-hf="hw" aria-label="${t('hsWhen')}">${opt('hw', '', t('hsWhenAll'))}${opt('hw', 'today', t('dayToday'))}${opt('hw', 'week', t('hsWhenWeek'))}</select>
+      <div class="hs-row">${[['all', 'pfAll'], ...(me.length ? [['mine', 'pfMine']] : []), ['open', 'pfOpen']].map(([k, l]) => `<span class="chip ${pf === k ? 'on' : ''}" data-pf="${k}">${t(l)}</span>`).join('')}
+        <span class="pcount">${t('pfCount', { n: filtered.length })}</span>${searchActive() ? `<button class="lnk" type="button" data-hreset>${t('hsReset')}</button>` : ''}</div></div>`;
   let lastDay = '';
   const planned = page.map(run => {
     const dk = dayKey(run.at), head = dk !== lastDay ? `<h4 class="day">${dayTitle(run.at)}</h4>` : ''; lastDay = dk;
@@ -1188,7 +1372,7 @@ function renderRuns() {
         ${!me.length ? `<small>${t('runLogin')}</small>` : ''}</div></div>`;
   }
   const plannedBlock = `<section class="planned"><div class="cathead"><h3 class="sub">${t('runsPlanned')}</h3>${RUNS === null ? `<span class="cx2">${t('runsApiDown')}</span>` : ''}</div>
-    ${state.runMsg ? `<p class="msg">${state.runMsg}</p>` : ''}${pfilters}${planned || `<p class="note">${allRuns.length ? t('pfNone') : t('runsNone')}</p>`}</section>`;
+    ${state.runMsg ? `<p class="msg">${state.runMsg}</p>` : ''}${planned || `<p class="note">${allRuns.length ? t('pfNone') : t('runsNone')}</p>`}</section>`;
 
   const card = run => {
     const [lo, , hi] = run.d.lvl || [];
@@ -1214,12 +1398,27 @@ function renderRuns() {
       <div class="rf"><span class="glabel">${t('runsGroup')}</span>${gp('tank', g.tank)}${gp('heal', g.heal)}${g.dps.map(p => gp('dps', p)).join('')}${form}</div></div>`;
   };
   box.innerHTML = `<div class="head"><h2>${t('runsT')}</h2><span class="note">${t('runsNote')} · Forever ${state.region.toUpperCase()}</span></div>
-    ${chips}${note}${plannedBlock}
+    ${chips}${pfilters}${note}${plannedBlock}
     <div class="cathead" style="margin-top:22px"><h3 class="sub">${t('runsIdeas')}</h3><span class="cx2">${t('runsIdeasNote')}</span></div>
-    ${runs.length ? `<div class="runs">${runs.slice(0, state.ilimit || 8).map(card).join('')}</div>${runs.length > (state.ilimit || 8) ? `<button class="btn ghost more" data-imore>${t('runMoreDun', { n: runs.length - (state.ilimit || 8) })}</button>` : ''}` : `<div class="empty"><b>${t('runsEmptyT')}</b>${t('runsEmpty')}</div>`}
+    ${!runs.length && searchActive() ? `<p class="note">${t('hsNone')}</p>` : ''}${runs.length ? `<div class="runs">${runs.slice(0, state.ilimit || 8).map(card).join('')}</div>${runs.length > (state.ilimit || 8) ? `<button class="btn ghost more" data-imore>${t('runMoreDun', { n: runs.length - (state.ilimit || 8) })}</button>` : ''}` : `<div class="empty"><b>${t('runsEmptyT')}</b>${t('runsEmpty')}</div>`}
     <p class="runs-src">${t('runsSrc')}</p>`;
   if (state.runFocus && !state.runFocused) { const el = document.getElementById('run-' + state.runFocus); if (el) { state.runFocused = true; el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } }
 }
+document.addEventListener('input', e => {
+  const q = e.target.closest('[data-hq]'); if (!q) return;
+  clearTimeout(renderRuns.t); renderRuns.t = setTimeout(() => {
+    state.hq = q.value.trim(); state.plimit = 10; state.ilimit = 8; renderRuns(); writeUrl(false);
+    const n = $('[data-hq]'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); }
+  }, 220);
+});
+document.addEventListener('change', e => {
+  const f = e.target.closest('[data-hf]'); if (!f) return;
+  state[f.dataset.hf] = f.value; state.plimit = 10; state.ilimit = 8; renderRuns(); writeUrl(false);
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('[data-hreset]')) return;
+  Object.assign(state, { hq: '', hl: '', ht: '', hr: '', hw: '', pf: 'all', plimit: 10, ilimit: 8 }); renderRuns(); writeUrl(false);
+});
 // actions : filtres, proposer, rejoindre, quitter
 async function runAction(path, body) {
   try {
@@ -1265,10 +1464,10 @@ document.addEventListener('change', e => {
 /* ---------- Nouveautés ---------- */
 function renderNews() {
   const box = $('#news-list');
-  if (!NEWS) { box.innerHTML = `<div class="empty">${t('loading')}</div>`; return; }
+  if (!NEWS) { box.innerHTML = loadingBox(); return; }
   if (!NEWS.versions?.length) { box.innerHTML = `<div class="empty"><b>${t('newsFailT')}</b>${t('newsFail')}</div>`; return; }
   box.innerHTML = NEWS.versions.map((v, i) => `
-    <div class="release${i > 1 ? ' more' : ''}">
+    <div class="release${i > 1 ? ' folded' : ''}">
       <div class="ver">${esc(v.version)}${i === 0 ? `<small>${t('latest')}</small>` : ''}</div>
       <div>${v.sections.map(s => `${s.title ? `<h4>${esc(s.title.toUpperCase())}</h4>` : ''}<ul>${s.items.map(x => `<li>${x}</li>`).join('')}</ul>`).join('')}
         ${i > 1 ? `<span class="toggle">${t('showMore')}</span>` : ''}</div>
@@ -1277,7 +1476,7 @@ function renderNews() {
 }
 document.addEventListener('click', e => { const a = e.target.closest('[data-sec]'); if (!a) return; e.preventDefault(); document.getElementById(a.dataset.sec)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); });
 document.addEventListener('change', e => { const sel = e.target.closest('[data-gs]'); if (!sel) return; state.gs = sel.value; renderGuild(); animate($('#guild-panel')); });
-document.addEventListener('click', e => { const x = e.target.closest('.release.more .toggle'); if (x) { x.closest('.release').classList.remove('more'); x.remove(); } });
+document.addEventListener('click', e => { const x = e.target.closest('.release.folded .toggle'); if (x) { x.closest('.release').classList.remove('folded'); x.remove(); } });
 
 /* ---------- Texte fixe traduit (data-t) et pied de page ---------- */
 function applyStatic() {
@@ -1445,6 +1644,7 @@ function readUrl() {
   state.region = ['eu', 'us', 'tw'].includes(q.get('r')) ? q.get('r') : 'eu';
   state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0;
   state.c = q.get('c') || state.c; state.g = q.get('g') || '';
+  if (state.view === 'runs') Object.assign(state, { hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
 }
 function writeUrl(push) {
   if (SHOT) return;
@@ -1454,6 +1654,7 @@ function writeUrl(push) {
   if (state.view === 'rank') { if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
   if (state.view === 'char' && state.c) q.set('c', state.c);
   if (state.view === 'guild' && state.g) q.set('g', state.g);
+  if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.runFocus) q.set('run', state.runFocus); }
   history[push ? 'pushState' : 'replaceState'](null, '', q.toString() ? '?' + q : location.pathname);
 }
 const RENDER = { rank: renderRank, char: renderChar, guild: renderGuild, runs: renderRuns, news: renderNews, join: () => Bnet.show() };
@@ -1582,3 +1783,21 @@ document.addEventListener('click', async e => {
   if (installEvt) { installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; e.target.closest('#install').hidden = true; }
 });
 document.fonts?.ready.then(fitNav);
+// captures de test, sur le poste de développement seulement : ?as=eu/ray-kuilu affiche le site « connecté » avec ce personnage
+if (location.hostname === 'localhost' && new URLSearchParams(location.search).get('as')) {
+  const as = new URLSearchParams(location.search).get('as');
+  Bnet.isMine = p => !!p && pkey(p) === as; Bnet.mine = () => DATA.players.filter(p => pkey(p) === as); Bnet.best = () => as;
+}
+// captures de test (localhost) : ?go=sec-hunt montre la page à partir de cette section
+if (location.hostname === 'localhost' && new URLSearchParams(location.search).get('go'))
+  setInterval(() => { const el = document.getElementById(new URLSearchParams(location.search).get('go')); if (!el) return;
+    // les captures sans fenêtre ne défilent pas : on masque ce qui précède la section
+    for (let n = el; n && n !== document.body; n = n.parentElement) { let x = n.previousElementSibling; while (x) { if (!x.matches('.sprite,script')) x.style.display = 'none'; x = x.previousElementSibling; } } }, 400);
+
+// goutte d'ouverture : levée après ~1,1 s (le temps qu'elle se remplisse), puis retirée
+if (!document.documentElement.classList.contains('nosplash')) setTimeout(() => {
+  document.documentElement.classList.add('ready'); setTimeout(() => $('#splash')?.remove(), 700);
+}, Math.max(250, 1150 - performance.now()));
+else $('#splash')?.remove();
+// captures de test (localhost) : ?img=1 ouvre l'image Hiscores du personnage affiché
+if (location.hostname === 'localhost' && new URLSearchParams(location.search).get('img')) setTimeout(() => $('[data-hsimg]')?.click(), 3500);
