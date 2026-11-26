@@ -1216,3 +1216,9 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .pvweeks li span{font-size:12px;color:var(--faint)}
 .pvweeks li b{font-size:20px;color:var(--gold)}
 .pvweeks li small{font-size:12px;color:var(--muted)}
+
+/* ligne collée en attente de l'armurerie : même couleur, plus discret */
+.pend{opacity:.6;font-style:italic}
+.sbar{position:relative}
+.sbar i.pend{position:absolute;left:0;top:0;bottom:0;opacity:.35;font-style:normal}
+.pendnote{margin-top:4px;font-size:13px;font-style:italic;color:var(--muted);opacity:.85}

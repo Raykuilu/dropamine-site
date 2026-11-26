@@ -84,6 +84,9 @@ const I18N = {
   'foot.trfb': ['Report a translation mistake', 'Signaler une erreur de traduction'], trfbTitle: ['Translation mistake', 'Erreur de traduction'],
   trfbBody: ['Thanks for helping! Copy the wrong text and write the right one (site or addon).', 'Merci de ton aide ! Copie le texte faux et écris le bon (site ou addon).'],
   trfbPage: ['Page:', 'Page :'], trfbLang: ['Language:', 'Langue :'], trfbWrong: ['Wrong text:', 'Texte faux :'], trfbRight: ['Right text:', 'Bon texte :'],
+  pendTitle: ['From your /drop hiscores line, waiting for the armory', 'De ta ligne /drop hiscores, en attente de l’armurerie'],
+  pendTip: ['{v} in your line, waiting for the armory', '{v} dans ta ligne, en attente de l’armurerie'],
+  pendTotal: ['+{n} from your line, waiting for the armory', '+{n} de ta ligne, en attente de l’armurerie'],
   hpkOk: ['armory', 'armurerie'], hpkOkTip: ['Kills checked against the Blizzard armory (last 7 days)', 'Victoires recoupées avec l’armurerie Blizzard (7 derniers jours)'],
   hpkPend: ['not checked yet', 'pas encore vérifié'], hpkPendTip: ['Checked against the Blizzard armory after a few days of history', 'Recoupé avec l’armurerie Blizzard après quelques jours d’historique'], duelsNote: ['won – lost', 'gagnés – perdus'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE PROGRESS', 'PROGRESSION DROPAMINE'],
   trust: ['Sent by the players with their Dropamine export: based on trust.', 'Envoyé par les joueurs avec leur ligne Dropamine : basé sur la confiance.'],
@@ -722,8 +725,35 @@ function chartSvg(hist) {
    Ordre de l'addon : Niveau, armes, Défense, métiers. Survol = infobulle façon jeu. */
 const TIER = [[75, ['Apprentice', 'Apprenti']], [150, ['Journeyman', 'Compagnon']], [225, ['Expert', 'Expert']], [300, ['Artisan', 'Artisan']]];
 const tierOf = max => L2((TIER.find(([m]) => max <= m) || TIER[3])[1]);
+// Ligne /drop hiscores collée : ses chiffres s'affichent aussitôt sur sa fiche, en discret (« en attente de l'armurerie »),
+// jusqu'au prochain relevé du site ; le classement reste celui de l'armurerie.
+const PROF_OF = { alchemy: 171, blacksmithing: 164, enchanting: 333, engineering: 202, herbalism: 182, leatherworking: 165, mining: 186,
+  skinning: 393, tailoring: 197, cooking: 185, fishing: 356, firstaid: 129 };
+function parsePendingLine(line) {
+  const f = {};
+  for (const part of String(line).split(/\r?\n/)[0].split(';')) { const i = part.indexOf('='); if (i > 0) f[part.slice(0, i).replace(/^DROPAMINE-HS1:/, '')] = part.slice(i + 1); }
+  const pairs = s => Object.fromEntries(String(s || '').split(',').map(x => x.split('=')).filter(x => x.length === 2 && /^\d+$/.test(x[1])).map(([k, v]) => [k, +v]));
+  const prof = {}; for (const [k, v] of Object.entries(pairs(f.p))) if (PROF_OF[k] && v > 0) prof[PROF_OF[k]] = v;
+  return { at: Date.now(), name: f.n, level: +f.l || 0, defense: +f.d || 0, prof, w: pairs(f.w) };
+}
+const pendKey = k => 'pendline:' + k;
+function pendingOf(p) {
+  let x = null; try { x = JSON.parse(localStorage.getItem(pendKey(pkey(p))) || 'null'); } catch (e) { return null; }
+  if (!x) return null;
+  if (DATA.updated && Date.parse(DATA.updated) > x.at) { try { localStorage.removeItem(pendKey(pkey(p))); } catch (e) { /* rien */ } return null; }   // relevé plus récent : fini
+  return x;
+}
 // Une compétence de la fiche : même données pour la liste et pour la grille
 function skillItems(p, peers) {
+  const items = skillItems0(p, peers), pend = Bnet.isMine(pkey(p)) ? pendingOf(p) : null;
+  if (!pend) return items;
+  for (const it of items) {
+    const v = it.key === 'level' ? pend.level : it.key === 'defense' ? pend.defense : it.key[0] === 'p' ? pend.prof[+it.key.slice(1)] : it.key[0] === 'w' ? pend.w[it.key.slice(1)] : null;
+    if (v && v > it.rank) it.pend = v;
+  }
+  return items;
+}
+function skillItems0(p, peers) {
   const place = sk => rankBy(sk, peers).find(x => x.p === p)?.r;
   const items = [{ key: 'level', ava: p.avatar, name: t('level'), rank: p.level, max: 60, group: 'lvl', r: place(skillById('level')) }];
   const used = new Set(p.equipped || []);
@@ -741,18 +771,19 @@ function skillItems(p, peers) {
 }
 const tipOf = it => `<b>${esc(it.name)}</b><span>${it.key === 'level' ? `${it.rank} / ${it.max}` : t('tipRank', { r: it.rank, m: it.max })}</span>`
   + (it.tier ? `<span class="tier">${esc(it.tier)}</span>` : '') + (it.r ? `<span class="rk">${t('tipPlace', { r: ord(it.r) })}</span>` : '')
-  + (it.est ? `<span class="est">${t('tipEst')}</span>` : '') + (it.spare ? `<span class="est">${t('tipSpare')}</span>` : '');
+  + (it.est ? `<span class="est">${t('tipEst')}</span>` : '') + (it.spare ? `<span class="est">${t('tipSpare')}</span>` : '')
+  + (it.pend ? `<span class="est">${t('pendTip', { v: it.pend })}</span>` : '');
 // l'icône : le portrait du personnage pour le niveau, l'icône du jeu pour le reste
 const pic = it => it.key === 'level'
   ? (it.ava ? `<img src="${esc(it.ava)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="logo"></span>')
   : `<img src="${icon(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer">`;
 const tileOf = it => `<div class="tile g-${it.group}${it.est ? ' est' : ''}${it.spare ? ' spare' : ''}" tabindex="0" data-tip="${esc(tipOf(it))}" aria-label="${esc(it.name)} ${it.rank} / ${it.max}">`
-  + pic(it) + `<span class="num"><b>${it.rank}</b><small>/${it.max}</small></span></div>`;
+  + pic(it) + `<span class="num"><b${it.pend ? ' class="pend"' : ''}>${it.pend || it.rank}</b><small>/${it.max}</small></span></div>`;
 const lineOf = it => `<div class="sline g-${it.group}${it.est ? ' est' : ''}${it.spare ? ' spare' : ''}" tabindex="0" data-tip="${esc(tipOf(it))}">
   <span class="sic2">${pic(it)}</span>
   <span class="snm"><b>${esc(it.name)}</b>${it.tier ? `<small>${esc(it.tier)}</small>` : it.est ? `<small>${t('est')}</small>` : ''}</span>
-  <span class="sbar"><i style="--w:${Math.min(100, 100 * it.rank / it.max).toFixed(1)}%"></i></span>
-  <span class="sv"><b>${it.rank}</b><small> / ${it.max}</small></span>
+  <span class="sbar"><i style="--w:${Math.min(100, 100 * it.rank / it.max).toFixed(1)}%"></i>${it.pend ? `<i class="pend" style="--w:${Math.min(100, 100 * it.pend / it.max).toFixed(1)}%"></i>` : ''}</span>
+  <span class="sv"><b${it.pend ? ` class="pend" title="${esc(t('pendTitle'))}"` : ''}>${it.pend || it.rank}</b><small> / ${it.max}</small></span>
   <span class="spl">${it.r ? ord(it.r) : ''}</span></div>`;
 let SKVIEW = (() => { try { return localStorage.getItem('skview') === 'grid' ? 'grid' : 'list'; } catch (e) { return 'list'; } })();
 let SHOW_SPARE = false;
@@ -829,7 +860,8 @@ function renderChar() {
       <div><h2>${full(p)}</h2><p>${desc} · ${t('levelN', { n: p.level })}${p.guild ? ` · <a href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${esc(p.guild.name)}</a>` : ''} · ${esc((p.region || 'eu').toUpperCase())}${rulesetName(p) ? ' ' + esc(rulesetName(p)) : ''}</p>
         ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t('previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}
         <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button><button class="share hsb" type="button" data-hsimg="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h8"/></svg><span>${t('hsBtn')}</span></button>${freshLine(p)}</div>
-      <div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n" data-n="${p.total}">${fmt(p.total)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div></div>
+      <div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n" data-n="${p.total}">${fmt(p.total)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div>${(() => { const its = Bnet.isMine(pkey(p)) ? skillItems(p, []) : []; const d = its.reduce((n, it) => n + (it.pend ? it.pend - it.rank : 0), 0);
+    return d > 0 ? `<div class="pendnote">${t('pendTotal', { n: fmt(d) })}</div>` : ''; })()}</div>
     </div>
     ${secNav(p)}
     <div id="sec-skills">${skillsBlock(p, peers)}</div>
@@ -2020,7 +2052,7 @@ const Bnet = (() => {
       try {
         const r = await call('/upload', { line }), j = await r.json();
         upMsg = r.ok ? t('upOk', { w: fmt(j.weapons), n: j.count }) : L2(I18N.upErr[j.error] || I18N.bnError);
-        if (r.ok) Ribbon.swell(.8);
+        if (r.ok) { Ribbon.swell(.8); if (j.key) { try { localStorage.setItem(pendKey(j.key), JSON.stringify(parsePendingLine(line))); } catch (e) { /* stockage indisponible */ } } }
       } catch { upMsg = t('bnError'); }
       await load(); draw(); header(); return;
     }

@@ -497,7 +497,10 @@
   "trfbPage": "Página:",
   "trfbLang": "Idioma:",
   "trfbWrong": "Texto errado:",
-  "trfbRight": "Texto certo:"
+  "trfbRight": "Texto certo:",
+  "pendTitle": "Da sua linha /drop hiscores, aguardando o arsenal",
+  "pendTip": "{v} na sua linha, aguardando o arsenal",
+  "pendTotal": "+{n} da sua linha, aguardando o arsenal"
  },
  "names": {
   "Leatherworking": "Couraria",

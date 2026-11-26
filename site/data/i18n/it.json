@@ -497,7 +497,10 @@
   "trfbPage": "Pagina:",
   "trfbLang": "Lingua:",
   "trfbWrong": "Testo sbagliato:",
-  "trfbRight": "Testo giusto:"
+  "trfbRight": "Testo giusto:",
+  "pendTitle": "Dalla tua riga /drop hiscores, in attesa dell'armeria",
+  "pendTip": "{v} nella tua riga, in attesa dell'armeria",
+  "pendTotal": "+{n} dalla tua riga, in attesa dell'armeria"
  },
  "names": {
   "Leatherworking": "Conciatura",

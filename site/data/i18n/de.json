@@ -497,7 +497,10 @@
   "trfbPage": "Seite:",
   "trfbLang": "Sprache:",
   "trfbWrong": "Falscher Text:",
-  "trfbRight": "Richtiger Text:"
+  "trfbRight": "Richtiger Text:",
+  "pendTitle": "Aus deiner /drop hiscores-Zeile, wartet auf das Arsenal",
+  "pendTip": "{v} in deiner Zeile, wartet auf das Arsenal",
+  "pendTotal": "+{n} aus deiner Zeile, wartet auf das Arsenal"
  },
  "names": {
   "Leatherworking": "Lederverarbeitung",

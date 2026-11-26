@@ -497,7 +497,10 @@
   "trfbPage": "Página:",
   "trfbLang": "Idioma:",
   "trfbWrong": "Texto erróneo:",
-  "trfbRight": "Texto correcto:"
+  "trfbRight": "Texto correcto:",
+  "pendTitle": "De tu línea /drop hiscores, a la espera de la armería",
+  "pendTip": "{v} en tu línea, a la espera de la armería",
+  "pendTotal": "+{n} de tu línea, a la espera de la armería"
  },
  "names": {
   "Leatherworking": "Peletería",
