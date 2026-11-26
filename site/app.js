@@ -212,6 +212,7 @@ const raceName = p => L2(RACE[p.raceId]) || (p.race || '').toLowerCase();
 const rulesetName = p => L2((RULESETS.find(([id]) => id === p.rulesetId) || [])[1]) || p.ruleset || '';
 const PROF_ORDER = [393, 186, 182, 171, 164, 333, 202, 165, 197, 185, 356, 129];
 const STAT_KEYS = ['killingBlows', 'kills', 'quests', 'dungeons', 'flights'];   // les VH sont dans la catégorie JcJ
+const STAT_ICON = { killingBlows: 'ability_backstab', kills: 'inv_misc_bone_skull_02', quests: 'inv_misc_book_08', dungeons: 'inv_misc_key_10', flights: 'ability_mount_gryphon_01' };
 const armoryStat = (p, k) => k === 'hk' ? (p.stats?.hk ?? p.pvpArmory?.hk ?? null) : (p.stats?.[k] ?? null);
 // Même référentiel que l'addon (Catalog.lua de Dropamine) : noms, icônes et ordre des armes
 const WPN = { axes: ['One-Handed Axes', 'Haches', 'inv_axe_01'], axes2h: ['Two-Handed Axes', 'Haches à deux mains', 'inv_axe_09'],
@@ -251,7 +252,7 @@ const SKILLS = [
     get: p => p.stats?.duelsWon ?? null, show: (v, p) => `${fmt(v)}<small> – ${fmt(p.stats.duelsLost || 0)}</small>`,
     ratio: (v, p) => v / ((v + (p.stats.duelsLost || 0)) || 1) },
   { id: 'pvprank', group: 'pvp', label: () => t('pvpRank'), max: '', icon: 'inv_misc_tabardpvp_01', get: p => p.pvpArmory?.rank || null },
-  ...STAT_KEYS.map(k => ({ id: k, group: 'stat', label: () => t(k), max: '', get: p => armoryStat(p, k) })),
+  ...STAT_KEYS.map(k => ({ id: k, group: 'stat', label: () => t(k), max: '', icon: STAT_ICON[k], get: p => armoryStat(p, k) })),
   // carnet Dropamine : déclaré par le joueur avec sa ligne /drop hiscores (sur la confiance), sauf les VH (armurerie)
   { id: 'clog', group: 'book', label: () => t('dbLog'), max: '', icon: 'inv_box_02', get: p => p.dropamine?.collection?.x ?? null,
     show: (v, p) => `${fmt(v)}<small> / ${fmt(p.dropamine.collection.y)}</small>`, ratio: (v, p) => v / p.dropamine.collection.y },
