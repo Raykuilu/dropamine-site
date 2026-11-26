@@ -575,6 +575,16 @@ function renderHome() {
 }
 
 /* ---------- Classement ---------- */
+// groupes de compétences ouverts (retenus sur cet appareil)
+const skFoldKey = 'dropamine.skgroups';
+const skFoldGet = () => { try { return JSON.parse(localStorage.getItem(skFoldKey)) || {}; } catch { return {}; } };
+const skFold = g => !!skFoldGet()[g];
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-sgt]'); if (!b) return;
+  const box = b.parentElement, open = box.classList.toggle('shut') === false;
+  b.setAttribute('aria-expanded', open);
+  const m = skFoldGet(); m[b.dataset.sgt] = open; try { localStorage.setItem(skFoldKey, JSON.stringify(m)); } catch {}
+});
 function renderRank() {
   if (DATA.failed) { $('#rank-panel').innerHTML = failed(); return; }
   const sk = skillById(state.skill), region = inRegion();
@@ -583,8 +593,16 @@ function renderRank() {
   const classes = [...new Set(byRs.map(p => p.classId).filter(Boolean))].sort((a, b) => L2(CLASS[a]).localeCompare(L2(CLASS[b])));
   let nav = '', grp;
   // comme la grille de l'addon : chaque compétence avec son icône ; une arme n'apparaît que si quelqu'un la pratique
-  SKILLS.filter(s => !(s.wpn || s.group === 'book') || s.id === sk.id || region.some(p => s.get(p))).forEach(s => {
-    if (s.group !== grp) { grp = s.group; if (grp) nav += `<div class="grp"><i class="dot" style="background:${GROUP_COLOR[grp]}"></i>${t('g.' + grp)}</div>`; }
+  // groupes pliables (Armes, Métiers…) : le groupe de la compétence affichée reste ouvert, les autres suivent le choix du joueur
+  const shown = SKILLS.filter(s => !(s.wpn || s.group === 'book') || s.id === sk.id || region.some(p => s.get(p)));
+  shown.forEach(s => {
+    if (s.group !== grp) {
+      if (grp) nav += '</div>';
+      grp = s.group;
+      if (grp) { const n = shown.filter(x => x.group === grp).length, open = grp === sk.group || n < 3 || skFold(grp);
+        nav += `<div class="sg${open ? '' : ' shut'}"><button type="button" class="grp" data-sgt="${grp}" aria-expanded="${open}"><i class="dot" style="background:${GROUP_COLOR[grp]}"></i>${t('g.' + grp)}<span class="sgn">${n}</span><i class="chev" aria-hidden="true"></i></button>`; }
+      else nav += '<div class="sg">';
+    }
     const ic = s.logo || s.id === 'total' ? '<i class="sic logo"></i>' : s.icon ? `<img class="sic" src="${icon(s.icon)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<i class="sic none"></i>';
     nav += `<a href="?p=rank&s=${s.id}" data-skill="${s.id}" class="${s.id === sk.id ? 'on' : ''}">${ic}<span class="lb">${s.label()}</span> <span>${s.max}</span></a>`;
   });
@@ -613,7 +631,7 @@ function renderRank() {
     <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
     <div class="chips" role="group">${rsChips}</div>
     <div class="board">
-      <nav class="skills">${nav}</nav>
+      <nav class="skills">${nav}</div></nav>
       <div>
         <div class="chips" role="group" style="margin:0 0 12px">${clsChips}</div>
         <div class="rows" role="table">
@@ -1304,10 +1322,11 @@ function runsData(players) {
 // groupe suggéré : un tank, un soigneur, trois dégâts, parmi les gens du bon niveau d'abord
 function suggestGroup(people) {
   const pool = [...people].sort(([, a], [, b]) => (a.fit === 'ok' ? 0 : 1) - (b.fit === 'ok' ? 0 : 1) || b.hunts.length - a.hunts.length).map(([p]) => p);
+  const said = (p, role) => p.role === role ? 0 : 1;   // rôle déclaré (données de démo) : passe en premier
   const fitRank = p => (people.get ? people.get(p) : new Map(people).get(p))?.fit === 'low' ? 1 : 0;   // trop bas : en dernier ; au-dessus : peut porter le groupe
   const used = new Set(), pick = role => {
     const p = pool.filter(x => !used.has(x) && ROLE_OK[role].includes(x.classId))
-      .sort((x, y) => fitRank(x) - fitRank(y) || ROLE_OK[role].indexOf(x.classId) - ROLE_OK[role].indexOf(y.classId))[0];
+      .sort((x, y) => said(x, role) - said(y, role) || fitRank(x) - fitRank(y) || ROLE_OK[role].indexOf(x.classId) - ROLE_OK[role].indexOf(y.classId))[0];
     if (p) used.add(p); return p;
   };
   const tank = pick('tank'), heal = pick('heal'), dps = pool.filter(x => !used.has(x)).slice(0, 3);
@@ -1875,7 +1894,9 @@ const Bnet = (() => {
     const a = $('#acct'); if (!a) return;
     const tag = me?.battletag ? me.battletag.split('#')[0] : '';
     a.classList.toggle('on', !!me);
-    a.querySelector('span').textContent = tag || t('acct.in');
+    // connecté : le BattleTag, que la traduction de la page ne doit pas réécrire en « Se connecter »
+    const sp = a.querySelector('span'); if (tag) sp.removeAttribute('data-t'); else sp.dataset.t = 'acct.in';
+    sp.textContent = tag || t('acct.in');
     a.title = me ? t('foot.join') : t('acct.in');
     const tab = $('.tabs [data-view="char"]'); if (tab) tab.hidden = !mine().length;
   }
@@ -1921,6 +1942,7 @@ function readUrl() {
 function writeUrl(push) {
   if (SHOT) return;
   const q = new URLSearchParams();
+  if (DEMO) q.set('demo', DEMO);
   if (state.view !== 'home') q.set('p', state.view);
   if (state.region !== 'eu') q.set('r', state.region);
   if (state.view === 'rank') { if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
@@ -2026,6 +2048,99 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
   box.addEventListener('mousedown', e => { const a = e.target.closest('a[data-key]'); if (a) { e.preventDefault(); pick(DATA.players.find(p => pkey(p) === a.dataset.key)); } });
   input.addEventListener('blur', () => setTimeout(() => box.classList.remove('on'), 120));
 })();
+
+/* ---------- Démo (poste de développement seulement) : ?demo=1 ----------
+   Données d'exemple pour les captures du trailer, dans un vrai donjon (la Cathédrale du Monastère Écarlate) : Ray Kuilu (le druide des vidéos)
+   connecté au centre (tank ours), son groupe réel (Colìn Maillard au soin, Yema Lobrah, Rakshir Noirsillage et Tim Plar aux dégâts),
+   chacun avec ses propres objets recherchés (utilisables par sa classe, aucun en double dans le groupe), des joueurs fictifs autour
+   (noms inventés) et des sorties prévues. Rien n'est envoyé au serveur : les lectures sont interceptées dans le navigateur.
+   ?demo=<clé du donjon> (ex. ?demo=RazorfenDowns) prend un autre donjon. */
+const DEMO = location.hostname === 'localhost' ? new URLSearchParams(location.search).get('demo') : null;
+if (DEMO) {
+  const realFetch = window.fetch.bind(window);
+  const rnd = (s => () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; })(1367);
+  const pickN = (arr, n) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, n); };
+  const RAY = 'eu/ray-kuilu', COLIN = 'eu/colìn-maillard', DPS = ['eu/yema-lobrah', 'eu/rakshir-noirsillage', 'eu/tim-plar'], REAL = [COLIN, ...DPS], DKEY = DEMO.length > 2 ? DEMO : 'ScarletMonasteryCathedral';
+  const FAKE = [['Brennor', 'Rochefer'], ['Thalyssa', 'Chantelune'], ['Korgath', 'Cendrelame'], ['Elwynna', 'Brisevent'], ['Durik', 'Marteau-Clair'],
+    ['Sylvaëlle', 'Valombre'], ['Morvan', 'Pierregrise'], ['Isolde', 'Haute-Rive'], ['Garrek', 'Lamenoire'], ['Nyra', 'Sombrefeu']];
+  const world = (async () => {
+    const [hs, loot, items, art, prod] = await Promise.all(['data/hiscores.json', 'data/loot.json', 'data/items.json', 'data/art.json'].map(u => realFetch(u).then(r => r.json()))
+      .concat(realFetch('https://dropamine.app/data/hiscores.json').then(r => r.json()).catch(() => null)));
+    const dun = loot.dungeons.find(d => d.key === DKEY) || loot.dungeons.find(d => d.key === 'ScarletMonasteryCathedral');
+    const dIds = dun.bosses.flatMap(b => b.i.map(e => Array.isArray(e) ? e[0] : e));
+    // objets à chasser : armes et armures du donjon (pas les récompenses de quête ni les clés)
+    const huntIds = [...new Set(dun.bosses.filter(b => !/quest|key/i.test(b.n[0])).flatMap(b => b.i.map(e => Array.isArray(e) ? e[0] : e)))]
+      .filter(id => items[id] && [2, 4].includes(items[id].c?.[0]) && items[id].q !== 'COMMON');
+    const taken = new Set(), entry = (id, tries) => ({ id, name: items[id].n[1] || items[id].n[0], tries: Math.floor(rnd() * tries), drops: 0 });
+    // le groupe : des objets que sa classe peut porter, jamais deux fois le même (personne ne se bat pour un besoin)
+    const huntFor = (p, n, tries = 30) => {
+      const mine = pickN(huntIds.filter(id => !taken.has(id) && canUse(p, items[id])), n);
+      if (mine.length < n) mine.push(...pickN(huntIds.filter(id => !taken.has(id) && !mine.includes(id)), n - mine.length));
+      mine.forEach(id => taken.add(id)); return mine.map(id => entry(id, tries));
+    };
+    // les autres : ce que leur classe peut porter, doublons permis
+    const huntAny = (p, n) => pickN(huntIds.filter(id => canUse(p, items[id])), n).map(id => entry(id, 30));
+    const now = Date.now(), ago = d => new Date(now - d * 864e5).toISOString().slice(0, 10);
+    // Ray : sa fiche publique (chiffres des vidéos), un carnet à moitié rempli dans ce donjon, trois objets recherchés ici
+    const ray = structuredClone(prod?.players.find(p => p.key === RAY) || hs.players.find(p => p.key === RAY));
+    for (const x of ray.professions || []) { if (x.id === 393) x.skill = 224; if (x.id === 129) x.skill = 209; }
+    ray.total = 1367; if (ray.parts) ray.parts.professions = (ray.professions || []).reduce((s, x) => s + x.skill, 0);
+    ray.dropamine = ray.dropamine || {}; ray.dropamineAt = ago(0);
+    ray.dropamine.hunt = [...huntFor(ray, 4, 12), ...(ray.dropamine.hunt || [])].slice(0, 8);
+    ray.dropamine.collection = { ...(ray.dropamine.collection || {}), items: [...new Set([...(ray.dropamine.collection?.items || []), ...pickN(dIds, Math.round(dIds.length * .55))])] };
+    const Y = ray.dropamine.collection.y || 1499;
+    ray.dropamine.collection.x = ray.dropamine.collection.items.length; ray.dropamine.collection.y = Y;
+    ray.history = [];   // pas de « +23 depuis hier » inventé
+    ray.role = 'tank';   // tank ours : le groupe suggéré le met au tank
+    // son groupe (vrais personnages) : Colìn au soin, trois dégâts ; les autres vrais joueurs deviennent des personnages fictifs
+    const players = [ray];
+    for (const key of REAL) {
+      const p = structuredClone(hs.players.find(x => x.key === key)); if (!p) continue;
+      p.level = Math.max(p.level, 33); p.role = key === COLIN ? 'heal' : 'dps'; p.dropamineAt = ago(1);
+      p.dropamine = { hunt: huntFor(p, 4), collection: { items: pickN(dIds, 10 + Math.floor(rnd() * 12)) } };
+      Object.assign(p.dropamine.collection, { x: p.dropamine.collection.items.length, y: Y });
+      players.push(p);
+    }
+    const others = hs.players.filter(p => p.key !== RAY && !REAL.includes(p.key));
+    const guilds = [ray.guild, ray.guild, { name: 'Les Veilleurs de l’Aube', slug: 'les-veilleurs-de-laube' }, ray.guild, { name: 'Cercle de Cénarius', slug: 'cercle-de-cenarius' }];
+    FAKE.forEach(([name, surname], i) => {
+      const p = structuredClone(others[i % others.length]);
+      const slug = (name + '-' + surname).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+      Object.assign(p, { name, surname, slug, key: 'eu/' + slug, guild: guilds[i % guilds.length], dropamineAt: ago(i % 4) });
+      if (p.level < 33) p.level = 33 + (i * 5) % 8;   // les petits niveaux remontés au niveau du donjon ; les 60 gardent leur total
+      p.dropamine = { hunt: huntAny(p, 1 + i % 3), collection: { items: pickN(dIds, 6 + (i * 7) % 20) } };
+      Object.assign(p.dropamine.collection, { x: p.dropamine.collection.items.length, y: Y });
+      players.push(p);
+    });
+    hs.players = [...players].sort((a, b) => b.total - a.total);
+    // sorties prévues : ce soir dans ce donjon, le groupe de Ray au complet ; demain une autre avec liste d'attente ; puis d'autres donjons
+    const at = (days, h, m = 0) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(h, m, 0, 0); return d.toISOString(); };
+    const k = i => players[1 + REAL.length + i].key, mk = (key, role) => ({ key, role });
+    const runs = [
+      { id: 'demo1', dungeon: DKEY, at: at(new Date().getHours() >= 21 ? 1 : 0, 21), by: RAY, note: 'On boucle 3 fois, chacun son objet', created: ago(0),
+        members: [mk(RAY, 'tank'), mk(COLIN, 'heal'), ...DPS.map(x => mk(x, 'dps'))] },
+      { id: 'demo2', dungeon: DKEY, at: at(1, 20, 30), by: k(4), note: 'Farm tranquille', created: ago(0),
+        members: [mk(k(4), 'tank'), mk(k(7), 'heal'), mk(k(2), 'dps'), mk(k(3), 'dps'), mk(k(5), 'dps'), mk(k(6), 'dps')] },
+      { id: 'demo3', dungeon: 'RazorfenDowns', at: at(1, 21), by: k(6), note: 'Cherche soigneur', created: ago(1), members: [mk(k(6), 'tank'), mk(k(1), 'dps')] },
+      { id: 'demo4', dungeon: DKEY === 'ScarletMonasteryArmory' ? 'ScarletMonasteryLibrary' : 'ScarletMonasteryArmory', at: at(2, 20), by: k(8), note: '', created: ago(1), members: [mk(k(8), 'dps'), mk(k(7), 'heal'), mk(k(0), 'tank')] },
+      { id: 'demo5', dungeon: 'Uldaman', at: at(3, 21, 15), by: k(5), note: 'Ambiance détente', created: ago(2), members: [mk(k(5), 'dps')] },
+    ];
+    return { hs, loot, art, runs };
+  })();
+  const json = o => new Response(JSON.stringify(o), { headers: { 'content-type': 'application/json' } });
+  window.fetch = async (u, o) => {
+    const s = String(u?.url || u);
+    if (/(^|\/)data\/hiscores\.json/.test(s)) return json((await world).hs);
+    if (/(^|\/)data\/loot\.json/.test(s)) return json((await world).loot);
+    if (/(^|\/)data\/art\.json/.test(s)) return json((await world).art);
+    if (s.startsWith(API + '/runs')) return json({ ok: true, runs: (await world).runs });
+    if (s.startsWith(API + '/me')) return json({ battletag: 'Raykuilu#0000', characters: [{ key: RAY, region: 'eu', slug: 'ray-kuilu', name: 'Ray', surname: 'Kuilu', classId: 11, level: 36, registered: true }] });
+    if (s.startsWith(API)) return json({ ok: true });   // rien ne part vers le serveur
+    return realFetch(u, o);
+  };
+  // Ray connecté
+  Bnet.isMine = key => key === RAY; Bnet.mine = () => DATA.players.filter(p => pkey(p) === RAY); Bnet.best = () => RAY;
+}
 
 /* ---------- Démarrage ---------- */
 const BOOT_RUN = new URLSearchParams(location.search).get('run');   // lien direct vers un run prévu
