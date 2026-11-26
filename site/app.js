@@ -938,6 +938,8 @@ function huntSuggest(p) {
       if (!k || owned.has(id) || hunted.has(id) || (worn[k] || []).includes(id)) continue;
       const rl = it.rl || Math.max(1, it.lv - 5);   // niveau requis absent : estimé d'après le niveau d'objet
       if (rl > p.level + 3 || rl < p.level - 12 || !canUse(p, it)) continue;
+      // fiche de l'API sans rapport avec le donjon (autre version de l'objet) : on ne s'y fie pas
+      const mid = (d.lvl || [])[1]; if (mid && rl < mid - 12) continue;
       const base = wornLv(k), gain = it.lv - base;
       if (base && gain <= 0) continue;
       const score = (base ? gain : it.lv / 4) + (it.q === 'EPIC' ? 6 : it.q === 'RARE' ? 3 : 0) + (rate ? Math.min(rate, 40) / 8 : 0);
@@ -1191,7 +1193,10 @@ const isTrash = b => /^(Trash|Ennemis)/i.test(b.n[0]);
 const ROLE_OK = { tank: [1, 2, 11], heal: [5, 7, 2, 11] };   // par préférence : guerrier, paladin, druide / prêtre, chaman, paladin, druide
 const ROLE_IC = { tank: 'ability_defend', heal: 'spell_holy_flashheal', dps: 'ability_dualwield' };
 function dunItems(d) { const all = new Set(); d.bosses.forEach(b => b.i.forEach(e => all.add(Array.isArray(e) ? e[0] : e))); return all; }
-const fitOf = (p, d) => { const [lo, , hi] = d.lvl || []; if (!lo) return 'ok'; return p.level < lo ? 'low' : p.level > hi + 5 ? 'high' : 'ok'; };
+// niveau d'un donjon : [entrée, niveau habituel, fin]. On le compte « à ta portée » à partir du niveau habituel - 6
+// (le niveau d'entrée seul laissait passer Dire Maul à 31 ou le Temple englouti à 35)
+const dunFrom = d => { const [lo, mid] = d.lvl || []; return lo ? Math.max(lo, (mid || lo) - 6) : 0; };
+const fitOf = (p, d) => { const [lo, , hi] = d.lvl || []; if (!lo) return 'ok'; return p.level < dunFrom(d) ? 'low' : p.level > hi + 5 ? 'high' : 'ok'; };
 function runsData(players) {
   const map = new Map(), get = d => { if (!map.has(d.key)) map.set(d.key, { d, people: new Map(), exp: 0, missing: 0 }); return map.get(d.key); };
   const person = (run, p) => { if (!run.people.has(p)) run.people.set(p, { hunts: [], missing: null, fit: fitOf(p, run.d) }); return run.people.get(p); };
@@ -1269,7 +1274,7 @@ function lvlMatch(d, me) {
   const hl = state.hl; if (!hl) return true;
   if (hl === 'me') return me.some(p => fitOf(p, d) === 'ok');
   const [lo, , hi] = d.lvl || [], b = +hl;
-  return lo ? lo <= b + 9 && hi >= b : b >= 50;   // raids : avec la tranche 50-60
+  return lo ? dunFrom(d) <= b + 9 && hi >= b : b >= 50;   // raids : avec la tranche 50-60
 }
 // tous les mots cherchés doivent se trouver quelque part dans le texte de la carte
 const textMatch = hay => { const q = fold(state.hq).split(/\s+/).filter(Boolean); if (!q.length) return true; const h = fold(hay); return q.every(w => h.includes(w)); };
@@ -1280,9 +1285,9 @@ const searchActive = () => !!(state.hq || state.hl || state.ht || state.hd || st
 function dunOptions() {
   const groups = [['dungeon', t('hsTypeDun')], ['forever', t('hsTypeFor')], ['raid', t('hsTypeRaid')]];
   return groups.map(([k, label]) => {
-    const ds = LOOT.dungeons.filter(d => dunType(d) === k).sort((a, b) => ((a.lvl || [])[0] || 99) - ((b.lvl || [])[0] || 99) || a.name.localeCompare(b.name));
+    const ds = LOOT.dungeons.filter(d => dunType(d) === k).sort((a, b) => (dunFrom(a) || 99) - (dunFrom(b) || 99) || a.name.localeCompare(b.name));
     return ds.length ? `<optgroup label="${esc(label)}">${ds.map(d => { const [lo, , hi] = d.lvl || [];
-      return `<option value="${esc(d.key)}"${state.hd === d.key ? ' selected' : ''}>${esc(d.name)}${lo ? ` (${lo}–${hi})` : ''}</option>`; }).join('')}</optgroup>` : '';
+      return `<option value="${esc(d.key)}"${state.hd === d.key ? ' selected' : ''}>${esc(d.name)}${lo ? ` (${dunFrom(d)}–${hi})` : ''}</option>`; }).join('')}</optgroup>` : '';
   }).join('');
 }
 function renderRuns() {
@@ -1384,7 +1389,7 @@ function renderRuns() {
     ${state.runMsg ? `<p class="msg">${state.runMsg}</p>` : ''}${planned || `<p class="note">${allRuns.length ? t('pfNone') : t('runsNone')}</p>`}</section>`;
 
   const card = run => {
-    const [lo, , hi] = run.d.lvl || [];
+    const [, , hi] = run.d.lvl || [], lo = dunFrom(run.d);
     const ppl = [...run.people], hunters = ppl.filter(([, x]) => x.hunts.length).length;
     const g = suggestGroup(ppl);
     const sorted = ppl.sort(([, a], [, b]) => b.hunts.length - a.hunts.length || (b.missing || 0) - (a.missing || 0));
