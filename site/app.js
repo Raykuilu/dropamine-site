@@ -1705,6 +1705,46 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-sec]
 document.addEventListener('change', e => { const sel = e.target.closest('[data-gs]'); if (!sel) return; state.gs = sel.value; renderGuild(); animate($('#guild-panel')); });
 document.addEventListener('click', e => { const x = e.target.closest('.release.folded .toggle'); if (x) { x.closest('.release').classList.remove('folded'); x.remove(); } });
 
+// version de l'addon : la dernière publiée sur GitHub (demandée une fois par visite), sinon celle du journal des versions
+// relu par le site (qui peut avoir un jour de retard après une publication)
+const verNum = x => String(x || '').replace(/^v/, '').split('.').map(n => +n || 0);
+const newerVersion = (a, b) => { if (!a) return b; if (!b) return a; const x = verNum(a), y = verNum(b);
+  for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0) ? a : b; return b; };
+let LATEST_VER = null;
+function parseChangelogMd(md, keep = 6) {
+  const out = []; let v = null, sec = null;
+  const inline = x => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  for (const line of md.split(/\r?\n/)) {
+    let m;
+    if ((m = line.match(/^##\s+(.+)/)) && !line.startsWith('###')) { v = { version: m[1].trim(), sections: [] }; out.push(v); sec = null; }
+    else if (v && (m = line.match(/^###\s+(.+)/))) { sec = { title: m[1].trim(), items: [] }; v.sections.push(sec); }
+    else if (v && (m = line.match(/^-\s+(.+)/))) { if (!sec) { sec = { title: '', items: [] }; v.sections.push(sec); } sec.items.push(inline(m[1])); }
+    else if (v && sec && (m = line.match(/^\s{2,}-\s+(.+)/))) { sec.items[sec.items.length - 1] += ' — ' + inline(m[1]); }
+  }
+  return out.slice(0, keep);
+}
+// appelé quand on connaît la dernière version publiée et le journal du site
+function freshenNews() {
+  const known = NEWS?.versions?.[0]?.version;
+  if (!LATEST_VER || !NEWS || freshenNews.done || !known || newerVersion(LATEST_VER, known) === known) return;
+  freshenNews.done = true;
+  fetch('https://raw.githubusercontent.com/Raykuilu/Dropamine/main/CHANGELOG.md').then(x => x.ok ? x.text() : null).then(md => {
+    const vs = md && parseChangelogMd(md);
+    if (!vs?.length || newerVersion(vs[0].version, known) === known) return;
+    NEWS = { ...NEWS, versions: vs };
+    if (state.view === 'news') renderNews();
+    applyStatic();
+  }).catch(() => {});
+}
+try { LATEST_VER = sessionStorage.getItem('dropLatest'); } catch (e) { /* stockage indisponible */ }
+if (!LATEST_VER) fetch('https://api.github.com/repos/Raykuilu/Dropamine/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+  .then(r => r.ok ? r.json() : null).then(j => {
+    const tag = String(j?.tag_name || '').replace(/^v/, '');
+    if (!/^\d+\.\d+\.\d+$/.test(tag)) return;
+    LATEST_VER = tag; try { sessionStorage.setItem('dropLatest', tag); } catch (e) { /* rien */ }
+    applyStatic(); freshenNews();
+  }).catch(() => {});
+
 /* ---------- Texte fixe traduit (data-t) et pied de page ---------- */
 function applyStatic() {
   $$('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
@@ -1715,7 +1755,7 @@ function applyStatic() {
   $('#lang').textContent = LANG === 'fr' ? 'EN' : 'FR';
   $('#lang').title = LANG === 'fr' ? 'English' : 'Français';
   if (DATA.updated) $('#updated').textContent = t('updated', { d: new Date(DATA.updated).toLocaleDateString(locale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) });
-  const v = NEWS?.versions?.[0]?.version;
+  const v = newerVersion(LATEST_VER, NEWS?.versions?.[0]?.version);
   if (v) $$('[data-meta]').forEach(el => {
     const link = el.querySelector('a');   // le lien « café » survit à la mise à jour du numéro de version
     el.textContent = (el.closest('[lang]').lang === 'fr' ? I18N.meta[1] : I18N.meta[0]).replace('{v}', v) + (link ? ' · ' : '');
@@ -1996,7 +2036,7 @@ Promise.all([
     .catch(() => { NEWS = { versions: [] }; }),
   Bnet.init(),
 ]).then(() => { Ribbon.load(false); return document.fonts.ready; })
-  .then(() => { render(false); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });
+  .then(() => { render(false); freshenNews(); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });
 
 /* ---------- Application installable (PWA) ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
