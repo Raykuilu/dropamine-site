@@ -219,7 +219,10 @@ const dungeonKeys = () => {
       const ds = JSON.parse(readFileSync(LOOT_FILE, 'utf8')).dungeons;
       // notifications en français : noms officiels du Journal Blizzard (site/data/dnames.json), sinon le nom anglais
       let fr = {}; try { fr = JSON.parse(readFileSync(LOOT_FILE.replace('loot.json', 'dnames.json'), 'utf8')); } catch { /* noms anglais */ }
-      dunCache = { t: Date.now(), set: new Set(ds.map(d => d.key)), names: new Map(ds.map(d => [d.key, fr[d.key]?.[1] || d.name])) };
+      // raids annoncés sans table de butin (Barrow Deeps, Hyjal…) : site/data/raids.json
+      let raids = []; try { const rj = JSON.parse(readFileSync(LOOT_FILE.replace('loot.json', 'raids.json'), 'utf8')); raids = [...(rj.raids ?? []), ...(rj.activities ?? [])]; } catch { /* aucun */ }
+      const all = [...ds, ...raids.filter(r => !ds.some(d => d.key === r.key)).map(r => ({ key: r.key, name: r.names?.[0] ?? r.key }))];
+      dunCache = { t: Date.now(), set: new Set(all.map(d => d.key)), names: new Map(all.map(d => [d.key, fr[d.key]?.[1] || raids.find(r => r.key === d.key)?.names?.[1] || d.name])) };
     } catch { /* on garde l'ancienne liste */ }
   }
   return dunCache.set;

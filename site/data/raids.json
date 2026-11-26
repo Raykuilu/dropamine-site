@@ -1,0 +1,110 @@
+{
+ "note": "Raids de WoW Forever : taille et composition type (tanks, soigneurs, dégâts). Les raids sans table de butin (pas encore connue) sont ajoutés à la liste des donjons pour proposer des sorties. opens : date d'ouverture annoncée. activities : activités hors donjon (places sans rôles imposés).",
+ "raids": [
+  {
+   "key": "BarrowDeeps",
+   "names": [
+    "Barrow Deeps",
+    "Barrow Deeps",
+    "Barrow Deeps",
+    "Barrow Deeps",
+    "Barrow Deeps",
+    "Barrow Deeps",
+    "Barrow Deeps"
+   ],
+   "size": 10,
+   "roles": {
+    "tank": 2,
+    "heal": 3,
+    "dps": 5
+   },
+   "opens": "2026-12-09T00:00:00+01:00",
+   "level": 60
+  },
+  {
+   "key": "HyjalSummit",
+   "names": [
+    "Hyjal Summit",
+    "Sommet d'Hyjal",
+    "Hyjalgipfel",
+    "Cima Hyjal",
+    "Vetta di Hyjal",
+    "Cume Hyjal",
+    "Вершина Хиджала"
+   ],
+   "size": 20,
+   "roles": {
+    "tank": 2,
+    "heal": 5,
+    "dps": 13
+   },
+   "opens": "2026-12-09T00:00:00+01:00",
+   "level": 60
+  },
+  {
+   "key": "Onyxia",
+   "size": 40,
+   "roles": {
+    "tank": 4,
+    "heal": 10,
+    "dps": 26
+   },
+   "opens": "2026-12-09T00:00:00+01:00",
+   "level": 60
+  }
+ ],
+ "activities": [
+  {
+   "key": "ActQuests",
+   "size": 5,
+   "names": [
+    "Group quests",
+    "Quêtes de groupe",
+    "Gruppenquests",
+    "Misiones de grupo",
+    "Missioni di gruppo",
+    "Missões em grupo",
+    "Групповые задания"
+   ]
+  },
+  {
+   "key": "ActPvP",
+   "size": 10,
+   "names": [
+    "World PvP / battleground",
+    "JcJ sauvage / champ de bataille",
+    "Welt-PvP / Schlachtfeld",
+    "JcJ en el mundo / campo de batalla",
+    "PvP mondiale / campo di battaglia",
+    "JxJ no mundo / campo de batalha",
+    "Мировое PvP / поле боя"
+   ]
+  },
+  {
+   "key": "ActFarm",
+   "size": 5,
+   "names": [
+    "Farming / gathering",
+    "Farm / récolte",
+    "Farmen / Sammeln",
+    "Farmeo / recolección",
+    "Farm / raccolta",
+    "Farm / coleta",
+    "Фарм / сбор"
+   ]
+  },
+  {
+   "key": "ActOther",
+   "size": 5,
+   "names": [
+    "Other",
+    "Autre",
+    "Sonstiges",
+    "Otro",
+    "Altro",
+    "Outro",
+    "Другое"
+   ]
+  }
+ ]
+}

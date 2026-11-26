@@ -1197,3 +1197,22 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 /* tri par meilleur gain du jour */
 .chip.dg{color:#7fd06a;border-color:rgba(127,208,106,.35)}
 .chip.dg.on{color:#0d1a09;background:#7fd06a;border-color:#7fd06a}
+
+/* honneur par victoire : recoupé avec l'armurerie */
+.vchk{font-style:normal;font-size:11px;margin-left:6px;color:var(--faint);letter-spacing:.02em}
+.vchk.ok{color:#7fd06a}
+
+/* sorties de raid : places par rôle (10, 20, 40) */
+.rcompo{display:inline-flex;gap:8px;align-items:center}
+.rcompo .rc{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--muted)}
+.rcompo .rc .role{width:14px;height:14px}
+.rcompo .rc.on{color:#7fd06a}
+.propose.any{margin:0 0 14px}
+
+/* saison JcJ : semaine par semaine */
+.pvweeks{grid-column:1/-1;margin-top:6px}
+.pvweeks ul{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.pvweeks li{display:flex;flex-direction:column;padding:8px 10px;border:1px solid var(--line);border-radius:6px}
+.pvweeks li span{font-size:12px;color:var(--faint)}
+.pvweeks li b{font-size:20px;color:var(--gold)}
+.pvweeks li small{font-size:12px;color:var(--muted)}

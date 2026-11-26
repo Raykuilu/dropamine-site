@@ -48,7 +48,7 @@ const I18N = {
   runsMissing: ['{n} missing', '{n} manquants'], runsGroup: ['Suggested group', 'Groupe suggéré'], runsNobody: ['nobody', 'personne'],
   fitOk: ['right level', 'bon niveau'], fitHigh: ['over level', 'au-dessus'],
   'role.tank': ['Tank', 'Tank'], 'role.heal': ['Healer', 'Soigneur'], 'role.dps': ['Damage', 'Dégâts'],
-  runPropose: ['Propose an outing', 'Proposer une sortie'], runWhen: ['When', 'Quand'], runChar: ['Character', 'Personnage'], runRole: ['Role', 'Rôle'],
+  runPropose: ['Propose an outing', 'Proposer une sortie'], optDun: ['Dungeons', 'Donjons'], optRaid: ['Raids', 'Raids'], optAct: ['Other activities', 'Autres activités'], needPlaces: ['{n} place{s}', '{n} place{s}'], runProposeAny: ['Propose an outing (dungeon, raid or activity)', 'Proposer une sortie (donjon, raid ou activité)'], runDunPick: ['Dungeon or raid', 'Donjon ou raid'], runWhen: ['When', 'Quand'], runChar: ['Character', 'Personnage'], runRole: ['Role', 'Rôle'],
   runNote: ['Note', 'Note'], runNotePh: ['e.g. full clear, Pummeler farm', 'ex. : full clear, farm du Faucheur'], runCreate: ['Create the outing', 'Créer la sortie'],
   runJoin: ['Join', 'S’inscrire'], runIcsTitle: ['Group: {d} (WoW Forever)', 'Groupe : {d} (WoW Forever)'], runMore: ['{n} more', '{n} de plus'], runWait: ['Waiting list ({n})', 'Liste d’attente ({n})'], runWaitN: ['{n} waiting', '{n} en attente'],
   runFullHint: ['Group complete: you will be on the waiting list.', 'Groupe complet : tu passeras en liste d’attente.'],
@@ -77,7 +77,15 @@ const I18N = {
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
   'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.about': ['About', 'À propos'], newsEnOnly: ['', 'en anglais'], 'foot.code': ['Site source (open source, MIT)', 'Code du site (open source, MIT)'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
-  'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.pvp': ['PVP', 'JCJ'], duelsWonT: ['Duels won', 'Duels gagnés'], duelsNote: ['won – lost', 'gagnés – perdus'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE PROGRESS', 'PROGRESSION DROPAMINE'],
+  'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.pvp': ['PVP', 'JCJ'], duelsWonT: ['Duels won', 'Duels gagnés'],
+  hpkT: ['Honor per kill', 'Honneur par victoire'], hpkNote: ['this week, from 10 honorable kills · high = opponents your size or stronger', 'cette semaine, dès 10 victoires honorables · élevé = des adversaires à ta taille ou plus forts'],
+  hpkSub: ['{h} honor for {k} kills this week', '{h} d’honneur pour {k} victoires cette semaine'],
+  pvWeeksT: ['Honor per kill, week by week', 'Honneur par victoire, semaine par semaine'], pvWeekOf: ['Week of {d}', 'Semaine du {d}'],
+  'foot.trfb': ['Report a translation mistake', 'Signaler une erreur de traduction'], trfbTitle: ['Translation mistake', 'Erreur de traduction'],
+  trfbBody: ['Thanks for helping! Copy the wrong text and write the right one (site or addon).', 'Merci de ton aide ! Copie le texte faux et écris le bon (site ou addon).'],
+  trfbPage: ['Page:', 'Page :'], trfbLang: ['Language:', 'Langue :'], trfbWrong: ['Wrong text:', 'Texte faux :'], trfbRight: ['Right text:', 'Bon texte :'],
+  hpkOk: ['armory', 'armurerie'], hpkOkTip: ['Kills checked against the Blizzard armory (last 7 days)', 'Victoires recoupées avec l’armurerie Blizzard (7 derniers jours)'],
+  hpkPend: ['not checked yet', 'pas encore vérifié'], hpkPendTip: ['Checked against the Blizzard armory after a few days of history', 'Recoupé avec l’armurerie Blizzard après quelques jours d’historique'], duelsNote: ['won – lost', 'gagnés – perdus'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE PROGRESS', 'PROGRESSION DROPAMINE'],
   trust: ['Sent by the players with their Dropamine export: based on trust.', 'Envoyé par les joueurs avec leur ligne Dropamine : basé sur la confiance.'],
   sortBy: ['Rank by', 'Classer par'], trustShort: ['based on trust', 'basé sur la confiance'],
   kills: ['Creatures killed', 'Créatures tuées'], killingBlows: ['Killing blows', 'Coups fatals'], dungeons: ['Dungeons entered', 'Donjons visités'],
@@ -232,6 +240,22 @@ const rulesetName = p => L2((RULESETS.find(([id]) => id === p.rulesetId) || [])[
 const PROF_ORDER = [393, 186, 182, 171, 164, 333, 202, 165, 197, 185, 356, 129];
 const STAT_KEYS = ['killingBlows', 'kills', 'quests', 'dungeons', 'flights'];   // les VH sont dans la catégorie JcJ
 const STAT_ICON = { killingBlows: 'ability_backstab', kills: 'inv_misc_bone_skull_02', quests: 'inv_misc_book_08', dungeons: 'inv_misc_key_10', flights: 'ability_mount_gryphon_01' };
+// honneur par victoire (semaine de la ligne Dropamine) : tuer des joueurs bien plus faibles ne rapporte rien, l'honneur d'une
+// victoire suit le niveau et le rang de l'adversaire : une valeur haute = des adversaires à sa taille ou plus forts
+// Toujours recoupé avec l'armurerie Blizzard : victoires honorables gagnées sur les 7 derniers jours (historique quotidien).
+// L'addon compte en direct et l'armurerie est relue une fois par jour : marge des victoires du jour (+3).
+const armoryWeekHK = p => { const h = (p.history || []).filter(x => x.hk != null); if (h.length < 2) return null;
+  const b = h[h.length - 1], start = Date.parse(b.d) - 7 * 864e5, a = h.find(x => Date.parse(x.d) >= start);
+  if (!a || a === b || Date.parse(a.d) > start + 864e5) return null;   // moins de 6 jours d'historique : pas encore vérifiable
+  return Math.max(0, b.hk - a.hk); };
+// 'ok' vérifié, 'pending' pas encore vérifiable, 'over' l'addon déclare plus que l'armurerie (exclu du classement)
+const hpkCheck = p => { const v = p.dropamine?.pvp, arm = armoryWeekHK(p); if (!v) return null; if (arm == null) return 'pending';
+  return v.hkWeek <= arm + (v.hkToday || 0) + 3 ? 'ok' : 'over'; };
+const hpkOf = p => { const v = p.dropamine?.pvp, at = Date.parse(p.dropamineAt || '');
+  if (!v || !(v.hkWeek >= 10) || !(v.honorWeek >= 0) || !(Date.now() - at < 7 * 864e5)) return null;
+  if (hpkCheck(p) === 'over') return null;
+  return v.honorWeek / v.hkWeek; };
+const hpkBadge = p => { const c = hpkCheck(p); return c === 'ok' ? `<em class="vchk ok" title="${t('hpkOkTip')}">✓ ${t('hpkOk')}</em>` : c === 'pending' ? `<em class="vchk" title="${t('hpkPendTip')}">${t('hpkPend')}</em>` : ''; };
 const armoryStat = (p, k) => k === 'hk' ? (p.stats?.hk ?? p.pvpArmory?.hk ?? null) : (p.stats?.[k] ?? null);
 // Même référentiel que l'addon (Catalog.lua de Dropamine) : noms, icônes et ordre des armes
 const WPN = { axes: ['One-Handed Axes', 'Haches', 'inv_axe_01'], axes2h: ['Two-Handed Axes', 'Haches à deux mains', 'inv_axe_09'],
@@ -270,6 +294,8 @@ const SKILLS = [
   { id: 'duels', group: 'pvp', label: () => t('duelsWonT'), max: '', icon: 'ability_warrior_challange', note: () => t('duelsNote'),
     get: p => p.stats?.duelsWon ?? null, show: (v, p) => `${fmt(v)}<small> – ${fmt(p.stats.duelsLost || 0)}</small>`,
     ratio: (v, p) => v / ((v + (p.stats.duelsLost || 0)) || 1) },
+  { id: 'hpk', group: 'pvp', label: () => t('hpkT'), max: '', icon: 'spell_holy_sealofwrath', note: () => t('hpkNote'), get: hpkOf,
+    show: (v, p) => `${v.toLocaleString(locale(), { maximumFractionDigits: 1 })}<small class="kdd"> · ${fmt(p.dropamine.pvp.honorWeek)} / ${fmt(p.dropamine.pvp.hkWeek)}</small>${hpkBadge(p)}` },
   { id: 'pvprank', group: 'pvp', label: () => t('pvpRank'), max: '', icon: 'inv_misc_tabardpvp_01', get: p => p.pvpArmory?.rank || null },
   ...STAT_KEYS.map(k => ({ id: k, group: 'stat', label: () => t(k), max: '', icon: STAT_ICON[k], get: p => armoryStat(p, k) })),
   // carnet Dropamine : déclaré par le joueur avec sa ligne /drop hiscores (sur la confiance), sauf les VH (armurerie)
@@ -961,6 +987,16 @@ function advPanel(p, hist, gained) {
     <div class="advgrid"><div class="prog"><h4 class="minor">${t('progress')}${gained ? ` <span>+${fmt(gained)}</span>` : ''}</h4>${chartSvg(hist)}</div>
     <div class="stiles">${tiles || `<div class="empty">—</div>`}</div></div></section>`;
 }
+// saison JcJ : pour chaque semaine (lundi), la dernière semaine déclarée par l'addon ; honneur par victoire et victoires
+function pvpWeeks(p) {
+  const byWeek = new Map();
+  for (const h of p.history || []) {
+    if (!h.pw) continue;
+    const d = new Date(h.d + 'T12:00:00Z'), monday = new Date(d); monday.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+    byWeek.set(monday.toISOString().slice(0, 10), h.pw);
+  }
+  return [...byWeek].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 4).map(([w, [hon, hk]]) => ({ w, hon, hk, hpk: hk >= 10 ? hon / hk : null }));
+}
 function pvpPanel(p) {
   const st = { ...(p.stats || {}), hk: armoryStat(p, 'hk') };
   if (st.hk == null && st.pvpDeaths == null) return '';
@@ -976,6 +1012,9 @@ function pvpPanel(p) {
         ${tile('ability_rogue_feigndeath', t('pvpDeaths'), st.pvpDeaths, st.factionDeaths != null ? t('subFaction', { n: fmt(st.factionDeaths) }) : '')}
         ${tile('ability_dualwield', t('duelsT'), duels || st.duelsWon != null ? `${fmt(st.duelsWon || 0)} – ${fmt(st.duelsLost || 0)}` : null, rate != null ? t('subWinRate', { n: rate }) : '')}
         ${rank ? tile('inv_misc_tabardpvp_01', t('pvpRank'), rank) : ''}
+        ${(() => { const h = hpkOf(p); return h == null ? '' : tile('spell_holy_sealofwrath', t('hpkT'), h.toLocaleString(locale(), { maximumFractionDigits: 1 }),
+          t('hpkSub', { h: fmt(p.dropamine.pvp.honorWeek), k: fmt(p.dropamine.pvp.hkWeek) }) + ' ' + hpkBadge(p)); })()}
+        ${(() => { const ws = pvpWeeks(p); return ws.length < 2 ? '' : `<div class="pvweeks"><h4 class="minor">${t('pvWeeksT')}</h4><ul>${ws.map(x => `<li><span>${t('pvWeekOf', { d: new Date(x.w + 'T12:00:00Z').toLocaleDateString(locale(), { day: 'numeric', month: 'short' }) })}</span><b>${x.hpk == null ? '—' : x.hpk.toLocaleString(locale(), { maximumFractionDigits: 1 })}</b><small>${fmt(x.hon)} / ${fmt(x.hk)}</small></li>`).join('')}</ul></div>`; })()}
       </div></div></section>`;
 }
 
@@ -996,7 +1035,7 @@ function repsPanel(p) {
    Ouvrent ce jour-là : Barrow Deeps (10), Hyjal Summit (20), Repaire d'Onyxia (40, harmonisation). Pas le Cœur du Magma ni les autres.
    Dans les tables de butin, seul Onyxia existe : c'est le seul raid suggéré, et seulement après l'ouverture. */
 const RAID_OPEN = Date.parse('2026-12-09T00:00:00+01:00');
-const OPEN_RAIDS = new Set(['Onyxia']);
+const OPEN_RAIDS = new Set(['Onyxia', 'BarrowDeeps', 'HyjalSummit']);
 const raidsOpen = () => Date.now() >= RAID_OPEN;
 const raidAvailable = d => raidsOpen() && OPEN_RAIDS.has(d.key);
 function raidBanner() {
@@ -1271,8 +1310,29 @@ function renderGuild() {
 /* ---------- Runs : les joueurs qui chassent dans le même donjon ---------- */
 // Tables de butin d'AtlasLoot Forever (GPL-2.0), chargées à la première visite : objet → donjon, boss, taux de drop
 let LOOT = null, lootLoad = null;
+const RAIDS = {};   // site/data/raids.json : { clé: { size, roles: { tank, heal, dps }, opens } } ; activités : { size, activity }
+const capOf = key => RAIDS[key]?.roles ? { ...RAIDS[key].roles } : { tank: 1, heal: 1, dps: 3 };
+// une sortie a-t-elle encore de la place (pour ce rôle) ?
+function runHasRoom(run, role) {
+  const RI = RAIDS[run.dungeon];
+  if (RI?.activity) return run.members.length < RI.size;
+  const l = capOf(run.dungeon); run.members.forEach(m => l[m.role]--);
+  return role ? l[role] > 0 : (l.tank > 0 || l.heal > 0 || l.dps > 0);
+}
 function loadLoot() {
-  return lootLoad ??= Promise.all([fetch('data/loot.json').then(r => r.json()), fetch('data/dnames.json').then(r => r.ok ? r.json() : {}).catch(() => ({}))]).then(([j, names]) => {
+  return lootLoad ??= Promise.all([fetch('data/loot.json').then(r => r.json()), fetch('data/dnames.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+    fetch('data/raids.json').then(r => r.ok ? r.json() : {}).catch(() => ({}))]).then(([j, names, rj]) => {
+    // raids de Forever (taille, rôles, ouverture) ; ceux sans table de butin (pas encore connue) entrent dans la liste sans boss
+    for (const a of rj.activities || []) {
+      RAIDS[a.key] = { ...a, activity: true };
+      names[a.key] = a.names;
+      if (!j.dungeons.some(d => d.key === a.key)) j.dungeons.push({ key: a.key, name: a.names[0], lvl: [], bosses: [], activity: true });
+    }
+    for (const r of rj.raids || []) {
+      RAIDS[r.key] = r;
+      if (r.names) names[r.key] = names[r.key] || r.names;
+      if (!j.dungeons.some(d => d.key === r.key)) j.dungeons.push({ key: r.key, name: r.names?.[0] || r.key, lvl: [r.level || 60, r.level || 60, r.level || 60], bosses: [], upcoming: true });
+    }
     // nom du donjon dans la langue du site (noms officiels du Journal Blizzard) : d.name suit la langue partout
     for (const d of j.dungeons) { const en = d.name, n = names[d.key]; Object.defineProperty(d, 'name', { get: () => (n ? n[li()] : en) || en, enumerable: true }); d.names = n || [en, en]; }
     const idx = new Map();
@@ -1542,7 +1602,7 @@ function runIcs(run) {
 }
 // ---------- Chasse en groupe : recherche (texte, niveau, type, rôle manquant, moment), gardée dans le lien ----------
 const FOREVER_DUN = new Set(['ExcavationSiteWetlands', 'ShapersTerrace', 'TheAlcazPrison', 'TheBlackmawHold', 'TheCityOfDalaran', 'TheDrownedCity', 'TheHallOfThanes', 'TheKrolDokStronghold', 'TheRuinsOfLordaeron']);
-const isRaid = d => !(d.lvl || [])[0] || /Raid|Core|Lair|Naxx|Qiraj|Gurub|Hyjal|Blackwing|Onyxia|WorldBosses/i.test(d.key);
+const isRaid = d => !!RAIDS[d.key] || !(d.lvl || [])[0] || /Raid|Core|Lair|Naxx|Qiraj|Gurub|Hyjal|Barrow|Blackwing|Onyxia|WorldBosses/i.test(d.key);
 const dunType = d => isRaid(d) ? 'raid' : FOREVER_DUN.has(d.key) ? 'forever' : 'dungeon';
 const fold = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const LV_BANDS = [10, 20, 30, 40, 50];
@@ -1592,14 +1652,14 @@ function renderRuns() {
   const mineKeys = new Set(me.map(pkey));
   const charSel = (sel) => `<select data-run-char>${me.map(p => `<option value="${esc(pkey(p))}"${pkey(p) === sel ? ' selected' : ''}>${full(p)} (${p.level})</option>`).join('')}</select>`;
   const roleSel = (sel, attr = 'data-run-role') => `<select ${attr}>${['tank', 'heal', 'dps'].map(x => `<option value="${x}"${x === sel ? ' selected' : ''}>${t('role.' + x)}</option>`).join('')}</select>`;
-  const allRuns = RUNS || [];
+  const allRuns = [...(RUNS || [])].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));   // par date (les raids du 9 décembre après le reste)
   const pf = state.pf || 'all', pd = state.pd || '';
   const filtered = allRuns.filter(run => (pf !== 'mine' || run.members.some(m => mineKeys.has(m.key)))
-    && (pf !== 'open' || (() => { const l = { tank: 1, heal: 1, dps: 3 }; run.members.forEach(m => l[m.role]--); return l.tank > 0 || l.heal > 0 || l.dps > 0; })())
+    && (pf !== 'open' || runHasRoom(run))
     && (!pd || run.dungeon === pd)
     && (() => { const d = LOOT.dungeons.find(x => x.key === run.dungeon); if (!d) return false;
       if (!lvlMatch(d, me) || (state.ht && dunType(d) !== state.ht) || (state.hd && d.key !== state.hd)) return false;
-      if (state.hr) { if (isRaid(d)) return false; const l = { tank: 1, heal: 1, dps: 3 }; run.members.forEach(m => l[m.role]--); if (l[state.hr] <= 0) return false; }
+      if (state.hr) { if (isRaid(d) && !RAIDS[d.key]) return false; if (!runHasRoom(run, state.hr)) return false; }
       if (state.hw) { const at = Date.parse(run.at), end = new Date(); end.setHours(23, 59, 59, 999); if (at > (state.hw === 'today' ? end.getTime() : Date.now() + 7 * 864e5)) return false; }
       return textMatch(dunText(d) + ' ' + (run.note || '') + ' ' + run.members.map(m => { const p = byKey.get(m.key); return (p ? p.name + ' ' + huntsText(p) : m.key); }).join(' ')); })());
   const plimit = state.plimit || 30, page = filtered.slice(0, plimit);
@@ -1629,15 +1689,23 @@ function renderRuns() {
   function plannedCard(run) {
     const d = LOOT.dungeons.find(x => x.key === run.dungeon); if (!d) return '';
     const myMember = run.members.find(m => mineKeys.has(m.key)), iOwn = mineKeys.has(run.by);
-    const raid = /Raid|Core|Lair|Naxx|Qiraj|Gurub|Hyjal|Blackwing|Onyxia|WorldBosses/i.test(d.key);
-    const left = { tank: 1, heal: 1, dps: 3 }, group = [], wait = [];
-    for (const m of run.members) { if (raid) { group.push(m); continue; } if (left[m.role] > 0) { left[m.role]--; group.push(m); } else wait.push(m); }
+    const RI = RAIDS[d.key];
+    const isAct = !!RI?.activity;
+    const raid = !RI && /Raid|Core|Lair|Naxx|Qiraj|Gurub|Hyjal|Barrow|Blackwing|Onyxia|WorldBosses/i.test(d.key);   // raid sans composition connue : on compte
+    const cap = isAct ? { tank: 99, heal: 99, dps: 99 } : capOf(d.key);
+    const left = { ...cap }, group = [], wait = [];
+    for (const m of run.members) {
+      if (raid) { group.push(m); continue; }
+      if (isAct) { (group.length < RI.size ? group : wait).push(m); continue; }   // activité : les premiers inscrits, puis l'attente
+      if (left[m.role] > 0) { left[m.role]--; group.push(m); } else wait.push(m);
+    }
     const counts = { tank: 0, heal: 0, dps: 0 }; group.forEach(m => counts[m.role] = (counts[m.role] || 0) + 1);
     // composition d'un groupe de 5 : 1 tank, 1 soigneur, 3 dégâts
-    const slots = raid ? '' : ['tank', 'heal', 'dps', 'dps', 'dps'].map((role, i) => {
+    const slots = raid || isAct ? '' : RI ? `<span class="rcompo">${['tank', 'heal', 'dps'].map(r => `<span class="rc ${r}${counts[r] >= cap[r] ? ' on' : ''}">${roleIcon(r)}${counts[r]}/${cap[r]}</span>`).join('')}</span>` : ['tank', 'heal', 'dps', 'dps', 'dps'].map((role, i) => {
       const filled = role === 'dps' ? counts.dps > i - 2 : counts[role] > 0;
       return `<i class="slot ${role}${filled ? ' on' : ''}" title="${t('role.' + role)}"></i>`; }).join('');
-    const full5 = !raid && counts.tank >= 1 && counts.heal >= 1 && counts.dps >= 3;
+    const full5 = !raid && (isAct ? group.length >= RI.size : counts.tank >= cap.tank && counts.heal >= cap.heal && counts.dps >= cap.dps);
+    const size = RI ? RI.size : 5;
     const memberRow = m => { const p = byKey.get(m.key); const hs = huntsIn(p, d), me1 = mineKeys.has(m.key);
       return `<li class="${me1 ? 'me' : ''}">${roleIcon(m.role)}<span class="nm" ${p ? `data-c="${esc(m.key)}"` : ''}>${p ? avatar(p) : ''}<span><b>${p ? full(p) : esc(m.key.split('/')[1])}${m.key === run.by ? ` <em>${t('runOrg')}</em>` : ''}</b><small>${p ? `${esc(className(p))} ${p.level} ${fitTag(fitOf(p, d))}` : ''}</small></span></span><span class="its">${itemIcons(hs)}</span>
         ${me1 ? `<span class="myrole">${roleSel(m.role, `data-run-role-change="${esc(run.id)}" data-key="${esc(m.key)}"`)}</span>` : ''}</li>`; };
@@ -1656,16 +1724,16 @@ function renderRuns() {
         <button class="btn gold" data-run-save>${t('runSave')}</button></div></details>` : '';
     const open = state.ropen === run.id || (state.runFocus === run.id && state.ropen === undefined);
     const [, , hiL] = d.lvl || [], loL = dunFrom(d), org = byKey.get(run.by);
-    const needs = raid ? '' : [left.tank > 0 && t('role.tank').toLowerCase(), left.heal > 0 && t('role.heal').toLowerCase(), left.dps > 0 && t('needDps', { n: left.dps })].filter(Boolean);
+    const needs = raid ? '' : isAct ? (group.length < RI.size ? [t('needPlaces', { n: RI.size - group.length })] : []) : [left.tank > 0 && t('role.tank').toLowerCase(), left.heal > 0 && t('role.heal').toLowerCase(), left.dps > 0 && t('needDps', { n: left.dps })].filter(Boolean);
     const stack = group.slice(0, 4).map(m => byKey.get(m.key)).filter(Boolean).map(p => avatar(p)).join('');
     const act = myMember ? `<span class="btn mine">✓ ${t('runIn')}</span>` : full5 ? `<span class="btn ghost">${t('runWaitBtn')}</span>` : `<span class="btn gold">${me.length ? t('runJoin') : t('runSee')}</span>`;
     return `<div class="rrow${myMember ? ' mine' : ''}${full5 && !myMember ? ' full' : ''}${open ? ' open' : ''}${state.runFocus === run.id ? ' focus' : ''}" id="run-${esc(run.id)}"${artStyle(d.key)}>
       <div class="rr-h" data-ropen="${esc(run.id)}" role="button" tabindex="0" aria-expanded="${open}">
         <span class="rr-art" aria-hidden="true"></span>
         <span class="rr-when"><b>${d0.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })}</b><small>${relWhen(d0)}</small></span>
-        <span class="rr-t"><b>${esc(d.name)}${loL ? ` <i class="lvl${me.some(p => fitOf(p, d) === 'ok') ? ' ok' : ''}">${loL}–${hiL}</i>` : ''}</b><small>${run.note ? '« ' + esc(run.note) + ' »' : t('runBy', { n: org ? esc(org.name) : esc(run.by.split('/')[1] || '') })}${run.edited ? ` · ${t('runEdited')}` : ''}</small></span>
+        <span class="rr-t"><b>${esc(d.name)}${loL ? ` <i class="lvl${me.some(p => fitOf(p, d) === 'ok') ? ' ok' : ''}">${loL === hiL ? loL : loL + '–' + hiL}</i>` : ''}</b><small>${run.note ? '« ' + esc(run.note) + ' »' : t('runBy', { n: org ? esc(org.name) : esc(run.by.split('/')[1] || '') })}${run.edited ? ` · ${t('runEdited')}` : ''}</small></span>
         <span class="rr-need">${slots ? `<span class="slots">${slots}</span>` : ''}<small class="${needs.length ? '' : 'done'}">${raid ? t('runCount', { n: run.members.length }) : needs.length ? t('needT', { x: needs.join(', ') }) : t('runFull') + (wait.length ? ' · ' + t('runWaitN', { n: wait.length }) : '')}</small></span>
-        <span class="rr-who">${stack}<em>${raid ? run.members.length : group.length + '/5'}</em></span>
+        <span class="rr-who">${stack}<em>${raid ? run.members.length : group.length + '/' + size}</em></span>
         <span class="rr-act">${act}</span>
       </div>
       ${open ? `<div class="rr-x"><ul>${members}</ul>
@@ -1673,7 +1741,20 @@ function renderRuns() {
         <span class="tools">${!iOwn && org ? `<button class="lnk" data-run-w="${esc(run.id)}">${t('runW')}</button>` : ''}${myMember ? `<button class="lnk" data-run-game="${esc(run.id)}">${t('runGame')}</button>` : ''}<button class="lnk" data-run-copy="${esc(run.id)}">${t('runCopy')}</button><button class="lnk" data-run-link="${esc(run.id)}">${t('runLink')}</button><button class="lnk" data-run-ics="${esc(run.id)}">${t('runIcs')}</button></span>
         ${!me.length ? `<small>${t('runLogin')}</small>` : ''}</div></div>` : ''}</div>`;
   }
-  const plannedBlock = `<section class="planned">${RUNS === null ? `<p class="note">${t('runsApiDown')}</p>` : ''}
+  // donjons, raids, autres activités : trois groupes dans la liste
+  const dOpt = x => `<option value="${esc(x.key)}">${esc(x.name)}${RAIDS[x.key] ? ` (${RAIDS[x.key].size})` : ''}</option>`;
+  const byName = (a, b) => a.name.localeCompare(b.name);
+  const dunOpts = [['optDun', LOOT.dungeons.filter(x => !isRaid(x))], ['optRaid', LOOT.dungeons.filter(x => isRaid(x) && !x.activity && x.key !== 'WorldBosses')],
+    ['optAct', LOOT.dungeons.filter(x => x.activity || x.key === 'WorldBosses')]]
+    .map(([k, list]) => list.length ? `<optgroup label="${t(k)}">${[...list].sort(byName).map(dOpt).join('')}</optgroup>` : '').join('');
+  const proposeAny = me.length ? `<details class="propose any"><summary class="btn gold">${t('runProposeAny')}</summary><div class="pform" data-dun="">
+      <label>${t('runDunPick')}<select data-run-dunpick>${dunOpts}</select></label>
+      <label>${t('runWhen')}<input type="datetime-local" data-run-at value="${localInput(nextEvening())}" min="${localInput(new Date())}"></label>
+      <label>${t('runChar')}<select data-run-char>${me.map(p => `<option value="${esc(pkey(p))}">${full(p)} (${p.level})</option>`).join('')}</select></label>
+      <label>${t('runRole')}<select data-run-role>${['dps', 'tank', 'heal'].map(x => `<option value="${x}">${t('role.' + x)}</option>`).join('')}</select></label>
+      <label class="wide">${t('runNote')}<input type="text" maxlength="140" data-run-note placeholder="${t('runNotePh')}"></label>
+      <button class="btn gold" data-run-create>${t('runCreate')}</button></div></details>` : '';
+  const plannedBlock = `<section class="planned">${proposeAny}${RUNS === null ? `<p class="note">${t('runsApiDown')}</p>` : ''}
     ${state.runMsg ? `<p class="msg">${state.runMsg}</p>` : ''}${planned || `<p class="note">${allRuns.length ? t('pfNone') : t('runsNone')}</p>`}</section>`;
 
   const card = run => {
@@ -1747,7 +1828,7 @@ document.addEventListener('click', e => {
   const cr = e.target.closest('[data-run-create]');
   if (cr) { const f = cr.closest('.pform'), at = $('[data-run-at]', f).value;
     if (!at) { state.runMsg = t('runErr.date'); renderRuns(); return; }
-    runAction('/runs/create', { dungeon: f.dataset.dun, at: new Date(at).toISOString(), key: $('[data-run-char]', f).value, role: $('[data-run-role]', f).value, note: $('[data-run-note]', f).value });
+    runAction('/runs/create', { dungeon: f.dataset.dun || $('[data-run-dunpick]', f)?.value, at: new Date(at).toISOString(), key: $('[data-run-char]', f).value, role: $('[data-run-role]', f).value, note: $('[data-run-note]', f).value });
     return; }
   const jn = e.target.closest('[data-run-join]');
   if (jn) { const f = jn.closest('.joinf'); runAction('/runs/join', { id: jn.dataset.runJoin, key: $('[data-run-char]', f).value, role: $('[data-run-role]', f).value }); return; }
@@ -1842,6 +1923,11 @@ function applyStatic() {
   $$('[data-t-title]').forEach(el => { el.title = t(el.dataset.tTitle); el.setAttribute('aria-label', t(el.dataset.tTitle)); });
   $$('[data-t-ph]').forEach(el => { el.placeholder = t(el.dataset.tPh); el.setAttribute('aria-label', t(el.dataset.tPh)); });
   if ($('#lang')) $('#lang').value = LANG;
+  const fb = $('#trfb');
+  if (fb) {
+    const title = `[${LANG}] ${t('trfbTitle')}`, body = `${t('trfbBody')}\n\n${t('trfbPage')} ${location.href}\n${t('trfbLang')} ${LANG_NAMES[LANG] || LANG}\n\n${t('trfbWrong')} \n${t('trfbRight')} \n`;
+    fb.href = 'https://github.com/Raykuilu/Dropamine/issues/new?labels=translation&title=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(body);
+  }
   applyBlocks();
   if (DATA.updated) $('#updated').textContent = t('updated', { d: new Date(DATA.updated).toLocaleDateString(locale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) });
   const v = newerVersion(LATEST_VER, NEWS?.versions?.[0]?.version);
@@ -2174,15 +2260,20 @@ if (DEMO) {
     ray.dropamine.collection = { ...(ray.dropamine.collection || {}), items: [...new Set([...(ray.dropamine.collection?.items || []), ...pickN(dIds, Math.round(dIds.length * .55))])] };
     const Y = ray.dropamine.collection.y || 1499;
     ray.dropamine.collection.x = ray.dropamine.collection.items.length; ray.dropamine.collection.y = Y;
-    ray.history = [];   // pas de « +23 depuis hier » inventé
+    // historique de l'armurerie (démo) : 30 victoires honorables en 7 jours, la semaine de l'addon (24) est vérifiée
+    ray.history = [{ d: ago(22), t: 1300, hk: 40, pw: [610, 12] }, { d: ago(15), t: 1330, hk: 62, pw: [1380, 22] }, { d: ago(8), t: 1367, hk: 100, pw: [2210, 31] }, { d: ago(7), t: 1367, hk: 100 }, { d: ago(0), t: 1367, hk: 130, pw: [1850, 24] }];
+    ray.dropamine.pvp = { hkWeek: 24, honorWeek: 1850, honor: 4200, dkLife: 0, highest: 0 };   // honneur par victoire (démo)
     ray.role = 'tank';   // tank ours : le groupe suggéré le met au tank
     // son groupe (vrais personnages) : Colìn au soin, trois dégâts ; les autres vrais joueurs deviennent des personnages fictifs
     const players = [ray];
     for (const key of REAL) {
       const p = structuredClone(hs.players.find(x => x.key === key)); if (!p) continue;
       p.level = Math.max(p.level, 33); p.role = key === COLIN ? 'heal' : 'dps'; p.dropamineAt = ago(1);
+      if (key === DPS[0]) p.history = [{ d: ago(7), t: p.total, hk: 50 }, { d: ago(0), t: p.total, hk: 55 }];   // démo : déclare plus que l'armurerie, exclu
+      p._pvpDemo = true;
       p.dropamine = { hunt: huntFor(p, 4), collection: { items: pickN(dIds, 10 + Math.floor(rnd() * 12)) } };
       Object.assign(p.dropamine.collection, { x: p.dropamine.collection.items.length, y: Y });
+      const hk = 10 + Math.floor(rnd() * 40); p.dropamine.pvp = { hkWeek: hk, honorWeek: Math.round(hk * (25 + rnd() * 70)), honor: 0, dkLife: 0, highest: 0 };
       players.push(p);
     }
     const others = hs.players.filter(p => p.key !== RAY && !REAL.includes(p.key));
@@ -2207,6 +2298,9 @@ if (DEMO) {
         members: [mk(k(4), 'tank'), mk(k(7), 'heal'), mk(k(2), 'dps'), mk(k(3), 'dps'), mk(k(5), 'dps'), mk(k(6), 'dps')] },
       { id: 'demo3', dungeon: 'RazorfenDowns', at: at(1, 21), by: k(6), note: 'Cherche soigneur', created: ago(1), members: [mk(k(6), 'tank'), mk(k(1), 'dps')] },
       { id: 'demo4', dungeon: DKEY === 'ScarletMonasteryArmory' ? 'ScarletMonasteryLibrary' : 'ScarletMonasteryArmory', at: at(2, 20), by: k(8), note: '', created: ago(1), members: [mk(k(8), 'dps'), mk(k(7), 'heal'), mk(k(0), 'tank')] },
+      { id: 'demo6', dungeon: 'HyjalSummit', at: at(13, 21), by: RAY, note: 'Première soirée Hyjal, venez nombreux', created: ago(0),
+        members: [mk(RAY, 'tank'), mk(COLIN, 'heal'), ...DPS.map(x => mk(x, 'dps')), mk(k(0), 'tank'), mk(k(7), 'heal'), mk(k(2), 'dps')] },
+      { id: 'demo7', dungeon: 'ActPvP', at: at(2, 22), by: k(1), note: 'Raid sur Tarren Mill, venez !', created: ago(0), members: [mk(k(1), 'dps'), mk(k(3), 'heal'), mk(RAY, 'tank')] },
       { id: 'demo5', dungeon: 'Uldaman', at: at(3, 21, 15), by: k(5), note: 'Ambiance détente', created: ago(2), members: [mk(k(5), 'dps')] },
     ];
     return { hs, loot, art, runs };

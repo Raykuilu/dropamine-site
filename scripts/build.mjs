@@ -312,7 +312,11 @@ async function main() {
     const last = hist[hist.length - 1];
     // chaque compétence du jour aussi (gain sur 7 jours par ligne de l'image Hiscores)
     const snap = skillSnapshot(s);
-    if (last?.d === today) { last.t = s.total; last.s = snap; } else hist.push({ d: today, t: s.total, s: snap });
+    const hkNow = pickStats(c.achStats)?.hk ?? c.pvp?.honorable_kills ?? null;   // armurerie : référence des victoires honorables
+    // semaine JcJ de l'addon (honneur, victoires), seulement si la ligne a moins de 2 jours : saison semaine par semaine
+    const pw = up?.pvp && up.at && Date.now() - Date.parse(up.at) < 2 * 864e5 ? [up.pvp.honorWeek ?? 0, up.pvp.hkWeek ?? 0] : null;
+    if (last?.d === today) { last.t = s.total; last.s = snap; if (hkNow != null) last.hk = hkNow; if (pw) last.pw = pw; }
+    else hist.push({ d: today, t: s.total, s: snap, ...(hkNow != null ? { hk: hkNow } : {}), ...(pw ? { pw } : {}) });
     await writeFile(hfile, JSON.stringify(hist));
 
     const p = c.profile;
@@ -331,7 +335,7 @@ async function main() {
       ...(c.pvp ? { pvpArmory: { hk: c.pvp.honorable_kills ?? 0, rank: c.pvp.pvp_rank ?? 0 } } : {}),
       ...(() => { const l = newLoots(prevPlayers.get(e.key), up, today); return l.length ? { loots: l } : {}; })(),
       // huntSite : liste d'objets recherchés modifiée sur le site (pas encore dans le jeu)
-      ...(up ? { dropamine: Object.fromEntries(['collection', 'achievements', 'records', 'hunt', 'huntSite'].filter(k => up[k]).map(k => [k, up[k]])), dropamineAt: up.at ?? null } : {}),
+      ...(up ? { dropamine: Object.fromEntries(['collection', 'achievements', 'records', 'hunt', 'huntSite', 'pvp'].filter(k => up[k]).map(k => [k, up[k]])), dropamineAt: up.at ?? null } : {}),
     });
     console.log(`✓ ${e.key} : ${s.total}${s.complete ? '' : ' (estimé)'}${e.preview ? ' [aperçu]' : ''}`);
   });
