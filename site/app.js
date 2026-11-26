@@ -75,6 +75,15 @@ const I18N = {
   kills: ['Creatures killed', 'Créatures tuées'], killingBlows: ['Killing blows', 'Coups fatals'], dungeons: ['Dungeons entered', 'Donjons visités'],
   pvpDeaths: ['Killed by players', 'Tué par des joueurs'], duels: ['Duels (won / lost)', 'Duels (gagnés / perdus)'],
   repsT: ['Reputations', 'Réputations'],
+  runW: ['Copy the /w', 'Copier le /w'], runGame: ['In-game reminder', 'Rappel en jeu'], wAny: ['any role', 'n’importe quel rôle'],
+  wMsg: ['Hi! I’d like to join your {d} outing ({h}), as {r}.', 'Salut ! Je viens pour ta sortie {d} ({h}), en {r}.'],
+  nTitle: ['Notifications', 'Notifications'], nPushOff: ['Turn on on this device', 'Activer sur cet appareil'], nPushOn: ['On for this device', 'Activées sur cet appareil'],
+  nSoundOff: ['Sound off', 'Son coupé'], nSoundOn: ['Sound on', 'Son activé'], nDenied: ['Blocked by the browser', 'Bloquées par le navigateur'],
+  nNoPush: ['This browser cannot receive notifications when the site is closed.', 'Ce navigateur ne reçoit pas de notifications site fermé.'],
+  nIos: ['On iPhone: first add the site to your home screen (Share → Add to Home Screen), then open it from there.', 'Sur iPhone : ajoute d’abord le site à l’écran d’accueil (Partager → Sur l’écran d’accueil), puis ouvre-le depuis là.'],
+  nHint: ['Joins and departures on your outings, a freed spot, a full group, a reminder 30 min before.', 'Arrivées et départs dans tes sorties, place libérée, groupe complet, rappel 30 min avant.'],
+  nJoin: ['joins your {d} outing', 'rejoint ta sortie {d}'], nLeave: ['leaves your {d} outing', 'quitte ta sortie {d}'], nCancel: [': outing cancelled', ' : sortie annulée'],
+  nSoon: ['starts in {n} min', 'commence dans {n} min'],
   rtabRuns: ['Planned outings', 'Sorties prévues'], rtabIdeas: ['Dungeon ideas', 'Idées de donjons'], pfAtLvl: ['{n} at your level', '{n} à ton niveau'], needT: ['needs {x}', 'cherche {x}'], needDps: ['{n} dps', '{n} dégât{s}'],
   runIn: ['Signed up', 'Inscrit'], runWaitBtn: ['Waitlist', 'Attente'], runSee: ['See', 'Voir'], runBy: ['by {n}', 'par {n}'],
   raidK: ['FOREVER · RAIDS', 'FOREVER · RAIDS'], raidT: ['Raids open soon', 'Les raids ouvrent bientôt'], raidSub: ['Barrow Deeps (10), Hyjal Summit (20) and Onyxia’s Lair (40, attunement) open on {d}, level 60. Time not announced yet.', 'Barrow Deeps (10), Hyjal Summit (20) et le Repaire d’Onyxia (40, harmonisation) ouvrent le {d}, niveau 60. Heure pas encore annoncée.'],
@@ -1215,7 +1224,7 @@ const loadArt = () => artLoad ??= fetch('data/art.json').then(r => r.json()).the
 let runsSig = '', runsBackoff = 0;
 const loadRuns = (force) => (force || !runsLoad) ? (runsLoad = fetch(API + '/runs', { cache: 'no-cache' })
   .then(r => { if (r.status === 429) { runsBackoff = Math.min(4, runsBackoff + 1); throw new Error('429'); } runsBackoff = 0; return r.json(); })
-  .then(j => { RUNS = j.runs || []; }).catch(e => { if (e.message !== '429') RUNS = RUNS ?? null; })) : runsLoad;
+  .then(j => { RUNS = j.runs || []; Notif?.check?.(); }).catch(e => { if (e.message !== '429') RUNS = RUNS ?? null; })) : runsLoad;
 // rafraîchissement : toutes les 60 s (plus lent si le serveur demande de patienter), seulement page Runs visible,
 // et jamais pendant qu'on remplit un formulaire ; on ne redessine que si la liste a changé
 setInterval(async () => {
@@ -1292,12 +1301,124 @@ function runText(run) {
   const who = run.members.map(m => { const p = byKey.get(m.key); return `${t('role.' + m.role)} ${p ? p.name : m.key.split('/')[1]}`; }).join(', ');
   return `[Dropamine] ${t('runAnn', { d: d?.name || run.dungeon, w: whenText(run.at), n: run.members.length })}${run.note ? ` · « ${run.note} »` : ''} · ${who} · ${runUrl(run.id)}`;
 }
+// /w à l'organisateur, prêt à coller dans le chat du jeu
+function runWhisper(run, role) {
+  const d = LOOT.dungeons.find(x => x.key === run.dungeon), org = DATA.players.find(p => pkey(p) === run.by), at = new Date(run.at);
+  const who = org ? org.name : String(run.by).split('/')[1]?.split('-')[0] || '';
+  return `/w ${who} ${t('wMsg', { d: d?.name || run.dungeon, h: at.toLocaleString(locale(), { weekday: 'short', hour: '2-digit', minute: '2-digit' }), r: role ? t('role.' + role).toLowerCase() : t('wAny') })}`;
+}
+// rappel en jeu : l'addon garde la sortie et prévient 15 min avant (/drop sortie DROP-RUN1:<heure en base 36>~<donjon>~<organisateur>)
+function runGameCode(run) {
+  const d = LOOT.dungeons.find(x => x.key === run.dungeon), org = DATA.players.find(p => pkey(p) === run.by);
+  const clean = x => String(x || '').replace(/[~|\n]/g, ' ').trim().replace(/\s+/g, '_').slice(0, 40);
+  return `/drop sortie DROP-RUN1:${Math.floor(Date.parse(run.at) / 1000).toString(36)}~${clean(d?.name || run.dungeon)}~${clean(org ? org.name : String(run.by).split('/')[1])}`;
+}
+
+// ---------- Notifications des sorties ----------
+// site ouvert : on compare les sorties toutes les minutes (toast façon addon, titre de l'onglet, son au choix) ;
+// site fermé : notifications push de l'appareil (abonnement enregistré sur api.dropamine.app, au choix du joueur)
+const Notif = (() => {
+  let snap = null, unread = 0, ctx = null;
+  const baseTitle = () => document.title.replace(/^\(\d+\) /, '');
+  const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { /* stockage indisponible */ } return null; };
+  const soundOn = () => store('dropSound') === '1';
+  const seen = new Set(JSON.parse(sessionStorage.getItem('dropSeen') || '[]'));
+  const mark = k => { seen.add(k); try { sessionStorage.setItem('dropSeen', JSON.stringify([...seen].slice(-200))); } catch (e) { /* rien */ } };
+  // le « drop » : deux notes douces (Web Audio, aucun fichier)
+  function ping() {
+    if (!soundOn()) return;
+    try {
+      ctx ??= new (window.AudioContext || window.webkitAudioContext)();
+      const t0 = ctx.currentTime;
+      [[660, 0], [990, .09]].forEach(([f, dt]) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, t0 + dt); g.gain.linearRampToValueAtTime(.18, t0 + dt + .015); g.gain.exponentialRampToValueAtTime(.001, t0 + dt + .35);
+        o.connect(g).connect(ctx.destination); o.start(t0 + dt); o.stop(t0 + dt + .4); });
+    } catch (e) { /* son indisponible */ }
+  }
+  function toast(html, runId) {
+    let wrap = $('#ltoasts'); if (!wrap) { wrap = document.createElement('div'); wrap.id = 'ltoasts'; document.body.append(wrap); }
+    const el = document.createElement('button'); el.type = 'button'; el.className = 'ltoast ntoast'; el.innerHTML = html;
+    el.addEventListener('click', () => { el.remove(); state.runFocus = runId; state.ropen = runId; state.runFocused = false; go({ view: 'runs' }); });
+    wrap.append(el); setTimeout(() => el.classList.add('out'), 9000); setTimeout(() => el.remove(), 9600);
+    ping();
+    if (document.hidden) { unread++; document.title = `(${unread}) ${baseTitle()}`; }
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && unread) { unread = 0; document.title = baseTitle(); } });
+  const dn = run => esc(LOOT?.dungeons.find(x => x.key === run.dungeon)?.name || run.dungeon);
+  const nm = key => { const p = DATA.players.find(x => pkey(x) === key); return p ? esc(p.name) : esc(String(key).split('/')[1] || key); };
+  // après chaque lecture des sorties : ce qui a changé pour moi
+  function check() {
+    const mine = new Set(Bnet.mine().map(pkey)); if (!mine.size || !RUNS) return;
+    const now = Date.now(), cur = new Map(RUNS.map(r => [r.id, r]));
+    const involved = r => mine.has(r.by) || r.members.some(m => mine.has(m.key));
+    if (snap) {
+      for (const [id, old] of snap) {
+        const r = cur.get(id);
+        if (!r) { if (Date.parse(old.at) > now) toast(`<b>${dn(old)}</b> ${t('nCancel')}`, id); continue; }
+        if (mine.has(r.by)) {
+          const was = new Set(old.members.map(m => m.key));
+          for (const m of r.members) if (!was.has(m.key) && !mine.has(m.key)) toast(`<b>${nm(m.key)}</b> ${t('nJoin', { d: dn(r) })}`, id);
+          for (const m of old.members) if (!r.members.some(x => x.key === m.key) && !mine.has(m.key)) toast(`<b>${nm(m.key)}</b> ${t('nLeave', { d: dn(r) })}`, id);
+        }
+      }
+    }
+    // rappels 30 min et 5 min avant, une fois chacun
+    for (const r of RUNS) if (involved(r)) for (const min of [30, 5]) {
+      const left = Date.parse(r.at) - now, k = r.id + '@' + r.at + '#' + min;
+      if (left > 0 && left <= min * 60e3 && !seen.has(k)) { mark(k); toast(`<b>${dn(r)}</b> ${t('nSoon', { n: Math.max(1, Math.round(left / 60e3)) })}`, r.id); }
+    }
+    snap = new Map(RUNS.filter(involved).map(r => [r.id, structuredClone(r)]));
+  }
+  // hors de la page Chasse en groupe : on relit les sorties chaque minute si l'on est connecté
+  setInterval(async () => { if (state.view !== 'runs' && Bnet.mine().length && !runsBackoff) { await loadRuns(true); check(); } }, 60e3);
+  // --------------------------------------------------- push (site fermé)
+  const pushOk = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent), standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  let pushOn = null;
+  async function pushState() {
+    if (!pushOk()) return (pushOn = false);
+    const reg = await navigator.serviceWorker.getRegistration(); const sub = await reg?.pushManager.getSubscription();
+    return (pushOn = !!sub && Notification.permission === 'granted');
+  }
+  const keyBytes = b => { const s0 = atob(b.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - b.length % 4) % 4)); return Uint8Array.from(s0, c => c.charCodeAt(0)); };
+  async function enable() {
+    if (await Notification.requestPermission() !== 'granted') throw new Error('denied');
+    const reg = await navigator.serviceWorker.ready, { key } = await (await fetch(API + '/push/key')).json();
+    const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) });
+    const res = await Bnet.call('/push/subscribe', { sub: sub.toJSON() }); if (!res.ok) throw new Error('server');
+    pushOn = true;
+  }
+  async function disable() {
+    const reg = await navigator.serviceWorker.getRegistration(), sub = await reg?.pushManager.getSubscription();
+    if (sub) { await Bnet.call('/push/unsubscribe', { endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); }
+    pushOn = false;
+  }
+  // le petit panneau de la page Chasse en groupe
+  function panel() {
+    if (!Bnet.mine().length) return '';
+    if (pushOn === null) pushState().then(() => { if (state.view === 'runs') { const el = $('#npanel'); if (el) el.outerHTML = panel(); } });
+    const push = !pushOk() ? `<small>${t('nNoPush')}</small>` : ios && !standalone ? `<small>${t('nIos')}</small>`
+      : pushOn ? `<button class="chip on" type="button" data-npush="off">🔔 ${t('nPushOn')}</button>` : `<button class="chip" type="button" data-npush="on">🔔 ${t('nPushOff')}</button>`;
+    return `<div class="npanel" id="npanel"><span class="np-t">${t('nTitle')}</span>${push}<button class="chip${soundOn() ? ' on' : ''}" type="button" data-nsound>${soundOn() ? '🔊 ' + t('nSoundOn') : '🔈 ' + t('nSoundOff')}</button><small class="np-h">${t('nHint')}</small></div>`;
+  }
+  document.addEventListener('click', async e => {
+    const sd = e.target.closest('[data-nsound]');
+    if (sd) { store('dropSound', soundOn() ? '0' : '1'); ping(); $('#npanel').outerHTML = panel(); return; }
+    const pb = e.target.closest('[data-npush]'); if (!pb) return;
+    pb.disabled = true;
+    try { if (pb.dataset.npush === 'on') await enable(); else await disable(); $('#npanel').outerHTML = panel(); }
+    catch (err) { pb.disabled = false; pb.textContent = err.message === 'denied' ? t('nDenied') : t('runErr.x'); }
+  });
+  return { check, panel };
+})();
+
 function runIcs(run) {
   const d = LOOT.dungeons.find(x => x.key === run.dungeon), st = new Date(run.at), en = new Date(st.getTime() + 2 * 3600e3);
   const f = x => x.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Dropamine//Runs//FR', 'BEGIN:VEVENT', `UID:${run.id}@dropamine.app`, `DTSTAMP:${f(new Date())}`,
     `DTSTART:${f(st)}`, `DTEND:${f(en)}`, `SUMMARY:${t('runIcsTitle', { d: (d?.name || run.dungeon).replace(/[,;]/g, ' ') })}`,
-    `DESCRIPTION:${(run.note || '').replace(/[,;\n]/g, ' ')}`, `URL:${runUrl(run.id)}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+    `DESCRIPTION:${(run.note || '').replace(/[,;\n]/g, ' ')}`, `URL:${runUrl(run.id)}`,
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'TRIGGER:-PT30M', `DESCRIPTION:${t('runIcsTitle', { d: (d?.name || run.dungeon).replace(/[,;]/g, ' ') })}`, 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
   const a = document.createElement('a'); a.download = `run-${run.dungeon}.ics`; a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })); a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
@@ -1431,7 +1552,7 @@ function renderRuns() {
       </div>
       ${open ? `<div class="rr-x"><ul>${members}</ul>
       <div class="pact">${joinForm}${myMember ? `<button class="btn ghost" data-run-leave="${esc(run.id)}">${iOwn ? t('runCancel') : t('runLeave')}</button>` : ''}${edit}
-        <span class="tools"><button class="lnk" data-run-copy="${esc(run.id)}">${t('runCopy')}</button><button class="lnk" data-run-link="${esc(run.id)}">${t('runLink')}</button><button class="lnk" data-run-ics="${esc(run.id)}">${t('runIcs')}</button></span>
+        <span class="tools">${!iOwn && org ? `<button class="lnk" data-run-w="${esc(run.id)}">${t('runW')}</button>` : ''}${myMember ? `<button class="lnk" data-run-game="${esc(run.id)}">${t('runGame')}</button>` : ''}<button class="lnk" data-run-copy="${esc(run.id)}">${t('runCopy')}</button><button class="lnk" data-run-link="${esc(run.id)}">${t('runLink')}</button><button class="lnk" data-run-ics="${esc(run.id)}">${t('runIcs')}</button></span>
         ${!me.length ? `<small>${t('runLogin')}</small>` : ''}</div></div>` : ''}</div>`;
   }
   const plannedBlock = `<section class="planned">${RUNS === null ? `<p class="note">${t('runsApiDown')}</p>` : ''}
@@ -1463,7 +1584,7 @@ function renderRuns() {
   const rtab = state.rtab === 'ideas' ? 'ideas' : 'planned';
   box.innerHTML = `<div class="head"><h2>${t('runsT')}</h2><span class="note">${t('runsNote')} · Forever ${state.region.toUpperCase()}</span></div>
     <div class="rtabs" role="tablist"><button role="tab" data-rtab="planned" aria-selected="${rtab === 'planned'}">${t('rtabRuns')}<em>${filtered.length}</em></button><button role="tab" data-rtab="ideas" aria-selected="${rtab === 'ideas'}">${t('rtabIdeas')}<em>${runs.length}</em></button></div>
-    ${chips}${pfilters}${note}${rtab === 'planned' ? plannedBlock : `<p class="note rideas-n">${t('runsIdeasNote')}</p>
+    ${Notif.panel()}${chips}${pfilters}${note}${rtab === 'planned' ? plannedBlock : `<p class="note rideas-n">${t('runsIdeasNote')}</p>
     ${!runs.length && searchActive() ? `<p class="note">${t('hsNone')}</p>` : ''}${runs.length ? `<div class="runs">${runs.slice(0, state.ilimit || 8).map(card).join('')}</div>${runs.length > (state.ilimit || 8) ? `<button class="btn ghost more" data-imore>${t('runMoreDun', { n: runs.length - (state.ilimit || 8) })}</button>` : ''}` : `<div class="empty"><b>${t('runsEmptyT')}</b>${t('runsEmpty')}</div>`}
     `}<p class="runs-src">${t('runsSrc')}</p>`;
   if (state.runFocus && !state.runFocused) { const el = document.getElementById('run-' + state.runFocus); if (el) { state.runFocused = true; el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } }
@@ -1522,6 +1643,11 @@ document.addEventListener('click', e => {
   const ln = e.target.closest('[data-run-link]');
   if (ln) { navigator.clipboard?.writeText(runUrl(ln.dataset.runLink)).then(() => { ln.textContent = t('runCopied'); setTimeout(() => ln.textContent = t('runLink'), 1800); }); return; }
   const ic = e.target.closest('[data-run-ics]'); if (ic) { const x = run(ic.dataset.runIcs); if (x) runIcs(x); }
+  const copyBtn = async (b, text) => { try { await navigator.clipboard.writeText(text); const o = b.textContent; b.textContent = t('copied'); setTimeout(() => { b.textContent = o; }, 1600); } catch (err) { prompt('', text); } };
+  const wb = e.target.closest('[data-run-w]');
+  if (wb) { const x = run(wb.dataset.runW); if (x) { const mineK = new Set(Bnet.mine().map(pkey)), mem = x.members.find(m => mineK.has(m.key));
+    const sel = wb.closest('.rr-x')?.querySelector('.joinf [data-run-role]'); copyBtn(wb, runWhisper(x, mem?.role || sel?.value)); } }
+  const gb = e.target.closest('[data-run-game]'); if (gb) { const x = run(gb.dataset.runGame); if (x) copyBtn(gb, runGameCode(x)); }
 });
 document.addEventListener('change', e => {
   const pds = e.target.closest('[data-pd]'); if (pds) { state.pd = pds.value; state.plimit = 30; renderRuns(); return; }
@@ -1749,7 +1875,8 @@ function go(patch) {
   const changedView = patch.view && patch.view !== state.view;
   Object.assign(state, patch); render(true);
   Ribbon.swell(changedView ? 1 : .45);
-  if (changedView) scrollTo({ top: Math.min(scrollY, $('.nav').offsetTop), behavior: reduce ? 'auto' : 'smooth' });
+  // nouvelle page : on repart du haut, tout de suite (un défilement animé se faisait interrompre par le nouvel affichage)
+  if (changedView) { scrollTo({ top: 0, behavior: 'auto' }); requestAnimationFrame(() => scrollTo({ top: 0, behavior: 'auto' })); }
 }
 // menu : une seule rangée si tout tient, sinon onglets puis outils (la largeur dépend de la langue et de la connexion)
 function fitNav() {

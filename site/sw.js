@@ -2,7 +2,7 @@
 // - pages et données (data/*.json) : réseau d'abord, copie en cache si le réseau manque ;
 // - fichiers du site (css, js, polices, icônes) : cache d'abord, rafraîchi en arrière-plan ;
 // - API (api.dropamine.app) et Battle.net : jamais en cache (toujours en direct).
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = `shell-${VERSION}`, DATA = `data-${VERSION}`, IMG = `img-${VERSION}`;
 const PRECACHE = ['./', 'index.html', 'Dropamine-Logo.png', 'icons/icon-192.png', 'manifest.webmanifest'];
 
@@ -46,4 +46,19 @@ self.addEventListener('fetch', e => {
   if (url.origin !== location.origin) return;
   if (req.mode === 'navigate' || url.pathname.startsWith('/data/')) { e.respondWith(networkFirst(req, req.mode === 'navigate' ? SHELL : DATA)); return; }
   e.respondWith(staleWhileRevalidate(req, SHELL));
+});
+
+// notifications push (sorties de la chasse en groupe)
+self.addEventListener('push', e => {
+  let m = {}; try { m = e.data ? e.data.json() : {}; } catch { m = { title: 'Dropamine', body: e.data?.text() }; }
+  // toujours afficher (Chrome l'exige pour chaque push) ; le même « tag » remplace l'alerte précédente de la même sortie
+  e.waitUntil(self.registration.showNotification(m.title || 'Dropamine', { body: m.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: m.tag, renotify: !!m.tag, data: { url: m.url || '/' } }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = e.notification.data?.url || '/';
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    const c = list.find(x => new URL(x.url).origin === location.origin);
+    return c ? c.navigate(url).then(x => (x || c).focus()) : self.clients.openWindow(url);
+  }));
 });

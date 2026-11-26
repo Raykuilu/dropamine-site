@@ -1100,3 +1100,17 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .rrow.mine{box-shadow:none}
 .rrow.mine::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#8cc472;z-index:2;pointer-events:none}
 .rrow.mine.focus{box-shadow:0 0 0 1px var(--gold),0 0 18px rgba(232,200,138,.18)}
+
+/* ---------- Notifications : panneau de la chasse en groupe, toasts cliquables ---------- */
+.npanel{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 12px;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--line-2);background:rgba(0,0,0,.16)}
+.npanel .np-t{font-family:var(--display);font-variant:small-caps;letter-spacing:.06em;color:var(--rim);font-size:16px}
+.npanel .chip{cursor:pointer;font:inherit}
+.npanel small{color:var(--faint);font-style:italic}
+.npanel .np-h{flex-basis:100%}
+.ntoast{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;max-width:min(380px,calc(100vw - 32px));padding:9px 14px;border-radius:6px;
+  background:linear-gradient(180deg,#1d3a14,#132a0d);border:1px solid #4f8a3a;box-shadow:0 0 18px rgba(30,255,0,.16),0 8px 24px rgba(0,0,0,.5);color:#d6f5c8;font-size:15px;pointer-events:auto;animation:enter .45s var(--ease) both;transition:opacity .5s,transform .5s}
+.ntoast b{color:#fff3cf}
+.ntoast.out{opacity:0;transform:translateY(8px)}
+.npanel button.chip{appearance:none;-webkit-appearance:none;font:inherit;font-family:var(--display);letter-spacing:.04em;line-height:1.2}
+.npanel button.chip:not(.on){background:transparent;color:var(--muted)}
+.npanel button.chip:hover{color:var(--gold);border-color:var(--rim-lo)}

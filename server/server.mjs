@@ -9,6 +9,9 @@
 //   POST /release { keys }    → les retire (seulement ceux du compte connecté)
 //   POST /upload  { line }    → ligne « /drop hiscores » : compétences d'armes exactes (inscrit le personnage au passage)
 //   POST /logout
+//   GET  /push/key            → clé publique VAPID (notifications push)
+//   POST /push/subscribe      → { sub } : cet appareil reçoit les notifications des sorties du compte (session requise)
+//   POST /push/unsubscribe    → { endpoint }
 //
 // Le registre vit dans le dépôt GitHub du site (data/registry.json) : le service le met à jour
 // par l'API GitHub, puis relance la mise à jour quotidienne du site.
@@ -20,6 +23,7 @@ import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey
   applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns } from './lib.mjs';
 import { readFileSync, existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { vapidKeys, sendPush, validSub, addSub, removeSub, runEvents, dueReminders } from './push.mjs';
 
 // Secrets : variables d'environnement, ou à défaut un fichier server/.env privé (jamais versionné)
 const ENV_FILE = fileURLToPath(new URL('./.env', import.meta.url));
@@ -208,11 +212,31 @@ async function cfRefresh() {
 cfRefresh(); setInterval(cfRefresh, 3 * 3600e3).unref();
 // donjons connus : les tables de butin du site (même dépôt), relues au plus une fois par heure
 const LOOT_FILE = fileURLToPath(new URL('../site/data/loot.json', import.meta.url));
-let dunCache = { t: 0, set: new Set() };
+let dunCache = { t: 0, set: new Set(), names: new Map() };
 const dungeonKeys = () => {
-  if (Date.now() - dunCache.t > 3600e3) { try { dunCache = { t: Date.now(), set: new Set(JSON.parse(readFileSync(LOOT_FILE, 'utf8')).dungeons.map(d => d.key)) }; } catch { /* on garde l'ancienne liste */ } }
+  if (Date.now() - dunCache.t > 3600e3) { try { const ds = JSON.parse(readFileSync(LOOT_FILE, 'utf8')).dungeons; dunCache = { t: Date.now(), set: new Set(ds.map(d => d.key)), names: new Map(ds.map(d => [d.key, d.name])) }; } catch { /* on garde l'ancienne liste */ } }
   return dunCache.set;
 };
+
+// ---------------------------------------------------------------- notifications push
+// abonnements par compte (empreinte Battle.net, jamais l'identifiant) dans .state/push.json ; clés VAPID dans .state/vapid.json
+const PUSH_FILE = STATE_DIR + 'push.json', VAPID = vapidKeys(STATE_DIR);
+let SUBS = {}; try { SUBS = JSON.parse(readFileSync(PUSH_FILE, 'utf8')); } catch { /* aucun abonnement encore */ }
+function subsSave() { mkdirSync(STATE_DIR, { recursive: true }); writeFileSync(PUSH_FILE + '.tmp', JSON.stringify(SUBS)); renameSync(PUSH_FILE + '.tmp', PUSH_FILE); }
+const dunName = k => (dungeonKeys(), dunCache.names.get(k) ?? k);
+const RAID_RE = /Raid|Core|Lair|Naxx|Qiraj|Gurub|Hyjal|Blackwing|Onyxia|WorldBosses/i;
+async function notify(events) {
+  let gone = false;
+  for (const { owner, msg } of events) for (const sub of SUBS[owner] ?? []) {
+    const r = await sendPush(sub, { ...msg, url: CFG.siteUrl + msg.url }, VAPID, CFG.siteUrl).catch(e => 'err:' + e.message);
+    if (r === 'gone') { SUBS = removeSub(SUBS, sub.endpoint); gone = true; }
+    else if (r !== 'ok') console.warn('push :', r);
+  }
+  if (gone) subsSave();
+}
+// rappels 30 min avant, vérifiés chaque minute
+const reminded = new Set();
+setInterval(() => { if (RUNS) notify(dueReminders(RUNS.runs ?? [], reminded, Date.now(), dunName)).catch(() => {}); }, 60e3).unref();
 
 // ---------------------------------------------------------------- HTTP
 function send(res, status, body, headers = {}) {
@@ -236,6 +260,7 @@ const server = createServer(async (req, res) => {
 
     if (url.pathname === '/health') return send(res, 200, 'ok', cors);
     if (url.pathname === '/runs' && req.method === 'GET') { await runsLoad(); return sendRuns(req, res); }
+    if (url.pathname === '/push/key' && req.method === 'GET') return send(res, 200, { key: VAPID.publicKey }, { ...cors, 'Cache-Control': 'public, max-age=86400' });
     if (url.pathname === '/stats' && req.method === 'GET') return send(res, 200, { curseforge: cfStats }, { ...cors, 'Cache-Control': 'public, max-age=900' });
 
     if (url.pathname === '/auth/login' && req.method === 'GET') {
@@ -257,7 +282,7 @@ const server = createServer(async (req, res) => {
     }
 
     // routes de session : appelées par dropamine.app (CORS avec cookie)
-    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit'].includes(url.pathname)) {
+    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit', '/push/subscribe', '/push/unsubscribe'].includes(url.pathname)) {
       if (req.method === 'POST' && req.headers.origin !== CFG.siteUrl) return send(res, 403, { error: 'origine refusée' }, cors);
       const s = session(req);
       if (url.pathname === '/logout') {
@@ -307,14 +332,31 @@ const server = createServer(async (req, res) => {
         refreshSite();
         return send(res, 200, { key: c.key, weapons: p.weapons, count: p.weaponList.length }, cors);
       }
+      if (url.pathname === '/push/subscribe' && req.method === 'POST') {
+        const { sub } = await readBody(req);
+        if (!validSub(sub)) return send(res, 400, { error: 'abonnement invalide' }, cors);
+        const r = addSub(SUBS, ownerOf(s), sub);
+        if (r.error) return send(res, 503, { error: r.error }, cors);
+        SUBS = r.store; subsSave();
+        return send(res, 200, { ok: true }, cors);
+      }
+      if (url.pathname === '/push/unsubscribe' && req.method === 'POST') {
+        const { endpoint } = await readBody(req);
+        SUBS = removeSub(SUBS, String(endpoint ?? '')); subsSave();
+        return send(res, 200, { ok: true }, cors);
+      }
       // runs : créer (avec un de ses personnages), rejoindre, quitter (le créateur annule)
       if (url.pathname.startsWith('/runs/') && req.method === 'POST') {
         const body = await readBody(req), owner = ownerOf(s);
         const fn = url.pathname === '/runs/create' ? d => applyRunCreate(d, body, owner, s.characters, dungeonKeys())
           : url.pathname === '/runs/edit' ? d => applyRunEdit(d, body, owner, dungeonKeys())
           : url.pathname === '/runs/join' ? d => applyRunJoin(d, body, owner, s.characters) : d => applyRunLeave(d, body, owner);
+        const before = structuredClone((await runsLoad()).runs?.find(x => x.id === body.id) ?? null);
         const r = await updateRuns(fn);
         if (r.error) return send(res, 400, { error: r.error }, cors);
+        // notifications : l'organisateur (arrivées, départs), les inscrits (place libérée, groupe complet, annulation)
+        const after = RUNS.runs?.find(x => x.id === (r.run?.id ?? body.id)) ?? null;
+        if (before || after) notify(runEvents(before, after, owner, { dungeonName: dunName, isRaid: k => RAID_RE.test(k) })).catch(() => {});
         return send(res, 200, { ok: true, id: r.run?.id ?? body.id, cancelled: !!r.cancelled, runs: publicRuns(RUNS) }, cors);
       }
     }
