@@ -3,7 +3,7 @@
     {
       "id": "mwwy2gs33qj9",
       "dungeon": "ShadowfangKeep",
-      "at": "2026-11-27T03:39:00.000Z",
+      "at": "2026-11-26T06:48:00.000Z",
       "note": "",
       "by": "eu/ray-kuilu",
       "owner": "bnet:masque",
@@ -14,7 +14,8 @@
           "role": "tank",
           "owner": "bnet:masque"
         }
-      ]
+      ],
+      "edited": "2026-11-26T06:32:40.867Z"
     }
   ]
 }
