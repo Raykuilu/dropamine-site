@@ -76,7 +76,7 @@ const I18N = {
   pvpDeaths: ['Killed by players', 'Tué par des joueurs'], duels: ['Duels (won / lost)', 'Duels (gagnés / perdus)'],
   repsT: ['Reputations', 'Réputations'],
   hsQ: ['Dungeon, boss, item, player…', 'Donjon, boss, objet, joueur…'], hsLvl: ['Level', 'Niveau'], hsLvlAll: ['All levels', 'Tous niveaux'], hsLvlMe: ['My level', 'À mon niveau'], hsLvlBand: ['Level {a}–{b}', 'Niveau {a}–{b}'],
-  hsType: ['Type', 'Type'], hsTypeAll: ['All types', 'Tous types'], hsTypeDun: ['Dungeons', 'Donjons'], hsTypeFor: ['Forever dungeons', 'Donjons Forever'], hsTypeRaid: ['Raids', 'Raids'],
+  hsType: ['Type', 'Type'], hsDun: ['Dungeon', 'Donjon'], hsDunAll: ['All dungeons', 'Tous les donjons'], hsTypeAll: ['All types', 'Tous types'], hsTypeDun: ['Dungeons', 'Donjons'], hsTypeFor: ['Forever dungeons', 'Donjons Forever'], hsTypeRaid: ['Raids', 'Raids'],
   hsRole: ['Missing role', 'Rôle manquant'], hsRoleAll: ['Any role', 'Tous rôles'], 'hsNeed.tank': ['Needs a tank', 'Cherche un tank'], 'hsNeed.heal': ['Needs a healer', 'Cherche un soigneur'], 'hsNeed.dps': ['Needs damage', 'Cherche des dégâts'], hsWhen: ['When', 'Quand'], hsWhenAll: ['Any time', 'Tout le temps'], hsWhenWeek: ['Next 7 days', '7 prochains jours'],
   hsReset: ['Reset', 'Tout effacer'], hsNone: ['Nothing matches this search.', 'Rien ne correspond à cette recherche.'],
   'slot.HEAD': ['Head', 'Tête'], 'slot.NECK': ['Neck', 'Cou'], 'slot.SHOULDER': ['Shoulders', 'Épaules'], 'slot.BACK': ['Back', 'Dos'], 'slot.CHEST': ['Chest', 'Torse'],
@@ -834,7 +834,7 @@ const kdOf = st => st.hk == null ? null : st.pvpDeaths ? st.hk / st.pvpDeaths : 
 function secNav(p) {
   const st = p.stats || {}, d = p.dropamine || {};
   const book = ['collection', 'achievements', 'records'].some(k => d[k]) || p.played;
-  const items = [['sec-skills', t('skillsT')], [book ? 'sec-book' : null, t('dbTitle')], [d.hunt?.length || Bnet.isMine(p) ? 'sec-hunt' : null, t('dbHunt')],
+  const items = [['sec-skills', t('skillsT')], [book ? 'sec-book' : null, t('dbTitle')], [d.hunt?.length || Bnet.isMine(pkey(p)) ? 'sec-hunt' : null, t('dbHunt')],
     [armoryStat(p, 'hk') != null || st.pvpDeaths != null ? 'sec-pvp' : null, t('pvpT')], ['sec-adv', t('advT')],
     [p.reps?.length ? 'sec-reps' : null, t('repsT')]].filter(([id]) => id);
   return `<nav class="secnav">${items.map(([id, l]) => `<a href="#${id}" data-sec="${id}">${l}</a>`).join('')}</nav>`;
@@ -949,7 +949,7 @@ function huntSuggest(p) {
 }
 let huntWait = null;
 function huntPanel(p) {
-  const hunt = p.dropamine?.hunt || [], mine = Bnet.isMine(p);
+  const hunt = p.dropamine?.hunt || [], mine = Bnet.isMine(pkey(p));
   if (!hunt.length && !mine) return '';
   if (!LOOT || !ITEMS) {
     huntWait ??= Promise.all([loadLoot(), loadItems()]).then(() => { if (state.view === 'char') renderChar(); });
@@ -1275,7 +1275,16 @@ function lvlMatch(d, me) {
 const textMatch = hay => { const q = fold(state.hq).split(/\s+/).filter(Boolean); if (!q.length) return true; const h = fold(hay); return q.every(w => h.includes(w)); };
 const dunText = d => [d.name, ...d.bosses.map(b => b.n.join(' '))].join(' ');
 const huntsText = p => (p?.dropamine?.hunt || []).map(h => huntName(h) + ' ' + itemName(h.id)).join(' ');
-const searchActive = () => !!(state.hq || state.hl || state.ht || state.hr || state.hw || (state.pf && state.pf !== 'all'));
+const searchActive = () => !!(state.hq || state.hl || state.ht || state.hd || state.hr || state.hw || (state.pf && state.pf !== 'all'));
+// liste des donjons pour la recherche : donjons, donjons Forever, raids ; chacun par niveau
+function dunOptions() {
+  const groups = [['dungeon', t('hsTypeDun')], ['forever', t('hsTypeFor')], ['raid', t('hsTypeRaid')]];
+  return groups.map(([k, label]) => {
+    const ds = LOOT.dungeons.filter(d => dunType(d) === k).sort((a, b) => ((a.lvl || [])[0] || 99) - ((b.lvl || [])[0] || 99) || a.name.localeCompare(b.name));
+    return ds.length ? `<optgroup label="${esc(label)}">${ds.map(d => { const [lo, , hi] = d.lvl || [];
+      return `<option value="${esc(d.key)}"${state.hd === d.key ? ' selected' : ''}>${esc(d.name)}${lo ? ` (${lo}–${hi})` : ''}</option>`; }).join('')}</optgroup>` : '';
+  }).join('');
+}
 function renderRuns() {
   const box = $('#runs-panel');
   if (!LOOT || !ITEMS || !ART) {
@@ -1291,7 +1300,7 @@ function renderRuns() {
   if (scope === 'guild' && myGuild && !list.length) { list = all; note = `<p class="note runs-note">${t('runsNoGuild')}</p>`; }
   let runs = runsData(list);
   if (state.rlvl && me.length && !state.hl) runs = runs.filter(x => me.some(p => fitOf(p, x.d) === 'ok'));
-  runs = runs.filter(x => lvlMatch(x.d, me) && (!state.ht || dunType(x.d) === state.ht)
+  runs = runs.filter(x => lvlMatch(x.d, me) && (!state.ht || dunType(x.d) === state.ht) && (!state.hd || x.d.key === state.hd)
     && textMatch(dunText(x.d) + ' ' + [...x.people.keys()].map(p => p.name + ' ' + (p.guild?.name || '') + ' ' + huntsText(p)).join(' ')));
   const chips = `<div class="chips" role="group">${myGuild ? `<span class="chip ${scope === 'guild' ? 'on' : ''}" data-rscope="guild">${t('runsGuild')} · ${esc(myGuild.name)}</span>` : ''}<span class="chip ${scope === 'all' ? 'on' : ''}" data-rscope="all">${t('runsAll')}</span></div>`;
 
@@ -1308,7 +1317,7 @@ function renderRuns() {
     && (pf !== 'open' || (() => { const l = { tank: 1, heal: 1, dps: 3 }; run.members.forEach(m => l[m.role]--); return l.tank > 0 || l.heal > 0 || l.dps > 0; })())
     && (!pd || run.dungeon === pd)
     && (() => { const d = LOOT.dungeons.find(x => x.key === run.dungeon); if (!d) return false;
-      if (!lvlMatch(d, me) || (state.ht && dunType(d) !== state.ht)) return false;
+      if (!lvlMatch(d, me) || (state.ht && dunType(d) !== state.ht) || (state.hd && d.key !== state.hd)) return false;
       if (state.hr) { if (isRaid(d)) return false; const l = { tank: 1, heal: 1, dps: 3 }; run.members.forEach(m => l[m.role]--); if (l[state.hr] <= 0) return false; }
       if (state.hw) { const at = Date.parse(run.at), end = new Date(); end.setHours(23, 59, 59, 999); if (at > (state.hw === 'today' ? end.getTime() : Date.now() + 7 * 864e5)) return false; }
       return textMatch(dunText(d) + ' ' + (run.note || '') + ' ' + run.members.map(m => { const p = byKey.get(m.key); return (p ? p.name + ' ' + huntsText(p) : m.key); }).join(' ')); })());
@@ -1324,7 +1333,7 @@ function renderRuns() {
       <label class="hs-q"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input type="search" data-hq value="${esc(state.hq || '')}" placeholder="${t('hsQ')}" aria-label="${t('hsQ')}"></label>
       <select data-hf="hl" aria-label="${t('hsLvl')}">${opt('hl', '', t('hsLvlAll'))}${me.length ? opt('hl', 'me', t('hsLvlMe')) : ''}${LV_BANDS.map(b => opt('hl', String(b), t('hsLvlBand', { a: b, b: b + 10 }))).join('')}</select>
-      <select data-hf="ht" aria-label="${t('hsType')}">${opt('ht', '', t('hsTypeAll'))}${opt('ht', 'dungeon', t('hsTypeDun'))}${opt('ht', 'forever', t('hsTypeFor'))}${opt('ht', 'raid', t('hsTypeRaid'))}</select>
+      <select data-hf="hd" aria-label="${t('hsDun')}">${opt('hd', '', t('hsDunAll'))}${dunOptions()}</select>
       <select data-hf="hr" aria-label="${t('hsRole')}">${opt('hr', '', t('hsRoleAll'))}${['tank', 'heal', 'dps'].map(x => opt('hr', x, t('hsNeed.' + x))).join('')}</select>
       <select data-hf="hw" aria-label="${t('hsWhen')}">${opt('hw', '', t('hsWhenAll'))}${opt('hw', 'today', t('dayToday'))}${opt('hw', 'week', t('hsWhenWeek'))}</select>
       <div class="hs-row">${[['all', 'pfAll'], ...(me.length ? [['mine', 'pfMine']] : []), ['open', 'pfOpen']].map(([k, l]) => `<span class="chip ${pf === k ? 'on' : ''}" data-pf="${k}">${t(l)}</span>`).join('')}
@@ -1417,7 +1426,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('click', e => {
   if (!e.target.closest('[data-hreset]')) return;
-  Object.assign(state, { hq: '', hl: '', ht: '', hr: '', hw: '', pf: 'all', plimit: 10, ilimit: 8 }); renderRuns(); writeUrl(false);
+  Object.assign(state, { hq: '', hl: '', ht: '', hd: '', hr: '', hw: '', pf: 'all', plimit: 10, ilimit: 8 }); renderRuns(); writeUrl(false);
 });
 // actions : filtres, proposer, rejoindre, quitter
 async function runAction(path, body) {
@@ -1644,7 +1653,7 @@ function readUrl() {
   state.region = ['eu', 'us', 'tw'].includes(q.get('r')) ? q.get('r') : 'eu';
   state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0;
   state.c = q.get('c') || state.c; state.g = q.get('g') || '';
-  if (state.view === 'runs') Object.assign(state, { hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
+  if (state.view === 'runs') Object.assign(state, { hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
 }
 function writeUrl(push) {
   if (SHOT) return;
@@ -1654,7 +1663,7 @@ function writeUrl(push) {
   if (state.view === 'rank') { if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
   if (state.view === 'char' && state.c) q.set('c', state.c);
   if (state.view === 'guild' && state.g) q.set('g', state.g);
-  if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.runFocus) q.set('run', state.runFocus); }
+  if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['d', 'hd'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.runFocus) q.set('run', state.runFocus); }
   history[push ? 'pushState' : 'replaceState'](null, '', q.toString() ? '?' + q : location.pathname);
 }
 const RENDER = { rank: renderRank, char: renderChar, guild: renderGuild, runs: renderRuns, news: renderNews, join: () => Bnet.show() };
@@ -1786,7 +1795,7 @@ document.fonts?.ready.then(fitNav);
 // captures de test, sur le poste de développement seulement : ?as=eu/ray-kuilu affiche le site « connecté » avec ce personnage
 if (location.hostname === 'localhost' && new URLSearchParams(location.search).get('as')) {
   const as = new URLSearchParams(location.search).get('as');
-  Bnet.isMine = p => !!p && pkey(p) === as; Bnet.mine = () => DATA.players.filter(p => pkey(p) === as); Bnet.best = () => as;
+  Bnet.isMine = key => key === as; Bnet.mine = () => DATA.players.filter(p => pkey(p) === as); Bnet.best = () => as;
 }
 // captures de test (localhost) : ?go=sec-hunt montre la page à partir de cette section
 if (location.hostname === 'localhost' && new URLSearchParams(location.search).get('go'))
