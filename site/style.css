@@ -1095,3 +1095,8 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
   .rr-act{grid-row:1;align-self:start}
 }
 @media (min-width:981px) and (max-width:1200px){.rr-h{grid-template-columns:104px 70px minmax(0,1fr) 150px 96px 112px;gap:12px}.rr-h{background:linear-gradient(90deg,transparent 0,#1b150e 104px)}.rr-x{padding-left:118px}}
+/* liseré vert de « mes sorties » : au-dessus de l'illustration, sur toute la hauteur */
+.rrow{position:relative}
+.rrow.mine{box-shadow:none}
+.rrow.mine::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#8cc472;z-index:2;pointer-events:none}
+.rrow.mine.focus{box-shadow:0 0 0 1px var(--gold),0 0 18px rgba(232,200,138,.18)}

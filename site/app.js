@@ -46,7 +46,7 @@ const I18N = {
   runFullHint: ['Group complete: you will be on the waiting list.', 'Groupe complet : tu passeras en liste d’attente.'],
   runMoreRuns: ['Show {n} more outings', 'Voir {n} sorties de plus'], runMoreDun: ['Show {n} more dungeons', 'Voir {n} donjons de plus'],
   pfAll: ['All', 'Tous'], pfMine: ['My outings', 'Mes sorties'], pfOpen: ['Open spots', 'Places libres'], pfAllDun: ['All dungeons', 'Tous les donjons'],
-  pfCount: ['{n} outings', '{n} sorties'], pfNone: ['No outing matches these filters.', 'Aucune sortie ne correspond à ces filtres.'],
+  pfCount: ['{n} outing{s}', '{n} sortie{s}'], pfNone: ['No outing matches these filters.', 'Aucune sortie ne correspond à ces filtres.'],
   dayToday: ['Today', 'Aujourd’hui'], dayTomorrow: ['Tomorrow', 'Demain'], runEdit: ['Edit', 'Modifier'], runSave: ['Save', 'Enregistrer'], runDungeon: ['Dungeon', 'Donjon'],
   runSaved: ['Outing updated.', 'Sortie modifiée.'], runRoleChanged: ['Role changed.', 'Rôle changé.'], runEdited: ['edited', 'modifié'],
   runFull: ['Group complete', 'Groupe complet'], runCount: ['{n} signed up', '{n} inscrit(s)'],
