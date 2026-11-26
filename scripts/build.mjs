@@ -323,7 +323,7 @@ async function main() {
       guild: p.guild ? { name: p.guild.name, slug: p.guild.slug } : null,
       ruleset: p.ruleset?.name ?? null, rulesetId: p.ruleset?.id ?? null,
       ...s, stats: pickStats(c.achStats), reps: pickReps(c.reputations), history: hist,
-      render: asset('main-raw'), avatar: asset('avatar'),
+      render: asset('main-raw'), avatar: asset('avatar'), inset: asset('inset'),   // buste : image des aperçus de liens
       ...(e.preview ? { preview: true } : {}),
       // /played : seulement si le joueur l'a laissé dans sa ligne Dropamine (case cochée dans l'addon)
       ...(up?.played > 0 ? { played: up.played, playedAt: up.at ?? null } : {}),
@@ -342,6 +342,9 @@ async function main() {
   console.log(`${players.length} personnage(s) écrit(s) dans site/data/hiscores.json`);
 
   await writeFile(join(ROOT, 'site/sitemap.xml'), sitemap(players, today));
+  // aperçus de liens par personnage (WhatsApp, Discord…) : site/c/<région>/<slug>/
+  const { writePreviews } = await import('./preview.mjs');
+  console.log(`aperçus de liens : ${await writePreviews(ROOT, players)} page(s)`);
   await stampAssets();
 
   // Nouveautés : le CHANGELOG public de l'addon (une erreur ici ne bloque pas le classement)

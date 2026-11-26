@@ -763,7 +763,8 @@ function renderChar() {
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-share]'); if (!b) return;
   const p = DATA.players.find(x => pkey(x) === b.dataset.share); if (!p) return;
-  const url = `https://dropamine.app/?p=char&c=${encodeURIComponent(pkey(p))}`;
+  // lien d'aperçu : une page par personnage avec son propre résumé et son buste (WhatsApp, Discord…), qui mène à la fiche
+  const url = `https://dropamine.app/c/${p.region || 'eu'}/${String(p.slug).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9-]/g, '')}/`;
   const text = `${p.name} ${p.surname} · ${fmt(p.total)} / ${fmt(p.max || 2460)} · Dropamine Hiscores`;
   try {
     if (navigator.share && matchMedia('(pointer:coarse)').matches) { await navigator.share({ title: text, url }); return; }
