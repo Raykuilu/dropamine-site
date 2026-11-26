@@ -557,3 +557,7 @@ html.static .pulse .live{animation:none}
 .gsort .note{font-style:italic;color:var(--faint);font-size:14px}
 .mbar.b i{background:linear-gradient(90deg,#a07a3c,#e6c47c)}
 .tot small{font-size:.7em;color:var(--muted);font-weight:400}
+
+/* réputations (armurerie) */
+.db-list.reps li{grid-template-columns:minmax(0,1fr) 110px 90px}
+.lbar.rep{height:6px}

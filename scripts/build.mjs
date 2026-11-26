@@ -45,9 +45,10 @@ export async function token() {
   return (await res.json()).access_token;
 }
 
-export async function get(tok, region, path) {
+// allLocales : noms dans toutes les langues (objet { en_US, fr_FR, … }) au lieu d'une seule
+export async function get(tok, region, path, allLocales = false) {
   const sep = path.includes('?') ? '&' : '?';
-  const url = `https://${region}.api.blizzard.com${path}${sep}namespace=profile-forever-${region}&locale=${LOCALE[region] || 'en_US'}`;
+  const url = `https://${region}.api.blizzard.com${path}${sep}namespace=profile-forever-${region}${allLocales ? '' : `&locale=${LOCALE[region] || 'en_US'}`}`;
   for (let attempt = 0; attempt < 3; attempt++) {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${tok}` } });
     if (res.status === 404) return null;                       // personnage < niveau 10, ou pas encore visible
@@ -108,8 +109,9 @@ export function score({ profile, professions, equipment, statistics }, upload) {
     weapons = list.length ? rankOf(meleeId) + (secondId ? rankOf(secondId) : 0) : Math.min(upload.weapons, 2 * 5 * level);
     weaponsSource = 'dropamine';
   } else {
-    // estimation : l'arme de mêlée et l'arme à distance (ou baguette) équipées, comptées au maximum (5 × niveau)
-    const kinds = [mh && !RANGED_KINDS.has(mh.kind) ? mh.kind : null, rg && secondId === rg.kind ? rg.kind : mode === 'wands' && rg?.kind === 'wands' ? 'wands' : null].filter(Boolean);
+    // estimation : l'arme de mêlée et l'arme à distance (ou baguette) équipées, comptées au maximum (5 × niveau) ;
+    // pour un druide, le Combat farouche (sa 2e compétence, sans objet) aussi, comme dans l'addon
+    const kinds = [mh && !RANGED_KINDS.has(mh.kind) ? mh.kind : null, rg && secondId === rg.kind ? rg.kind : mode === 'wands' && rg?.kind === 'wands' ? 'wands' : mode === 'feral' ? 'feral' : null].filter(Boolean);
     weaponList = kinds.map(id => ({ id, rank: 5 * level, est: true }));
     weapons = kinds.length * 5 * level; weaponsSource = 'estimate';
   }
@@ -129,13 +131,23 @@ export function skillSnapshot(s) {
   return o;
 }
 
-function pickStats(achStats) {
-  // quelques statistiques de l'armurerie (noms fr_FR / en_US)
+// statistiques de l'armurerie, par identifiant (stables quelle que soit la langue)
+export const STAT_IDS = { 107: 'kills', 98: 'quests', 60: 'deaths', 349: 'flights', 932: 'dungeons',
+  588: 'hk', 1487: 'killingBlows', 1501: 'pvpDeaths', 319: 'duelsWon', 320: 'duelsLost' };
+// réputations : [{ id, n: [en, fr], t: palier 0-7, s: [en, fr], v, m }] de la plus avancée à la moins avancée
+export function pickReps(reps) {
+  return (reps?.reputations ?? []).filter(r => r.faction?.id && r.standing)
+    .map(r => ({ id: r.faction.id, n: [r.faction.name?.en_US ?? '', r.faction.name?.fr_FR ?? r.faction.name?.en_US ?? ''],
+      t: r.standing.tier ?? 3, s: [r.standing.name?.en_US ?? '', r.standing.name?.fr_FR ?? ''], v: r.standing.value ?? 0, m: r.standing.max ?? 0, raw: r.standing.raw ?? 0 }))
+    .sort((a, b) => b.raw - a.raw).map(({ raw, ...r }) => r);
+}
+export function pickStats(achStats) {
+  // repli sur les noms (fr_FR / en_US) si un identifiant manquait
   const want = { 'Créatures tuées': 'kills', 'Creatures killed': 'kills', 'Quêtes achevées': 'quests', 'Quests completed': 'quests',
     'Nombre total de morts': 'deaths', 'Total deaths': 'deaths', 'Trajets aériens empruntés': 'flights', 'Flight paths taken': 'flights' };
   const out = {};
   const walk = cats => cats?.forEach(c => {
-    c.statistics?.forEach(s => { if (want[s.name]) out[want[s.name]] = Math.round(s.quantity); });
+    c.statistics?.forEach(s => { const k = STAT_IDS[s.id] || want[s.name]; if (k && out[k] == null) out[k] = Math.round(s.quantity); });
     walk(c.sub_categories);
   });
   walk(achStats?.categories);
@@ -147,13 +159,14 @@ export async function fetchCharacter(tok, region, slug) {
   const base = `/profile/wow/character/${encodeURIComponent(slug)}`;
   const profile = await get(tok, region, base);
   if (!profile) return null;
-  const [professions, equipment, statistics, achStats, media, pvp] = await Promise.all([
+  const [professions, equipment, statistics, achStats, media, pvp, reputations] = await Promise.all([
     get(tok, region, `${base}/professions`), get(tok, region, `${base}/equipment`),
     get(tok, region, `${base}/statistics`), get(tok, region, `${base}/achievements/statistics`),
     get(tok, region, `${base}/character-media`).catch(() => null),   // rendu 3D : absent quelques heures après la création
     get(tok, region, `${base}/pvp-summary`).catch(() => null),       // victoires honorables (à vie) et rang JcJ
+    get(tok, region, `${base}/reputations`, true).catch(() => null),  // réputations, noms en anglais et en français
   ]);
-  return { profile, professions, equipment, statistics, achStats, media, pvp };
+  return { profile, professions, equipment, statistics, achStats, media, pvp, reputations };
 }
 
 // ---------------------------------------------------------------------------
@@ -281,14 +294,14 @@ async function main() {
       gender: p.gender?.type ?? null, faction: p.faction?.type,
       guild: p.guild ? { name: p.guild.name, slug: p.guild.slug } : null,
       ruleset: p.ruleset?.name ?? null, rulesetId: p.ruleset?.id ?? null,
-      ...s, stats: pickStats(c.achStats), history: hist,
+      ...s, stats: pickStats(c.achStats), reps: pickReps(c.reputations), history: hist,
       render: asset('main-raw'), avatar: asset('avatar'),
       ...(e.preview ? { preview: true } : {}),
       // /played : seulement si le joueur l'a laissé dans sa ligne Dropamine (case cochée dans l'addon)
       ...(up?.played > 0 ? { played: up.played, playedAt: up.at ?? null } : {}),
       // JcJ de l'armurerie (pour tous) ; le reste vient de la ligne Dropamine, groupe par groupe (cases de l'addon)
       ...(c.pvp ? { pvpArmory: { hk: c.pvp.honorable_kills ?? 0, rank: c.pvp.pvp_rank ?? 0 } } : {}),
-      ...(up ? { dropamine: Object.fromEntries(['collection', 'achievements', 'records', 'hunt', 'pvp'].filter(k => up[k]).map(k => [k, up[k]])), dropamineAt: up.at ?? null } : {}),
+      ...(up ? { dropamine: Object.fromEntries(['collection', 'achievements', 'records', 'hunt'].filter(k => up[k]).map(k => [k, up[k]])), dropamineAt: up.at ?? null } : {}),
     });
     console.log(`✓ ${e.key} : ${s.total}${s.complete ? '' : ' (estimé)'}${e.preview ? ' [aperçu]' : ''}`);
   });

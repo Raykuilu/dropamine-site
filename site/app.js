@@ -37,7 +37,9 @@ const I18N = {
   'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE LOGBOOK', 'CARNET DROPAMINE'],
   trust: ['Sent by the players with their Dropamine line: based on trust.', 'Envoyé par les joueurs avec leur ligne Dropamine : basé sur la confiance.'],
   sortBy: ['Rank by', 'Classer par'], trustShort: ['based on trust', 'basé sur la confiance'],
-  kills: ['Creatures killed', 'Créatures tuées'], quests: ['Quests', 'Quêtes'], flights: ['Flights taken', 'Trajets aériens'], deaths: ['Deaths', 'Morts'],
+  kills: ['Creatures killed', 'Créatures tuées'], killingBlows: ['Killing blows', 'Coups fatals'], dungeons: ['Dungeons entered', 'Donjons visités'],
+  pvpDeaths: ['Killed by players', 'Tué par des joueurs'], duels: ['Duels (won / lost)', 'Duels (gagnés / perdus)'],
+  repsT: ['Reputations', 'Réputations'], armorySrc: ['from the armory', "d'après l'armurerie"], repsN: ['{n} factions', '{n} factions'], quests: ['Quests', 'Quêtes'], flights: ['Flights taken', 'Trajets aériens'], deaths: ['Deaths', 'Morts'],
   played: ['Played', 'Temps de jeu'],
   dbTitle: ['Dropamine logbook', 'Carnet Dropamine'], dbWhen: ['sent by the player on {d}', 'envoyé par le joueur le {d}'],
   dbLog: ['Collection log', 'Collection log'], dbAch: ['Dropamine achievements', 'Succès Dropamine'], dbRec: ['Records', 'Records'],
@@ -102,7 +104,8 @@ const className = p => L2(CLASS[p.classId]) || p.class || '';
 const raceName = p => L2(RACE[p.raceId]) || (p.race || '').toLowerCase();
 const rulesetName = p => L2((RULESETS.find(([id]) => id === p.rulesetId) || [])[1]) || p.ruleset || '';
 const PROF_ORDER = [393, 186, 182, 171, 164, 333, 202, 165, 197, 185, 356, 129];
-const STAT_KEYS = ['kills', 'quests', 'flights'];
+const STAT_KEYS = ['hk', 'killingBlows', 'kills', 'quests', 'dungeons', 'flights'];
+const armoryStat = (p, k) => k === 'hk' ? (p.stats?.hk ?? p.pvpArmory?.hk ?? null) : (p.stats?.[k] ?? null);
 // Même référentiel que l'addon (Catalog.lua de Dropamine) : noms, icônes et ordre des armes
 const WPN = { axes: ['One-Handed Axes', 'Haches', 'inv_axe_01'], axes2h: ['Two-Handed Axes', 'Haches à deux mains', 'inv_axe_09'],
   maces: ['One-Handed Maces', 'Masses', 'inv_mace_01'], maces2h: ['Two-Handed Maces', 'Masses à deux mains', 'inv_mace_04'],
@@ -128,14 +131,13 @@ const SKILLS = [
   { id: 'defense', group: 'wpn', label: () => t('defense'), max: '300', get: p => p.defense || null, icon: DEF_ICON },
   ...PROF_ORDER.map(id => ({ id: 'p' + id, group: 'prf', label: () => profName(id), max: '300', prof: id, icon: PROF_ICON[id],
     get: p => p.professions?.find(x => x.id === id)?.skill ?? null })),
-  ...STAT_KEYS.map(k => ({ id: k, group: 'stat', label: () => t(k), max: '', get: p => p.stats?.[k] ?? null })),
+  ...STAT_KEYS.map(k => ({ id: k, group: 'stat', label: () => t(k), max: '', get: p => armoryStat(p, k) })),
   // carnet Dropamine : déclaré par le joueur avec sa ligne /drop hiscores (sur la confiance), sauf les VH (armurerie)
   { id: 'clog', group: 'book', label: () => t('dbLog'), max: '', icon: 'inv_box_02', get: p => p.dropamine?.collection?.x ?? null,
     show: (v, p) => `${fmt(v)}<small> / ${fmt(p.dropamine.collection.y)}</small>`, ratio: (v, p) => v / p.dropamine.collection.y },
   { id: 'ach', group: 'book', label: () => t('dbAch'), max: '', logo: true, get: p => p.dropamine?.achievements?.n ?? null,
     show: (v, p) => `${v}<small> / ${p.dropamine.achievements.total}</small>`, ratio: (v, p) => v / p.dropamine.achievements.total },
   { id: 'played', group: 'book', label: () => t('played'), max: '', icon: 'inv_misc_pocketwatch_01', get: p => p.played ?? null, show: v => playedText(v) },
-  { id: 'hk', group: 'book', label: () => t('hk'), max: '', icon: 'inv_bannerpvp_02', get: p => p.pvpArmory?.hk ?? null, armory: true },
   { id: 'rsession', group: 'book', label: () => t('recSession'), max: '', icon: 'inv_misc_note_01', get: p => p.dropamine?.records?.bestSession ?? null },
   { id: 'rday', group: 'book', label: () => t('recDay'), max: '', icon: 'inv_misc_note_01', get: p => p.dropamine?.records?.bestDay ?? null },
   { id: 'rhour', group: 'book', label: () => t('recHour'), max: '', icon: 'inv_misc_note_01', get: p => p.dropamine?.records?.bestHour ?? null },
@@ -433,8 +435,10 @@ function renderChar() {
   const totalRank = rankBy(SKILLS[0], peers).find(x => x.p === p)?.r;
   const hist = p.history || [], gained = hist.length > 1 ? hist[hist.length - 1].t - hist[0].t : 0;
   const nProf = p.professions?.length || 0;
-  const stats = [...STAT_KEYS, 'deaths'].filter(k => p.stats?.[k] != null).map(k => `<div>${t(k)}<b>${fmt(p.stats[k])}</b></div>`).join('')
-    + (p.pvpArmory?.hk ? `<div>${t('hk')}<b>${fmt(p.pvpArmory.hk)}</b></div>` : '');
+  const st = p.stats || {}, duel = st.duelsWon != null || st.duelsLost != null ? `${fmt(st.duelsWon || 0)} / ${fmt(st.duelsLost || 0)}` : null;
+  const stats = [['hk', armoryStat(p, 'hk')], ['killingBlows', st.killingBlows], ['pvpDeaths', st.pvpDeaths], ['duels', duel],
+    ['kills', st.kills], ['quests', st.quests], ['dungeons', st.dungeons], ['flights', st.flights], ['deaths', st.deaths]]
+    .filter(([, v]) => v != null).map(([k, v]) => `<div>${t(k)}<b>${typeof v === 'number' ? fmt(v) : v}</b></div>`).join('');
   const portrait = p.render
     ? `<div class="portrait"><div class="plinth"></div><div class="plinth2"></div><div class="fig" style="background-image:url('${esc(p.render)}')" role="img" aria-label="${full(p)}"></div></div>`
     : `<div class="vial" role="img" aria-label="Dropamine"></div>`;
@@ -455,6 +459,7 @@ function renderChar() {
       <div><h3 class="sub">${t('progress')}${gained ? ` <span>+${fmt(gained)}</span>` : ''}</h3>${chartSvg(hist)}</div>
       <div><h3 class="sub">${t('statsT')}</h3>${stats ? `<div class="ledger">${stats}</div>` : `<div class="empty">—</div>`}</div>
     </div>
+    ${repsPanel(p)}
     ${dropBook(p)}
     ${p.complete ? '' : `<div class="cta">${t('ctaEst')}</div>`}`;
 }
@@ -487,14 +492,14 @@ function weekGain(p, key) {
 function hsBook(p) {
   const d = p.dropamine || {}, fr = LANG === 'fr';
   const book = { collection: d.collection, achievements: d.achievements, played: p.played, playedText: p.played ? playedText(p.played) : '',
-    hk: p.pvpArmory?.hk ?? null, pvp: d.pvp, records: d.records, hunt: d.hunt, stats: p.stats };
+    records: d.records, hunt: d.hunt, stats: { ...(p.stats || {}), hk: armoryStat(p, 'hk') }, reps: p.reps || [] };
   return { book, BL: fr
-    ? { locale: 'fr-FR', title: 'Carnet Dropamine', log: 'Collection log', ach: 'Succès', played: 'Temps de jeu', hk: 'Victoires hon.', week: 'cette sem.',
+    ? { locale: 'fr-FR', li: 1, sessionS: 'Session', dayS: 'Jour', hourS: 'Heure', kb: 'Coups fatals', pvpDeaths: 'Tué par joueurs', duels: 'Duels G / P', dungeons: 'Donjons', reps: 'Réputations', factions: 'factions', title: 'Carnet Dropamine', log: 'Collection log', ach: 'Succès', played: 'Temps de jeu', hk: 'Victoires honorables', week: 'cette sem.',
         rec: 'Records', sessions: 'sessions', session: 'Meilleure session', day: 'Meilleur jour', hour: 'Meilleure heure', combo: 'Plus long combo',
         pvp: 'JcJ', honorWeek: 'Honneur semaine', honor: "Points d'honneur", highest: 'Rang le plus haut', dk: 'Vict. déshonorantes',
         hunt: 'Chasse', found: 'trouvé', tries: 'essais', kills: 'Créatures tuées', quests: 'Quêtes', deaths: 'Morts', flights: 'Trajets aériens', armory: 'Armurerie', inviteT: 'Remplis ton carnet',
         invite1: 'Collection log, records, chasse : tape', invite2: '/drop hiscores en jeu, colle ta ligne sur le site.' }
-    : { locale: 'en-US', title: 'Dropamine logbook', log: 'Collection log', ach: 'Achievements', played: 'Played', hk: 'Honorable kills', week: 'this week',
+    : { locale: 'en-US', li: 0, sessionS: 'Session', dayS: 'Day', hourS: 'Hour', kb: 'Killing blows', pvpDeaths: 'Killed by players', duels: 'Duels W / L', dungeons: 'Dungeons', reps: 'Reputations', factions: 'factions', title: 'Dropamine logbook', log: 'Collection log', ach: 'Achievements', played: 'Played', hk: 'Honorable kills', week: 'this week',
         rec: 'Records', sessions: 'sessions', session: 'Best session', day: 'Best day', hour: 'Best hour', combo: 'Longest combo',
         pvp: 'PvP', honorWeek: 'Honor this week', honor: 'Honor points', highest: 'Highest rank', dk: 'Dishonorable kills',
         hunt: 'Hunt', found: 'found', tries: 'tries', kills: 'Creatures killed', quests: 'Quests', deaths: 'Deaths', flights: 'Flights taken', armory: 'Armory', inviteT: 'Fill your logbook',
@@ -567,6 +572,14 @@ const HsImage = (() => {
   return { open };
 })();
 
+// Réputations de l'armurerie : palier (couleurs du jeu) et avancement dans le palier
+const REP_COL = ['#cc3322', '#cc3322', '#e0682a', '#e6c84c', '#6fbf4a', '#4cc9a0', '#3fb8c9', '#5aa6e6'];
+function repsPanel(p) {
+  if (!p.reps?.length) return '';
+  const rows = p.reps.map(x => `<li><span>${esc(L2(x.n) || x.n[0])}</span><i class="lbar rep"><i style="width:${x.m ? (100 * x.v / x.m).toFixed(1) : 100}%;background:${REP_COL[x.t] || REP_COL[3]}"></i></i><b style="color:${REP_COL[x.t] || REP_COL[3]}">${esc(L2(x.s) || x.s[0])}</b></li>`).join('');
+  return `<div class="dpanel reps"><div class="dhead"><h3 class="sub">${t('repsT')}</h3><span class="db-when">${t('repsN', { n: p.reps.length })} · ${t('armorySrc')}</span></div><ul class="db-list reps">${rows}</ul></div>`;
+}
+
 // Carnet Dropamine : tout ce que l'armurerie n'a pas, envoyé par le joueur avec sa ligne /drop hiscores
 // (chaque groupe n'existe que si sa case était cochée dans l'addon)
 function dropBook(p) {
@@ -593,12 +606,6 @@ function dropBook(p) {
   if (d.hunt?.length) {
     const rows = d.hunt.map(h => `<li><span>${esc(h.name)}</span><em>${h.tries ? t('huTries', { n: fmt(h.tries) }) : ''}</em><b class="${h.drops ? 'ok' : ''}">${h.drops ? '✓ ' + (h.drops > 1 ? '×' + h.drops : t('huFound')) : '—'}</b></li>`).join('');
     parts.push(`<section class="db-card"><h4>${t('dbHunt')}</h4><ul class="db-list hunt">${rows}</ul></section>`);
-  }
-  if (d.pvp || p.pvpArmory?.hk) {
-    const v = d.pvp || {};
-    const L = [[t('hk'), p.pvpArmory?.hk], [t('pvHkWeek'), v.hkWeek], [t('pvHonorWeek'), v.honorWeek], [t('pvHonor'), v.honor], [t('pvDk'), v.dkLife], [t('pvHighest'), v.highest || null]]
-      .filter(([k, x]) => x != null && (x > 0 || k === t('pvHonor') || k === t('hk'))).map(([k, x]) => `<div>${k}<b>${fmt(x)}</b></div>`).join('');
-    parts.push(`<section class="db-card"><h4>${t('dbPvp')}</h4><div class="ledger one">${L}</div></section>`);
   }
   if (!parts.length) return '';
   const when = p.dropamineAt ? new Date(p.dropamineAt).toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) : '';

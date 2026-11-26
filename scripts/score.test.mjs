@@ -1,7 +1,7 @@
 // Tests du calcul de score (node --test scripts/)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { score } from './build.mjs';
+import { score, pickStats, pickReps } from './build.mjs';
 
 const prof = (id, skill, max) => ({ profession: { id, name: 'p' + id }, tiers: [{ skill_points: skill, max_skill_points: max, known_recipes: [{}, {}] }] });
 const ray = {
@@ -119,7 +119,8 @@ test('armes en main : depuis l’armurerie, + Combat farouche pour un druide', (
   const druid = score({ profile: { level: 36, character_class: { id: 11 } }, professions: {}, statistics: {}, equipment: eq }, { weapons: 100, weaponList: [{ id: 'staves', rank: 100 }] });
   assert.deepEqual(druid.equipped, ['staves', 'feral']);
   const est = score({ profile: { level: 36, character_class: { id: 11 } }, professions: {}, statistics: {}, equipment: eq });
-  assert.deepEqual(est.weaponList.map(w => w.id), ['staves']);   // l'estimation ne compte pas Combat farouche
+  assert.deepEqual(est.weaponList.map(w => w.id), ['staves', 'feral']);   // l'estimation compte aussi Combat farouche
+  assert.equal(est.weapons, 360);
 });
 
 import { skillSnapshot } from './build.mjs';
@@ -127,4 +128,18 @@ test('historique : chaque compétence du jour, sans les armes estimées', () => 
   const snap = skillSnapshot(score(ray, { weapons: 1, weaponList: [{ id: 'staves', rank: 103 }] }));
   assert.deepEqual(snap, { l: 36, d: 177, p165: 120, p393: 223, p185: 161, p356: 137, p129: 208, wstaves: 103 });
   assert.equal(skillSnapshot(score(ray)).wstaves, undefined);
+});
+
+test("statistiques de l'armurerie lues par identifiant (JcJ, donjons)", () => {
+  const s = pickStats({ categories: [{ statistics: [{ id: 588, name: 'x', quantity: 24 }], sub_categories: [{ statistics: [
+    { id: 1501, name: 'y', quantity: 11 }, { id: 319, quantity: 1 }, { id: 320, quantity: 2 }, { id: 1487, quantity: 2890 }, { id: 932, quantity: 18 }, { id: 9999, quantity: 5 }] }] }] });
+  assert.deepEqual(s, { hk: 24, pvpDeaths: 11, duelsWon: 1, duelsLost: 2, killingBlows: 2890, dungeons: 18 });
+});
+
+test('réputations de l\'armurerie : deux langues, triées par avancement', () => {
+  const r = pickReps({ reputations: [
+    { faction: { id: 72, name: { en_US: 'Stormwind', fr_FR: 'Hurlevent' } }, standing: { raw: 14378, value: 5378, max: 12000, tier: 5, name: { en_US: 'Honored', fr_FR: 'Honoré' } } },
+    { faction: { id: 69, name: { en_US: 'Darnassus', fr_FR: 'Darnassus' } }, standing: { raw: 20246, value: 11246, max: 12000, tier: 5, name: { en_US: 'Honored', fr_FR: 'Honoré' } } }] });
+  assert.deepEqual(r.map(x => x.id), [69, 72]);
+  assert.deepEqual(r[1], { id: 72, n: ['Stormwind', 'Hurlevent'], t: 5, s: ['Honored', 'Honoré'], v: 5378, m: 12000 });
 });
