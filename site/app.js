@@ -34,8 +34,19 @@ const I18N = {
   'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
   'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.code': ['Site source (open source, MIT)', 'Code du site (open source, MIT)'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
-  'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.stat': ['STATISTICS', 'STATISTIQUES'],
+  'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.stat': ['STATISTICS', 'STATISTIQUES'], 'g.book': ['DROPAMINE LOGBOOK', 'CARNET DROPAMINE'],
+  trust: ['Sent by the players with their Dropamine line: based on trust.', 'Envoyé par les joueurs avec leur ligne Dropamine : basé sur la confiance.'],
+  sortBy: ['Rank by', 'Classer par'], trustShort: ['based on trust', 'basé sur la confiance'],
   kills: ['Creatures killed', 'Créatures tuées'], quests: ['Quests', 'Quêtes'], flights: ['Flights taken', 'Trajets aériens'], deaths: ['Deaths', 'Morts'],
+  played: ['Played', 'Temps de jeu'],
+  dbTitle: ['Dropamine logbook', 'Carnet Dropamine'], dbWhen: ['sent by the player on {d}', 'envoyé par le joueur le {d}'],
+  dbLog: ['Collection log', 'Collection log'], dbAch: ['Dropamine achievements', 'Succès Dropamine'], dbRec: ['Records', 'Records'],
+  dbHunt: ['Hunt', 'Chasse'], dbPvp: ['PvP', 'JcJ'], hk: ['Honorable kills', 'Victoires honorables'],
+  recSession: ['Best session', 'Meilleure session'], recHour: ['Best hour', 'Meilleure heure'], recDay: ['Best day', 'Meilleur jour'],
+  recCombo: ['Longest combo', 'Plus long combo'], recSessions: ['Sessions', 'Sessions'], recGoals: ['Goals reached', 'Objectifs atteints'],
+  recTime: ['Time tracked', 'Temps suivi'], huTries: ['{n} tries', '{n} essais'], huFound: ['found', 'trouvé'],
+  pvHkWeek: ['HK this week', 'VH cette semaine'], pvHonorWeek: ['Honor this week', 'Honneur cette semaine'], pvHonor: ['Honor points', "Points d'honneur"],
+  pvDk: ['Dishonorable kills', 'Victoires déshonorantes'], pvHighest: ['Highest rank', 'Rang le plus haut'], playedN: ['{t} played', '{t} de jeu'], playedTip: ['/played, sent by the player with their Dropamine line', '/played, envoyé par le joueur avec sa ligne Dropamine'],
   rank: ['RANK', 'RANG'], character: ['CHARACTER', 'PERSONNAGE'], split: ['BREAKDOWN', 'RÉPARTITION'], value: ['VALUE', 'VALEUR'], totalH: ['TOTAL', 'TOTAL'],
   member: ['MEMBER', 'MEMBRE'], guildH: ['GUILD', 'GUILDE'], members: ['MEMBERS', 'INSCRITS'], d7: ['7 D', '7 J'],
   est: ['estimated', 'estimé'], preview: ['preview', 'aperçu'],
@@ -118,12 +129,24 @@ const SKILLS = [
   ...PROF_ORDER.map(id => ({ id: 'p' + id, group: 'prf', label: () => profName(id), max: '300', prof: id, icon: PROF_ICON[id],
     get: p => p.professions?.find(x => x.id === id)?.skill ?? null })),
   ...STAT_KEYS.map(k => ({ id: k, group: 'stat', label: () => t(k), max: '', get: p => p.stats?.[k] ?? null })),
+  // carnet Dropamine : déclaré par le joueur avec sa ligne /drop hiscores (sur la confiance), sauf les VH (armurerie)
+  { id: 'clog', group: 'book', label: () => t('dbLog'), max: '', icon: 'inv_box_02', get: p => p.dropamine?.collection?.x ?? null,
+    show: (v, p) => `${fmt(v)}<small> / ${fmt(p.dropamine.collection.y)}</small>`, ratio: (v, p) => v / p.dropamine.collection.y },
+  { id: 'ach', group: 'book', label: () => t('dbAch'), max: '', logo: true, get: p => p.dropamine?.achievements?.n ?? null,
+    show: (v, p) => `${v}<small> / ${p.dropamine.achievements.total}</small>`, ratio: (v, p) => v / p.dropamine.achievements.total },
+  { id: 'played', group: 'book', label: () => t('played'), max: '', icon: 'inv_misc_pocketwatch_01', get: p => p.played ?? null, show: v => playedText(v) },
+  { id: 'hk', group: 'book', label: () => t('hk'), max: '', icon: 'inv_bannerpvp_02', get: p => p.pvpArmory?.hk ?? null, armory: true },
+  { id: 'rsession', group: 'book', label: () => t('recSession'), max: '', icon: 'inv_misc_note_01', get: p => p.dropamine?.records?.bestSession ?? null },
+  { id: 'rday', group: 'book', label: () => t('recDay'), max: '', icon: 'inv_misc_note_01', get: p => p.dropamine?.records?.bestDay ?? null },
+  { id: 'rhour', group: 'book', label: () => t('recHour'), max: '', icon: 'inv_misc_note_01', get: p => p.dropamine?.records?.bestHour ?? null },
+  { id: 'rcombo', group: 'book', label: () => t('recCombo'), max: '', icon: 'inv_misc_note_01', get: p => p.dropamine?.records?.longestCombo ?? null, show: v => 'x' + v },
 ];
-const GROUP_COLOR = { lvl: 'var(--lvl)', wpn: 'var(--wpn)', prf: 'var(--prf)', stat: 'var(--rim)' };
+const showVal = (sk, v, p) => sk.show ? sk.show(v, p) : fmt(v);
+const GROUP_COLOR = { lvl: 'var(--lvl)', wpn: 'var(--wpn)', prf: 'var(--prf)', stat: 'var(--rim)', book: 'var(--gold)' };
 const VIEWS = ['home', 'rank', 'char', 'guild', 'news', 'get', 'join', 'privacy'];
 
 let DATA = { players: [] }, NEWS = null;
-const state = { view: 'home', region: 'eu', skill: 'total', cls: 0, rs: 0, c: '', g: '' };
+const state = { view: 'home', region: 'eu', skill: 'total', cls: 0, rs: 0, c: '', g: '', gs: 'total' };
 const inRegion = () => DATA.players.filter(p => (p.region || 'eu') === state.region);
 
 /* ======================================================================
@@ -262,7 +285,7 @@ function renderRank() {
   const classes = [...new Set(byRs.map(p => p.classId).filter(Boolean))].sort((a, b) => L2(CLASS[a]).localeCompare(L2(CLASS[b])));
   let nav = '', grp;
   // comme la grille de l'addon : chaque compétence avec son icône ; une arme n'apparaît que si quelqu'un la pratique
-  SKILLS.filter(s => !s.wpn || s.id === sk.id || region.some(p => s.get(p))).forEach(s => {
+  SKILLS.filter(s => !(s.wpn || s.group === 'book') || s.id === sk.id || region.some(p => s.get(p))).forEach(s => {
     if (s.group !== grp) { grp = s.group; if (grp) nav += `<div class="grp"><i class="dot" style="background:${GROUP_COLOR[grp]}"></i>${t('g.' + grp)}</div>`; }
     const ic = s.logo || s.id === 'total' ? '<i class="sic logo"></i>' : s.icon ? `<img class="sic" src="${icon(s.icon)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<i class="sic none"></i>';
     nav += `<a href="?p=rank&s=${s.id}" data-skill="${s.id}" class="${s.id === sk.id ? 'on' : ''}">${ic}<span class="lb">${s.label()}</span> <span>${s.max}</span></a>`;
@@ -281,14 +304,15 @@ function renderRank() {
       <span class="rk">${r || '–'}</span>
       <span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p)}<small>${who(p)}${rulesetName(p) ? ' · ' + esc(rulesetName(p)) : ''}</small></span></span>
       ${isTotal ? tri(p) : sk.prof ? `<span class="mbar"><i style="--w:${(100 * v / (p.professions.find(x => x.id === sk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
-        : sk.wpn ? `<span class="mbar w${sk.est(p) ? ' est' : ''}"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>` : '<span class="c3"></span>'}
-      <span class="tot">${fmt(v)}${isTotal ? estTag(p) : sk.wpn && sk.est(p) ? `<em>${t('est')}</em>` : ''}</span>
+        : sk.wpn ? `<span class="mbar w${sk.est(p) ? ' est' : ''}"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>`
+        : sk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, sk.ratio(v, p))).toFixed(1)}%"></i></span>` : '<span class="c3"></span>'}
+      <span class="tot">${showVal(sk, v, p)}${isTotal ? estTag(p) : sk.wpn && sk.est(p) ? `<em>${t('est')}</em>` : ''}</span>
     </div>`;
   const rows = (list.length || estRows.length)
     ? list.map(row).join('') + (estRows.length ? `<div class="you-sep est-sep">${t('estSep')}</div>` + estRows.map(row).join('') : '')
     : nobody();
   $('#rank-panel').innerHTML = `
-    <div class="head"><h2>${sk.label()}</h2><span class="note">${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
+    <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
     <div class="chips" role="group">${rsChips}</div>
     <div class="board">
       <nav class="skills">${nav}</nav>
@@ -409,7 +433,8 @@ function renderChar() {
   const totalRank = rankBy(SKILLS[0], peers).find(x => x.p === p)?.r;
   const hist = p.history || [], gained = hist.length > 1 ? hist[hist.length - 1].t - hist[0].t : 0;
   const nProf = p.professions?.length || 0;
-  const stats = [...STAT_KEYS, 'deaths'].filter(k => p.stats?.[k] != null).map(k => `<div>${t(k)}<b>${fmt(p.stats[k])}</b></div>`).join('');
+  const stats = [...STAT_KEYS, 'deaths'].filter(k => p.stats?.[k] != null).map(k => `<div>${t(k)}<b>${fmt(p.stats[k])}</b></div>`).join('')
+    + (p.pvpArmory?.hk ? `<div>${t('hk')}<b>${fmt(p.pvpArmory.hk)}</b></div>` : '');
   const portrait = p.render
     ? `<div class="portrait"><div class="plinth"></div><div class="plinth2"></div><div class="fig" style="background-image:url('${esc(p.render)}')" role="img" aria-label="${full(p)}"></div></div>`
     : `<div class="vial" role="img" aria-label="Dropamine"></div>`;
@@ -430,6 +455,7 @@ function renderChar() {
       <div><h3 class="sub">${t('progress')}${gained ? ` <span>+${fmt(gained)}</span>` : ''}</h3>${chartSvg(hist)}</div>
       <div><h3 class="sub">${t('statsT')}</h3>${stats ? `<div class="ledger">${stats}</div>` : `<div class="empty">—</div>`}</div>
     </div>
+    ${dropBook(p)}
     ${p.complete ? '' : `<div class="cta">${t('ctaEst')}</div>`}`;
 }
 
@@ -457,6 +483,23 @@ function weekGain(p, key) {
   return base === last || val(base) == null || val(last) == null ? null : val(last) - val(base);
 }
 // les lignes de l'image : le total puis les 9 cases comptées par l'addon
+// carnet Dropamine sur l'image : seulement ce que le joueur a laissé dans sa ligne (et les VH de l'armurerie)
+function hsBook(p) {
+  const d = p.dropamine || {}, fr = LANG === 'fr';
+  const book = { collection: d.collection, achievements: d.achievements, played: p.played, playedText: p.played ? playedText(p.played) : '',
+    hk: p.pvpArmory?.hk ?? null, pvp: d.pvp, records: d.records, hunt: d.hunt, stats: p.stats };
+  return { book, BL: fr
+    ? { locale: 'fr-FR', title: 'Carnet Dropamine', log: 'Collection log', ach: 'Succès', played: 'Temps de jeu', hk: 'Victoires hon.', week: 'cette sem.',
+        rec: 'Records', sessions: 'sessions', session: 'Meilleure session', day: 'Meilleur jour', hour: 'Meilleure heure', combo: 'Plus long combo',
+        pvp: 'JcJ', honorWeek: 'Honneur semaine', honor: "Points d'honneur", highest: 'Rang le plus haut', dk: 'Vict. déshonorantes',
+        hunt: 'Chasse', found: 'trouvé', tries: 'essais', kills: 'Créatures tuées', quests: 'Quêtes', deaths: 'Morts', flights: 'Trajets aériens', armory: 'Armurerie', inviteT: 'Remplis ton carnet',
+        invite1: 'Collection log, records, chasse : tape', invite2: '/drop hiscores en jeu, colle ta ligne sur le site.' }
+    : { locale: 'en-US', title: 'Dropamine logbook', log: 'Collection log', ach: 'Achievements', played: 'Played', hk: 'Honorable kills', week: 'this week',
+        rec: 'Records', sessions: 'sessions', session: 'Best session', day: 'Best day', hour: 'Best hour', combo: 'Longest combo',
+        pvp: 'PvP', honorWeek: 'Honor this week', honor: 'Honor points', highest: 'Highest rank', dk: 'Dishonorable kills',
+        hunt: 'Hunt', found: 'found', tries: 'tries', kills: 'Creatures killed', quests: 'Quests', deaths: 'Deaths', flights: 'Flights taken', armory: 'Armory', inviteT: 'Fill your logbook',
+        invite1: 'Collection log, records, hunt: type', invite2: '/drop hiscores in game, paste your line on the site.' } };
+}
 function hsRows(p) {
   const peers = DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu'));
   const rank = id => rankBy(skillById(id), peers).find(x => x.p === p)?.r || null;
@@ -472,8 +515,13 @@ function hsRows(p) {
   return rows;
 }
 const HsImage = (() => {
-  let dlg, p;
-  const png = () => new Promise(r => $('canvas', dlg).toBlob(r, 'image/png'));
+  let dlg, p, opts, finalCv;
+  // l'aperçu montre l'invitation « Remplis ton carnet » ; l'image téléchargée, copiée ou partagée ne l'a pas
+  const final = async () => {
+    if (!finalCv) { const cv = document.createElement('canvas'); await DropShare.draw(cv, p, { ...opts, preview: false }); finalCv = cv; }
+    return finalCv;
+  };
+  const png = () => final().then(cv => new Promise(r => cv.toBlob(r, 'image/png')));
   function build() {
     dlg = document.createElement('dialog'); dlg.className = 'hsd';
     dlg.innerHTML = `<button class="cx" type="button" aria-label="${t('close')}">×</button><canvas width="1200" height="630"></canvas>
@@ -481,7 +529,7 @@ const HsImage = (() => {
     document.body.append(dlg);
     dlg.addEventListener('click', async e => {
       if (e.target === dlg || e.target.closest('.cx')) return dlg.close();
-      if (e.target.closest('.dl')) { const a = document.createElement('a'); a.download = `dropamine-hiscores-${p.slug}.png`; a.href = $('canvas', dlg).toDataURL('image/png'); a.click(); return; }
+      if (e.target.closest('.dl')) { const a = document.createElement('a'); a.download = `dropamine-hiscores-${p.slug}.png`; a.href = (await final()).toDataURL('image/png'); a.click(); return; }
       if (e.target.closest('.sh')) {
         try { await navigator.share({ files: [new File([await png()], `dropamine-hiscores-${p.slug}.png`, { type: 'image/png' })], title: `${p.name} ${p.surname} · Dropamine Hiscores` }); }
         catch (err) { /* partage annulé */ }
@@ -502,11 +550,15 @@ const HsImage = (() => {
     dlg.showModal();
     const desc = LANG === 'fr' ? `${className(p)} ${raceName(p)}` : `${raceName(p)} ${className(p)}`;
     await document.fonts.ready;
-    await DropShare.draw($('canvas', dlg), p, { rows: hsRows(p), L: {
+    finalCv = null;
+    opts = { rows: hsRows(p), L: {
       title: `Hiscores · ${p.name} ${p.surname}`,
       sub: `${desc.charAt(0).toUpperCase() + desc.slice(1)} · ${t('levelN', { n: p.level })}${p.guild ? ' · ' + p.guild.name : ''} · Forever ${(p.region || 'eu').toUpperCase()}`,
       cols: [t('hsSkill'), t('hsRank'), t('hsLevel'), t('hsWeek')],
-      date: DATA.updated ? new Date(DATA.updated).toLocaleDateString(locale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '' } });
+      date: DATA.updated ? new Date(DATA.updated).toLocaleDateString(locale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '' },
+      ...hsBook(p) };
+    await DropShare.draw($('canvas', dlg), p, { ...opts, preview: true });
+    final();   // prépare l'image finale pendant que le joueur regarde
   }
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-hsimg]'); if (!b) return;
@@ -514,6 +566,48 @@ const HsImage = (() => {
   });
   return { open };
 })();
+
+// Carnet Dropamine : tout ce que l'armurerie n'a pas, envoyé par le joueur avec sa ligne /drop hiscores
+// (chaque groupe n'existe que si sa case était cochée dans l'addon)
+function dropBook(p) {
+  const d = p.dropamine || {}, parts = [];
+  const bar = (x, y) => `<i class="lbar"><i style="width:${Math.min(100, 100 * x / Math.max(1, y)).toFixed(1)}%"></i></i>`;
+  if (d.collection) {
+    const c = d.collection;
+    const rows = [...c.dungeons].sort((a, b) => b.x / b.y - a.x / a.y).map(g =>
+      `<li><span>${esc(g.name)}</span>${bar(g.x, g.y)}<b>${g.x} / ${g.y}</b></li>`).join('');
+    parts.push(`<section class="db-card db-wide"><h4>${t('dbLog')}</h4><div class="db-big">${fmt(c.x)}<small> / ${fmt(c.y)}</small></div>${bar(c.x, c.y)}
+      ${rows ? `<ul class="db-list">${rows}</ul>` : ''}</section>`);
+  }
+  if (d.achievements) {
+    const a = d.achievements;
+    parts.push(`<section class="db-card"><h4>${t('dbAch')}</h4><div class="db-big">${a.n}<small> / ${a.total}</small></div>${bar(a.n, a.total)}</section>`);
+  }
+  if (p.played) parts.push(`<section class="db-card"><h4>${t('played')}</h4><div class="db-big">${playedText(p.played)}</div><p class="db-note">/played</p></section>`);
+  if (d.records) {
+    const r = d.records;
+    const L = [['recSession', r.bestSession], ['recHour', r.bestHour], ['recDay', r.bestDay], ['recCombo', 'x' + r.longestCombo], ['recSessions', r.sessions], ['recGoals', r.goalsHit]]
+      .map(([k, v]) => `<div>${t(k)}<b>${typeof v === 'number' ? fmt(v) : v}</b></div>`).join('');
+    parts.push(`<section class="db-card db-wide"><h4>${t('dbRec')}</h4><div class="ledger">${L}<div>${t('recTime')}<b>${playedText(r.playtime)}</b></div></div></section>`);
+  }
+  if (d.hunt?.length) {
+    const rows = d.hunt.map(h => `<li><span>${esc(h.name)}</span><em>${h.tries ? t('huTries', { n: fmt(h.tries) }) : ''}</em><b class="${h.drops ? 'ok' : ''}">${h.drops ? '✓ ' + (h.drops > 1 ? '×' + h.drops : t('huFound')) : '—'}</b></li>`).join('');
+    parts.push(`<section class="db-card"><h4>${t('dbHunt')}</h4><ul class="db-list hunt">${rows}</ul></section>`);
+  }
+  if (d.pvp || p.pvpArmory?.hk) {
+    const v = d.pvp || {};
+    const L = [[t('hk'), p.pvpArmory?.hk], [t('pvHkWeek'), v.hkWeek], [t('pvHonorWeek'), v.honorWeek], [t('pvHonor'), v.honor], [t('pvDk'), v.dkLife], [t('pvHighest'), v.highest || null]]
+      .filter(([k, x]) => x != null && (x > 0 || k === t('pvHonor') || k === t('hk'))).map(([k, x]) => `<div>${k}<b>${fmt(x)}</b></div>`).join('');
+    parts.push(`<section class="db-card"><h4>${t('dbPvp')}</h4><div class="ledger one">${L}</div></section>`);
+  }
+  if (!parts.length) return '';
+  const when = p.dropamineAt ? new Date(p.dropamineAt).toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) : '';
+  return `<div class="dpanel dbook"><div class="dhead"><h3 class="sub">${t('dbTitle')}</h3>${when ? `<span class="db-when">${t('dbWhen', { d: when })} · ${t('trustShort')}</span>` : ''}</div>
+    <div class="db-grid">${parts.join('')}</div></div>`;
+}
+
+const playedText = s => { const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return d ? (LANG === 'fr' ? `${d} j ${h} h` : `${d}d ${h}h`) : (LANG === 'fr' ? `${h} h ${m} min` : `${h}h ${m}m`); };
 
 /* ---------- Guildes ---------- */
 function guilds() {
@@ -537,6 +631,12 @@ function renderGuild() {
     return;
   }
   const rank = all.indexOf(g) + 1, members = [...g.members].sort((a, b) => b.total - a.total);
+  const gsk = skillById(state.gs), avail = SKILLS.filter(s => s.id === 'total' || members.some(p => s.get(p) && !(s.est && s.est(p))));
+  const ranked = gsk.id === 'total' ? members.map((p, i) => ({ p, v: p.total, r: i + 1 })) : rankBy(gsk, members);
+  let og = '', grp0;
+  avail.forEach(s => { if (s.group !== grp0) { if (grp0 !== undefined) og += '</optgroup>'; grp0 = s.group; og += `<optgroup label="${s.group ? t('g.' + s.group) : t('total')}">`; }
+    og += `<option value="${s.id}"${s.id === gsk.id ? ' selected' : ''}>${esc(s.label())}</option>`; });
+  og += '</optgroup>';
   let best = null; members.forEach(p => p.professions?.forEach(pr => { if (!best || pr.skill > best.pr.skill) best = { p, pr }; }));
   const gains = members.map(p => ({ p, d: gain7(p) })).filter(x => x.d > 0).sort((a, b) => b.d - a.d);
   const feat = (k, v, s) => `<div class="feat"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
@@ -564,9 +664,15 @@ function renderGuild() {
       ${gains.length ? feat(t('bestWeek'), full(gains[0].p), t('inWeek', { n: fmt(gains[0].d) })) : feat(t('bestWeek'), '—', t('notEnough'))}
     </div>
     ${clan}
-    <div class="rows" style="margin-top:clamp(18px,2.6vw,28px)">
-      <div class="row th g"><span>${t('rank')}</span><span>${t('member')}</span><span class="c3">${t('split')}</span><span class="c4" style="text-align:right">${t('d7')}</span><span style="text-align:right">${t('totalH')}</span></div>
-      ${members.map((p, i) => { const d = gain7(p); return `<div class="row g${i < 3 ? ' top' : ''}" data-c="${esc(pkey(p))}"><span class="rk">${i + 1}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b><small>${esc(className(p))} ${p.level}</small></span></span>${tri(p)}<span class="up">${d ? (d > 0 ? '+' : '') + fmt(d) : '—'}</span><span class="tot">${fmt(p.total)}${estTag(p)}</span></div>`; }).join('')}
+    <div class="gsort"><label for="gs">${t('sortBy')}</label><select id="gs" data-gs>${og}</select>${gsk.group === 'book' && !gsk.armory ? `<span class="note">${t('trustShort')}</span>` : ''}</div>
+    <div class="rows" style="margin-top:10px">
+      <div class="row th g"><span>${t('rank')}</span><span>${t('member')}</span><span class="c3">${gsk.id === 'total' ? t('split') : ''}</span><span class="c4" style="text-align:right">${gsk.id === 'total' ? t('d7') : ''}</span><span style="text-align:right">${gsk.id === 'total' ? t('totalH') : esc(gsk.label())}</span></div>
+      ${ranked.length ? ranked.map(({ p, v, r }) => { const d = gain7(p), tot = gsk.id === 'total';
+        const bar = tot ? tri(p) : gsk.prof ? `<span class="mbar"><i style="--w:${(100 * v / (p.professions.find(x => x.id === gsk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
+          : gsk.wpn ? `<span class="mbar w"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>`
+          : gsk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, gsk.ratio(v, p))).toFixed(1)}%"></i></span>` : '<span class="c3"></span>';
+        return `<div class="row g${r <= 3 ? ' top' : ''}" data-c="${esc(pkey(p))}"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b><small>${esc(className(p))} ${p.level}</small></span></span>${bar}<span class="up">${tot ? (d ? (d > 0 ? '+' : '') + fmt(d) : '—') : ''}</span><span class="tot">${showVal(gsk, v, p)}${tot ? estTag(p) : ''}</span></div>`; }).join('')
+        : nobody()}
     </div>`;
 }
 
@@ -583,6 +689,7 @@ function renderNews() {
     </div>`).join('') +
     `<p style="margin:18px 0 0;color:var(--faint);font-style:italic">${t('fullHistory')} <a href="https://github.com/Raykuilu/Dropamine/blob/main/CHANGELOG.md" rel="noopener">GitHub</a>.</p>`;
 }
+document.addEventListener('change', e => { const sel = e.target.closest('[data-gs]'); if (!sel) return; state.gs = sel.value; renderGuild(); });
 document.addEventListener('click', e => { const x = e.target.closest('.release.more .toggle'); if (x) { x.closest('.release').classList.remove('more'); x.remove(); } });
 
 /* ---------- Texte fixe traduit (data-t) et pied de page ---------- */

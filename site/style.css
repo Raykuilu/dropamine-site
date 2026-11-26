@@ -526,3 +526,34 @@ html.static .pulse .live{animation:none}
 .cact button:hover{filter:brightness(1.1)}
 .cact button:focus-visible{outline:2px solid var(--rim);outline-offset:2px}
 .hsd{padding-top:44px}
+
+/* Carnet Dropamine (données de la ligne /drop hiscores) */
+.dbook .db-when{font-style:italic;color:var(--muted,#a08c6a);font-size:14px}
+.db-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:10px}
+.db-card{padding:14px 16px;border:1px solid var(--line-2);border-radius:var(--radius);background:linear-gradient(180deg,rgba(196,154,92,.06),transparent)}
+.db-card h4{margin:0 0 6px;font-variant:small-caps;letter-spacing:.04em;color:var(--cream);font-size:17px}
+.db-big{font-family:var(--num);font-weight:700;font-size:30px;color:var(--gold);line-height:1.1}
+.db-big small{font-size:15px;color:var(--muted,#a08c6a);font-weight:400}
+.db-note{margin:2px 0 0;font-size:13px;color:var(--muted,#a08c6a)}
+.lbar{display:block;height:6px;border-radius:3px;background:rgba(0,0,0,.45);margin:8px 0 4px;overflow:hidden}
+.lbar>i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#a07a3c,#e6c47c)}
+.db-list{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:22px}
+.db-list li{display:grid;grid-template-columns:minmax(0,1fr) 90px 64px;align-items:center;gap:10px;padding:5px 0;border-bottom:1px dotted var(--line-2);font-size:15px}
+.db-list li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.db-list li .lbar{margin:0}
+.db-list li b{font-family:var(--num);text-align:right;color:var(--gold)}
+.db-list.hunt{grid-template-columns:1fr}
+.db-list.hunt li{grid-template-columns:minmax(0,1fr) auto 70px}
+.db-list.hunt em{color:var(--muted,#a08c6a);font-size:13px}
+.db-list.hunt b.ok{color:#8cc472}
+.ledger.one{grid-template-columns:1fr}
+.db-wide{grid-column:1/-1}
+@media (max-width:720px){.db-grid,.db-list{grid-template-columns:1fr}}
+
+/* guilde : « Classer par » ; barres dorées du carnet */
+.gsort{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:clamp(18px,2.6vw,28px)}
+.gsort label{font-family:var(--display);font-variant:small-caps;letter-spacing:.08em;color:var(--muted)}
+.gsort select{background:#120d08;color:var(--cream);border:1px solid var(--rim-lo);border-radius:8px;padding:7px 10px;font:inherit;min-width:220px}
+.gsort .note{font-style:italic;color:var(--faint);font-size:14px}
+.mbar.b i{background:linear-gradient(90deg,#a07a3c,#e6c47c)}
+.tot small{font-size:.7em;color:var(--muted);font-weight:400}

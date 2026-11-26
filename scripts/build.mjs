@@ -147,12 +147,13 @@ export async function fetchCharacter(tok, region, slug) {
   const base = `/profile/wow/character/${encodeURIComponent(slug)}`;
   const profile = await get(tok, region, base);
   if (!profile) return null;
-  const [professions, equipment, statistics, achStats, media] = await Promise.all([
+  const [professions, equipment, statistics, achStats, media, pvp] = await Promise.all([
     get(tok, region, `${base}/professions`), get(tok, region, `${base}/equipment`),
     get(tok, region, `${base}/statistics`), get(tok, region, `${base}/achievements/statistics`),
     get(tok, region, `${base}/character-media`).catch(() => null),   // rendu 3D : absent quelques heures après la création
+    get(tok, region, `${base}/pvp-summary`).catch(() => null),       // victoires honorables (à vie) et rang JcJ
   ]);
-  return { profile, professions, equipment, statistics, achStats, media };
+  return { profile, professions, equipment, statistics, achStats, media, pvp };
 }
 
 // ---------------------------------------------------------------------------
@@ -256,7 +257,8 @@ async function main() {
       console.warn(`· ${e.key} : introuvable (niveau < 10, pas encore visible ou supprimé)`);
       return;
     }
-    const s = score(c, uploads[e.key] ?? uploads[e.slug]);
+    const up = uploads[e.key] ?? uploads[e.slug];
+    const s = score(c, up);
     const asset = key => c.media?.assets?.find(a => a.key === key)?.value ?? null;
 
     // historique : un point par jour (ancien emplacement data/history/{slug}.json repris une fois)
@@ -282,6 +284,11 @@ async function main() {
       ...s, stats: pickStats(c.achStats), history: hist,
       render: asset('main-raw'), avatar: asset('avatar'),
       ...(e.preview ? { preview: true } : {}),
+      // /played : seulement si le joueur l'a laissé dans sa ligne Dropamine (case cochée dans l'addon)
+      ...(up?.played > 0 ? { played: up.played, playedAt: up.at ?? null } : {}),
+      // JcJ de l'armurerie (pour tous) ; le reste vient de la ligne Dropamine, groupe par groupe (cases de l'addon)
+      ...(c.pvp ? { pvpArmory: { hk: c.pvp.honorable_kills ?? 0, rank: c.pvp.pvp_rank ?? 0 } } : {}),
+      ...(up ? { dropamine: Object.fromEntries(['collection', 'achievements', 'records', 'hunt', 'pvp'].filter(k => up[k]).map(k => [k, up[k]])), dropamineAt: up.at ?? null } : {}),
     });
     console.log(`✓ ${e.key} : ${s.total}${s.complete ? '' : ' (estimé)'}${e.preview ? ' [aperçu]' : ''}`);
   });

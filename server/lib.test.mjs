@@ -61,6 +61,25 @@ test('ligne hiscores : lue, vérifiée, rattachée au bon personnage', () => {
   assert.equal(matchUpload(p, chars).key, 'eu/ray-kuilu');
   assert.equal(matchUpload({ ...p, name: 'Bob' }, chars), null);
 });
+test('ligne hiscores : /played facultatif', () => {
+  assert.equal(parseHiscoresLine(hsLine(BODY)).played, null);                 // case décochée : rien
+  assert.equal(parseHiscoresLine(hsLine(BODY + ';tp=300000')).played, 300000);
+  assert.equal(parseHiscoresLine(hsLine(BODY + ';tp=abc')).played, null);
+  assert.equal(parseHiscoresLine(hsLine(BODY + ';tp=999999999999')).played, null);
+});
+test('ligne hiscores : groupes facultatifs (collection, succès, records, chasse, JcJ)', () => {
+  const extra = ";ct=6~69;cl=Gnomeregan~5~29,Onyxia's Lair~1~12;ac=2~3~goal1.sess25;rc=61~19~88~7~30~4~123456;hu=9449~Roueur manuel [test]~42~1;pv=12~340~900~1~3~0~0";
+  const p = parseHiscoresLine(hsLine(BODY + extra));
+  assert.deepEqual(p.collection, { x: 6, y: 69, dungeons: [{ name: 'Gnomeregan', x: 5, y: 29 }, { name: "Onyxia's Lair", x: 1, y: 12 }] });
+  assert.deepEqual(p.achievements, { n: 2, total: 3, ids: ['goal1', 'sess25'] });
+  assert.equal(p.records.bestDay, 88); assert.equal(p.records.playtime, 123456);
+  assert.deepEqual(p.hunt, [{ id: 9449, name: 'Roueur manuel [test]', tries: 42, drops: 1 }]);
+  assert.equal(p.pvp.honorWeek, 340);
+  const none = parseHiscoresLine(hsLine(BODY));                               // tout décoché
+  for (const k of ['collection', 'achievements', 'records', 'hunt', 'pvp']) assert.equal(none[k], undefined);
+  assert.equal(parseHiscoresLine(hsLine(BODY + ';ct=70~69')).collection, undefined);   // incohérent : ignoré
+  assert.equal(parseHiscoresLine(hsLine(BODY + ';hu=1~<script>~1~0')).hunt[0].name, 'script');
+});
 test('ligne hiscores : modifiée, tronquée ou impossible → refusée', () => {
   assert.equal(parseHiscoresLine(hsLine(BODY).replace('176', '300')).error, 'checksum');
   assert.equal(parseHiscoresLine('bonjour').error, 'format');

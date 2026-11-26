@@ -86,6 +86,48 @@ export function hsChecksum(body) {          // même calcul que Hiscores.lua (oc
 }
 const pairs = s => String(s ?? '').split(',').filter(Boolean).map(x => x.split('=')).filter(x => x.length === 2 && /^\d+$/.test(x[1]))
   .map(([id, rank]) => ({ id: /^\d+$/.test(id) ? +id : id, rank: +rank }));
+// 3.11.1 : groupes facultatifs (chacun absent si décoché dans l'addon). Valeurs bornées, textes courts.
+const num = (v, max = 1e9) => { const n = Number(v); return Number.isInteger(n) && n >= 0 && n <= max ? n : null; };
+const txt = (v, max = 48) => String(v ?? '').replace(/[^\p{L}\p{N} '\-\[\]()]/gu, '').trim().slice(0, max);
+const tilde = v => String(v ?? '').split('~');
+export function extras(f) {
+  const o = {};
+  if (f.ct) {                                   // collection log : total et donjons commencés
+    const [x, y] = tilde(f.ct).map(v => num(v, 1e5));
+    if (x != null && y && x <= y) {
+      const dungeons = String(f.cl ?? '').split(',').filter(Boolean).slice(0, 80).map(p => {
+        const [name, a, b] = tilde(p); return { name: txt(name), x: num(a, 1e4), y: num(b, 1e4) };
+      }).filter(d => d.name && d.x != null && d.y && d.x <= d.y);
+      o.collection = { x, y, dungeons };
+    }
+  }
+  if (f.ac) {                                   // succès Dropamine
+    const [n, total, ids] = tilde(f.ac);
+    if (num(n, 999) != null && num(total, 999) && +n <= +total)
+      o.achievements = { n: +n, total: +total, ids: String(ids ?? '').split('.').map(x => x.replace(/[^\w]/g, '').slice(0, 24)).filter(Boolean).slice(0, 200) };
+  }
+  if (f.rc) {                                   // records Dropamine
+    const v = tilde(f.rc).map(x => num(x));
+    if (v.length >= 7 && v.slice(0, 7).every(x => x != null)) {
+      const [bestSession, bestHour, bestDay, longestCombo, sessions, goalsHit, playtime] = v;
+      o.records = { bestSession, bestHour, bestDay, longestCombo, sessions, goalsHit, playtime };
+    }
+  }
+  if (f.hu) {                                   // chasse : objets recherchés
+    const hunt = String(f.hu).split(',').slice(0, 20).map(p => {
+      const [id, name, tries, drops] = tilde(p); return { id: num(id, 1e7), name: txt(name), tries: num(tries, 1e6), drops: num(drops, 1e4) };
+    }).filter(h => h.id && h.name && h.tries != null && h.drops != null);
+    if (hunt.length) o.hunt = hunt;
+  }
+  if (f.pv) {                                   // JcJ : ce que l'armurerie n'a pas
+    const v = tilde(f.pv).map(x => num(x));
+    if (v.length >= 5 && v.slice(0, 5).every(x => x != null)) {
+      const [hkWeek, honorWeek, honor, dkLife, highest, hkToday = 0, honorToday = 0] = v;
+      o.pvp = { hkWeek, honorWeek, honor, dkLife, highest, hkToday: hkToday ?? 0, honorToday: honorToday ?? 0 };
+    }
+  }
+  return o;
+}
 export function parseHiscoresLine(raw) {
   const s = String(raw ?? '').trim().replace(/\s*\n[\s\S]*$/, '');
   if (!s.startsWith(HS_PREFIX)) return { error: 'format' };
@@ -98,7 +140,10 @@ export function parseHiscoresLine(raw) {
   if (!f.n || !(level >= 1 && level <= 60) || !['eu', 'us', 'tw', 'kr', 'cn'].includes(f.r)) return { error: 'format' };
   if (weapons.some(w => w.rank > 5 * level)) return { error: 'values' };
   return { name: f.n, level, region: f.r, guild: f.g || null, defense: +f.d || 0,
-    weapons: weapons.reduce((a, w) => a + w.rank, 0), weaponList: weapons, professions: pairs(f.p), version: f.v || null, time: +f.t || 0 };
+    weapons: weapons.reduce((a, w) => a + w.rank, 0), weaponList: weapons, professions: pairs(f.p), version: f.v || null, time: +f.t || 0,
+    // /played (Dropamine 3.11.1+, facultatif) : secondes, plafonné à 10 ans
+    played: /^\d+$/.test(f.tp ?? '') && +f.tp > 0 && +f.tp < 315360000 ? +f.tp : null,
+    ...extras(f) };
 }
 // À quel personnage du compte connecté appartient la ligne ? (même région, même prénom ; niveau pour départager)
 export function matchUpload(parsed, characters) {

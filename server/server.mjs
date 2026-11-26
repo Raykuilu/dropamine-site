@@ -232,7 +232,9 @@ const server = createServer(async (req, res) => {
         if (c.level < 10) return send(res, 400, { error: 'level' }, cors);
         await updateRegistry(reg => applyClaim(reg, [c.key], ownerOf(s), s.characters), `Hiscores: register ${c.key} (Battle.net)`);
         const entry = { weapons: p.weapons, weaponList: p.weaponList, defense: p.defense, level: p.level,
-          professions: p.professions, version: p.version, at: new Date().toISOString().slice(0, 10) };
+          professions: p.professions, version: p.version, at: new Date().toISOString().slice(0, 10),
+          ...(p.played ? { played: p.played } : {}),
+          ...Object.fromEntries(['collection', 'achievements', 'records', 'hunt', 'pvp'].filter(k => p[k]).map(k => [k, p[k]])) };
         await updateUploads(u => ({ registry: { ...u, [c.key]: entry }, changed: true }), `Hiscores: Dropamine line for ${c.key}`);
         refreshSite();
         return send(res, 200, { key: c.key, weapons: p.weapons, count: p.weaponList.length }, cors);
