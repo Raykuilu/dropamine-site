@@ -1157,3 +1157,8 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .start b{display:block;font-family:var(--display);font-size:16px;color:var(--cream)}
 .start small{display:block;color:var(--muted);font-style:italic;font-size:14px}
 @media (max-width:560px){.start li{grid-template-columns:30px minmax(0,1fr)}.start li .btn{grid-column:2;justify-self:start}}
+
+/* À propos */
+.about .ab-lead{font-size:19px;color:var(--cream);line-height:1.5}
+.about ul{padding-left:20px}
+.about li{margin:0 0 8px}
