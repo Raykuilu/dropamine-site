@@ -75,6 +75,8 @@ const I18N = {
   kills: ['Creatures killed', 'Créatures tuées'], killingBlows: ['Killing blows', 'Coups fatals'], dungeons: ['Dungeons entered', 'Donjons visités'],
   pvpDeaths: ['Killed by players', 'Tué par des joueurs'], duels: ['Duels (won / lost)', 'Duels (gagnés / perdus)'],
   repsT: ['Reputations', 'Réputations'],
+  rtabRuns: ['Planned outings', 'Sorties prévues'], rtabIdeas: ['Dungeon ideas', 'Idées de donjons'], pfAtLvl: ['{n} at your level', '{n} à ton niveau'], needT: ['needs {x}', 'cherche {x}'], needDps: ['{n} dps', '{n} dégât{s}'],
+  runIn: ['Signed up', 'Inscrit'], runWaitBtn: ['Waitlist', 'Attente'], runSee: ['See', 'Voir'], runBy: ['by {n}', 'par {n}'],
   raidK: ['FOREVER · RAIDS', 'FOREVER · RAIDS'], raidT: ['Raids open soon', 'Les raids ouvrent bientôt'], raidSub: ['Barrow Deeps (10), Hyjal Summit (20) and Onyxia’s Lair (40, attunement) open on {d}, level 60. Time not announced yet.', 'Barrow Deeps (10), Hyjal Summit (20) et le Repaire d’Onyxia (40, harmonisation) ouvrent le {d}, niveau 60. Heure pas encore annoncée.'],
   raidOpenT: ['Raids are open!', 'Les raids sont ouverts !'], raidOpenSub: ['Barrow Deeps, Hyjal Summit and Onyxia’s Lair: get your group together.', 'Barrow Deeps, Hyjal Summit et le Repaire d’Onyxia : rassemble ton groupe.'],
   cdD: ['days', 'jours'], cdH: ['hours', 'heures'], cdM: ['min', 'min'], cdS: ['sec', 's'],
@@ -1361,7 +1363,8 @@ function renderRuns() {
       if (state.hr) { if (isRaid(d)) return false; const l = { tank: 1, heal: 1, dps: 3 }; run.members.forEach(m => l[m.role]--); if (l[state.hr] <= 0) return false; }
       if (state.hw) { const at = Date.parse(run.at), end = new Date(); end.setHours(23, 59, 59, 999); if (at > (state.hw === 'today' ? end.getTime() : Date.now() + 7 * 864e5)) return false; }
       return textMatch(dunText(d) + ' ' + (run.note || '') + ' ' + run.members.map(m => { const p = byKey.get(m.key); return (p ? p.name + ' ' + huntsText(p) : m.key); }).join(' ')); })());
-  const plimit = state.plimit || 10, page = filtered.slice(0, plimit);
+  const plimit = state.plimit || 30, page = filtered.slice(0, plimit);
+  const atLvl = me.length ? filtered.filter(run => { const d = LOOT.dungeons.find(x => x.key === run.dungeon); return d && me.some(p => fitOf(p, d) === 'ok'); }).length : 0;
   const dayKey = iso => new Date(iso).toDateString();
   const dayTitle = iso => { const d = new Date(iso), diff = Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 864e5);
     return diff <= 0 ? t('dayToday') : diff === 1 ? t('dayTomorrow') : d.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' }); };
@@ -1377,12 +1380,13 @@ function renderRuns() {
       <select data-hf="hr" aria-label="${t('hsRole')}">${opt('hr', '', t('hsRoleAll'))}${['tank', 'heal', 'dps'].map(x => opt('hr', x, t('hsNeed.' + x))).join('')}</select>
       <select data-hf="hw" aria-label="${t('hsWhen')}">${opt('hw', '', t('hsWhenAll'))}${opt('hw', 'today', t('dayToday'))}${opt('hw', 'week', t('hsWhenWeek'))}</select>
       <div class="hs-row">${[['all', 'pfAll'], ...(me.length ? [['mine', 'pfMine']] : []), ['open', 'pfOpen']].map(([k, l]) => `<span class="chip ${pf === k ? 'on' : ''}" data-pf="${k}">${t(l)}</span>`).join('')}
-        <span class="pcount">${t('pfCount', { n: filtered.length })}</span>${searchActive() ? `<button class="lnk" type="button" data-hreset>${t('hsReset')}</button>` : ''}</div></div>`;
+        <span class="pcount">${t('pfCount', { n: filtered.length })}${me.length ? ' · ' + t('pfAtLvl', { n: atLvl }) : ''}</span>${searchActive() ? `<button class="lnk" type="button" data-hreset>${t('hsReset')}</button>` : ''}</div></div>`;
   let lastDay = '';
+  const perDay = new Map(); filtered.forEach(run => perDay.set(dayKey(run.at), (perDay.get(dayKey(run.at)) || 0) + 1));
   const planned = page.map(run => {
-    const dk = dayKey(run.at), head = dk !== lastDay ? `<h4 class="day">${dayTitle(run.at)}</h4>` : ''; lastDay = dk;
+    const dk = dayKey(run.at), head = dk !== lastDay ? `${lastDay ? '</div>' : ''}<h4 class="rday">${dayTitle(run.at)}<small>${t('pfCount', { n: perDay.get(dk) })}</small></h4><div class="rlist">` : ''; lastDay = dk;
     return head + plannedCard(run);
-  }).join('') + (filtered.length > plimit ? `<button class="btn ghost more" data-pmore>${t('runMoreRuns', { n: filtered.length - plimit })}</button>` : '');
+  }).join('') + (page.length ? '</div>' : '') + (filtered.length > plimit ? `<p class="rmore"><button class="btn ghost" data-pmore>${t('runMoreRuns', { n: Math.min(30, filtered.length - plimit) })}</button></p>` : '');
   function plannedCard(run) {
     const d = LOOT.dungeons.find(x => x.key === run.dungeon); if (!d) return '';
     const myMember = run.members.find(m => mineKeys.has(m.key)), iOwn = mineKeys.has(run.by);
@@ -1411,16 +1415,26 @@ function renderRuns() {
         <label>${t('runDungeon')}<select data-run-dun>${[...LOOT.dungeons].sort((a, b) => a.name.localeCompare(b.name)).map(x => `<option value="${esc(x.key)}"${x.key === d.key ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
         <label class="wide">${t('runNote')}<input type="text" maxlength="140" data-run-note value="${esc(run.note || '')}" placeholder="${t('runNotePh')}"></label>
         <button class="btn gold" data-run-save>${t('runSave')}</button></div></details>` : '';
-    return `<div class="prun${myMember ? ' mine' : ''}${state.runFocus === run.id ? ' focus' : ''}" id="run-${esc(run.id)}"${artStyle(d.key)}>
-      <div class="prh">${dateBlock}<div class="pti"><h3>${esc(d.name)}</h3><span class="when">${relWhen(d0)}${run.edited ? ` · <i>${t('runEdited')}</i>` : ''}</span>
-        ${run.note ? `<p class="pnote">« ${esc(run.note)} »</p>` : ''}</div>
-        <div class="comp">${slots ? `<div class="slots">${slots}</div>` : ''}<span class="cnt">${full5 ? `<b class="full">${t('runFull')}</b>${wait.length ? ` · ${t('runWaitN', { n: wait.length })}` : ''}` : t('runCount', { n: run.members.length })}</span></div></div>
-      <ul>${members}</ul>
+    const open = state.ropen === run.id || (state.runFocus === run.id && state.ropen === undefined);
+    const [, , hiL] = d.lvl || [], loL = dunFrom(d), org = byKey.get(run.by);
+    const needs = raid ? '' : [left.tank > 0 && t('role.tank').toLowerCase(), left.heal > 0 && t('role.heal').toLowerCase(), left.dps > 0 && t('needDps', { n: left.dps })].filter(Boolean);
+    const stack = group.slice(0, 4).map(m => byKey.get(m.key)).filter(Boolean).map(p => avatar(p)).join('');
+    const act = myMember ? `<span class="btn mine">✓ ${t('runIn')}</span>` : full5 ? `<span class="btn ghost">${t('runWaitBtn')}</span>` : `<span class="btn gold">${me.length ? t('runJoin') : t('runSee')}</span>`;
+    return `<div class="rrow${myMember ? ' mine' : ''}${full5 && !myMember ? ' full' : ''}${open ? ' open' : ''}${state.runFocus === run.id ? ' focus' : ''}" id="run-${esc(run.id)}"${artStyle(d.key)}>
+      <div class="rr-h" data-ropen="${esc(run.id)}" role="button" tabindex="0" aria-expanded="${open}">
+        <span class="rr-art" aria-hidden="true"></span>
+        <span class="rr-when"><b>${d0.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })}</b><small>${relWhen(d0)}</small></span>
+        <span class="rr-t"><b>${esc(d.name)}${loL ? ` <i class="lvl${me.some(p => fitOf(p, d) === 'ok') ? ' ok' : ''}">${loL}–${hiL}</i>` : ''}</b><small>${run.note ? '« ' + esc(run.note) + ' »' : t('runBy', { n: org ? esc(org.name) : esc(run.by.split('/')[1] || '') })}${run.edited ? ` · ${t('runEdited')}` : ''}</small></span>
+        <span class="rr-need">${slots ? `<span class="slots">${slots}</span>` : ''}<small class="${needs.length ? '' : 'done'}">${raid ? t('runCount', { n: run.members.length }) : needs.length ? t('needT', { x: needs.join(', ') }) : t('runFull') + (wait.length ? ' · ' + t('runWaitN', { n: wait.length }) : '')}</small></span>
+        <span class="rr-who">${stack}<em>${raid ? run.members.length : group.length + '/5'}</em></span>
+        <span class="rr-act">${act}</span>
+      </div>
+      ${open ? `<div class="rr-x"><ul>${members}</ul>
       <div class="pact">${joinForm}${myMember ? `<button class="btn ghost" data-run-leave="${esc(run.id)}">${iOwn ? t('runCancel') : t('runLeave')}</button>` : ''}${edit}
         <span class="tools"><button class="lnk" data-run-copy="${esc(run.id)}">${t('runCopy')}</button><button class="lnk" data-run-link="${esc(run.id)}">${t('runLink')}</button><button class="lnk" data-run-ics="${esc(run.id)}">${t('runIcs')}</button></span>
-        ${!me.length ? `<small>${t('runLogin')}</small>` : ''}</div></div>`;
+        ${!me.length ? `<small>${t('runLogin')}</small>` : ''}</div></div>` : ''}</div>`;
   }
-  const plannedBlock = `<section class="planned"><div class="cathead"><h3 class="sub">${t('runsPlanned')}</h3>${RUNS === null ? `<span class="cx2">${t('runsApiDown')}</span>` : ''}</div>
+  const plannedBlock = `<section class="planned">${RUNS === null ? `<p class="note">${t('runsApiDown')}</p>` : ''}
     ${state.runMsg ? `<p class="msg">${state.runMsg}</p>` : ''}${planned || `<p class="note">${allRuns.length ? t('pfNone') : t('runsNone')}</p>`}</section>`;
 
   const card = run => {
@@ -1446,27 +1460,29 @@ function renderRuns() {
       <ul>${rows}</ul>
       <div class="rf"><span class="glabel">${t('runsGroup')}</span>${gp('tank', g.tank)}${gp('heal', g.heal)}${g.dps.map(p => gp('dps', p)).join('')}${form}</div></div>`;
   };
+  const rtab = state.rtab === 'ideas' ? 'ideas' : 'planned';
   box.innerHTML = `<div class="head"><h2>${t('runsT')}</h2><span class="note">${t('runsNote')} · Forever ${state.region.toUpperCase()}</span></div>
-    ${chips}${pfilters}${note}${plannedBlock}
-    <div class="cathead" style="margin-top:22px"><h3 class="sub">${t('runsIdeas')}</h3><span class="cx2">${t('runsIdeasNote')}</span></div>
+    <div class="rtabs" role="tablist"><button role="tab" data-rtab="planned" aria-selected="${rtab === 'planned'}">${t('rtabRuns')}<em>${filtered.length}</em></button><button role="tab" data-rtab="ideas" aria-selected="${rtab === 'ideas'}">${t('rtabIdeas')}<em>${runs.length}</em></button></div>
+    ${chips}${pfilters}${note}${rtab === 'planned' ? plannedBlock : `<p class="note rideas-n">${t('runsIdeasNote')}</p>
     ${!runs.length && searchActive() ? `<p class="note">${t('hsNone')}</p>` : ''}${runs.length ? `<div class="runs">${runs.slice(0, state.ilimit || 8).map(card).join('')}</div>${runs.length > (state.ilimit || 8) ? `<button class="btn ghost more" data-imore>${t('runMoreDun', { n: runs.length - (state.ilimit || 8) })}</button>` : ''}` : `<div class="empty"><b>${t('runsEmptyT')}</b>${t('runsEmpty')}</div>`}
-    <p class="runs-src">${t('runsSrc')}</p>`;
+    `}<p class="runs-src">${t('runsSrc')}</p>`;
   if (state.runFocus && !state.runFocused) { const el = document.getElementById('run-' + state.runFocus); if (el) { state.runFocused = true; el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } }
 }
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('[data-ropen]')) { e.preventDefault(); e.target.click(); } });
 document.addEventListener('input', e => {
   const q = e.target.closest('[data-hq]'); if (!q) return;
   clearTimeout(renderRuns.t); renderRuns.t = setTimeout(() => {
-    state.hq = q.value.trim(); state.plimit = 10; state.ilimit = 8; renderRuns(); writeUrl(false);
+    state.hq = q.value.trim(); state.plimit = 30; state.ilimit = 8; renderRuns(); writeUrl(false);
     const n = $('[data-hq]'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); }
   }, 220);
 });
 document.addEventListener('change', e => {
   const f = e.target.closest('[data-hf]'); if (!f) return;
-  state[f.dataset.hf] = f.value; state.plimit = 10; state.ilimit = 8; renderRuns(); writeUrl(false);
+  state[f.dataset.hf] = f.value; state.plimit = 30; state.ilimit = 8; renderRuns(); writeUrl(false);
 });
 document.addEventListener('click', e => {
   if (!e.target.closest('[data-hreset]')) return;
-  Object.assign(state, { hq: '', hl: '', ht: '', hd: '', hr: '', hw: '', pf: 'all', plimit: 10, ilimit: 8 }); renderRuns(); writeUrl(false);
+  Object.assign(state, { hq: '', hl: '', ht: '', hd: '', hr: '', hw: '', pf: 'all', plimit: 30, ilimit: 8 }); renderRuns(); writeUrl(false);
 });
 // actions : filtres, proposer, rejoindre, quitter
 async function runAction(path, body) {
@@ -1481,8 +1497,12 @@ async function runAction(path, body) {
 document.addEventListener('click', e => {
   const c = e.target.closest('[data-rscope]'); if (c) { state.rscope = c.dataset.rscope; renderRuns(); return; }
   if (e.target.closest('[data-rlvl]')) { state.rlvl = !state.rlvl; renderRuns(); return; }
-  const pfc = e.target.closest('[data-pf]'); if (pfc) { state.pf = pfc.dataset.pf; state.plimit = 10; renderRuns(); return; }
-  if (e.target.closest('[data-pmore]')) { state.plimit = (state.plimit || 10) + 10; renderRuns(); return; }
+  const pfc = e.target.closest('[data-pf]'); if (pfc) { state.pf = pfc.dataset.pf; state.plimit = 30; renderRuns(); return; }
+  if (e.target.closest('[data-pmore]')) { state.plimit = (state.plimit || 30) + 30; renderRuns(); return; }
+  const tb = e.target.closest('[data-rtab]'); if (tb) { state.rtab = tb.dataset.rtab; renderRuns(); writeUrl(false); return; }
+  const ro = e.target.closest('[data-ropen]');
+  if (ro) { const id = ro.dataset.ropen, wasOpen = ro.closest('.rrow').classList.contains('open'); state.ropen = wasOpen ? null : id; renderRuns();
+    if (!wasOpen) document.getElementById('run-' + id)?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }); return; }
   if (e.target.closest('[data-imore]')) { state.ilimit = (state.ilimit || 8) + 8; renderRuns(); return; }
   const cr = e.target.closest('[data-run-create]');
   if (cr) { const f = cr.closest('.pform'), at = $('[data-run-at]', f).value;
@@ -1504,7 +1524,7 @@ document.addEventListener('click', e => {
   const ic = e.target.closest('[data-run-ics]'); if (ic) { const x = run(ic.dataset.runIcs); if (x) runIcs(x); }
 });
 document.addEventListener('change', e => {
-  const pds = e.target.closest('[data-pd]'); if (pds) { state.pd = pds.value; state.plimit = 10; renderRuns(); return; }
+  const pds = e.target.closest('[data-pd]'); if (pds) { state.pd = pds.value; state.plimit = 30; renderRuns(); return; }
   const sel = e.target.closest('[data-run-role-change]');
   if (sel) runAction('/runs/join', { id: sel.dataset.runRoleChange, key: sel.dataset.key, role: sel.value, change: true });
 });
@@ -1693,7 +1713,7 @@ function readUrl() {
   state.region = ['eu', 'us', 'tw'].includes(q.get('r')) ? q.get('r') : 'eu';
   state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0;
   state.c = q.get('c') || state.c; state.g = q.get('g') || '';
-  if (state.view === 'runs') Object.assign(state, { hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
+  if (state.view === 'runs') Object.assign(state, { rtab: q.get('tab') === 'ideas' ? 'ideas' : 'planned', hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
 }
 function writeUrl(push) {
   if (SHOT) return;
@@ -1703,7 +1723,7 @@ function writeUrl(push) {
   if (state.view === 'rank') { if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
   if (state.view === 'char' && state.c) q.set('c', state.c);
   if (state.view === 'guild' && state.g) q.set('g', state.g);
-  if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['d', 'hd'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.runFocus) q.set('run', state.runFocus); }
+  if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['d', 'hd'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.rtab === 'ideas') q.set('tab', 'ideas'); if (state.runFocus) q.set('run', state.runFocus); }
   history[push ? 'pushState' : 'replaceState'](null, '', q.toString() ? '?' + q : location.pathname);
 }
 const RENDER = { rank: renderRank, char: renderChar, guild: renderGuild, runs: renderRuns, news: renderNews, join: () => Bnet.show() };
@@ -1850,3 +1870,17 @@ if (!document.documentElement.classList.contains('nosplash')) setTimeout(() => {
 else $('#splash')?.remove();
 // captures de test (localhost) : ?img=1 ouvre l'image Hiscores du personnage affiché
 if (location.hostname === 'localhost' && new URLSearchParams(location.search).get('img')) setTimeout(() => $('[data-hsimg]')?.click(), 3500);
+// captures de test (localhost) : ?fakeruns=1 remplit la chasse en groupe avec des sorties fictives (vrais personnages, vrais donjons)
+if (location.hostname === 'localhost' && new URLSearchParams(location.search).get('fakeruns')) {
+  const fake = () => {
+    if (!DATA.players.length || !LOOT?.dungeons) return setTimeout(fake, 300);
+    const ps = DATA.players, ds = LOOT.dungeons.filter(d => (d.lvl || [])[0]), roles = ['tank', 'heal', 'dps', 'dps', 'dps'], now = Date.now();
+    RUNS = Array.from({ length: 24 }, (_, i) => {
+      const at = new Date(now + (2 + i * 5.5) * 36e5), d = ds[(i * 7) % ds.length], n = 1 + (i * 3) % 6, by = ps[i % ps.length];
+      return { id: 'f' + i, dungeon: d.key, at: at.toISOString(), note: i % 3 ? ['Farm tranquille', 'Cherche soigneur, ambiance détente', 'On boucle 3 fois'][i % 3] : '', by: pkey(by),
+        created: new Date(now - i * 36e5).toISOString(), members: Array.from({ length: n }, (_, k) => ({ key: pkey(ps[(i + k) % ps.length]), role: roles[k % 5] })) };
+    });
+    runsLoad = Promise.resolve(); if (state.view === 'runs') renderRuns(); else if (state.view === 'home') renderHome();
+  };
+  loadLoot(); fake();
+}

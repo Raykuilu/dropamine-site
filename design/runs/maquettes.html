@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Chasse en groupe · maquettes A B C</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Cormorant+SC:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#110d09;--panel:#19130d;--panel-2:#1f1811;--line:#2e2418;--line-2:#3c2f1e;--rim:#c49a5c;--rim-lo:#8a6a3a;--gold:#e8c88a;--cream:#efe2c6;--muted:#a8946f;--faint:#75644a;
+  --serif:'EB Garamond',Georgia,serif;--display:'Cormorant SC',Georgia,serif;--num:'Cormorant Garamond',Georgia,serif;--ok:#8cc472;--warn:#e0a050}
+*{box-sizing:border-box}
+body{margin:0;background:#0b0806;color:var(--cream);font-family:var(--serif);font-size:16px}
+.mq{width:1240px;margin:0 auto;padding:28px 0 40px}
+.mq+.mq{border-top:2px dashed #3a2c1a}
+.tag{font-family:var(--display);letter-spacing:.3em;font-size:14px;color:var(--rim);margin:0 0 6px}
+h1{font-family:var(--display);font-size:30px;color:var(--gold);margin:0 0 4px;letter-spacing:.04em}
+.lead{font-style:italic;color:var(--muted);margin:0 0 18px}
+.panel{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid #050302;border-radius:6px;padding:20px 22px;box-shadow:inset 0 0 0 1px rgba(196,154,92,.2)}
+.tabs2{display:flex;gap:6px;border-bottom:1px solid rgba(196,154,92,.25);margin-bottom:14px}
+.tabs2 span{font-family:var(--display);font-size:17px;letter-spacing:.06em;color:var(--muted);padding:8px 14px;position:relative}
+.tabs2 span.on{color:var(--gold)}
+.tabs2 span.on::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.tabs2 em{font-style:normal;font-family:var(--num);font-weight:700;color:var(--rim);margin-left:6px}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.bar .q{flex:1 1 260px;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);background:#0d0a07;color:var(--faint);font-style:italic}
+.bar .s{padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);background:#0d0a07;color:var(--cream);font-size:15px}
+.bar .c{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);font-family:var(--display);font-size:14px;letter-spacing:.05em;color:var(--muted)}
+.bar .c.on{background:var(--gold);color:#2a1a08;border-color:var(--gold)}
+.count{margin-left:auto;font-style:italic;color:var(--muted)}
+.day{position:relative;font-family:var(--display);font-size:16px;letter-spacing:.08em;color:var(--rim);padding:14px 4px 6px;border-bottom:1px solid rgba(196,154,92,.22);display:flex;justify-content:space-between}
+.day small{font-family:var(--serif);font-style:italic;letter-spacing:0;color:var(--faint);font-size:14px}
+.slots{display:inline-flex;gap:3px}
+.slots i{width:18px;height:18px;border-radius:4px;border:1px solid #3a2c1a;background:#0d0a07 center/cover;opacity:.35}
+.slots i.on{opacity:1;border-color:var(--rim)}
+.slots i.t{background-image:url(https://render.worldofwarcraft.com/eu/icons/56/ability_defend.jpg)}
+.slots i.h{background-image:url(https://render.worldofwarcraft.com/eu/icons/56/spell_holy_flashheal.jpg)}
+.slots i.d{background-image:url(https://render.worldofwarcraft.com/eu/icons/56/ability_dualwield.jpg)}
+.need{font-size:13px;color:var(--warn);font-style:italic}
+.btn{display:inline-block;padding:6px 14px;border-radius:999px;font-family:var(--display);font-weight:700;letter-spacing:.06em;font-size:13px;border:1px solid var(--rim-lo);color:var(--gold);white-space:nowrap}
+.btn.gold{background:linear-gradient(180deg,#f0d49a,#d9b06a);color:#2a1a08;border-color:#f0d49a}
+.btn.mine{border-color:#4f8a3a;color:var(--ok)}
+.lvl{font-family:var(--num);font-weight:700;color:var(--muted);font-size:15px;white-space:nowrap}
+.lvl.ok{color:var(--ok)}
+.ava{width:24px;height:24px;border-radius:50%;border:1px solid var(--rim-lo);background:#2a2015 center/cover;display:inline-block;vertical-align:middle}
+.note{font-style:italic;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci{width:28px;height:28px;border-radius:5px;border:2px solid #0070dd;background:#0a0806 center/cover;display:inline-block}
+
+/* ---------- A : tableau dense ---------- */
+.ta{width:100%;border-collapse:collapse}
+.ta td{padding:7px 8px;border-bottom:1px solid rgba(196,154,92,.1);vertical-align:middle}
+.ta tr.r:hover td{background:rgba(196,154,92,.06)}
+.ta tr.me td{background:rgba(140,196,114,.06)}
+.ta tr.me td:first-child{box-shadow:inset 3px 0 0 var(--ok)}
+.ta .hr{font-family:var(--num);font-weight:700;font-size:18px;color:var(--gold);width:58px}
+.ta .dn{display:flex;align-items:center;gap:10px;min-width:0}
+.ta .dn i{width:44px;height:28px;border-radius:4px;background:center/cover;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)}
+.ta .dn b{font-family:var(--display);font-size:17px;color:var(--cream);white-space:nowrap}
+.ta .org{color:var(--muted);font-size:14px;white-space:nowrap}
+.ta .cnt{font-family:var(--num);font-weight:700;color:var(--cream);white-space:nowrap}
+.ta .nt{max-width:230px}
+.ta tr.open td{background:rgba(232,200,138,.07);border-bottom:0}
+.ta tr.det td{background:rgba(232,200,138,.07);padding:4px 14px 14px 66px}
+.det-g{display:grid;grid-template-columns:1.2fr 1fr auto;gap:18px;align-items:start}
+.mem{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px}
+.mem div{display:flex;align-items:center;gap:8px;font-size:15px}
+.mem small{color:var(--faint);font-style:italic}
+.det-h{font-family:var(--display);color:var(--rim);font-size:14px;letter-spacing:.08em;margin:0 0 6px}
+.acts{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.lnk{color:var(--gold);font-style:italic;font-size:14px;text-decoration:underline;text-decoration-color:var(--rim-lo)}
+
+/* ---------- B : lignes-cartes fines ---------- */
+.lb{display:grid;gap:6px}
+.rb{display:grid;grid-template-columns:150px 70px minmax(0,1fr) 120px 140px 110px;align-items:center;gap:14px;height:62px;padding-right:14px;border-radius:8px;overflow:hidden;
+  border:1px solid var(--line-2);background:linear-gradient(90deg,transparent 0,#1b150e 150px)}
+.rb .art{height:100%;background:center/cover;-webkit-mask-image:linear-gradient(90deg,#000 55%,transparent);mask-image:linear-gradient(90deg,#000 55%,transparent);position:relative}
+.rb .when{display:flex;flex-direction:column;line-height:1.05}
+.rb .when b{font-family:var(--num);font-weight:700;font-size:22px;color:var(--gold)}
+.rb .when small{font-size:13px;color:var(--ok);font-style:italic}
+.rb .tt{min-width:0}
+.rb .tt b{display:block;font-family:var(--display);font-size:18px;color:var(--cream);letter-spacing:.03em}
+.rb .tt .note{font-size:14px}
+.stack{display:flex}
+.stack .ava{margin-left:-7px;box-shadow:0 0 0 2px #1b150e}
+.stack .ava:first-child{margin-left:0}
+.stack em{font-style:normal;font-family:var(--num);font-weight:700;color:var(--muted);margin-left:6px;align-self:center}
+.rb.me{border-color:#4f8a3a;box-shadow:inset 3px 0 0 var(--ok)}
+.rb.full{opacity:.62}
+.rb.open{height:auto;grid-template-rows:62px auto;border-color:var(--rim)}
+.rb.open .xd{grid-column:1/-1;padding:4px 14px 14px 164px;display:grid;grid-template-columns:1.2fr 1fr auto;gap:18px}
+
+/* ---------- C : agenda par jour ---------- */
+.ag{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) 300px;gap:8px;align-items:start}
+.col h4{margin:0 0 6px;padding:8px 6px;border-radius:6px;text-align:center;font-family:var(--display);font-size:15px;letter-spacing:.06em;color:var(--rim);background:rgba(0,0,0,.25);border:1px solid var(--line-2)}
+.col h4 small{display:block;font-family:var(--serif);font-style:italic;letter-spacing:0;color:var(--faint);font-size:13px}
+.col h4.today{color:var(--gold);border-color:var(--rim)}
+.ev{position:relative;margin-bottom:6px;padding:7px 8px 7px 10px;border-radius:6px;border:1px solid var(--line-2);background:linear-gradient(180deg,rgba(14,10,7,.7),rgba(14,10,7,.92)),var(--a) center/cover;font-size:14px;line-height:1.2}
+.ev b{display:block;font-family:var(--display);font-size:14px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .t{font-family:var(--num);font-weight:700;color:var(--gold)}
+.ev .slots i{width:13px;height:13px;border-radius:3px}
+.ev.me{border-color:#4f8a3a;box-shadow:inset 3px 0 0 var(--ok)}
+.ev.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 0 18px rgba(232,200,138,.2)}
+.ev.full{opacity:.55}
+.more{font-style:italic;font-size:13px;color:var(--gold);text-align:center;padding:4px}
+.side{position:sticky;top:10px;border:1px solid var(--rim-lo);border-radius:8px;overflow:hidden;background:var(--panel)}
+.side .hd{height:110px;background:center/cover;position:relative}
+.side .hd::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,var(--panel))}
+.side .bd{padding:0 14px 14px;margin-top:-30px;position:relative}
+.side h3{margin:0;font-family:var(--display);font-size:22px;color:var(--gold)}
+.side p{margin:2px 0 10px;font-style:italic;color:var(--muted);font-size:14px}
+.side .mem{grid-template-columns:1fr}
+.caption{margin:14px 0 0;font-style:italic;color:var(--muted);font-size:15px}
+.caption b{color:var(--gold);font-style:normal}
+</style></head>
+<body>
+<script>
+// données fictives communes aux trois maquettes
+const A = k => `https://render.worldofwarcraft.com/eu/zones/${k}-small.jpg`;
+const D = {
+  sfk: ['Shadowfang Keep', A('shadowfang-keep'), '17–30'], sm: ['Monastère · Armurerie', A('scarlet-monastery'), '26–42'], rfk: ['Razorfen Kraul', A('razorfen-kraul'), '25–38'],
+  ul: ['Uldaman', A('uldaman'), '35–51'], gn: ['Gnomeregan', A('gnomeregan'), '23–38'], zf: ['Zul’Farrak', A('zulfarrak'), '39–54'], mar: ['Maraudon', A('maraudon'), '40–55'],
+  dm: ['Les Mortemines', A('deadmines'), '11–26'], wc: ['Cavernes des Lamentations', A('wailing-caverns'), '11–24'], brd: ['Profondeurs de Blackrock', A('blackrock-depths'), '46–60'], rfd: ['Souilles de Tranchebauge', A('razorfen-downs'), '35–46'], bfd: ['Profondeurs de Brassenoire', A('blackfathom-deeps'), '18–32'] };
+const R = [ // jour, heure, donjon, places [t,h,d], inscrits, orga, note, moi ?, à mon niveau ?
+  ['Ce soir', '21:00', 'sm', [1, 1, 2], 4, 'Ray Kuilu', 'Marque de Kern, on boucle l’Armurerie 3 fois', 1, 1],
+  ['Ce soir', '21:30', 'rfk', [1, 0, 3], 4, 'Yema Lobrah', 'Cherche soigneur, ambiance détente', 0, 1],
+  ['Ce soir', '22:00', 'brd', [1, 1, 3], 5, 'Patience', 'Run complet, groupe plein', 0, 0],
+  ['Ce soir', '22:15', 'gn', [0, 1, 1], 2, 'Colìn Maillard', 'Roueur manuel, il faut un tank', 0, 1],
+  ['Demain', '18:00', 'dm', [1, 1, 3], 5, 'Framb', 'Premier donjon de la guilde', 0, 0],
+  ['Demain', '20:30', 'ul', [0, 1, 2], 3, 'Drazz', 'Archaedas + clés', 0, 1],
+  ['Demain', '21:00', 'sfk', [1, 0, 1], 2, 'Nagazach', 'Farm Spallières robustes', 0, 1],
+  ['Demain', '21:00', 'zf', [1, 1, 1], 3, 'Rakshir', 'Bâton de Zum’rah', 0, 1],
+  ['Samedi 28', '14:00', 'wc', [0, 0, 2], 2, 'Ax Pirine', 'Rerolls bienvenus', 0, 0],
+  ['Samedi 28', '20:00', 'mar', [1, 1, 3], 5, 'Gue', '', 0, 0],
+  ['Samedi 28', '21:00', 'rfd', [0, 1, 1], 2, 'Tim', 'Cherche tank ou druide ours', 0, 1],
+  ['Dimanche 29', '15:00', 'bfd', [1, 0, 2], 3, 'Spell', 'Lunette de l’Aube', 0, 0],
+  ['Dimanche 29', '21:00', 'sm', [0, 0, 1], 1, 'Rak', 'Cathédrale, tranquille', 0, 1],
+];
+const slots = ([t, h, d]) => `<span class="slots"><i class="t${t ? ' on' : ''}"></i><i class="h${h ? ' on' : ''}"></i>${[0, 1, 2].map(i => `<i class="d${d > i ? ' on' : ''}"></i>`).join('')}</span>`;
+const need = ([t, h, d]) => { const n = [!t && 'tank', !h && 'soigneur', d < 3 && `${3 - d} dégât${3 - d > 1 ? 's' : ''}`].filter(Boolean); return n.length ? `<span class="need">cherche ${n.join(', ')}</span>` : '<span class="need" style="color:var(--faint)">complet</span>'; };
+const full = s => s[0] && s[1] && s[2] >= 3;
+const AV = ['https://render.worldofwarcraft.com/forever-eu/character/207/9332175-avatar.jpg'];
+const ava = () => `<i class="ava" style="background-image:url(${AV[0]})"></i>`;
+const days = [...new Set(R.map(r => r[0]))];
+const bar = `<div class="tabs2"><span class="on">Sorties prévues<em>128</em></span><span>Idées de donjons<em>24</em></span></div>
+  <div class="bar"><span class="q">Donjon, boss, objet, joueur…</span><span class="s">À mon niveau ▾</span><span class="s">Tous les donjons ▾</span><span class="s">Cherche un soigneur ▾</span><span class="c on">Tous</span><span class="c">Mes sorties</span><span class="c">Places libres</span><span class="count">128 sorties · 42 à ton niveau</span></div>`;
+const detail = r => `<div><p class="det-h">Inscrits · 4 / 5</p><div class="mem">${['Ray Kuilu · Tank · Druide 36', 'Yema Lobrah · Dégâts · Chasseur 40', 'Colìn Maillard · Soigneur · Prêtre 32', 'Tim · Dégâts · Voleur 36'].map(x => `<div>${ava()}<span>${x.split(' · ')[0]} <small>${x.split(' · ').slice(1).join(' · ')}</small></span></div>`).join('')}</div></div>
+  <div><p class="det-h">Ce qu'ils chassent ici</p><span class="ci" style="background-image:url(https://render.worldofwarcraft.com/forever-eu/icons/56/133357.jpg);border-color:#0070dd"></span> <span class="ci" style="background-image:url(https://render.worldofwarcraft.com/forever-eu/icons/56/135039.jpg)"></span><p style="margin:8px 0 0;font-style:italic;color:var(--muted);font-size:14px">« ${r[6]} »</p></div>
+  <div class="acts"><span class="btn mine">✓ Inscrit · Tank</span><span class="lnk">Copier l'annonce</span><span class="lnk">Ajouter au calendrier</span><span class="lnk">Modifier</span></div>`;
+
+let html = '';
+// ---------- A ----------
+html += `<section class="mq"><p class="tag">MAQUETTE A</p><h1>Tableau dense</h1><p class="lead">Une ligne par sortie (~44 px), comme un tableau de recherche de groupe. Clic : la ligne se déplie sur place.</p><div class="panel">${bar}
+  <table class="ta">${days.map(d => `<tr><td colspan="8"><div class="day">${d}<small>${R.filter(r => r[0] === d).length} sorties</small></div></td></tr>` + R.filter(r => r[0] === d).map((r, i) => {
+    const [dn, art, lv] = D[r[2]], open = r[7];
+    return `<tr class="r${r[7] ? ' me open' : ''}"><td class="hr">${r[1]}</td><td><div class="dn"><i style="background-image:url(${art})"></i><b>${dn}</b></div></td><td><span class="lvl${r[8] ? ' ok' : ''}">${lv}</span></td>
+      <td>${slots(r[3])}</td><td class="cnt">${r[4]} / 5</td><td class="org">${ava()} ${r[5]}</td><td class="nt"><div class="note">${r[6] || '—'}</div></td>
+      <td style="text-align:right">${r[7] ? '<span class="btn mine">✓ Inscrit</span>' : full(r[3]) ? '<span class="btn">Liste d’attente</span>' : '<span class="btn gold">Rejoindre</span>'}</td></tr>` + (open ? `<tr class="det"><td colspan="8"><div class="det-g">${detail(r)}</div></td></tr>` : '');
+  }).join('')).join('')}</table>
+  <p style="text-align:center;margin:14px 0 0"><span class="btn">Afficher 30 sorties de plus</span></p></div>
+  <p class="caption"><b>Pour :</b> 20 à 25 sorties visibles sans défiler, tri et lecture très rapides. <b>Contre :</b> moins « jeu », les illustrations sont petites.</p></section>`;
+
+// ---------- B ----------
+html += `<section class="mq"><p class="tag">MAQUETTE B</p><h1>Lignes-cartes fines</h1><p class="lead">Une carte fine par sortie (~62 px) avec l'illustration du donjon en fondu ; les membres en pastilles. Clic : la carte s'agrandit.</p><div class="panel">${bar}
+  ${days.map(d => `<div class="day">${d}<small>${R.filter(r => r[0] === d).length} sorties</small></div><div class="lb" style="margin-top:8px">` + R.filter(r => r[0] === d).map(r => {
+    const [dn, art, lv] = D[r[2]];
+    return `<div class="rb${r[7] ? ' me open' : ''}${full(r[3]) ? ' full' : ''}"><div class="art" style="background-image:url(${art})"></div>
+      <div class="when"><b>${r[1]}</b><small>${r[0] === 'Ce soir' ? 'dans 2 h' : r[0].toLowerCase()}</small></div>
+      <div class="tt"><b>${dn} <span class="lvl${r[8] ? ' ok' : ''}">${lv}</span></b><div class="note">${r[6] ? '« ' + r[6] + ' »' : 'par ' + r[5]}</div></div>
+      <div>${slots(r[3])}<br>${need(r[3])}</div>
+      <div class="stack">${Array.from({ length: Math.min(4, r[4]) }, ava).join('')}<em>${r[4]}/5</em></div>
+      <div style="text-align:right">${r[7] ? '<span class="btn mine">✓ Inscrit</span>' : full(r[3]) ? '<span class="btn">Attente</span>' : '<span class="btn gold">Rejoindre</span>'}</div>
+      ${r[7] ? `<div class="xd">${detail(r)}</div>` : ''}</div>`;
+  }).join('') + '</div>').join('')}
+  <p style="text-align:center;margin:14px 0 0"><span class="btn">Afficher 30 sorties de plus</span></p></div>
+  <p class="caption"><b>Pour :</b> garde l'ambiance des donjons, ce qui manque (« cherche un soigneur ») se lit d'un coup d'œil. <b>Contre :</b> 10 à 12 sorties par écran.</p></section>`;
+
+// ---------- C ----------
+const week = [['Jeu. 26', 'Ce soir'], ['Ven. 27', 'Demain'], ['Sam. 28', 'Samedi 28'], ['Dim. 29', 'Dimanche 29'], ['Lun. 30', null], ['Mar. 1', null], ['Mer. 2', null]];
+const extra = { 'Ce soir': 9, 'Demain': 6, 'Samedi 28': 4 };
+html += `<section class="mq"><p class="tag">MAQUETTE C</p><h1>Agenda de la semaine</h1><p class="lead">Une colonne par jour, des pastilles compactes par sortie ; la sortie choisie s'ouvre dans le panneau de droite.</p><div class="panel">${bar}
+  <div class="ag">${week.map(([lab, key], ci) => `<div class="col"><h4 class="${ci === 0 ? 'today' : ''}">${lab}<small>${key ? R.filter(r => r[0] === key).length + (extra[key] || 0) + ' sorties' : '—'}</small></h4>` + (key ? R.filter(r => r[0] === key).map(r => {
+    const [dn, art] = D[r[2]];
+    return `<div class="ev${r[7] ? ' me sel' : ''}${full(r[3]) ? ' full' : ''}" style="--a:url(${art})"><span class="t">${r[1]}</span> · ${r[4]}/5<b>${dn}</b>${slots(r[3])}</div>`;
+  }).join('') + (extra[key] ? `<div class="more">+ ${extra[key]} autres</div>` : '') : '') + '</div>').join('')}
+  <aside class="side"><div class="hd" style="background-image:url(${D.sm[1]})"></div><div class="bd"><h3>Monastère · Armurerie</h3><p>Ce soir 21:00 · dans 2 h · niveau 26–42 · par Ray Kuilu</p>
+    <p class="det-h">Inscrits · 4 / 5 ${slots([1, 1, 2])}</p><div class="mem">${['Ray Kuilu · Tank', 'Yema Lobrah · Dégâts', 'Colìn Maillard · Soigneur', 'Tim · Dégâts'].map(x => `<div>${ava()}<span>${x.split(' · ')[0]} <small>${x.split(' · ')[1]}</small></span></div>`).join('')}</div>
+    <p style="margin:10px 0;font-style:italic;color:var(--muted);font-size:14px">« Marque de Kern, on boucle l'Armurerie 3 fois »</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn mine">✓ Inscrit · Tank</span><span class="lnk">Calendrier</span><span class="lnk">Copier</span></div></div></aside></div></div>
+  <p class="caption"><b>Pour :</b> on voit la semaine entière et les soirs chargés, idéal pour planifier. <b>Contre :</b> chaque sortie est petite ; sur téléphone, les jours deviennent des onglets.</p></section>`;
+document.body.innerHTML = html;
+// ?m=A, B ou C : une seule maquette (pour les captures)
+const m = new URLSearchParams(location.search).get("m"); if (m) [...document.querySelectorAll(".mq")].forEach((s, i) => { if ("ABC"[i] !== m) s.remove(); });
+</script>
+</body></html>
