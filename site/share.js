@@ -92,7 +92,7 @@
     rows.forEach((r, i) => {
       const y = top + i * rh;
       if (i % 2) { g.fillStyle = '#5a3a1010'; g.fillRect(x - 6, y - rh + 13, w + 10, rh); }
-      if (r.total) { if (logo) g.drawImage(logo, x - 2, y - 24, 30, 30); } else icon(icons[i], x, y - 21, 26);
+      if (!r.total) icon(icons[i], x, y - 21, 26);
       T(r.name, x + 36, y - 3, 18, INK, { f: NARROW, w: r.total ? 700 : 400, max: cLvl - x - 90 });
       // mini-barre sous le nom
       const bx = x + 36, bw = cLvl - x - 96, by = y + 3;
@@ -153,7 +153,7 @@
     // 3) carnet déclaré : trois chiffres
     const tiles = [];
     if (B.collection) tiles.push({ img: BI.col, label: BL.log, value: `${fmtN(B.collection.x, loc)} / ${fmtN(B.collection.y, loc)}`, ratio: B.collection.x / B.collection.y });
-    if (B.achievements) tiles.push({ img: logo, label: BL.ach, value: `${B.achievements.n} / ${B.achievements.total}`, ratio: B.achievements.n / B.achievements.total });
+    if (B.achievements) tiles.push({ img: BI.ach, label: BL.ach, value: `${B.achievements.n} / ${B.achievements.total}`, ratio: B.achievements.n / B.achievements.total });
     if (B.played) tiles.push({ img: BI.time, label: BL.played, value: B.playedText });
     if (tiles.length) {
       const tw = w / tiles.length;
@@ -252,7 +252,7 @@
     // titre et sceau-goutte (le logo d'origine)
     T(L.title, px + 30, 90, 38, '#3a2410', { f: SC, w: 700, max: sw - 210 });
     T(L.sub, px + 32, 118, 19, INK2, { max: sw - 210 });
-    if (logo) { g.save(); g.translate(W - 100, 88); g.rotate(-0.12); g.shadowColor = '#3a241088'; g.shadowBlur = 10; g.shadowOffsetY = 4; g.drawImage(logo, -56, -56, 112, 112); g.restore(); }
+    if (logo) { g.save(); g.translate(W - 104, 90); g.rotate(-0.12); g.shadowColor = "#3a241088"; g.shadowBlur = 12; g.shadowOffsetY = 5; g.drawImage(logo, -68, -68, 136, 136); g.restore(); }
     // pli du livre
     const m = PAGE.mid;
     g.fillStyle = grad(m - 16, 0, m + 16, 0, [[0, '#0000'], [0.5, '#5a3a1033'], [1, '#0000']]); g.fillRect(m - 16, PAGE.top + 4, 32, PAGE.bottom - PAGE.top - 4);
@@ -262,7 +262,7 @@
     T(L.date, px + 32, H - 24, 15, SOFT);
     T('dropamine.app', W - 30, H - 24, 16, SOFT, { a: 'right' });
   }
-  const BOOK_ICONS = { col: 'inv_box_02', time: 'inv_misc_pocketwatch_01', pvp: 'inv_bannerpvp_02', rec: 'inv_misc_note_01', hunt: 'ability_hunter_snipershot', kills: 'ability_warrior_rampage', quests: 'inv_misc_book_08', deaths: 'ability_rogue_feigndeath', flights: 'ability_mount_gryphon_01', rep: 'inv_misc_tabardpvp_01' };
+  const BOOK_ICONS = { ach: 'achievement_general', col: 'inv_box_02', time: 'inv_misc_pocketwatch_01', pvp: 'inv_bannerpvp_02', rec: 'inv_misc_note_01', hunt: 'ability_hunter_snipershot', kills: 'ability_warrior_rampage', quests: 'inv_misc_book_08', deaths: 'ability_rogue_feigndeath', flights: 'ability_mount_gryphon_01', rep: 'inv_misc_tabardpvp_01' };
   const iconUrl = n => `https://render.worldofwarcraft.com/eu/icons/56/${n}.jpg`;
   window.DropShare = { draw };
 })();

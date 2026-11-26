@@ -747,7 +747,7 @@ function weekGain(p, key) {
 function hsBook(p) {
   const d = p.dropamine || {}, fr = LANG === 'fr';
   const book = { collection: d.collection, achievements: d.achievements, played: p.played, playedText: p.played ? playedText(p.played) : '',
-    records: d.records, hunt: d.hunt, stats: { ...(p.stats || {}), hk: armoryStat(p, 'hk') }, reps: p.reps || [] };
+    records: d.records, hunt: d.hunt?.map(h => ({ ...h, name: huntName(h) })), stats: { ...(p.stats || {}), hk: armoryStat(p, 'hk') }, reps: p.reps || [] };
   return { book, BL: fr
     ? { locale: 'fr-FR', li: 1, sessionS: 'Session', dayS: 'Jour', hourS: 'Heure', kb: 'Coups fatals', pvpDeaths: 'Tué par joueurs', duels: 'Duels G / P', dungeons: 'Donjons', reps: 'Réputations', factions: 'factions', title: 'Carnet Dropamine', log: 'Collection log', ach: 'Succès', played: 'Temps de jeu', hk: 'Victoires honorables', week: 'cette sem.',
         rec: 'Records', sessions: 'sessions', session: 'Meilleure session', day: 'Meilleur jour', hour: 'Meilleure heure', combo: 'Plus long combo',
@@ -803,6 +803,7 @@ const HsImage = (() => {
   }
   async function open(player) {
     if (!window.DropShare) return;
+    await loadItems();   // noms d'objets dans la langue de l'image
     if (!dlg) build();
     p = player;
     let files = false; try { files = !!navigator.canShare?.({ files: [new File([''], 'x.png', { type: 'image/png' })] }) && matchMedia('(pointer:coarse)').matches; } catch (e) { /* pas de partage de fichier */ }
