@@ -1180,3 +1180,13 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
   .skills button.grp{display:none}
   .skills .sg.shut a{display:flex}
 }
+
+/* objets recherchés modifiés sur le site */
+.hsite{margin:12px 0;padding:10px 14px;border:1px dashed var(--rim-lo);border-radius:var(--radius);display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.hsite p{margin:0;color:var(--muted);font-style:italic}
+.hsite p.msg{flex-basis:100%;color:var(--gold);font-style:normal}
+.hsite code{font-size:13px;color:var(--cream);background:rgba(0,0,0,.25);padding:3px 8px;border-radius:4px;overflow-wrap:anywhere}
+.hlist .st{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.hlist .hdel{all:unset;cursor:pointer;width:22px;height:22px;display:inline-grid;place-items:center;border-radius:50%;color:var(--faint);font-size:16px;line-height:1;flex:none;transition:color .2s,background .2s}
+.hlist .hdel:hover,.hlist .hdel:focus-visible{color:#e07060;background:rgba(224,112,96,.12)}
+.hcode [data-hsave]{margin-right:6px}

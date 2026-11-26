@@ -134,3 +134,25 @@ test('runs : modifier (organisateur seulement), changer de rôle', () => {
   assert.equal(r.run.members.find(m => m.key === 'eu/bob-x').role, 'heal');
   assert.equal(r.run.members.length, 2);
 });
+
+import { applyHuntEdit, keepSiteHunt } from './lib.mjs';
+test('liste d’objets recherchés modifiée sur le site', () => {
+  const up = { 'eu/ray-kuilu': { at: '2026-11-20', hunt: [{ id: 2262, name: 'Marque de Kern', tries: 7, drops: 0 }], collection: { x: 1 } } };
+  const r = applyHuntEdit(up, 'eu/ray-kuilu', [{ id: 2262, name: 'x' }, { id: 7720, name: 'Bandeau de la Croisade écarlate' }, { id: 7720, name: 'doublon' }], '2026-11-26');
+  assert.equal(r.changed, true);
+  const e = r.registry['eu/ray-kuilu'];
+  assert.deepEqual(e.hunt[0], { id: 2262, name: 'Marque de Kern', tries: 7, drops: 0 }, 'essais gardés');
+  assert.deepEqual(e.hunt[1], { id: 7720, name: 'Bandeau de la Croisade écarlate', tries: 0, drops: 0 });
+  assert.equal(e.hunt.length, 2, 'doublon ignoré');
+  assert.equal(e.huntSite, '2026-11-26'); assert.equal(e.collection.x, 1); assert.equal(e.at, '2026-11-20', 'date de l’export du jeu inchangée');
+  assert.equal(applyHuntEdit(up, 'eu/ray-kuilu', Array.from({ length: 21 }, (_, i) => ({ id: i + 1, name: 'o' }))).error, 'full');
+  assert.equal(applyHuntEdit(up, 'eu/ray-kuilu', 'x').error, 'items');
+  // personnage sans ligne Dropamine : la liste suffit
+  assert.equal(applyHuntEdit({}, 'eu/new-one', [{ id: 5, name: 'A' }], '2026-11-26').registry['eu/new-one'].hunt.length, 1);
+  // liste vidée
+  assert.equal(applyHuntEdit(up, 'eu/ray-kuilu', [], '2026-11-26').registry['eu/ray-kuilu'].hunt, undefined);
+  // nouvelle ligne du jeu sans chasse : la liste du site reste ; avec chasse : le jeu remplace
+  assert.equal(keepSiteHunt({ at: 'x' }, e).hunt.length, 2);
+  assert.equal(keepSiteHunt({ at: 'x', hunt: [{ id: 9 }] }, e).hunt.length, 1);
+  assert.equal(keepSiteHunt({ at: 'x' }, { hunt: [{ id: 1 }] }).hunt, undefined, 'liste du jeu d’avant : pas gardée');
+});

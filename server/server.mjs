@@ -20,7 +20,7 @@ import { createServer } from 'node:http';
 import { gzipSync } from 'node:zlib';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload,
-  applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns } from './lib.mjs';
+  applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt } from './lib.mjs';
 import { readFileSync, existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { vapidKeys, sendPush, validSub, addSub, removeSub, runEvents, dueReminders } from './push.mjs';
@@ -289,7 +289,7 @@ const server = createServer(async (req, res) => {
     }
 
     // routes de session : appelées par dropamine.app (CORS avec cookie)
-    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit', '/push/subscribe', '/push/unsubscribe'].includes(url.pathname)) {
+    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit', '/push/subscribe', '/push/unsubscribe', '/hunt/save'].includes(url.pathname)) {
       if (req.method === 'POST' && req.headers.origin !== CFG.siteUrl) return send(res, 403, { error: 'origine refusée' }, cors);
       const s = session(req);
       if (url.pathname === '/logout') {
@@ -335,9 +335,21 @@ const server = createServer(async (req, res) => {
           professions: p.professions, version: p.version, at: new Date().toISOString().slice(0, 10),
           ...(p.played ? { played: p.played } : {}),
           ...Object.fromEntries(['collection', 'achievements', 'records', 'hunt', 'pvp'].filter(k => p[k]).map(k => [k, p[k]])) };
-        await updateUploads(u => ({ registry: { ...u, [c.key]: entry }, changed: true }), `Hiscores: Dropamine line for ${c.key}`);
+        await updateUploads(u => ({ registry: { ...u, [c.key]: keepSiteHunt(entry, u[c.key]) }, changed: true }), `Hiscores: Dropamine line for ${c.key}`);
         refreshSite();
         return send(res, 200, { key: c.key, weapons: p.weapons, count: p.weaponList.length }, cors);
+      }
+      // objets recherchés choisis sur le site, pour un personnage du compte connecté
+      if (url.pathname === '/hunt/save' && req.method === 'POST') {
+        const body = await readBody(req), key = String(body.key ?? '').toLowerCase(), c = s.characters.get(key);
+        if (!validKey(key) || !c) return send(res, 400, { error: 'not-yours' }, cors);
+        if (c.level < 10) return send(res, 400, { error: 'level' }, cors);
+        await updateRegistry(reg => applyClaim(reg, [key], ownerOf(s), s.characters), `Hiscores: register ${key} (Battle.net)`);
+        let out = null;
+        const r = await updateUploads(u => (out = applyHuntEdit(u, key, body.items)).error ? { changed: false } : out, `Hiscores: wanted items of ${key} (site)`);
+        if (out?.error) return send(res, 400, { error: out.error }, cors);
+        if (r.changed) refreshSite();
+        return send(res, 200, { ok: true, hunt: out.hunt }, cors);
       }
       if (url.pathname === '/push/subscribe' && req.method === 'POST') {
         const { sub } = await readBody(req);

@@ -114,7 +114,11 @@ const I18N = {
   hsSugNoGear: ['Dungeon drops your class can use, at your level. Your worn gear is read with the next daily armory update: suggestions will then only show upgrades.', 'Des objets de donjon que ta classe peut porter, à ton niveau. Ton équipement porté sera lu au prochain relevé quotidien de l’armurerie : les suggestions ne montreront alors que des améliorations.'],
   hsSugNone: ['No better dungeon drop found for your level right now.', 'Aucun meilleur objet de donjon trouvé à ton niveau pour l’instant.'],
   hsWorn: ['worn', 'porté'], hsIlvl: ['ilvl {n}', 'niv. {n}'], hsPicked: ['{n} picked', '{n} choisi{s}'], hsFree: ['{n} free spot{s} in game', '{n} place{s} libre{s} en jeu'],
-  hsCmdCopy: ['Copy for the game', 'Copier pour le jeu'], hsCodeHow: ['In game: paste it in the chat box and press Enter.', 'En jeu : colle-la dans le chat et valide.'], 'tb.home': ['Home', 'Accueil'], 'tb.hunt': ['Groups', 'Groupes'], 'tb.me': ['Me', 'Moi'],
+  hsCmdCopy: ['Copy for the game', 'Copier pour le jeu'], hsSave: ['Add to my list', 'Ajouter à ma liste'], hsDel: ['Remove from my list', 'Retirer de ma liste'],
+  hsSaved: ['Saved: your list is on the site now. Copy it for the game to keep both the same.', 'Enregistré : ta liste est sur le site. Copie-la pour le jeu pour garder les deux pareilles.'],
+  hsRemoved: ['Removed on the site. Also remove it in game (Hunt tab), or your next /drop hiscores brings it back.', 'Retiré sur le site. Retire-le aussi en jeu (onglet Chasse), sinon ton prochain /drop hiscores le remettra.'],
+  hsErr: ['Could not save, try again in a moment.', 'Enregistrement impossible, réessaie dans un instant.'], hsFull: ['Your list is full (20 items).', 'Ta liste est pleine (20 objets).'],
+  hsSiteNote: ['List changed on the site on {d}, not in the game yet.', 'Liste modifiée sur le site le {d}, pas encore dans le jeu.'], hsCodeHow: ['In game: paste it in the chat box and press Enter.', 'En jeu : colle-la dans le chat et valide.'], 'tb.home': ['Home', 'Accueil'], 'tb.hunt': ['Groups', 'Groupes'], 'tb.me': ['Me', 'Moi'],
   lvTitle: ['Right now on Forever', 'En ce moment sur Forever'], lvSub: ['the last 7 days', 'les 7 derniers jours'],
   lvUp: ['<b>{n}</b> +{d} {s} <em>→ {v}</em>', '<b>{n}</b> +{d} {s} <em>→ {v}</em>'],
   lvFound: ['<b>{n}</b> got <em>{i}</em>', '<b>{n}</b> a obtenu <em>{i}</em>'], lvLoots: ['Latest loot', 'Derniers loots'], lvLootsSub: ['what players got, dated by their export', 'ce que les joueurs ont obtenu, daté par leur export'],
@@ -1077,9 +1081,12 @@ function huntPanel(p) {
   const rows = hunt.map(h => { const s = bestSrc(h.id);
     return `<li class="${h.drops ? 'got' : ''}">${itemChip(h.id)}<b style="color:${QCOL[ITEMS[h.id]?.q] || 'var(--cream)'}">${esc(huntName(h))}</b>
       <span class="src">${s ? `${esc(bossName(s.b))} · ${esc(s.d.name)}` : ''}</span><span class="rt">${s?.rate ? t('hsRate', { r: rateTxt(s.rate) }) : t('hsRateNo')}</span>
-      <span class="st">${h.drops ? '✓ ' + t('huFound') : h.tries ? t('huTries', { n: fmt(h.tries) }) : t('hsToTry')}</span></li>`; }).join('');
+      <span class="st">${h.drops ? '✓ ' + t('huFound') : h.tries ? t('huTries', { n: fmt(h.tries) }) : t('hsToTry')}${mine ? `<button class="hdel" type="button" data-hdel="${h.id}" title="${t('hsDel')}" aria-label="${t('hsDel')}">×</button>` : ''}</span></li>`; }).join('');
   const list = hunt.length ? `<ul class="hlist">${rows}</ul>` : `<p class="note">${t('hsEmpty')}</p>`;
-  return `<section class="cat hunt" id="sec-hunt">${catHead('hunt', t('dbHunt'), 'decl', t('hsSub'))}${doll}${list}${mine ? huntBuilder(p, hunt) : ''}</section>`;
+  const msg = state.huntMsgFor === pkey(p) ? state.huntMsg : '';
+  const siteNote = mine && (p.dropamine?.huntSite || msg) ? `<div class="hsite">${msg ? `<p class="msg">${msg}</p>` : ''}${p.dropamine?.huntSite && hunt.length
+    ? `<p>${t('hsSiteNote', { d: new Date(p.dropamine.huntSite).toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) })}</p><code>${'/drop DROP-CH1:' + hunt.filter(h => !h.drops).map(h => b36(h.id)).join('.')}</code><button class="btn ghost" type="button" data-hsync>${t('hsCmdCopy')}</button>` : ''}</div>` : '';
+  return `<section class="cat hunt" id="sec-hunt">${catHead('hunt', t('dbHunt'), 'decl', t('hsSub'))}${doll}${siteNote}${list}${mine ? huntBuilder(p, hunt) : ''}</section>`;
 }
 function huntBuilder(p, hunt) {
   const sug = huntSuggest(p), worn = wornBySlot(p), free = Math.max(0, 20 - hunt.length);
@@ -1092,7 +1099,7 @@ function huntBuilder(p, hunt) {
     <p class="note">${p.gear?.length ? t('hsSugHow') : t('hsSugNoGear')}${!raidsOpen() && p.level >= 55 ? ' ' + t('raidSugNote', { d: new Date(RAID_OPEN).toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) }) : ''}</p>
     ${groups ? `<div class="hsug-grid">${groups}</div>` : `<p class="note">${t('hsSugNone')}</p>`}
     <div class="hcode"><span data-hcount>${t('hsPicked', { n: 0 })} · ${t('hsFree', { n: free })}</span><code data-hcode>/drop …</code>
-      <button class="btn gold" type="button" data-hcopy disabled>${t('hsCmdCopy')}</button><small>${t('hsCodeHow')}</small></div></div>`;
+      <button class="btn gold" type="button" data-hsave disabled>${t('hsSave')}</button><button class="btn ghost" type="button" data-hcopy disabled>${t('hsCmdCopy')}</button><small>${t('hsCodeHow')}</small></div></div>`;
 }
 // coches → commande d'import (identifiants en base 36) ; jamais plus que les places libres de la liste en jeu
 const b36 = n => Number(n).toString(36);
@@ -1104,6 +1111,25 @@ document.addEventListener('change', e => {
   box.querySelector('[data-hcount]').textContent = t('hsPicked', { n: ids.length }) + ' · ' + t('hsFree', { n: free });
   box.querySelector('[data-hcode]').textContent = cmd;
   box.querySelector('[data-hcopy]').disabled = !ids.length;
+  box.querySelector('[data-hsave]').disabled = !ids.length;
+});
+// liste enregistrée sur le site (compte connecté) : visible tout de suite ; le prochain /drop hiscores avec la chasse la remplace
+async function saveHunt(ids, msgKey) {
+  const p = DATA.players.find(x => pkey(x) === state.c); if (!p || !Bnet.isMine(pkey(p))) return;
+  try {
+    const r = await Bnet.call('/hunt/save', { key: pkey(p), items: ids.map(id => ({ id, name: itemName(id) })) }), j = await r.json().catch(() => ({}));
+    if (!r.ok) { state.huntMsg = t(j.error === 'full' ? 'hsFull' : 'hsErr'); }
+    else { p.dropamine = { ...(p.dropamine || {}), hunt: j.hunt, huntSite: new Date().toISOString().slice(0, 10) }; if (!j.hunt?.length) delete p.dropamine.hunt; state.huntMsg = t(msgKey); Ribbon.swell(.7); }
+  } catch { state.huntMsg = t('hsErr'); }
+  state.huntMsgFor = pkey(p); renderChar(); document.getElementById('sec-hunt')?.scrollIntoView({ block: 'start' });
+}
+document.addEventListener('click', e => {
+  const sv = e.target.closest('[data-hsave]'), del = e.target.closest('[data-hdel]'), sync = e.target.closest('[data-hsync]');
+  const p = (sv || del || sync) && DATA.players.find(x => pkey(x) === state.c); if (!p) return;
+  const cur = (p.dropamine?.hunt || []).map(h => h.id);
+  if (sv) { sv.disabled = true; saveHunt([...cur, ...[...sv.closest('.hsug').querySelectorAll('[data-hpick]:checked')].map(x => +x.dataset.hpick)], 'hsSaved'); }
+  if (del) saveHunt(cur.filter(id => id !== +del.dataset.hdel), 'hsRemoved');
+  if (sync) navigator.clipboard?.writeText(sync.previousElementSibling.textContent).then(() => { sync.textContent = t('copied'); setTimeout(() => { sync.textContent = t('hsCmdCopy'); }, 1600); }).catch(() => {});
 });
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-hcopy]'); if (!b) return;
@@ -2145,6 +2171,10 @@ if (DEMO) {
     if (/(^|\/)data\/art\.json/.test(s)) return json((await world).art);
     if (s.startsWith(API + '/runs')) return json({ ok: true, runs: (await world).runs });
     if (s.startsWith(API + '/me')) return json({ battletag: 'Raykuilu#0000', characters: [{ key: RAY, region: 'eu', slug: 'ray-kuilu', name: 'Ray', surname: 'Kuilu', classId: 11, level: 36, registered: true }] });
+    if (s.startsWith(API + '/hunt/save')) {   // liste enregistrée « sur le site » : renvoyée telle quelle, essais gardés
+      const { key, items } = JSON.parse(o?.body || '{}'), p = (await world).hs.players.find(x => x.key === key), prev = new Map((p?.dropamine?.hunt || []).map(h => [h.id, h]));
+      return json({ ok: true, hunt: items.map(x => prev.get(x.id) || { id: x.id, name: x.name, tries: 0, drops: 0 }) });
+    }
     if (s.startsWith(API)) return json({ ok: true });   // rien ne part vers le serveur
     return realFetch(u, o);
   };

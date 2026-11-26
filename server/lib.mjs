@@ -222,3 +222,29 @@ export function applyRunEdit(data, input, owner, dungeons, now = Date.now()) {
   upd.edited = new Date(now).toISOString();
   return { registry: { runs: runs.map(r => r === run ? upd : r) }, changed: true, run: upd };
 }
+
+// ---------------------------------------------------------------- liste d'objets recherchés modifiée sur le site (data/uploads.json)
+// Le joueur coche ou retire des objets sur sa fiche : la liste est enregistrée tout de suite (huntSite = date) et visible des autres.
+// Les essais et les drops déjà comptés par l'addon sont gardés ; une nouvelle ligne /drop hiscores avec sa chasse remplace tout (le jeu reste maître).
+export const HUNT_MAX = 20;
+export function applyHuntEdit(uploads, key, items, today = new Date().toISOString().slice(0, 10)) {
+  if (!Array.isArray(items)) return { error: 'items' };
+  const seen = new Set(), clean = [];
+  for (const x of items) {
+    const id = num(x?.id, 1e7), name = txt(x?.name, 80);
+    if (!id || seen.has(id)) continue;
+    seen.add(id); clean.push({ id, name });
+  }
+  if (clean.length > HUNT_MAX) return { error: 'full' };
+  const cur = uploads[key] ?? {}, prev = new Map((cur.hunt ?? []).map(h => [h.id, h]));
+  const hunt = clean.map(({ id, name }) => prev.get(id) ?? { id, name: name || '#' + id, tries: 0, drops: 0 });
+  const entry = { ...cur, hunt, huntSite: today };
+  if (!hunt.length) delete entry.hunt;
+  const changed = JSON.stringify(cur.hunt ?? []) !== JSON.stringify(hunt) || cur.huntSite !== today;
+  return { registry: { ...uploads, [key]: entry }, changed, hunt };
+}
+// nouvelle ligne du jeu sans chasse (case décochée) : la liste faite sur le site reste
+export function keepSiteHunt(entry, prev) {
+  if (entry.hunt || !prev?.huntSite || !prev.hunt) return entry;
+  return { ...entry, hunt: prev.hunt, huntSite: prev.huntSite };
+}

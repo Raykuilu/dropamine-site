@@ -330,7 +330,8 @@ async function main() {
       // JcJ de l'armurerie (pour tous) ; le reste vient de la ligne Dropamine, groupe par groupe (cases de l'addon)
       ...(c.pvp ? { pvpArmory: { hk: c.pvp.honorable_kills ?? 0, rank: c.pvp.pvp_rank ?? 0 } } : {}),
       ...(() => { const l = newLoots(prevPlayers.get(e.key), up, today); return l.length ? { loots: l } : {}; })(),
-      ...(up ? { dropamine: Object.fromEntries(['collection', 'achievements', 'records', 'hunt'].filter(k => up[k]).map(k => [k, up[k]])), dropamineAt: up.at ?? null } : {}),
+      // huntSite : liste d'objets recherchés modifiée sur le site (pas encore dans le jeu)
+      ...(up ? { dropamine: Object.fromEntries(['collection', 'achievements', 'records', 'hunt', 'huntSite'].filter(k => up[k]).map(k => [k, up[k]])), dropamineAt: up.at ?? null } : {}),
     });
     console.log(`✓ ${e.key} : ${s.total}${s.complete ? '' : ' (estimé)'}${e.preview ? ' [aperçu]' : ''}`);
   });
