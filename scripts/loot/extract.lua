@@ -90,4 +90,12 @@ for _, k in ipairs(keys) do
       q("bosses") .. ":[" .. table.concat(bosses, ",") .. "]}"
   end
 end
-io.write('{"source":"AtlasLoot Forever (AtlasLootClassic_DungeonsAndRaids), GPL-2.0","dungeons":[', table.concat(out, ","), "]}\n")
+-- noms anglais des objets propres à Forever (identifiant ≥ 200000) : l'API Blizzard ne les connaît pas,
+-- AtlasLoot les note en commentaire de chaque ligne ({ 17, 274043 }, -- Irradiated Shield)
+local names, seenName = {}, {}
+for line in io.lines(DIR .. "data.lua") do
+  local id, nm = line:match("{%s*%d+%s*,%s*(%d+)%s*}%s*,?%s*%-%-%s*(.-)%s*$")
+  id = tonumber(id)
+  if id and id >= 200000 and nm ~= "" and not seenName[id] then seenName[id] = true names[#names + 1] = q(tostring(id)) .. ":" .. q(nm) end
+end
+io.write('{"source":"AtlasLoot Forever (AtlasLootClassic_DungeonsAndRaids), GPL-2.0","dungeons":[', table.concat(out, ","), '],"names":{', table.concat(names, ","), "}}\n")

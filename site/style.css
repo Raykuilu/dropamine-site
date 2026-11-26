@@ -619,3 +619,74 @@ html.static .pulse .live{animation:none}
 .runs-note{margin:10px 0 0}
 .runs-src{margin:18px 0 0;color:var(--faint);font-style:italic;font-size:13px}
 @media (max-width:720px){.run li{grid-template-columns:1fr}.run .sc{margin-left:0}}
+
+/* collection log en icônes */
+.clog{margin-top:12px;display:grid;gap:8px}
+.cdun{border:1px solid var(--line-2);border-radius:10px;background:rgba(0,0,0,.18)}
+.cdun summary{display:grid;grid-template-columns:minmax(0,1fr) 160px 70px;gap:12px;align-items:center;padding:9px 12px;cursor:pointer;list-style:none}
+.cdun summary::-webkit-details-marker{display:none}
+.cdun summary::before{content:"▸";position:absolute;margin-left:-2px;color:var(--muted)}
+.cdun[open] summary{border-bottom:1px solid var(--line-2)}
+.cdn{font-family:var(--display);font-variant:small-caps;letter-spacing:.05em;color:var(--cream);padding-left:14px}
+.cdun summary b{font-family:var(--num);color:var(--gold);text-align:right}
+.cboss{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px 18px;padding:12px}
+.cbn{display:block;font-size:14px;color:var(--muted);font-style:italic;margin-bottom:6px}
+.cgrid{display:flex;flex-wrap:wrap;gap:6px}
+.ci{width:38px;height:38px;border-radius:6px;border:2px solid #2a2218;background:#0a0806;overflow:hidden;cursor:default}
+.ci img{width:100%;height:100%;display:block;filter:grayscale(1) brightness(.45);transition:filter .15s}
+.ci.got{border-color:var(--q);box-shadow:0 0 8px color-mix(in srgb,var(--q) 45%,transparent)}
+.ci.got img{filter:none}
+.ci:hover img{filter:none}
+.itip{position:fixed;z-index:50;display:none;max-width:300px;padding:9px 11px;border-radius:6px;background:rgba(8,10,24,.96);border:1px solid #4a5a8a;box-shadow:0 8px 24px rgba(0,0,0,.6);font:14px/1.35 var(--body,Georgia,serif);color:#fff;pointer-events:none}
+.itip b{display:block;font-size:15px;margin-bottom:2px}
+.itip .dim{color:#9d9d9d;font-style:italic}
+.itip .src{margin-top:6px;color:#ffd100;font-size:13px}
+.itip .ok{color:#1eff00;font-size:13px}
+.itip .no{color:#9d9d9d;font-size:13px}
+.cdun summary::before{content:none}
+.cdn::before{content:"▸ ";color:var(--muted)}
+.cdun[open] .cdn::before{content:"▾ "}
+@media (max-width:640px){.cdun summary{grid-template-columns:minmax(0,1fr) 70px 56px;gap:8px}.cboss{grid-template-columns:1fr}.ci{width:34px;height:34px}}
+
+/* Runs : runs prévus et donjons à faire */
+.planned{margin-top:18px}
+.prun,.run{position:relative;overflow:hidden}
+.prun::before,.run::before{content:"";position:absolute;inset:0 0 auto 0;height:120px;background:var(--art) center 35%/cover no-repeat;opacity:.28;-webkit-mask-image:linear-gradient(#000,transparent);mask-image:linear-gradient(#000,transparent);pointer-events:none}
+.prun>*,.run>*{position:relative}
+.prun{border:1px solid rgba(196,154,92,.45);border-radius:var(--radius);background:linear-gradient(180deg,rgba(196,154,92,.1),transparent);padding:14px 16px;margin-top:12px}
+.prh{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.prun h3,.run h3{margin:0;font-family:var(--display);font-variant:small-caps;letter-spacing:.04em;color:var(--gold);font-size:22px;text-shadow:0 2px 8px #000}
+.prun .when{display:block;color:var(--cream);font-style:italic;text-transform:capitalize}
+.prun .cnt{display:flex;align-items:center;gap:4px;font-family:var(--num);color:var(--cream)}
+.role{width:20px;height:20px;border-radius:4px;border:1px solid #000;vertical-align:middle;margin-right:2px}
+.pnote{margin:8px 0 0;color:var(--muted);font-style:italic}
+.prun ul{list-style:none;margin:8px 0 0;padding:0}
+.prun li{display:grid;grid-template-columns:24px minmax(180px,260px) minmax(0,1fr);gap:10px;align-items:center;padding:6px 2px;border-bottom:1px dotted var(--line-2)}
+.prun .nm{display:flex;gap:10px;align-items:center;cursor:pointer}.prun .nm small{display:block;color:var(--muted);font-style:italic}
+.prun em,.run em{font-style:normal;font-size:12px;color:var(--gold);border:1px solid var(--rim-lo);border-radius:9px;padding:0 6px;margin-left:4px}
+.pact{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.pact small{color:var(--faint);font-style:italic}
+.joinf{display:flex;gap:8px;flex-wrap:wrap}
+.joinf select,.pform select,.pform input{background:#120d08;color:var(--cream);border:1px solid var(--rim-lo);border-radius:8px;padding:6px 8px;font:inherit}
+.run .rh{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;min-height:62px;border-bottom:1px solid var(--rim-lo);padding-bottom:10px}
+.run .rt{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.badges span{font-size:14px;color:var(--muted);padding:3px 10px;border-radius:999px;border:1px solid var(--line-2);background:rgba(0,0,0,.35)}
+.badges b{font-family:var(--num);color:var(--gold)}
+.run li{grid-template-columns:minmax(200px,280px) minmax(0,1fr) 110px}
+.run .miss{text-align:right;color:var(--muted);font-style:italic;font-size:14px}
+.run .its,.prun .its{display:flex;flex-wrap:wrap;gap:6px}
+.run .its .ci,.prun .its .ci{width:32px;height:32px}
+.fit{font-style:normal;font-size:12px;padding:0 6px;border-radius:9px;margin-left:4px}
+.fit.ok{color:#8cc472;border:1px solid rgba(140,196,114,.45)}.fit.low{color:#e0682a;border:1px solid rgba(224,104,42,.45)}.fit.high{color:#9cb6e0;border:1px solid rgba(106,136,192,.45)}
+.rf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:8px;border-top:1px solid var(--line-2)}
+.glabel{font-family:var(--display);font-variant:small-caps;letter-spacing:.06em;color:var(--muted);margin-right:4px}
+.gp{display:inline-flex;align-items:center;gap:4px;padding:2px 9px 2px 3px;border-radius:999px;border:1px solid var(--line-2);color:var(--cream);font-size:14px}
+.gp.off{color:var(--faint)}
+.propose{margin-left:auto}
+.propose summary{list-style:none;cursor:pointer}.propose summary::-webkit-details-marker{display:none}
+.pform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px;padding:12px;border:1px solid var(--line-2);border-radius:10px;background:rgba(0,0,0,.3)}
+.pform label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.pform .wide{grid-column:1/-1}
+.pform .btn{grid-column:1/-1;justify-self:start}
+@media (max-width:720px){.prun li,.run li{grid-template-columns:1fr}.run .miss{text-align:left}.pform{grid-template-columns:1fr}.propose{margin-left:0}}

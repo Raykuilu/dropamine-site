@@ -15,7 +15,8 @@
 
 import { createServer } from 'node:http';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
-import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload } from './lib.mjs';
+import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload,
+  applyRunCreate, applyRunJoin, applyRunLeave, publicRuns } from './lib.mjs';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -147,6 +148,16 @@ async function updateFile(path, fallback, fn, message) {
 }
 const updateRegistry = (fn, message) => updateFile('data/registry.json', undefined, fn, message);
 const updateUploads = (fn, message) => updateFile('data/uploads.json', {}, fn, message);
+const updateRuns = (fn, message) => updateFile('data/runs.json', { runs: [] }, fn, message);
+// donjons connus : les tables de butin du site (même dépôt)
+const LOOT_FILE = fileURLToPath(new URL('../site/data/loot.json', import.meta.url));
+const dungeonKeys = () => { try { return new Set(JSON.parse(readFileSync(LOOT_FILE, 'utf8')).dungeons.map(d => d.key)); } catch { return new Set(); } };
+// lecture publique des runs, gardée 20 s en mémoire
+let runsCache = { t: 0, data: null };
+async function currentRuns(fresh = false) {
+  if (fresh || !runsCache.data || Date.now() - runsCache.t > 20e3) runsCache = { t: Date.now(), data: (await readFile('data/runs.json', { runs: [] })).data };
+  return runsCache.data;
+}
 
 // ---------------------------------------------------------------- HTTP
 function send(res, status, body, headers = {}) {
@@ -169,6 +180,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, '', { ...cors, 'Access-Control-Allow-Methods': 'GET, POST', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600' });
 
     if (url.pathname === '/health') return send(res, 200, 'ok', cors);
+    if (url.pathname === '/runs' && req.method === 'GET') return send(res, 200, { runs: publicRuns(await currentRuns()) }, cors);
 
     if (url.pathname === '/auth/login' && req.method === 'GET') {
       const state = randomBytes(18).toString('base64url');
@@ -189,7 +201,7 @@ const server = createServer(async (req, res) => {
     }
 
     // routes de session : appelées par dropamine.app (CORS avec cookie)
-    if (['/me', '/claim', '/release', '/upload', '/logout'].includes(url.pathname)) {
+    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave'].includes(url.pathname)) {
       if (req.method === 'POST' && req.headers.origin !== CFG.siteUrl) return send(res, 403, { error: 'origine refusée' }, cors);
       const s = session(req);
       if (url.pathname === '/logout') {
@@ -238,6 +250,18 @@ const server = createServer(async (req, res) => {
         await updateUploads(u => ({ registry: { ...u, [c.key]: entry }, changed: true }), `Hiscores: Dropamine line for ${c.key}`);
         refreshSite();
         return send(res, 200, { key: c.key, weapons: p.weapons, count: p.weaponList.length }, cors);
+      }
+      // runs : créer (avec un de ses personnages), rejoindre, quitter (le créateur annule)
+      if (url.pathname.startsWith('/runs/') && req.method === 'POST') {
+        const body = await readBody(req), owner = ownerOf(s);
+        const fn = url.pathname === '/runs/create' ? d => applyRunCreate(d, body, owner, s.characters, dungeonKeys())
+          : url.pathname === '/runs/join' ? d => applyRunJoin(d, body, owner, s.characters) : d => applyRunLeave(d, body, owner);
+        let err = null;
+        const r = await updateRuns(d => { const x = fn(d); if (x.error) { err = x.error; return { changed: false }; } return x; },
+          `Runs: ${url.pathname.slice(6)} ${String(body.dungeon ?? body.id ?? '').slice(0, 40)}`);
+        if (err) return send(res, 400, { error: err }, cors);
+        runsCache.t = 0;
+        return send(res, 200, { ok: true, id: r.run?.id ?? body.id, cancelled: !!r.cancelled, runs: publicRuns(await currentRuns(true)) }, cors);
       }
     }
     return send(res, 404, { error: 'introuvable' });

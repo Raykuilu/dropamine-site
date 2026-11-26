@@ -98,7 +98,10 @@ export function extras(f) {
       const dungeons = String(f.cl ?? '').split(',').filter(Boolean).slice(0, 80).map(p => {
         const [name, a, b] = tilde(p); return { name: txt(name), x: num(a, 1e4), y: num(b, 1e4) };
       }).filter(d => d.name && d.x != null && d.y && d.x <= d.y);
-      o.collection = { x, y, dungeons };
+      // objets obtenus (Dropamine 3.11.1+) : identifiants en base 36 séparés par des points, 3 000 au plus
+      const items = [...new Set(String(f.ci ?? '').split('.').filter(v => /^[0-9a-z]{1,6}$/.test(v)).map(v => parseInt(v, 36)))]
+        .filter(id => id > 0 && id < 1e7).slice(0, 3000).sort((a, b) => a - b);
+      o.collection = { x, y, dungeons, ...(items.length ? { items } : {}) };
     }
   }
   if (f.ac) {                                   // succès Dropamine
@@ -151,4 +154,54 @@ export function matchUpload(parsed, characters) {
   if (same.length === 1) return same[0];
   const byLevel = same.filter(c => c.level === parsed.level);
   return byLevel.length === 1 ? byLevel[0] : null;
+}
+
+// ---------------------------------------------------------------- runs de donjon (data/runs.json)
+// { runs: [{ id, dungeon, at (ISO), note, by (clé du créateur), owner (compte), created, members: [{ key, role, owner }] }] }
+export const RUN_ROLES = ['tank', 'heal', 'dps'];
+const RUN_KEEP_MS = 3 * 3600e3;                       // un run reste visible 3 h après son heure
+export function pruneRuns(data, now = Date.now()) {
+  const runs = (data?.runs ?? []).filter(r => Date.parse(r.at) + RUN_KEEP_MS > now);
+  return { runs, changed: runs.length !== (data?.runs ?? []).length };
+}
+export function publicRuns(data, now = Date.now()) {   // ce que le site affiche : sans les comptes
+  return pruneRuns(data, now).runs.map(({ owner, members, ...r }) => ({ ...r, members: members.map(({ owner: _, ...m }) => m) }))
+    .sort((a, b) => a.at.localeCompare(b.at));
+}
+const cleanNote = s => String(s ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 140);
+export function applyRunCreate(data, input, owner, characters, dungeons, now = Date.now()) {
+  const { runs } = pruneRuns(data, now);
+  const key = String(input.key ?? '').toLowerCase(), c = characters.get(key);
+  if (!c) return { error: 'not-yours' };
+  if (!dungeons.has(String(input.dungeon))) return { error: 'dungeon' };
+  const at = Date.parse(input.at);
+  if (!Number.isFinite(at) || at < now - 15 * 60e3 || at > now + 30 * 864e5) return { error: 'date' };
+  if (runs.filter(r => r.owner === owner).length >= 5) return { error: 'too-many' };
+  if (runs.length >= 200) return { error: 'full' };
+  const role = RUN_ROLES.includes(input.role) ? input.role : 'dps';
+  const run = { id: Math.floor(now).toString(36) + Math.random().toString(36).slice(2, 6), dungeon: String(input.dungeon), at: new Date(at).toISOString(),
+    note: cleanNote(input.note), by: key, owner, created: new Date(now).toISOString(), members: [{ key, role, owner }] };
+  return { registry: { runs: [...runs, run] }, changed: true, run };
+}
+export function applyRunJoin(data, input, owner, characters, now = Date.now()) {
+  const { runs } = pruneRuns(data, now);
+  const key = String(input.key ?? '').toLowerCase();
+  if (!characters.get(key)) return { error: 'not-yours' };
+  const run = runs.find(r => r.id === input.id);
+  if (!run) return { error: 'gone' };
+  if (run.members.some(m => m.owner === owner && m.key !== key)) return { error: 'already' };   // un personnage par compte
+  const role = RUN_ROLES.includes(input.role) ? input.role : 'dps';
+  const members = run.members.filter(m => m.key !== key);
+  if (members.length >= 40) return { error: 'full' };
+  const upd = { ...run, members: [...members, { key, role, owner }] };
+  return { registry: { runs: runs.map(r => r === run ? upd : r) }, changed: true, run: upd };
+}
+export function applyRunLeave(data, input, owner, now = Date.now()) {
+  const { runs } = pruneRuns(data, now);
+  const run = runs.find(r => r.id === input.id);
+  if (!run) return { error: 'gone' };
+  if (run.owner === owner) return { registry: { runs: runs.filter(r => r !== run) }, changed: true, cancelled: true };   // le créateur annule
+  const members = run.members.filter(m => m.owner !== owner);
+  if (members.length === run.members.length) return { registry: { runs }, changed: false };
+  return { registry: { runs: runs.map(r => r === run ? { ...run, members } : r) }, changed: true };
 }

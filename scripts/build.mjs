@@ -327,6 +327,14 @@ async function main() {
     await writeFile(join(ROOT, 'site/data/changelog.json'), JSON.stringify({ updated: new Date().toISOString(), versions }, null, 1));
     console.log(`changelog : ${versions.length} version(s)`);
   } catch (err) { console.warn(`· changelog non mis à jour (${err.message})`); }
+
+  // Objets du collection log (noms, icônes, infobulles) : cache mis à jour par petites portions (une erreur ne bloque rien)
+  try {
+    const { updateItems } = await import('./items.mjs');
+    const { updateArt } = await import('./items.mjs');
+    await updateItems(tok, players, 800);
+    await updateArt(tok);
+  } catch (err) { console.warn(`· objets non mis à jour (${err.message})`); }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -78,6 +78,8 @@ test('ligne hiscores : groupes facultatifs (collection, succès, records, chasse
   const none = parseHiscoresLine(hsLine(BODY));                               // tout décoché
   for (const k of ['collection', 'achievements', 'records', 'hunt', 'pvp']) assert.equal(none[k], undefined);
   assert.equal(parseHiscoresLine(hsLine(BODY + ';ct=70~69')).collection, undefined);   // incohérent : ignoré
+  // objets obtenus en base 36
+  assert.deepEqual(parseHiscoresLine(hsLine(BODY + ';ct=2~69;cl=Gnomeregan~2~29;ci=5vgb.7ah.7ah.zz!z.10')).collection.items, [36, 9449, 274043]);   // doublon et valeur invalide ignorés
   assert.equal(parseHiscoresLine(hsLine(BODY + ';hu=1~<script>~1~0')).hunt[0].name, 'script');
 });
 test('ligne hiscores : modifiée, tronquée ou impossible → refusée', () => {
@@ -93,4 +95,26 @@ test('retirer un personnage en aperçu de guilde → optout ; le réinscrire →
   assert.equal(applyRelease(r.registry, ['eu/tim-plar'], mine).changed, false);   // déjà retiré
   const c = applyClaim(r.registry, ['eu/tim-plar'], 'bnet:1', mine);
   assert.deepEqual(c.registry.optout, []); assert.ok(c.registry.characters.includes('eu/tim-plar'));
+});
+
+import { applyRunCreate, applyRunJoin, applyRunLeave, publicRuns, pruneRuns } from './lib.mjs';
+test('runs : créer, rejoindre, quitter, annuler, purger', () => {
+  const now = Date.parse('2026-11-26T12:00:00Z');
+  const mine = new Map([['eu/ray-kuilu', { key: 'eu/ray-kuilu', level: 36 }], ['eu/tim-plar', { key: 'eu/tim-plar', level: 36 }]]);
+  const bob = new Map([['eu/bob-x', { key: 'eu/bob-x', level: 30 }]]);
+  const dungeons = new Set(['Gnomeregan']);
+  assert.equal(applyRunCreate({}, { key: 'eu/bob-x', dungeon: 'Gnomeregan', at: '2026-11-26T20:00:00Z' }, 'A', mine, dungeons, now).error, 'not-yours');
+  assert.equal(applyRunCreate({}, { key: 'eu/ray-kuilu', dungeon: 'Nowhere', at: '2026-11-26T20:00:00Z' }, 'A', mine, dungeons, now).error, 'dungeon');
+  assert.equal(applyRunCreate({}, { key: 'eu/ray-kuilu', dungeon: 'Gnomeregan', at: '2026-11-20T20:00:00Z' }, 'A', mine, dungeons, now).error, 'date');
+  const c = applyRunCreate({}, { key: 'EU/Ray-Kuilu', dungeon: 'Gnomeregan', at: '2026-11-26T20:00:00Z', note: '<b>Roueur</b> !', role: 'heal' }, 'A', mine, dungeons, now);
+  assert.equal(c.run.note, 'bRoueur/b !'); assert.deepEqual(c.run.members, [{ key: 'eu/ray-kuilu', role: 'heal', owner: 'A' }]);
+  const j = applyRunJoin(c.registry, { id: c.run.id, key: 'eu/bob-x', role: 'tank' }, 'B', bob, now);
+  assert.equal(j.run.members.length, 2);
+  assert.equal(applyRunJoin(j.registry, { id: c.run.id, key: 'eu/tim-plar' }, 'A', mine, now).error, 'already');   // un perso par compte
+  const pub = publicRuns(j.registry, now);
+  assert.equal(pub[0].owner, undefined); assert.equal(pub[0].members[1].owner, undefined); assert.equal(pub[0].members[1].role, 'tank');
+  const l = applyRunLeave(j.registry, { id: c.run.id }, 'B', now);
+  assert.equal(l.registry.runs[0].members.length, 1);
+  assert.equal(applyRunLeave(l.registry, { id: c.run.id }, 'A', now).cancelled, true);           // le créateur annule
+  assert.equal(pruneRuns(j.registry, now + 12 * 3600e3).runs.length, 0);                          // 3 h après l'heure : disparu
 });
