@@ -623,6 +623,8 @@ html.static .pulse .live{animation:none}
 
 /* collection log en icônes */
 .clog{margin-top:12px;display:grid;gap:8px}
+.cband{margin:8px 2px 0;font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.clog>.cband:first-child{margin-top:0}
 .cdun{border:1px solid var(--line-2);border-radius:10px;background:rgba(0,0,0,.18)}
 .cdun summary{display:grid;grid-template-columns:minmax(0,1fr) 160px 70px;gap:12px;align-items:center;padding:9px 12px;cursor:pointer;list-style:none}
 .cdun summary::-webkit-details-marker{display:none}
@@ -1418,6 +1420,8 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .xd b{font-family:var(--serif);font-weight:500;color:var(--cream);font-size:15px;line-height:1.25}
 .xd small{color:var(--faint);font-style:italic;font-size:13px}
 .xd:hover,.xd:focus-visible{border-color:var(--rim-lo)}
+.xlist>.xband{margin:10px 2px 2px}
+.xlist>.xband:first-child{margin-top:0}
 .xd.on{border-color:var(--rim);background:linear-gradient(180deg,rgba(196,154,92,.16),rgba(0,0,0,.2))}
 .xd.on b{color:var(--gold)}
 .xmain{display:grid;gap:12px;min-width:0}

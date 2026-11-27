@@ -174,6 +174,7 @@ const I18N = {
   clogResend: ['Paste your /drop hiscores export again to see each item as an icon.', 'Renvoie ta ligne /drop hiscores pour voir chaque objet en icône.'],
   clogNone: ['No dungeon item obtained yet.', 'Aucun objet de donjon obtenu pour l’instant.'],
   clogSrc: ['Loot tables: AtlasLoot Forever (GPL-2.0) · items: Blizzard API.', 'Tables de butin : AtlasLoot Forever (GPL-2.0) · objets : API Blizzard.'],
+  clogBand: ['Dungeons lvl {a}-{b}', 'Donjons niv. {a}-{b}'], clogRaids: ['Raids', 'Raids'], clogOther: ['Other activities', 'Autres activités'],
   obtained: ['Obtained', 'Obtenu'], notObtained: ['Not obtained yet', 'Pas encore obtenu'], itemForever: ['Forever item', 'Objet propre à Forever'], advT: ['Adventure', 'Aventure'], pvpT: ['PvP', 'JcJ'],
   srcArm: ['Armory', 'Armurerie'], srcDecl: ['Dropamine · on trust', 'Dropamine · sur la confiance'],
   kd: ['K/D ratio', 'Ratio K/D'],
@@ -1713,6 +1714,8 @@ function loadLoot() {
     }
     // nom du donjon dans la langue du site (noms officiels du Journal Blizzard) : d.name suit la langue partout
     for (const d of j.dungeons) { const en = d.name, n = names[d.key]; Object.defineProperty(d, 'name', { get: () => (n ? n[li()] : en) || en, enumerable: true }); d.names = n || [en, en]; }
+    // un seul ordre partout, comme le carnet de l'addon : tranches de niveau, puis raids, puis autres activités
+    j.dungeons.sort(byLevel);
     const idx = new Map();
     for (const d of j.dungeons) for (const b of d.bosses) if (!noDrop(b)) for (const it of b.i) {
       const [id, rate] = Array.isArray(it) ? it : [it, null];
@@ -1735,7 +1738,7 @@ function clogData(p) {
     bosses.forEach(x => x.items.forEach(i => all.add(i.id)));
     const have = [...all].filter(id => got.has(id)).length;
     return { d, bosses, have, total: all.size };
-  }).filter(x => x.have > 0).sort((a, b) => b.have / b.total - a.have / a.total || b.have - a.have);
+  }).filter(x => x.have > 0).sort((a, b) => byLevel(a.d, b.d));
 }
 async function fillClog(p) {
   await Promise.all([loadLoot(), loadItems()]);
@@ -1744,7 +1747,9 @@ async function fillClog(p) {
   const got = new Set(p.dropamine.collection.items), list = clogData(p);
   if (!list.length) { box.innerHTML = `<p class="db-note">${t('clogNone')}</p>`; return; }
   const bossName = b => L2(b.n) || b.n[0];
-  box.innerHTML = list.map((x, k) => `<details class="cdun"${k === 0 ? ' open' : ''}><summary><span class="cdn">${esc(x.d.name)}</span>
+  // en-tête de tranche (Donjons niv. 10-29…, Raids, Autres activités) avant le premier donjon de chaque tranche
+  const head = (x, k) => k > 0 && dunRank(list[k - 1].d) === dunRank(x.d) ? '' : `<h5 class="cband">${esc(dunBandLabel(x.d))}</h5>`;
+  box.innerHTML = list.map((x, k) => `${head(x, k)}<details class="cdun"${k === 0 ? ' open' : ''}><summary><span class="cdn">${esc(x.d.name)}</span>
       <i class="lbar"><i style="width:${(100 * x.have / x.total).toFixed(1)}%"></i></i><b>${x.have} / ${x.total}</b></summary>
       <div class="cboss">${x.bosses.map(({ b, items }) => `<div class="cb"><span class="cbn">${esc(bossName(b))}</span><div class="cgrid">${items.map(i =>
         `<span class="ci${got.has(i.id) ? ' got' : ''}" data-item="${i.id}" data-boss="${esc(bossName(b))}"${i.rate != null ? ` data-rate="${i.rate}"` : ''} style="--q:${QCOL[ITEMS?.[i.id]?.q] || '#8a7a5a'}"><img src="${itemIcon(i.id)}" alt="${esc(itemName(i.id))}" loading="lazy" referrerpolicy="no-referrer"></span>`).join('')}</div></div>`).join('')}</div></details>`).join('')
@@ -1982,6 +1987,23 @@ function runIcs(run) {
 const FOREVER_DUN = new Set(['ExcavationSiteWetlands', 'ShapersTerrace', 'TheAlcazPrison', 'TheBlackmawHold', 'TheCityOfDalaran', 'TheDrownedCity', 'TheHallOfThanes', 'TheKrolDokStronghold', 'TheRuinsOfLordaeron']);
 const isRaid = d => !!RAIDS[d.key] || !(d.lvl || [])[0] || /Raid|Core|Lair|Naxx|Qiraj|Gurub|Hyjal|Barrow|Blackwing|Onyxia|WorldBosses/i.test(d.key);
 const dunType = d => isRaid(d) ? 'raid' : FOREVER_DUN.has(d.key) ? 'forever' : 'dungeon';
+// <dunorder> ordre des donjons, avec les tranches du carnet de collection de l'addon (10-29, 30-49, 50-60) :
+// tranche du niveau conseillé affiché (dunFrom, « niveau 16–30 »), puis ce niveau, niveau max, nom ;
+// raids ensuite (ordre de progression), autres activités à la fin
+const DUN_BANDS = [[0, 29], [30, 49], [50, 999]];
+const dunMax = d => { const l = d.lvl || []; return l[2] || l[1] || l[0] || 0; };
+const dunMin = d => dunFrom(d) || dunMax(d);
+const isActivity = d => !!d.activity || d.key === 'WorldBosses';
+const dunRank = d => isActivity(d) ? 9 : isRaid(d) ? 8 : Math.max(0, DUN_BANDS.findIndex(([a, b]) => dunMin(d) >= a && dunMin(d) <= b));
+// raids : dans l'ordre de progression du jeu (ils sont tous niveau 60), les raids propres à Forever ensuite
+const RAID_ORDER = ['MoltenCore', 'Onyxia', 'BlackwingLair', "Zul'Gurub", 'TheRuinsofAhnQiraj', 'TheTempleofAhnQiraj', 'Naxxramas', 'BarrowDeeps', 'HyjalSummit'];
+const raidPos = d => { const i = RAID_ORDER.indexOf(d.key); return i < 0 ? RAID_ORDER.length : i; };
+function byLevel(a, b) {
+  return dunRank(a) - dunRank(b) || (dunRank(a) === 8 ? raidPos(a) - raidPos(b) : 0) || dunMin(a) - dunMin(b) || dunMax(a) - dunMax(b) || String(a.name).localeCompare(String(b.name));
+}
+const dunBandLabel = d => { const r = dunRank(d); if (r === 9) return t('clogOther'); if (r === 8) return t('clogRaids');
+  const [a, b] = DUN_BANDS[r]; return t('clogBand', { a: Math.max(10, a), b: Math.min(60, b) }); };
+// </dunorder>
 const fold = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const LV_BANDS = [10, 20, 30, 40, 50];
 function lvlMatch(d, me) {
@@ -2036,8 +2058,10 @@ function exploreBlock(me) {
   const huntersIn = d => { const ids = new Set(d.bosses.flatMap(b => b.i.map(e => Array.isArray(e) ? e[0] : e))); let n = 0; ids.forEach(id => { n += hunt.get(id) || 0; }); return n; };
   const stat = id => { const o = own.get(id) || 0, h = hunt.get(id) || 0;
     return [base.length >= 10 ? t('xOwnPct', { p: Math.round(100 * o / base.length) }) : base.length ? t('xOwnN', { n: o, t: base.length }) : '', h ? t('xHunt', { n: h }) : ''].filter(Boolean).join(' · '); };
-  const rows = list.map(d => { const [, , hi] = d.lvl || [], lo = dunFrom(d), hn = huntersIn(d);
-    return `<button type="button" class="xd${sel?.key === d.key ? ' on' : ''}" data-xd="${esc(d.key)}"><b>${esc(d.name)}</b><small>${lo ? t('runsLvl', { a: lo, b: hi }) : t('optRaid')}${hn ? ' · ' + t('xHunters', { n: hn }) : ''}</small></button>`; }).join('');
+  // titres de tranche (Donjons niv. 10-29…, Raids) comme le carnet de collection : la liste suit l'ordre de LOOT.dungeons (byLevel)
+  const band = (d, k) => k > 0 && dunRank(list[k - 1]) === dunRank(d) ? '' : `<h5 class="cband xband">${esc(dunBandLabel(d))}</h5>`;
+  const rows = list.map((d, k) => { const [, , hi] = d.lvl || [], lo = dunFrom(d), hn = huntersIn(d);
+    return `${band(d, k)}<button type="button" class="xd${sel?.key === d.key ? ' on' : ''}" data-xd="${esc(d.key)}"><b>${esc(d.name)}</b><small>${lo ? t('runsLvl', { a: lo, b: hi }) : t('optRaid')}${hn ? ' · ' + t('xHunters', { n: hn }) : ''}</small></button>`; }).join('');
   const bossName = b => isTrash(b) ? t('runsTrash') : (L2(b.n) || b.n[0]);
   const detail = sel ? `<div class="xdet"${artStyle(sel.key)}><div class="xh"><h3>${esc(sel.name)}</h3>${dunFrom(sel) ? `<span class="lv">${t('runsLvl', { a: dunFrom(sel), b: (sel.lvl || [])[2] })}</span>` : ''}</div>
       ${sel.bosses.map(b => `<div class="cb"><span class="cbn">${esc(bossName(b))}</span><div class="cgrid">${b.i.map(e => { const id = Array.isArray(e) ? e[0] : e, rate = Array.isArray(e) ? e[1] : null, hn = hunt.get(id) || 0;
@@ -2103,7 +2127,7 @@ function renderRuns() {
   const dayKey = iso => new Date(iso).toDateString();
   const dayTitle = iso => { const d = new Date(iso), diff = Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 864e5);
     return diff <= 0 ? t('dayToday') : diff === 1 ? t('dayTomorrow') : d.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' }); };
-  const dunsWithRuns = [...new Set(allRuns.map(x => x.dungeon))].map(k => LOOT.dungeons.find(d => d.key === k)).filter(Boolean);
+  const dunsWithRuns = [...new Set(allRuns.map(x => x.dungeon))].map(k => LOOT.dungeons.find(d => d.key === k)).filter(Boolean).sort(byLevel);
   const pfiltersOld = allRuns.length > 1 ? `<div class="pfil chips">${[['all', 'pfAll'], ...(me.length ? [['mine', 'pfMine']] : []), ['open', 'pfOpen']].map(([k, l]) => `<span class="chip ${pf === k ? 'on' : ''}" data-pf="${k}">${t(l)}</span>`).join('')}
     ${dunsWithRuns.length > 1 ? `<select data-pd><option value="">${t('pfAllDun')}</option>${dunsWithRuns.map(d => `<option value="${esc(d.key)}"${pd === d.key ? ' selected' : ''}>${esc(d.name)}</option>`).join('')}</select>` : ''}<span class="pcount">${t('pfCount', { n: filtered.length })}</span></div>` : '';
   const opt = (k, v, label) => `<option value="${v}"${(state[k] || '') === v ? ' selected' : ''}>${label}</option>`;
@@ -2155,7 +2179,7 @@ function renderRuns() {
     const joinForm = me.length && !myMember ? `<span class="joinf">${charSel()}${roleSel(left.tank ? 'tank' : left.heal ? 'heal' : 'dps')}<button class="btn gold" data-run-join="${esc(run.id)}">${t('runJoin')}</button>${!raid && !left.tank && !left.heal && !left.dps ? `<small>${t('runFullHint')}</small>` : ''}</span>` : '';
     const edit = iOwn ? `<details class="redit"><summary class="btn ghost">${t('runEdit')}</summary><div class="pform" data-edit="${esc(run.id)}">
         <label>${t('runWhen')}<input type="datetime-local" data-run-at value="${localInput(d0)}" min="${localInput(new Date())}"></label>
-        <label>${t('runDungeon')}<select data-run-dun>${[...LOOT.dungeons].sort((a, b) => a.name.localeCompare(b.name)).map(x => `<option value="${esc(x.key)}"${x.key === d.key ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
+        <label>${t('runDungeon')}<select data-run-dun>${[...LOOT.dungeons].sort(byLevel).map(x => `<option value="${esc(x.key)}"${x.key === d.key ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
         <label class="wide">${t('runNote')}<input type="text" maxlength="140" data-run-note value="${esc(run.note || '')}" placeholder="${t('runNotePh')}"></label>
         <button class="btn gold" data-run-save>${t('runSave')}</button></div></details>` : '';
     const open = state.ropen === run.id || (state.runFocus === run.id && state.ropen === undefined);
@@ -2179,10 +2203,9 @@ function renderRuns() {
   }
   // donjons, raids, autres activités : trois groupes dans la liste
   const dOpt = x => `<option value="${esc(x.key)}">${esc(x.name)}${RAIDS[x.key] ? ` (${RAIDS[x.key].size})` : ''}</option>`;
-  const byName = (a, b) => a.name.localeCompare(b.name);
   const dunOpts = [['optDun', LOOT.dungeons.filter(x => !isRaid(x))], ['optRaid', LOOT.dungeons.filter(x => isRaid(x) && !x.activity && x.key !== 'WorldBosses')],
     ['optAct', LOOT.dungeons.filter(x => x.activity || x.key === 'WorldBosses')]]
-    .map(([k, list]) => list.length ? `<optgroup label="${t(k)}">${[...list].sort(byName).map(dOpt).join('')}</optgroup>` : '').join('');
+    .map(([k, list]) => list.length ? `<optgroup label="${t(k)}">${[...list].sort(byLevel).map(dOpt).join('')}</optgroup>` : '').join('');
   const proposeAny = me.length ? `<details class="propose any"><summary class="btn gold">${t('runProposeAny')}</summary><div class="pform" data-dun="">
       <label>${t('runDunPick')}<select data-run-dunpick>${dunOpts}</select></label>
       <label>${t('runWhen')}<input type="datetime-local" data-run-at value="${localInput(nextEvening())}" min="${localInput(new Date())}"></label>
