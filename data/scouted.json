@@ -1456,6 +1456,7 @@
     "eu/righteous-reeve": {
       "l": 19,
       "c": "PALADIN",
+      "g": "Non Nobis Domine",
       "s": "x",
       "d": 20784
     },
@@ -2516,6 +2517,349 @@
       "l": 52,
       "c": "PRIEST",
       "g": "HALF BRAIN SQUAD",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/adawin-lansarg": {
+      "l": 22,
+      "c": "WARRIOR",
+      "g": "sanglier avec tshirt",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/alex-argentum": {
+      "l": 16,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ambroise-chloris": {
+      "l": 16,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/anotherguy-kek": {
+      "l": 60,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/apyh-bank": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/baw-back": {
+      "l": 10,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bro-akenshield": {
+      "l": 21,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/brohemian-rapsody": {
+      "l": 32,
+      "c": "DRUID",
+      "g": "La Sapologie",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/calladoctor-dasse": {
+      "l": 15,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/cazadora-astur": {
+      "l": 28,
+      "c": "HUNTER",
+      "g": "Niollstalgique",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/chaise-amnennar": {
+      "l": 60,
+      "c": "PRIEST",
+      "g": "Parse Attack",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/confusion-mkd": {
+      "l": 8,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/cyndemis-vardlokkur": {
+      "l": 10,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dark-sasuk": {
+      "l": 60,
+      "c": "ROGUE",
+      "g": "All B all Out",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/don-orares": {
+      "l": 30,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ettan-stålnacke": {
+      "l": 30,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/fayan-moonlight": {
+      "l": 10,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/fe-banker": {
+      "l": 1,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/gotrek-gurn": {
+      "l": 21,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/grusmar-goldbeard": {
+      "l": 40,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/gualtieri-paul": {
+      "l": 34,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/hecard-durandal": {
+      "l": 55,
+      "c": "PALADIN",
+      "g": "Chaussette IKEA",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/himeno-lucifero": {
+      "l": 13,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/hr-surmule": {
+      "l": 35,
+      "c": "DRUID",
+      "g": "CRH Concrete",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/jin-bankie": {
+      "l": 2,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kai-remix": {
+      "l": 2,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kala-mora": {
+      "l": 31,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kapital-kossan": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kel-stormpaw": {
+      "l": 20,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kimshi-gankruptcy": {
+      "l": 36,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kit-ignatius": {
+      "l": 10,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/magnet-guilliman": {
+      "l": 36,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/michel-gleeb": {
+      "l": 57,
+      "c": "SHAMAN",
+      "g": "Les Citoyens",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mummie-minogue": {
+      "l": 35,
+      "c": "PRIEST",
+      "g": "QuoicouChouffe",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/night-maarr": {
+      "l": 34,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/piktas-bomzas": {
+      "l": 27,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/rodrigo-roldan": {
+      "l": 43,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/saints-stash": {
+      "l": 5,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shady-cultist": {
+      "l": 40,
+      "c": "PRIEST",
+      "g": "Magna Farta",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sinmaril-whitethorn": {
+      "l": 38,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/slift-nimh": {
+      "l": 24,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/srag-banker": {
+      "l": 1,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/thorius-soleret": {
+      "l": 38,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tikarr-tank": {
+      "l": 44,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tirl-bank": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tom-storm": {
+      "l": 22,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tosi-shadoweaver": {
+      "l": 35,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tulpmeista-penance": {
+      "l": 50,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/uhoh-lightborn": {
+      "l": 18,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/vaelean-altheas": {
+      "l": 49,
+      "c": "DRUID",
+      "g": "OnlyDruids",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/valar-voherim": {
+      "l": 32,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/vengeful-klaaxy": {
+      "l": 53,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/wazafu-brutal": {
+      "l": 48,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/xea-invisibelle": {
+      "l": 45,
+      "c": "ROGUE",
+      "g": "Bleu Blanc Vin Rouge",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/yoni-shan": {
+      "l": 24,
+      "c": "PALADIN",
+      "g": "Legendary Rebirth",
       "s": "x",
       "d": 20784
     }
