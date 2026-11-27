@@ -725,6 +725,7 @@ function renderRank() {
   $('#rank-panel').innerHTML = `
     <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
     ${fbar}
+    ${state.dg ? `<span class="dgon" data-dg role="button" tabindex="0" title="${t('dgTip')}">▲ ${t('dgSort')} <i aria-hidden="true">✕</i></span>` : ''}
     ${kdSw}
     <div class="chips rk-rs" role="group">${rsChips}</div>
     <div class="board">
