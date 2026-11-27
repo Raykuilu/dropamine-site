@@ -1,6 +1,6 @@
 {
   "eu/ray-kuilu": {
-    "weapons": 521,
+    "weapons": 704,
     "weaponList": [
       {
         "id": "axes",
@@ -48,7 +48,7 @@
       },
       {
         "id": "feral",
-        "rank": 1
+        "rank": 184
       },
       {
         "id": "bows",
@@ -129,7 +129,7 @@
     ],
     "version": "3.12.1",
     "at": "2026-11-27",
-    "played": 515965,
+    "played": 516208,
     "collection": {
       "x": 9,
       "y": 1499,
@@ -201,7 +201,7 @@
       "longestCombo": 41,
       "sessions": 68,
       "goalsHit": 5,
-      "playtime": 171762
+      "playtime": 172063
     },
     "hunt": [
       {
