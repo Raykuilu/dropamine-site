@@ -286,5 +286,190 @@
       "hkToday": 0,
       "honorToday": 0
     }
+  },
+  "eu/dé-monique": {
+    "weapons": 45,
+    "weaponList": [
+      {
+        "id": "axes",
+        "rank": 0
+      },
+      {
+        "id": "axes2h",
+        "rank": 0
+      },
+      {
+        "id": "maces",
+        "rank": 0
+      },
+      {
+        "id": "maces2h",
+        "rank": 0
+      },
+      {
+        "id": "swords",
+        "rank": 0
+      },
+      {
+        "id": "swords2h",
+        "rank": 0
+      },
+      {
+        "id": "polearms",
+        "rank": 0
+      },
+      {
+        "id": "staves",
+        "rank": 0
+      },
+      {
+        "id": "fist",
+        "rank": 0
+      },
+      {
+        "id": "daggers",
+        "rank": 43
+      },
+      {
+        "id": "unarmed",
+        "rank": 1
+      },
+      {
+        "id": "feral",
+        "rank": 0
+      },
+      {
+        "id": "bows",
+        "rank": 0
+      },
+      {
+        "id": "guns",
+        "rank": 0
+      },
+      {
+        "id": "crossbows",
+        "rank": 0
+      },
+      {
+        "id": "thrown",
+        "rank": 0
+      },
+      {
+        "id": "wands",
+        "rank": 1
+      }
+    ],
+    "defense": 45,
+    "level": 10,
+    "professions": [
+      {
+        "id": "alchemy",
+        "rank": 0
+      },
+      {
+        "id": "blacksmithing",
+        "rank": 0
+      },
+      {
+        "id": "enchanting",
+        "rank": 0
+      },
+      {
+        "id": "engineering",
+        "rank": 0
+      },
+      {
+        "id": "herbalism",
+        "rank": 7
+      },
+      {
+        "id": "leatherworking",
+        "rank": 0
+      },
+      {
+        "id": "mining",
+        "rank": 0
+      },
+      {
+        "id": "skinning",
+        "rank": 0
+      },
+      {
+        "id": "tailoring",
+        "rank": 0
+      },
+      {
+        "id": "cooking",
+        "rank": 1
+      },
+      {
+        "id": "fishing",
+        "rank": 1
+      },
+      {
+        "id": "firstaid",
+        "rank": 16
+      },
+      {
+        "id": "riding",
+        "rank": 0
+      }
+    ],
+    "version": "3.12.1",
+    "at": "2026-11-27",
+    "played": 35045,
+    "lc": "frFR",
+    "collection": {
+      "x": 0,
+      "y": 1499,
+      "dungeons": []
+    },
+    "achievements": {
+      "n": 3,
+      "total": 38,
+      "ids": [
+        "hour10",
+        "total100",
+        "early"
+      ]
+    },
+    "records": {
+      "bestSession": 11,
+      "bestHour": 7,
+      "bestDay": 7,
+      "longestCombo": 3,
+      "sessions": 20,
+      "goalsHit": 0,
+      "playtime": 20160
+    },
+    "hunt": [
+      {
+        "id": 9420,
+        "name": "",
+        "tries": 0,
+        "drops": 0
+      },
+      {
+        "id": 9411,
+        "name": "",
+        "tries": 0,
+        "drops": 0
+      },
+      {
+        "id": 9428,
+        "name": "",
+        "tries": 0,
+        "drops": 0
+      }
+    ],
+    "pvp": {
+      "hkWeek": 0,
+      "honorWeek": 0,
+      "honor": 0,
+      "dkLife": 0,
+      "highest": 0,
+      "hkToday": 0,
+      "honorToday": 0
+    }
   }
 }
