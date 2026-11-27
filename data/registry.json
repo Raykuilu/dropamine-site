@@ -1,9 +1,11 @@
 {
   "_comment": "Personnages inscrits, « région/prénom-nom » en minuscules. owners : compte GitHub, ou « bnet:… » = empreinte anonyme du compte Battle.net (jamais le numéro de compte). optout : personnages masqués (aperçu de guilde).",
   "characters": [
-    "eu/ray-kuilu"
+    "eu/ray-kuilu",
+    "eu/dé-monique"
   ],
   "owners": {
-    "eu/ray-kuilu": "bnet:masque"
+    "eu/ray-kuilu": "bnet:masque",
+    "eu/dé-monique": "bnet:masque"
   }
 }
