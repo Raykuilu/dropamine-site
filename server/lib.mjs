@@ -79,6 +79,8 @@ export const validKey = k => typeof k === 'string' && /^(eu|us|tw)\/[\p{L}\p{N}]
 // ---------------------------------------------------------------- ligne « /drop hiscores » (Dropamine 3.11+)
 // DROPAMINE-HS1:n=Ray;l=36;r=eu;g=Everybody Knows;d=177;ws=278;w=136=176,54=102;p=393=223,129=208;v=3.11.0;t=…;c=xxxxxxxx
 export const HS_PREFIX = 'DROPAMINE-HS1:';
+// Dropamine 3.13+ : une seule famille de codes « DROP:<type><version>: » ; même contenu, même somme de contrôle
+export const HS_PREFIXES = ['DROP:HS2:', HS_PREFIX];
 export function hsChecksum(body) {          // même calcul que Hiscores.lua (octets UTF-8, modulo 2^32)
   let h = 5381;
   for (const b of Buffer.from(body, 'utf8')) h = (h * 33 + b) % 4294967296;
@@ -135,8 +137,9 @@ export function extras(f) {
 }
 export function parseHiscoresLine(raw) {
   const s = String(raw ?? '').trim().replace(/\s*\n[\s\S]*$/, '');
-  if (!s.startsWith(HS_PREFIX)) return { error: 'format' };
-  const m = s.slice(HS_PREFIX.length).match(/^(.*);c=([0-9a-f]{8})$/);
+  const pre = HS_PREFIXES.find(x => s.startsWith(x));
+  if (!pre) return { error: 'format' };
+  const m = s.slice(pre.length).match(/^(.*);c=([0-9a-f]{8})$/);
   if (!m) return { error: 'format' };
   if (hsChecksum(m[1]) !== m[2]) return { error: 'checksum' };
   const f = {};

@@ -545,7 +545,18 @@
   "wkToday": "oggi",
   "dwSort": "Maggiori progressi della settimana",
   "dwTip": "Chi è salito di più questa settimana (verificato dall’armeria), in questa classifica",
-  "dwNone": "Nessuno è ancora salito qui questa settimana."
+  "dwNone": "Nessuno è ancora salito qui questa settimana.",
+  "syTitle": "Sincronizza con il gioco",
+  "syUpT": "Incolla la tua riga dal gioco",
+  "syUpHow": "Nel gioco: /drop app → Invia al sito, Ctrl+C",
+  "syLast": "ultimo invio il {d}",
+  "syNever": "mai inviato",
+  "sySend": "Invia",
+  "syDownT": "Copia per il gioco",
+  "syDownWhat": "La tua caccia ({h} oggetti) e le tue prossime uscite ({r}), in un solo codice.",
+  "syDownNone": "Ancora niente da inviare al gioco: scegli oggetti da cacciare o unisciti a un’uscita.",
+  "syDownHow": "Nel gioco: /drop app → Ricevi dal sito, Ctrl+V (Dropamine 3.13 o successivo).",
+  "syCopy": "Copia"
  },
  "names": {
   "Leatherworking": "Conciatura",

@@ -545,7 +545,18 @@
   "wkToday": "heute",
   "dwSort": "Größte Gewinne der Woche",
   "dwTip": "Wer diese Woche am meisten zugelegt hat (vom Arsenal geprüft), in dieser Rangliste",
-  "dwNone": "Diese Woche hat hier noch niemand zugelegt."
+  "dwNone": "Diese Woche hat hier noch niemand zugelegt.",
+  "syTitle": "Mit dem Spiel abgleichen",
+  "syUpT": "Deine Zeile aus dem Spiel einfügen",
+  "syUpHow": "Im Spiel: /drop app → An die Seite senden, Strg+C",
+  "syLast": "zuletzt gesendet am {d}",
+  "syNever": "noch nie gesendet",
+  "sySend": "Senden",
+  "syDownT": "Für das Spiel kopieren",
+  "syDownWhat": "Deine Jagd ({h} Gegenstände) und deine kommenden Ausflüge ({r}) in einem Code.",
+  "syDownNone": "Noch nichts fürs Spiel: wähle Gegenstände zum Jagen oder tritt einem Ausflug bei.",
+  "syDownHow": "Im Spiel: /drop app → Von der Seite empfangen, Strg+V (Dropamine 3.13 oder neuer).",
+  "syCopy": "Kopieren"
  },
  "names": {
   "Leatherworking": "Lederverarbeitung",

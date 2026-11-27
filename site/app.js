@@ -562,6 +562,34 @@ setInterval(() => {
 }, 9000);
 
 // ---------- Bien démarrer : du téléchargement à la mise en relation, en 4 étapes qui se cochent toutes seules ----------
+// 3.13 : un seul code pour le jeu — ta chasse et tes sorties à venir. Dans l'addon : /drop app → Recevoir du site.
+// (les boutons « Copier pour le jeu » de la chasse et « Rappel en jeu » d'une sortie gardent l'ancien format, lu par tous les addons)
+function syncCode(p, runs) {
+  const ids = [...new Set((p.dropamine?.hunt || []).filter(x => !x.drops).map(x => Number(x.id).toString(36)))].slice(0, 20);
+  const rs = (runs || []).filter(r => Date.parse(r.at) > Date.now()).slice(0, 5).map(r => runGameCode(r).replace(/^\/drop DROP-RUN1:/, ''));
+  const parts = [];
+  if (ids.length) parts.push('ch=' + ids.join('.'));
+  if (rs.length) parts.push('run=' + rs.join('|'));
+  return { code: parts.length ? '/drop DROP:SYNC1:' + parts.join(';') : '', hunt: ids.length, runs: rs.length };
+}
+let syncMsg = '';
+function syncCard(p, runs) {
+  const sc = syncCode(p, runs), last = p.dropamineAt ? new Date(p.dropamineAt) : null;
+  const lastTxt = last ? t('syLast', { d: last.toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) }) : t('syNever');
+  return `<section class="dcard dsync"><h3>${t('syTitle')}</h3><div class="sync2">
+    <div><h4>${t('syUpT')}</h4><p class="note">${t('syUpHow')} · ${lastTxt}</p>
+      <textarea id="syncline" spellcheck="false" placeholder="${t('upPh')}"></textarea>
+      <button class="btn gold" type="button" data-syncup>${t('sySend')}</button>${syncMsg ? `<p class="msg">${syncMsg}</p>` : ''}</div>
+    <div><h4>${t('syDownT')}</h4><p class="note">${sc.code ? t('syDownWhat', { h: sc.hunt, r: sc.runs }) : t('syDownNone')}</p>
+      ${sc.code ? `<code class="sycode">${esc(sc.code)}</code><button class="btn ghost" type="button" data-synccopy>${t('syCopy')}</button><p class="note">${t('syDownHow')}</p>` : ''}</div>
+  </div></section>`;
+}
+document.addEventListener('click', async e => {
+  const up = e.target.closest('[data-syncup]');
+  if (up) { const v = $('#syncline')?.value; if (!v || !v.trim()) return; up.setAttribute('disabled', ''); syncMsg = (await Bnet.upload(v)).msg; renderDash(); return; }
+  const cp = e.target.closest('[data-synccopy]');
+  if (cp) navigator.clipboard?.writeText(cp.previousElementSibling.textContent).then(() => { cp.textContent = t('copied'); setTimeout(() => { cp.textContent = t('syCopy'); }, 1600); }).catch(() => {});
+});
 function startCard(me) {
   const exp = me.some(p => p.dropamineAt), shared = me.some(p => p.dropamine?.hunt?.length || p.dropamine?.collection?.items?.length);
   const steps = [
@@ -644,7 +672,7 @@ function renderDash() {
     { n: t('defense'), v: p.defense || 0, m: 5 * p.level, ic: DEF_ICON }]
     .filter(x => x.v > 0 && x.v < x.m).sort((a, b) => (b.v / b.m) - (a.v / a.m)).slice(0, 4);
   const stepCard = steps.length ? `<section class="dcard"><h3>${t('dashNext')}</h3><ul class="dsteps">${steps.map(x => `<li><img src="${icon(x.ic)}" alt="" referrerpolicy="no-referrer"><span>${esc(x.n)}</span><i class="lbar"><i style="width:${(100 * x.v / x.m).toFixed(1)}%"></i></i><b>${x.v} / ${x.m}</b><small>${t('dashLeft', { n: x.m - x.v })}</small></li>`).join('')}</ul></section>` : '';
-  box.innerHTML = `${chooser}${hero}${startCard(me)}${raidBanner()}<div class="dgrid">${runsCard}${huntCard}${colCard}${stepCard}${guildCard}</div>
+  box.innerHTML = `${chooser}${hero}${startCard(me)}${syncCard(p, myRuns)}${raidBanner()}<div class="dgrid">${runsCard}${huntCard}${colCard}${stepCard}${guildCard}</div>
     <p class="dash-more"><a class="lnk" data-dash-intro>${t('dashAbout')}</a></p>`;
   return true;
 }
@@ -797,7 +825,7 @@ const PROF_OF = { alchemy: 171, blacksmithing: 164, enchanting: 333, engineering
   skinning: 393, tailoring: 197, cooking: 185, fishing: 356, firstaid: 129 };
 function parsePendingLine(line) {
   const f = {};
-  for (const part of String(line).split(/\r?\n/)[0].split(';')) { const i = part.indexOf('='); if (i > 0) f[part.slice(0, i).replace(/^DROPAMINE-HS1:/, '')] = part.slice(i + 1); }
+  for (const part of String(line).split(/\r?\n/)[0].split(';')) { const i = part.indexOf('='); if (i > 0) f[part.slice(0, i).replace(/^(DROPAMINE-HS1|DROP:HS2):/, '')] = part.slice(i + 1); }
   const pairs = s => Object.fromEntries(String(s || '').split(',').map(x => x.split('=')).filter(x => x.length === 2 && /^\d+$/.test(x[1])).map(([k, v]) => [k, +v]));
   const prof = {}; for (const [k, v] of Object.entries(pairs(f.p))) if (PROF_OF[k] && v > 0) prof[PROF_OF[k]] = v;
   return { at: Date.now(), name: f.n, level: +f.l || 0, defense: +f.d || 0, prof, w: pairs(f.w) };
@@ -2272,7 +2300,18 @@ Object.assign(I18N, {
   upTitle: ['Exact score with Dropamine', 'Score exact avec Dropamine'],
   upPitch: ['In game, type /drop hiscores, copy the export (Ctrl+C) and paste it here. Your real weapon skills replace the estimate.',
     'En jeu, tape /drop hiscores, copie la ligne (Ctrl+C) et colle-la ici. Tes vraies compétences d\'armes remplacent l\'estimation.'],
-  upSend: ['Update my logbook', 'Mettre à jour mon carnet'], upPh: ['DROPAMINE-HS1:…', 'DROPAMINE-HS1:…'],
+  syTitle: ["Sync with the game", "Synchroniser avec le jeu"],
+  syUpT: ["Paste your line from the game", "Coller ta ligne du jeu"],
+  syUpHow: ["In game: /drop app → Send to site, Ctrl+C", "Dans le jeu : /drop app → Envoyer au site, Ctrl+C"],
+  syLast: ["last sent {d}", "dernier envoi le {d}"],
+  syNever: ["never sent yet", "jamais envoyé"],
+  sySend: ["Send", "Envoyer"],
+  syDownT: ["Copy for the game", "Copier pour le jeu"],
+  syDownWhat: ["Your hunt ({h} items) and your upcoming outings ({r}), in one code.", "Ta chasse ({h} objets) et tes sorties à venir ({r}), en un seul code."],
+  syDownNone: ["Nothing to send to the game yet: pick items to hunt or join an outing.", "Rien à envoyer au jeu pour l’instant : choisis des objets à chasser ou rejoins une sortie."],
+  syDownHow: ["In game: /drop app → Receive from site, Ctrl+V (Dropamine 3.13 or later).", "Dans le jeu : /drop app → Recevoir du site, Ctrl+V (Dropamine 3.13 ou plus récent)."],
+  syCopy: ["Copy", "Copier"],
+  upSend: ['Update my logbook', 'Mettre à jour mon carnet'], upPh: ['DROP:HS2:…', 'DROP:HS2:…'],
   upOk: ['Received: {w} weapon skill points ({n} weapons). The Hiscores refresh within a few minutes.',
     'Reçu : {w} points de compétences d\'armes ({n} armes). Les classements se rafraîchissent d\'ici quelques minutes.'],
   upErr: {
@@ -2331,12 +2370,8 @@ const Bnet = (() => {
     if (act === 'upload') {
       const line = $('#hsline')?.value.trim(); if (!line) return;
       el.setAttribute('disabled', '');
-      try {
-        const r = await call('/upload', { line }), j = await r.json();
-        upMsg = r.ok ? t('upOk', { w: fmt(j.weapons), n: j.count }) : L2(I18N.upErr[j.error] || I18N.bnError);
-        if (r.ok) { Ribbon.swell(.8); if (j.key) { try { localStorage.setItem(pendKey(j.key), JSON.stringify(parsePendingLine(line))); } catch (e) { /* stockage indisponible */ } } }
-      } catch { upMsg = t('bnError'); }
-      await load(); draw(); header(); return;
+      upMsg = (await upload(line)).msg;
+      draw(); return;
     }
     const checked = $$('#bnet input:checked').map(i => i.value), all = $$('#bnet input').map(i => i.value);
     const keys = act === 'claim' ? checked.filter(k => !me.characters.find(c => c.key === k)?.registered)
@@ -2372,7 +2407,19 @@ const Bnet = (() => {
     render(false); Ribbon.swell(.6);
   });
   async function refresh() { await load(); render(false); }
-  return { show, init, header, mine, best, isMine, refresh, call, logged: () => !!me };
+  // la ligne du jeu → le site (page Inscription et guichet « Synchroniser avec le jeu ») ; renvoie { ok, msg }
+  async function upload(line) {
+    line = String(line || '').trim(); if (!line) return { ok: false, msg: '' };
+    let res = { ok: false, msg: t('bnError') };
+    try {
+      const r = await call('/upload', { line }), j = await r.json();
+      res = { ok: r.ok, msg: r.ok ? t('upOk', { w: fmt(j.weapons), n: j.count }) : L2(I18N.upErr[j.error] || I18N.bnError) };
+      if (r.ok) { Ribbon.swell(.8); if (j.key) { try { localStorage.setItem(pendKey(j.key), JSON.stringify(parsePendingLine(line))); } catch (e) { /* stockage indisponible */ } } }
+    } catch { /* message d'erreur par défaut */ }
+    await load(); header();
+    return res;
+  }
+  return { show, init, header, mine, best, isMine, refresh, call, upload, logged: () => !!me };
 })();
 
 /* ---------- Animations d'arrivée ---------- */

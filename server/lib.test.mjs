@@ -49,7 +49,15 @@ test('cookies et identifiants', () => {
   assert.ok(!validKey('eu/ray')); assert.ok(!validKey('kr/ray-kuilu')); assert.ok(!validKey('eu/ray-kuilu"><script>'));
 });
 
-import { hsChecksum, parseHiscoresLine, matchUpload, HS_PREFIX } from './lib.mjs';
+import { hsChecksum, parseHiscoresLine, matchUpload, HS_PREFIX, HS_PREFIXES } from './lib.mjs';
+test('ligne du jeu : nouveau préfixe DROP:HS2 (Dropamine 3.13+), ancien toujours accepté', () => {
+  const body = 'n=Ray;l=37;r=eu;g=EK;d=185;ws=110;w=staves=110;p=185=218;v=3.13.0;t=1';
+  for (const pre of HS_PREFIXES) {
+    const p = parseHiscoresLine(pre + body + ';c=' + hsChecksum(body));
+    assert.equal(p.name, 'Ray'); assert.equal(p.level, 37);
+  }
+  assert.equal(parseHiscoresLine('DROP:XX9:' + body + ';c=' + hsChecksum(body)).error, 'format');
+});
 const hsLine = body => HS_PREFIX + body + ';c=' + hsChecksum(body);
 const BODY = 'n=Ray;l=36;r=eu;g=Everybody Knows;d=177;ws=278;w=136=176,54=102;p=393=223,129=208;v=3.11.0;t=1795600000';
 

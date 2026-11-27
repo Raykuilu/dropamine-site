@@ -545,7 +545,18 @@
   "wkToday": "hoje",
   "dwSort": "Maiores ganhos da semana",
   "dwTip": "Quem mais progrediu esta semana (verificado pelo arsenal), nesta classificação",
-  "dwNone": "Ninguém progrediu aqui esta semana ainda."
+  "dwNone": "Ninguém progrediu aqui esta semana ainda.",
+  "syTitle": "Sincronizar com o jogo",
+  "syUpT": "Cole a sua linha do jogo",
+  "syUpHow": "No jogo: /drop app → Enviar ao site, Ctrl+C",
+  "syLast": "último envio em {d}",
+  "syNever": "nunca enviado",
+  "sySend": "Enviar",
+  "syDownT": "Copiar para o jogo",
+  "syDownWhat": "Sua caçada ({h} itens) e suas próximas saídas ({r}), num só código.",
+  "syDownNone": "Nada para enviar ao jogo por enquanto: escolha itens para caçar ou entre numa saída.",
+  "syDownHow": "No jogo: /drop app → Receber do site, Ctrl+V (Dropamine 3.13 ou mais recente).",
+  "syCopy": "Copiar"
  },
  "names": {
   "Leatherworking": "Couraria",

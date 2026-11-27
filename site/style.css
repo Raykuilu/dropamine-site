@@ -1403,3 +1403,10 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .brand-logo.live{filter:none;animation:none}
 .brand-logo.live .drop-frame{filter:drop-shadow(0 6px 10px rgba(0,0,0,.55))}
 .brand-logo .sp-w,.brand-logo .sp-bub circle{will-change:transform}
+
+/* « Moi » : guichet unique avec le jeu (coller ta ligne / copier pour le jeu) */
+.dsync{margin-top:16px}
+.sync2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:18px}
+.sync2 h4{margin:0 0 6px;font-family:var(--display);color:var(--gold);font-size:17px}
+.sync2 textarea{width:100%;box-sizing:border-box;min-height:64px;margin:6px 0 8px;padding:8px;border-radius:6px;border:1px solid var(--line-2);background:#0e0b07;color:var(--cream);font:13px/1.4 ui-monospace,Consolas,monospace;resize:vertical}
+.sycode{display:block;margin:6px 0 8px;padding:8px;border-radius:6px;border:1px solid var(--line-2);background:#0e0b07;color:#cfe8b8;font:12px/1.4 ui-monospace,Consolas,monospace;word-break:break-all;max-height:84px;overflow:auto}
