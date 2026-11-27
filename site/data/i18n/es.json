@@ -599,7 +599,8 @@
   "gm.members": "Miembros",
   "gmSub": "{n} de nivel 60",
   "ytPlay": "Reproducir el vídeo",
-  "ytCap": "Comparte tu lista de caza, encuentra tu grupo"
+  "ytCap": "Comparte tu lista de caza, encuentra tu grupo",
+  "previewNoteCrawl": "Leído automáticamente de la armería pública de Forever. ¿Eres tú? <a href=\"?p=join\" data-view-link=\"join\">Inicia sesión</a> para inscribirte con una puntuación exacta, o para ocultarlo."
  },
  "names": {
   "Leatherworking": "Peletería",

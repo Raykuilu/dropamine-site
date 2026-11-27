@@ -33,3 +33,11 @@ test('accueil léger : inscrits, joueurs qui ont progressé, top 5 par région, 
   for (let i = 19; i > 19 - HOME_TOP; i--) assert.ok(keys.has('eu/p-' + i));
   assert.equal(h.players.length, 2 + HOME_TOP + 1);
 });
+
+import { serverMode } from './build.mjs';
+test('mode de la mise à jour selon le relevé du serveur', () => {
+  assert.equal(serverMode(null, 100), 'off');
+  assert.equal(serverMode({ status: { target: 0, since: 90 }, players: [] }, 100), 'off', 'relevé arrêté dans l\'admin');
+  assert.equal(serverMode({ status: { target: 6, since: 99 }, players: [] }, 100), 'hold');
+  assert.equal(serverMode({ status: { target: 6, since: 98 }, players: [] }, 100), 'publish');
+});

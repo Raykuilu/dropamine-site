@@ -291,13 +291,51 @@ try {
   internal = (await import('./private/admin.mjs')).default({ gh, readRaw, session, isAdmin, send, cfStats: () => cfStats, stateDir: STATE_DIR });
 } catch (err) { if (err.code !== 'ERR_MODULE_NOT_FOUND') console.warn('outils internes :', err.message); }
 
+// relevé continu de tout le serveur WoW Forever (crawl.mjs) ; CRAWL=off dans server/.env pour le couper
+let crawl = null;
+if (process.env.CRAWL !== 'off') {
+  try { crawl = (await import('./crawl.mjs')).startCrawl({ stateDir: STATE_DIR, clientId: CFG.clientId, clientSecret: CFG.clientSecret, readRaw }); }
+  catch (err) { console.warn('relevé serveur indisponible :', err.message); }
+}
+// réponses publiques du relevé (données de l'armurerie, comme le site) ; compressées si le client l'accepte
+function sendPublic(req, res, body, maxAge = 60) {
+  const text = JSON.stringify(body), h = { ...cors, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': `public, max-age=${maxAge}` };
+  if (/\bgzip\b/.test(req.headers['accept-encoding'] || '')) { res.writeHead(200, { ...h, 'Content-Encoding': 'gzip' }); return res.end(gzipSync(text)); }
+  res.writeHead(200, h); res.end(text);
+}
+let activeCache = null;   // export des actifs (lu par la mise à jour du site) : recalculé au plus toutes les 10 min
+async function crawlRoute(req, res, url) {
+  if (!url.pathname.startsWith('/hs/') || req.method !== 'GET') return false;
+  if (!crawl) { send(res, 503, { error: 'relevé indisponible' }, cors); return true; }
+  const p = url.pathname;
+  if (p === '/hs/status') sendPublic(req, res, crawl.status(), 30);
+  else if (p === '/hs/active') {
+    if (!activeCache || Date.now() - activeCache.at > 10 * 60e3) activeCache = { at: Date.now(), body: { at: new Date().toISOString(), status: crawl.status(), players: crawl.active() } };
+    sendPublic(req, res, activeCache.body, 300);
+  }
+  else if (p === '/hs/search') sendPublic(req, res, { results: crawl.search(String(url.searchParams.get('q') || '').slice(0, 40), 20) }, 60);
+  else if (p === '/hs/char') {
+    const k = String(url.searchParams.get('k') || '').toLowerCase();
+    const c = validKey(k) ? crawl.char(k) : null;
+    c ? sendPublic(req, res, c, 300) : send(res, 404, { error: 'inconnu' }, cors);
+  }
+  else if (p === '/hs/rank') {
+    const r = REGIONS.includes(url.searchParams.get('r')) ? url.searchParams.get('r') : 'eu';
+    const pg = Math.max(1, Math.min(10000, Math.floor(+url.searchParams.get('pg') || 1)));
+    sendPublic(req, res, crawl.rank(r, pg, 50), 120);
+  }
+  else send(res, 404, { error: 'inconnu' }, cors);
+  return true;
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, CFG.publicUrl);
   try {
-    if (limited(req, url.pathname === '/runs' && req.method === 'GET' ? 120 : 40)) return send(res, 429, { error: 'trop de requêtes' }, { ...cors, 'Retry-After': '60' });
+    if (limited(req, (url.pathname === '/runs' || url.pathname === '/hs/search') && req.method === 'GET' ? 120 : 40)) return send(res, 429, { error: 'trop de requêtes' }, { ...cors, 'Retry-After': '60' });
     if (req.method === 'OPTIONS') return send(res, 204, '', { ...cors, 'Access-Control-Allow-Methods': 'GET, POST', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600' });
 
     if (internal && await internal(req, res, url)) return;
+    if (await crawlRoute(req, res, url)) return;
     if (url.pathname === '/health') return send(res, 200, 'ok', cors);
     if (url.pathname === '/runs' && req.method === 'GET') { await runsLoad(); return sendRuns(req, res); }
     if (url.pathname === '/push/key' && req.method === 'GET') return send(res, 200, { key: VAPID.publicKey }, { ...cors, 'Cache-Control': 'public, max-age=86400' });

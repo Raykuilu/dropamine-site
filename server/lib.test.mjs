@@ -203,3 +203,9 @@ test('queueDue : relance horaire tant que la file a du monde', () => {
   assert.equal(queueDue(q, { ...s, newPerRun: 0 }, null, now), false);                // coupé
   assert.equal(queueDue(q, { ...s, maxPreviews: 150 }, null, now), false);            // plafond
 });
+
+test('queueDue : en mode relevé serveur, publication chaque heure même file vide', () => {
+  const now = 10 * AUTO_RUN_GAP;
+  assert.equal(queueDue({ players: {}, runs: [{ mode: 'publish', kept: 0, fresh: 50000 }] }, { maxPreviews: 10 }, { at: now - AUTO_RUN_GAP, done: true }, now), true);
+  assert.equal(queueDue({ players: {}, runs: [{ mode: 'publish' }] }, {}, { at: now - 60e3, done: true }, now), false);
+});

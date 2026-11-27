@@ -246,6 +246,8 @@ const I18N = {
   member: ['MEMBER', 'MEMBRE'], guildH: ['GUILD', 'GUILDE'], members: ['MEMBERS', 'INSCRITS'], d7: ['7 D', '7 J'],
   est: ['estimated', 'estimé'], preview: ['preview', 'aperçu'],
   sealPreview: ['GUILD PREVIEW · NOT REGISTERED', 'APERÇU DE GUILDE · NON INSCRIT'],
+  previewNoteCrawl: ['Read automatically from the public Forever armory. Is it you? <a href="?p=join" data-view-link="join">Sign in</a> to register for an exact score, or to hide it.',
+    "Relevé automatiquement dans l'armurerie publique de Forever. C'est toi ? <a href=\"?p=join\" data-view-link=\"join\">Connecte-toi</a> pour t'inscrire avec un score exact, ou pour le masquer."],
   previewNote: ['Shown because their guild is followed. Is it you? <a href="?p=join" data-view-link="join">Sign in</a> to register for an exact score, or to hide it.',
     "Affiché parce que sa guilde est suivie. C'est toi ? <a href=\"?p=join\" data-view-link=\"join\">Connecte-toi</a> pour t'inscrire avec un score exact, ou pour le masquer."], allModes: ['All modes', 'Tous les modes'], allClasses: ['All classes', 'Toutes les classes'],
   fSkill: ['Ranking', 'Classement'], fMode: ['Mode', 'Mode'], fClass: ['Class', 'Classe'], allM: ['All', 'Tous'], allC: ['All', 'Toutes'],
@@ -1046,10 +1048,27 @@ const Tip = (() => {
 // fraîcheur : quand l'armurerie a été relue, et l'âge de l'export du jeu (sans lui, le site ne sait pas ce qu'il te manque)
 const hoursAgo = at => { const h = (Date.now() - at) / 36e5; return h < 1 ? t('agoLt1h') : h < 24 ? t('agoH', { n: Math.round(h) }) : dayAgo(at); };
 const freshLine = p => `<p class="fresh">${DATA.updated ? t('freshArm', { d: hoursAgo(Date.parse(DATA.updated)) }) : ''}${p.preview ? '' : ' · ' + (p.dropamineAt ? t('freshExp', { d: dayAgo(Date.parse(p.dropamineAt)) }) : t('freshNoExp'))}</p>`;
+// personnages connus du relevé serveur mais pas publiés sur le site (pas actifs) : fiche demandée à l'API, gardée en mémoire
+const SERVER_CHARS = new Map();
+function loadServerChar(k) {
+  if (SERVER_CHARS.has(k)) return Promise.resolve(SERVER_CHARS.get(k));
+  return fetch(`${API}/hs/char?k=${encodeURIComponent(k)}`).then(r => r.ok ? r.json() : null).catch(() => null)
+    .then(p => { const v = p && p.key === k ? Object.assign(p, { _full: true, _server: true }) : null; SERVER_CHARS.set(k, v); return v; });
+}
 function renderChar() {
   if (DATA.loading) { $('#char-panel').innerHTML = loadingBox(); return; }
   if (DATA.failed) { $('#char-panel').innerHTML = failed(); return; }
-  const p = DATA.players.find(x => pkey(x) === state.c || x.slug === state.c) || DATA.players.find(x => pkey(x) === Bnet.best());
+  const want = state.c;
+  let p = DATA.players.find(x => pkey(x) === want || x.slug === want);
+  if (!p && want && want.includes('/')) {
+    if (!SERVER_CHARS.has(want)) {
+      $('#char-panel').innerHTML = loadingBox();
+      loadServerChar(want).then(() => { if (state.view === 'char' && state.c === want) { renderChar(); animate($('#char')); } });
+      return;
+    }
+    p = SERVER_CHARS.get(want) || undefined;
+  }
+  if (!p && !want) p = DATA.players.find(x => pkey(x) === Bnet.best());
   if (!p) { $('#char-panel').innerHTML = `<div class="empty"><b>${t('noCharT')}</b>${t('noChar')}</div>`; return; }
   state.c = pkey(p);
   if (!p._full) {
@@ -1072,7 +1091,7 @@ function renderChar() {
     <div class="who${p.render ? ' has-render' : ''}">
       ${portrait}
       <div><h2>${full(p)}</h2><p>${desc} · ${t('levelN', { n: p.level })}${p.guild ? ` · <a href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${esc(p.guild.name)}</a>` : ''} · ${esc((p.region || 'eu').toUpperCase())}${rulesetName(p) ? ' ' + esc(rulesetName(p)) : ''}</p>
-        ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t('previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}
+        ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t(p.via === 'crawl' ? 'previewNoteCrawl' : 'previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}
         ${weekBadges(p)}
         <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button><button class="share hsb" type="button" data-hsimg="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h8"/></svg><span>${t('hsBtn')}</span></button>${freshLine(p)}</div>
       ${(() => {
@@ -2920,11 +2939,22 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
   };
   const pick = p => { input.value = ''; box.classList.remove('on'); input.blur(); go({ view: 'char', c: pkey(p), region: p.region || 'eu' }); };
   input.addEventListener('focus', () => { if (DATA.partial) loadFull().then(() => { if (input.value.trim()) input.dispatchEvent(new Event('input')); }); });
+  let srvT = 0, srvQ = '';
   input.addEventListener('input', () => {
     if (DATA.partial) loadFull().then(() => { if (!DATA.partial) input.dispatchEvent(new Event('input')); });
     const q = fold(input.value.trim()); hl = 0;
     hits = q ? DATA.players.filter(p => fold(`${p.name} ${p.surname} ${p.slug}`).includes(q)).slice(0, 8) : [];
     draw();
+    clearTimeout(srvT);
+    if (q.length >= 2 && hits.length < 8) srvT = setTimeout(() => {
+      srvQ = q;
+      fetch(`${API}/hs/search?q=${encodeURIComponent(q)}`).then(r => r.ok ? r.json() : null).catch(() => null).then(j => {
+        if (srvQ !== fold(input.value.trim()) || !j?.results) return;
+        const seen = new Set(hits.map(pkey));
+        const more = j.results.filter(r => !seen.has(r.key)).map(r => ({ ...r, guild: r.guild ? { name: r.guild } : null, _srv: true }));
+        hits = [...hits, ...more].slice(0, 8); draw();
+      });
+    }, 250);
   });
   input.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown') { hl = Math.min(hits.length - 1, hl + 1); draw(); e.preventDefault(); }
@@ -2932,7 +2962,7 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
     else if (e.key === 'Enter' && hits[hl]) pick(hits[hl]);
     else if (e.key === 'Escape') { box.classList.remove('on'); input.blur(); }
   });
-  box.addEventListener('mousedown', e => { const a = e.target.closest('a[data-key]'); if (a) { e.preventDefault(); pick(DATA.players.find(p => pkey(p) === a.dataset.key)); } });
+  box.addEventListener('mousedown', e => { const a = e.target.closest('a[data-key]'); if (a) { e.preventDefault(); const p = hits.find(h => pkey(h) === a.dataset.key) || DATA.players.find(h => pkey(h) === a.dataset.key); if (p) pick(p); } });
   input.addEventListener('blur', () => setTimeout(() => box.classList.remove('on'), 120));
 })();
 

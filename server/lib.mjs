@@ -112,7 +112,7 @@ export function parseScoutLine(line) {
   return { region: f.r, players };
 }
 // Admin : réglages du remplissage (data/settings.json) et guildes suivies (data/guilds.json)
-export const SETTINGS_RANGE = { newPerRun: [0, 500], maxPreviews: [0, 10000] };
+export const SETTINGS_RANGE = { newPerRun: [0, 500], maxPreviews: [0, 50000], crawlRate: [0, 9] };   // crawlRate : appels Blizzard / s du relevé serveur (0 = arrêté)
 export function applySettings(cur, body) {
   const out = { ...(cur ?? {}) };
   for (const [k, [lo, hi]] of Object.entries(SETTINGS_RANGE)) {
@@ -130,6 +130,7 @@ export const AUTO_RUN_GAP = 55 * 60e3;
 export function queueDue(queue, settings, lastRun, now = Date.now()) {
   if (lastRun && !lastRun.done) return false;                                   // une mise à jour tourne déjà
   if (lastRun && now - lastRun.at < AUTO_RUN_GAP) return false;                 // une par heure au plus
+  if (queue?.runs?.[0]?.mode && queue.runs[0].mode !== 'off') return true;    // relevé serveur : on publie ses progrès chaque heure
   if (!Object.keys(queue?.players ?? {}).length) return false;                  // file vide
   if ((settings?.newPerRun ?? 1) === 0) return false;                           // remplissage coupé dans l'admin
   const last = queue?.runs?.[0], cap = settings?.maxPreviews ?? 3000;
