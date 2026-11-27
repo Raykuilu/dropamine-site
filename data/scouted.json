@@ -9116,6 +9116,580 @@
       "c": "PRIEST",
       "s": "x",
       "d": 20784
+    },
+    "eu/svima-sin": {
+      "l": 47,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mashalux-ontheflux": {
+      "l": 25,
+      "c": "WARLOCK",
+      "g": "Un doit dans le cube",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/snowy-sac": {
+      "l": 6,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/major-délaluse": {
+      "l": 58,
+      "c": "PALADIN",
+      "g": "Baguette et Bouclier",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/buddy-argo": {
+      "l": 51,
+      "c": "HUNTER",
+      "g": "Гопак",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/safe-place": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "BAGAR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pitakos-topsema": {
+      "l": 56,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/deviouz-graybeard": {
+      "l": 52,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/xellnaga-spacedwarf": {
+      "l": 40,
+      "c": "SHAMAN",
+      "g": "For lvling",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/zmu-lan": {
+      "l": 56,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/grak-poulpfer": {
+      "l": 56,
+      "c": "WARRIOR",
+      "g": "Baston et Chopines",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/alessio-grandissimo": {
+      "l": 58,
+      "c": "HUNTER",
+      "g": "Half Life",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/davy-joones": {
+      "l": 51,
+      "c": "DRUID",
+      "g": "Dreadbound",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tomek-tomek": {
+      "l": 60,
+      "c": "MAGE",
+      "g": "stepfathers",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pepper-trix": {
+      "l": 60,
+      "c": "PALADIN",
+      "g": "WreckingBallZ Forever",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/izahnagull-picrochard": {
+      "l": 28,
+      "c": "MAGE",
+      "g": "Arrakis",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/rwd-il": {
+      "l": 35,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kalem-defter": {
+      "l": 1,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lepipo-dalessio": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "Half Life",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/øzae-sauvageon": {
+      "l": 60,
+      "c": "PRIEST",
+      "g": "Houk Houk",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/gandalv-brassbeard": {
+      "l": 1,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dria-stormcaller": {
+      "l": 40,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/talion-nightstrider": {
+      "l": 45,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ylusal-nostrall": {
+      "l": 12,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ellena-chantenuit": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "Savages",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bandit-war": {
+      "l": 24,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kurton-os": {
+      "l": 17,
+      "c": "PRIEST",
+      "g": "AntiSocialFrenchies",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lynnvia-cutie": {
+      "l": 48,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/furax-amg": {
+      "l": 60,
+      "c": "WARRIOR",
+      "g": "Praxis",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/wildy-moon": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "Campfire",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lifted-eye": {
+      "l": 41,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/cirion-citron": {
+      "l": 57,
+      "c": "WARLOCK",
+      "g": "Cool Beans",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sahir-xyz": {
+      "l": 60,
+      "c": "SHAMAN",
+      "g": "Millenium",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/apollo-mil": {
+      "l": 44,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/blite-itsaflower": {
+      "l": 36,
+      "c": "WARRIOR",
+      "g": "Forever French",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nuy-miy": {
+      "l": 43,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/chef-asu": {
+      "l": 58,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mitnick-lucifer": {
+      "l": 35,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/prom-swag": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "Logarithme",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lani-malerie": {
+      "l": 30,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/more-drink": {
+      "l": 56,
+      "c": "PRIEST",
+      "g": "La Gaule",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/olympie-thagore": {
+      "l": 60,
+      "c": "MAGE",
+      "g": "Logarithme",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/aralore-barbedefeu": {
+      "l": 55,
+      "c": "WARRIOR",
+      "g": "Unbuff",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/jobu-tupaki": {
+      "l": 60,
+      "c": "MAGE",
+      "g": "Dark Odyssey",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/cute-deadflower": {
+      "l": 10,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/saokkei-ezwin": {
+      "l": 60,
+      "c": "MAGE",
+      "g": "yo",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/unstable-potato": {
+      "l": 54,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/hardcore-hooligans": {
+      "l": 24,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/krigaren-gard": {
+      "l": 35,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/leoric-ashfall": {
+      "l": 19,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nano-hawke": {
+      "l": 57,
+      "c": "HUNTER",
+      "g": "Le Wipe Club",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/brynhild-jarnslegge": {
+      "l": 59,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mesmel-thunderfart": {
+      "l": 12,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/necrorobicon-xmortis": {
+      "l": 6,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mazza-dura": {
+      "l": 45,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/zynical-zeneweh": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "Rename",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dajm-kryss": {
+      "l": 45,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/rohrk-urdur": {
+      "l": 60,
+      "c": "DRUID",
+      "g": "FINAL MARCH",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/myriad-maleka": {
+      "l": 34,
+      "c": "WARRIOR",
+      "g": "Forêver PvP",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tommyg-thebutcher": {
+      "l": 17,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tyme-hunt": {
+      "l": 42,
+      "c": "HUNTER",
+      "g": "Les Grosses Chaussures",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shaelra-briarveil": {
+      "l": 14,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/orygin-witherstorm": {
+      "l": 25,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/yhorm-grailseeker": {
+      "l": 41,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/haha-haha": {
+      "l": 50,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/raven-frost": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "Radiant Hymn",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/buffa-mage": {
+      "l": 14,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ecco-mcsofty": {
+      "l": 16,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/koos-kombuis": {
+      "l": 49,
+      "c": "PALADIN",
+      "g": "StrandBrakke",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/rogée-oqtf": {
+      "l": 60,
+      "c": "WARRIOR",
+      "g": "Astral",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/yaourt-salé": {
+      "l": 46,
+      "c": "PALADIN",
+      "g": "Lanppart",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/jsraked-war": {
+      "l": 60,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/faustian-grauwenberg": {
+      "l": 28,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/micro-bimbo": {
+      "l": 15,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/glørn-downhammer": {
+      "l": 60,
+      "c": "PALADIN",
+      "g": "Unbuff",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lenne-valkyrie": {
+      "l": 21,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tung-type": {
+      "l": 42,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shinfaya-goutetsu": {
+      "l": 55,
+      "c": "ROGUE",
+      "g": "Fin De Partie",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bastu-bright": {
+      "l": 10,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mandraa-gora": {
+      "l": 60,
+      "c": "SHAMAN",
+      "g": "Disconnect",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ariel-winter": {
+      "l": 60,
+      "c": "SHAMAN",
+      "g": "Baston et Chopines",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/hagal-nordansköld": {
+      "l": 41,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/valin-pivson": {
+      "l": 37,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lighty-sword": {
+      "l": 15,
+      "c": "PALADIN",
+      "g": "Elite",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/scaco-attacko": {
+      "l": 56,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lothir-cinderborn": {
+      "l": 33,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/saita-sansbruit": {
+      "l": 54,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shortlegs-bigears": {
+      "l": 22,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/katarina-kosaca": {
+      "l": 46,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
     }
   }
 }
