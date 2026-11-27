@@ -743,7 +743,7 @@ html.static .pulse .live{animation:none}
 @media (display-mode:standalone){body{padding-top:env(safe-area-inset-top)}}
 
 /* ---------- Accueil personnel ---------- */
-#home.logged:not(.show-intro) > :not(#dash){display:none}
+#home.logged:not(.show-intro) > :not(#dash):not(#week){display:none}
 .dash{padding:clamp(18px,3vw,32px) 0}
 .dash>.chips{margin-bottom:12px}
 .dhero{position:relative;overflow:hidden;border-radius:var(--radius);border:1px solid rgba(196,154,92,.4);padding:clamp(18px,3vw,30px);background:radial-gradient(120% 140% at 100% 0%,rgba(196,154,92,.16),transparent 60%),linear-gradient(180deg,#2a2a1c,#141209)}
