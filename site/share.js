@@ -16,7 +16,9 @@
   function T(s, x, y, size, color, o = {}) {
     const font = z => `${o.w || 400} ${z}px ${o.f || SERIF}`;
     g.font = font(size); g.textAlign = o.a || 'left'; g.textBaseline = 'alphabetic';
-    if (o.max) { let z = size; while (z > 10 && g.measureText(s).width > o.max) g.font = font(--z); }
+    if (o.max) { let z = size; while (z > (o.min ?? 10) && g.measureText(s).width > o.max) g.font = font(--z); }
+    // toujours trop long (autres langues) : coupé avec « … » plutôt que de déborder sur la colonne voisine
+    if (o.max && g.measureText(s).width > o.max) { while (s.length > 1 && g.measureText(s + '…').width > o.max) s = s.slice(0, -1); s = s.replace(/\s+$/, '') + '…'; }
     g.fillStyle = color; g.fillText(s, x, y); return g.measureText(s).width;
   }
   // cadrage du rendu 3D sur le corps (centre de masse horizontal), pas sur l'arme
@@ -84,7 +86,7 @@
 
   // page de gauche : les compétences (nom + mini-barre de couleur, niveau / max, rang)
   function skills(rows, icons, logo, L) {
-    const { lx: x, lw: w } = PAGE, cLvl = x + w - 74, cMax = x + w - 70, cRank = x + w - 2;
+    const { lx: x, lw: w } = PAGE, cLvl = x + w - 86, cMax = x + w - 82, cRank = x + w - 2;
     head(x, w, PAGE.top + 18, null, L.cols[0], null);
     T(L.cols[2].toUpperCase(), cLvl + 22, PAGE.top + 18, 13, SOFT, { f: NARROW, w: 700, a: 'right' });
     T(L.cols[1].toUpperCase(), cRank, PAGE.top + 18, 13, SOFT, { f: NARROW, w: 700, a: 'right' });
@@ -100,9 +102,10 @@
       if (r.total && r.parts) { let xx = bx; for (const [k, gname] of [['level', 'lvl'], ['combat', 'wpn'], ['professions', 'prf']]) { const ww = bw * (r.parts[k] || 0) / r.max; g.fillStyle = COL[gname][0]; g.fillRect(xx, by, ww, 4); xx += ww; } }
       else { g.fillStyle = grad(bx, 0, bx + bw, 0, [[0, COL[r.group][0]], [1, COL[r.group][1]]]); rr(bx, by, Math.max(4, bw * Math.min(1, r.v / r.max)), 4, 2); g.fill(); }
       T(r.vText, cLvl, y, 20, INK, { f: NARROW, w: 700, a: 'right' });
-      T('/' + r.maxText, cMax, y, 13, SOFT, { f: NARROW });
+      const mw = T('/' + r.maxText, cMax, y, 13, SOFT, { f: NARROW, max: 44, min: 10 });
       if (r.week > 0) T('+' + r.week, cMax, y - 15, 12, GREEN, { f: NARROW, w: 700 });
-      T(r.rank ? r.rankText : '—', cRank, y, 20, r.rank === 1 ? GOLD : INK, { f: NARROW, w: r.rank === 1 ? 700 : 400, a: 'right' });
+      // le rang prend la place restante à droite du maximum (rangs à 4 ou 5 chiffres : police réduite, jamais de chevauchement)
+      T(r.rank ? r.rankText : '—', cRank, y, 20, r.rank === 1 ? GOLD : INK, { f: NARROW, w: r.rank === 1 ? 700 : 400, a: 'right', max: cRank - cMax - mw - 6, min: 11 });
     });
   }
 
@@ -160,8 +163,8 @@
       S.push([58, y => tiles.forEach((t, i) => {
         const tx = x + i * tw, ix = tx + (i ? 10 : 0);
         if (i) { g.fillStyle = LINE + '44'; g.fillRect(tx - 1, y + 2, 1, 50); }
-        icon(t.img, ix, y + 2, 20);
-        T(t.label.toUpperCase(), ix + 26, y + 16, 11, SOFT, { f: NARROW, w: 700, max: tw - 40 });
+        icon(t.img, ix, y + 3, 16);
+        T(t.label.toUpperCase(), ix + 20, y + 15, 11, SOFT, { f: NARROW, w: 700, max: tw - 30, min: 8 });
         T(t.value, ix, y + 41, 22, INK, { f: NARROW, w: 700, max: tw - 16 });
         if (t.ratio != null) gbar(ix, y + 48, tw - 22, 4, t.ratio);
       })]);
