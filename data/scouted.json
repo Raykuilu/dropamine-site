@@ -2740,7 +2740,7 @@
       "d": 20784
     },
     "eu/piktas-bomzas": {
-      "l": 27,
+      "l": 28,
       "c": "MAGE",
       "s": "x",
       "d": 20784
@@ -2801,7 +2801,7 @@
       "d": 20784
     },
     "eu/tom-storm": {
-      "l": 22,
+      "l": 23,
       "c": "SHAMAN",
       "s": "x",
       "d": 20784
@@ -3654,6 +3654,1013 @@
     "eu/coco-fish": {
       "l": 1,
       "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bamseog-kylling": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/laeh-heal": {
+      "l": 60,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/elsa-jääpuska": {
+      "l": 10,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/luna-elara": {
+      "l": 60,
+      "c": "DRUID",
+      "g": "Bloodhire",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/beranabus-themagician": {
+      "l": 60,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dark-wandor": {
+      "l": 39,
+      "c": "WARLOCK",
+      "g": "Unguildead",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/aynen-aynenn": {
+      "l": 36,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mágnesshphi-csaju": {
+      "l": 1,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dawn-argent": {
+      "l": 49,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ananas-mcnanas": {
+      "l": 60,
+      "c": "PRIEST",
+      "g": "INSU",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/duaza-lipa": {
+      "l": 60,
+      "c": "WARRIOR",
+      "g": "INSU",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/syl-dovah": {
+      "l": 25,
+      "c": "HUNTER",
+      "g": "Wipe Brigade",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/arial-butterfly": {
+      "l": 39,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/chouany-zaony": {
+      "l": 58,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/traphouse-moneymaker": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kaplanka-teodora": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kaleya-bladesong": {
+      "l": 36,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dolladolla-billzyall": {
+      "l": 1,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/snurry-bank": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tys-upad": {
+      "l": 36,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/gompro-bank": {
+      "l": 1,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/plum-powder": {
+      "l": 30,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/elf-therapy": {
+      "l": 60,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dread-sixsixsix": {
+      "l": 60,
+      "c": "WARLOCK",
+      "g": "Erben des Löwen",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/maxi-ken": {
+      "l": 60,
+      "c": "PALADIN",
+      "g": "NPRAP",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tyo-ironballs": {
+      "l": 42,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mythic-mike": {
+      "l": 60,
+      "c": "PRIEST",
+      "g": "MARSHAL ARTS",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ranger-nunnally": {
+      "l": 21,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/leona-sarla": {
+      "l": 53,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/hvartz-sverk": {
+      "l": 60,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ystahr-mya": {
+      "l": 34,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shaad-ke": {
+      "l": 46,
+      "c": "ROGUE",
+      "g": "Knights of Eternity",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shaw-tyy": {
+      "l": 54,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lime-voidwaker": {
+      "l": 57,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/alphar-beerbringer": {
+      "l": 34,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/magicbatar-silverfist": {
+      "l": 35,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/neffi-nyx": {
+      "l": 60,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/rebilek-arcweaver": {
+      "l": 32,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/draaize-bank": {
+      "l": 1,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kekht-arakh": {
+      "l": 39,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/stacked-short": {
+      "l": 24,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/miu-parrotslayer": {
+      "l": 60,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bandor-lobad": {
+      "l": 47,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/loric-starstrider": {
+      "l": 32,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/herr-föreståndare": {
+      "l": 35,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/manny-tentacles": {
+      "l": 60,
+      "c": "PRIEST",
+      "g": "LOBSTER GO PEENCH PEENCH",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/alyas-wolf": {
+      "l": 42,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/genge-eaglebearer": {
+      "l": 59,
+      "c": "WARRIOR",
+      "g": "RAKIJA FOREVER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pluppsbank-två": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/elcofro-delamuchacha": {
+      "l": 4,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/small-stuff": {
+      "l": 51,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/flippinah-allday": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/danxor-dinosaure": {
+      "l": 26,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/abihu-riis": {
+      "l": 58,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/anthorn-greenleaf": {
+      "l": 60,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/control-priest": {
+      "l": 48,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/placebo-prophet": {
+      "l": 40,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/wodan-winterborne": {
+      "l": 23,
+      "c": "MAGE",
+      "g": "Azeroth Social Club",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/danglorious-moontwinkle": {
+      "l": 42,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/warraka-bis": {
+      "l": 60,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mido-bank": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tony-bodypull": {
+      "l": 1,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/wing-host": {
+      "l": 60,
+      "c": "WARRIOR",
+      "g": "Parse Attack",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/brodruf-trademaster": {
+      "l": 6,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nyakatsuki-catgami": {
+      "l": 60,
+      "c": "PALADIN",
+      "g": "Zerg rush",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/blood-diamondz": {
+      "l": 49,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lock-mcwar": {
+      "l": 16,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sirpinw-bafousalot": {
+      "l": 32,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/maria-elfowskacuri": {
+      "l": 27,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/hunt-done": {
+      "l": 47,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/alpha-bang": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/plupps-bank": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/alunaria-moonwhisper": {
+      "l": 32,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/teapaze-meteo": {
+      "l": 30,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/gändalf-legris": {
+      "l": 10,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kangi-htrzaska": {
+      "l": 43,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/grimtok-bank": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/alreth-ward": {
+      "l": 37,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sativa-vié": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "All B all Out",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dej-gnaar": {
+      "l": 1,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/admiral-gandalf": {
+      "l": 1,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/snekid-dikens": {
+      "l": 57,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pidriarque-levaleureux": {
+      "l": 24,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/blood-striker": {
+      "l": 23,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/këll-kaïyar": {
+      "l": 22,
+      "c": "HUNTER",
+      "g": "Wipe Only",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bubble-kirk": {
+      "l": 31,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shadowed-samurai": {
+      "l": 19,
+      "c": "ROGUE",
+      "g": "is Pro",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dany-forever": {
+      "l": 25,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/zad-kude": {
+      "l": 37,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/docteurlulu-candyup": {
+      "l": 57,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/banky-lastwish": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nyx-handler": {
+      "l": 49,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ouaicest-lenoop": {
+      "l": 10,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nicko-bloodpaw": {
+      "l": 14,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lodsin-mage": {
+      "l": 6,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sharman-thistel": {
+      "l": 18,
+      "c": "SHAMAN",
+      "g": "Comon",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bandit-défias": {
+      "l": 49,
+      "c": "ROGUE",
+      "g": "Murloc Lifting Club",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/elízabeth-báthory": {
+      "l": 23,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/durgan-sunhammer": {
+      "l": 41,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/céline-donjon": {
+      "l": 4,
+      "c": "MAGE",
+      "g": "Vanilla Spirit Forever",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dutch-ye": {
+      "l": 28,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pierunska-ukleja": {
+      "l": 51,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shivor-il": {
+      "l": 28,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/gavanb-bank": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kirupa-ra": {
+      "l": 49,
+      "c": "WARRIOR",
+      "g": "We Live Forever",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/noble-rat": {
+      "l": 45,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/gaelad-mossforest": {
+      "l": 33,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pringla-sjöflinga": {
+      "l": 17,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/paul-windfury": {
+      "l": 35,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/artimis-pallas": {
+      "l": 34,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/gentle-menell": {
+      "l": 27,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bankentar-alladinapeng": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/skattev-erket": {
+      "l": 6,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/eltranor-stark": {
+      "l": 25,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/jenii-zek": {
+      "l": 40,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/larry-kakuka": {
+      "l": 37,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/renka-benka": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/redbull-coco": {
+      "l": 60,
+      "c": "DRUID",
+      "g": "Confrérie de la raclette",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mr-atos": {
+      "l": 17,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/supernova-duanyar": {
+      "l": 51,
+      "c": "MAGE",
+      "g": "Légendes",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/doubleblinds-bank": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mr-looser": {
+      "l": 26,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shimi-ye": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/md-bankson": {
+      "l": 1,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/beau-sinn": {
+      "l": 20,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/badkyk-memelord": {
+      "l": 53,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/larger-man": {
+      "l": 10,
+      "c": "WARRIOR",
+      "g": "Best Friends Forever",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/onizuka-mage": {
+      "l": 55,
+      "c": "MAGE",
+      "g": "Ashen One",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/blitzkrieger-painbringer": {
+      "l": 27,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/astarky-vala": {
+      "l": 60,
+      "c": "MAGE",
+      "g": "INSU",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pikk-lefion": {
+      "l": 60,
+      "c": "ROGUE",
+      "g": "S P E C T R E",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/trälen-tova": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/drizy-storm": {
+      "l": 60,
+      "c": "MAGE",
+      "g": "Parse Attack",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ropli-femboylover": {
+      "l": 60,
+      "c": "PALADIN",
+      "g": "Pour toujours",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/banques-account": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bank-ofkaoz": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/brandy-babbelas": {
+      "l": 48,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/franck-dux": {
+      "l": 45,
+      "c": "SHAMAN",
+      "g": "Two",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/justice-lightwrath": {
+      "l": 17,
+      "c": "PALADIN",
+      "g": "Goony Family",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dhote-herosquest": {
+      "l": 23,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/diladaille-sombrage": {
+      "l": 5,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/farming-lavigne": {
+      "l": 18,
+      "c": "DRUID",
+      "g": "La Crème",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/charles-magnes": {
+      "l": 42,
+      "c": "WARRIOR",
+      "g": "K e K",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/deliana-thorn": {
+      "l": 30,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/jaba-kudii": {
+      "l": 60,
+      "c": "MAGE",
+      "g": "Custodes Aeterni",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ragnar-laudbrok": {
+      "l": 20,
+      "c": "WARRIOR",
+      "g": "Unguildead",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/julie-sílver": {
+      "l": 10,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/conny-cowboy": {
+      "l": 52,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/greirat-il": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lagerta-vi": {
+      "l": 51,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/wienerli-wursthammer": {
+      "l": 53,
+      "c": "PALADIN",
+      "g": "Pond",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ondend-lizardwizard": {
+      "l": 31,
+      "c": "MAGE",
+      "g": "LMG",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mario-bros": {
+      "l": 56,
+      "c": "HUNTER",
+      "g": "Saperlamute",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/feebus-volt": {
+      "l": 56,
+      "c": "MAGE",
+      "g": "Saperlamute",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/orion-moonslayer": {
+      "l": 38,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/élysthéa-highcloud": {
+      "l": 60,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/veylor-heldane": {
+      "l": 57,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/zx-nn": {
+      "l": 34,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kédérion-radiant": {
+      "l": 60,
+      "c": "PALADIN",
+      "g": "S P E C T R E",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/magejon-maynard": {
+      "l": 45,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sakoh-furbolg": {
+      "l": 43,
+      "c": "ROGUE",
+      "g": "Déluge",
       "s": "x",
       "d": 20784
     }
