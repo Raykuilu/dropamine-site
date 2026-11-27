@@ -583,10 +583,6 @@ function renderLive() {
   const region = inRegion(), now = Date.now();
   LIVE = liveFeed();
   const runs = (RUNS || []).filter(r => Date.parse(r.at) > now - 15 * 60e3);
-  const guildsN = DATA.counts?.guilds ?? new Set(DATA.players.filter(p => p.guild).map(p => (p.region || 'eu') + '/' + p.guild.slug)).size;
-  const found = DATA.counts?.found ?? DATA.players.reduce((n, p) => n + (p.dropamine?.collection?.x || 0), 0);
-  const counters = [[CF_DOWNLOADS, t('lvcDl')], [DATA.counts?.players ?? DATA.players.length, t('lvcChars')], [guildsN, t('lvcGuilds')], [runs.length, t('lvcRuns')], [found, t('lvcItems')]]
-    .map(([n, l]) => `<div><b data-n="${n}">${fmt(n)}</b><span>${l}</span></div>`).join('');
   const feed = LIVE.slice(0, 8).map(e => `<li${e.run ? ` data-runlink="${esc(e.run)}"` : ` data-c="${esc(pkey(e.p))}"`}>${avatar(e.p)}<span>${e.html}</span><time>${dayAgo(e.at)}</time></li>`).join('');
   // les guildes qui montent (le podium de la semaine est dans « Cette semaine », juste au-dessus)
   const gmap = new Map();
@@ -596,8 +592,7 @@ function renderLive() {
   const loots = region.flatMap(p => (p.loots || []).map(([id, d]) => ({ p, id, at: Date.parse(d) }))).sort((a, b) => b.at - a.at).slice(0, 10);
   const lootRow = loots.length && ITEMS ? `<section class="panel lv-loots"><div class="cathead"><h3 class="sub">${t('lvLoots')}</h3><span class="cx2">${t('lvLootsSub')}</span></div>
     <div class="lootrow">${loots.map(x => `<a class="loot" href="?p=char&c=${esc(encodeURIComponent(pkey(x.p)))}" data-c="${esc(pkey(x.p))}">${itemChip(x.id)}<b style="color:${QCOL[ITEMS?.[x.id]?.q] || 'var(--cream)'}">${esc(lootName(x.p, x.id))}</b><small>${esc(x.p.name)} · ${dayAgo(x.at)}</small></a>`).join('')}</div></section>` : '';
-  // les chiffres vont sous le titre (#lvc) ; ici : les trouvailles, le fil, les sorties, puis l'annonce des raids en bas
-  const lvc = $('#lvc'); if (lvc) { lvc.innerHTML = counters; lvc.hidden = false; }
+  // les chiffres sont dans la petite ligne au point vert sous les boutons (renderHome) ; ici : les trouvailles, le fil, les sorties, puis les raids
   box.innerHTML = `${lootRow}
     <div class="lv-grid">
       <section class="panel lv-feed"><div class="cathead"><h3 class="sub"><i class="live"></i>${t('lvTitle')}</h3><span class="cx2">${t('lvSub')}</span></div>
@@ -753,15 +748,8 @@ function renderHome() {
   renderWeek();
   loadCf();
   renderLive();
-  // les chiffres qui montrent que le projet vit (toutes régions)
-  if (DATA.players.length) {
-    const gs = new Set(DATA.players.filter(p => p.guild).map(p => (p.region || 'eu') + '/' + p.guild.slug));
-    const up = DATA.updated ? new Date(DATA.updated) : null;
-    const when = up ? (up.toDateString() === new Date().toDateString()
-      ? t('pulseToday', { h: up.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }) })
-      : t('pulseOn', { d: up.toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) })) : '';
-    $$('[data-pulse]').forEach(el => { el.innerHTML = `<i class="live"></i>${t('pulseDl', { n: fmt(CF_DOWNLOADS) })} · ${t('pulseChars', { n: fmt(DATA.players.length) })} · ${t('pulseGuilds', { n: gs.size })}${when ? ' · ' + when : ''}`; });
-  }
+  fillPulse();
+
   const all = rankBy(SKILLS[0], inRegion()), top = all.slice(0, 5);
   const line = ({ p, v, r }, cls = '') => `<div class="row${r <= 3 ? ' top' : ''}${cls}" data-c="${esc(pkey(p))}" style="grid-template-columns:44px minmax(0,1fr) minmax(90px,160px) 96px"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p)}<small>${who(p)}</small></span></span>${tri(p)}<span class="tot">${fmt(v)}${estTag(p)}</span></div>`;
   // connecté : ton meilleur personnage, sous le top 5 s'il n'y figure pas
@@ -2572,6 +2560,19 @@ if (!LATEST_VER) fetch('https://api.github.com/repos/Raykuilu/Dropamine/releases
     applyStatic(); freshenNews();
   }).catch(() => {});
 
+// la petite ligne au point vert sous les boutons : les chiffres qui montrent que le projet vit (toutes régions)
+// (re-remplie après applyStatic, qui réécrit les blocs traduits de l'accueil)
+function fillPulse() {
+  if (DATA.players.length) {
+    const nGuilds = DATA.counts?.guilds ?? new Set(DATA.players.filter(p => p.guild).map(p => (p.region || 'eu') + '/' + p.guild.slug)).size;
+    const up = DATA.updated ? new Date(DATA.updated) : null;
+    const when = up ? (up.toDateString() === new Date().toDateString()
+      ? t('pulseToday', { h: up.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }) })
+      : t('pulseOn', { d: up.toLocaleDateString(locale(), { day: 'numeric', month: 'long' }) })) : '';
+    $$('[data-pulse]').forEach(el => { el.innerHTML = `<i class="live"></i>${t('pulseDl', { n: fmt(CF_DOWNLOADS) })} · ${t('pulseChars', { n: fmt(DATA.counts?.players ?? DATA.players.length) })} · ${t('pulseGuilds', { n: nGuilds })}${when ? ' · ' + when : ''}`; });
+  }
+}
+
 /* ---------- Texte fixe traduit (data-t) et pied de page ---------- */
 function applyStatic() {
   $$('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
@@ -2585,7 +2586,7 @@ function applyStatic() {
     const title = `[${LANG}] ${t('trfbTitle')}`, body = `${t('trfbBody')}\n\n${t('trfbPage')} ${location.href}\n${t('trfbLang')} ${LANG_NAMES[LANG] || LANG}\n\n${t('trfbWrong')} \n${t('trfbRight')} \n`;
     fb.href = 'https://github.com/Raykuilu/Dropamine/issues/new?labels=translation&title=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(body);
   }
-  applyBlocks();
+  applyBlocks(); fillPulse();
   if (DATA.updated) $('#updated').textContent = t('updated', { d: new Date(DATA.updated).toLocaleDateString(locale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) });
   const v = newerVersion(LATEST_VER, NEWS?.versions?.[0]?.version);
   if (v) $$('[data-meta]').forEach(el => {
