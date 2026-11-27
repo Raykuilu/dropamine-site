@@ -382,7 +382,8 @@ const showVal = (sk, v, p) => sk.show ? sk.show(v, p) : fmt(v);
 const GROUP_COLOR = { lvl: 'var(--lvl)', wpn: 'var(--wpn)', prf: 'var(--prf)', pvp: '#a874d6', stat: 'var(--rim)', book: 'var(--gold)' };
 const VIEWS = ['home', 'rank', 'char', 'guild', 'runs', 'news', 'get', 'join', 'privacy', 'about'];
 
-let DATA = { players: [] }, NEWS = null;
+// loading : hiscores.json pas encore arrivé (la goutte de chargement s'affiche au lieu d'une liste vide)
+let DATA = { players: [], loading: true }, NEWS = null;
 const state = { view: 'home', region: 'eu', skill: 'total', cls: 0, rs: 0, c: '', g: '', gs: 'total', rscope: '' };
 const inRegion = () => DATA.players.filter(p => (p.region || 'eu') === state.region);
 
@@ -723,7 +724,7 @@ function renderHome() {
   // connecté : ton meilleur personnage, sous le top 5 s'il n'y figure pas
   const me = all.find(x => pkey(x.p) === Bnet.best());
   const you = me && !top.includes(me) ? `<div class="you-sep">${t('youHere')}</div>${line(me, ' you')}` : '';
-  $('#home-top').innerHTML = DATA.failed ? failed() : top.length
+  $('#home-top').innerHTML = DATA.loading ? loadingBox() : DATA.failed ? failed() : top.length
     ? top.map(x => line(x, pkey(x.p) === Bnet.best() ? ' you' : '')).join('') + you
     : nobody();
 }
@@ -750,6 +751,7 @@ document.addEventListener('click', e => {
   const m = skFoldGet(); m[b.dataset.sgt] = open; try { localStorage.setItem(skFoldKey, JSON.stringify(m)); } catch {}
 });
 function renderRank() {
+  if (DATA.loading) { $('#rank-panel').innerHTML = loadingBox(); return; }
   if (DATA.failed) { $('#rank-panel').innerHTML = failed(); return; }
   const sk = skillById(state.skill), region = inRegion();
   const byRs = state.rs ? region.filter(p => p.rulesetId === state.rs) : region;
@@ -964,6 +966,7 @@ const Tip = (() => {
 const hoursAgo = at => { const h = (Date.now() - at) / 36e5; return h < 1 ? t('agoLt1h') : h < 24 ? t('agoH', { n: Math.round(h) }) : dayAgo(at); };
 const freshLine = p => `<p class="fresh">${DATA.updated ? t('freshArm', { d: hoursAgo(Date.parse(DATA.updated)) }) : ''}${p.preview ? '' : ' · ' + (p.dropamineAt ? t('freshExp', { d: dayAgo(Date.parse(p.dropamineAt)) }) : t('freshNoExp'))}</p>`;
 function renderChar() {
+  if (DATA.loading) { $('#char-panel').innerHTML = loadingBox(); return; }
   if (DATA.failed) { $('#char-panel').innerHTML = failed(); return; }
   const p = DATA.players.find(x => pkey(x) === state.c || x.slug === state.c) || DATA.players.find(x => pkey(x) === Bnet.best());
   if (!p) { $('#char-panel').innerHTML = `<div class="empty"><b>${t('noCharT')}</b>${t('noChar')}</div>`; return; }
@@ -1379,7 +1382,7 @@ function dropBook(p) {
     const rows = [...c.dungeons].sort((a, b) => b.x / b.y - a.x / a.y).map(g =>
       `<li><span>${esc(g.name)}</span>${bar(g.x, g.y)}<b>${g.x} / ${g.y}</b></li>`).join('');
     parts.push(`<section class="db-card db-wide"><h4>${t('dbLog')}</h4><div class="db-big">${fmt(c.x)}<small> / ${fmt(c.y)}</small></div>${bar(c.x, c.y)}
-      ${c.items?.length ? `<div class="clog" data-clog>${t('loading')}</div>` : `${rows ? `<ul class="db-list">${rows}</ul>` : ''}<p class="db-note">${t('clogResend')}</p>`}</section>`);
+      ${c.items?.length ? `<div class="clog" data-clog>${loadingBox()}</div>` : `${rows ? `<ul class="db-list">${rows}</ul>` : ''}<p class="db-note">${t('clogResend')}</p>`}</section>`);
   }
   if (d.achievements) {
     const a = d.achievements;
@@ -1628,6 +1631,7 @@ function gain7(p) {
   return histDiff(p, [...h].reverse().find(x => x.d <= cut) || h[0], last);
 }
 function renderGuild() {
+  if (DATA.loading) { $('#guild-panel').innerHTML = loadingBox(); return; }
   if (DATA.failed) { $('#guild-panel').innerHTML = failed(); return; }
   const all = guilds(), g = all.find(x => x.slug === state.g);
   if (!g) {
@@ -2101,7 +2105,7 @@ function exploreBlock(me) {
 }
 function renderRuns() {
   const box = $('#runs-panel');
-  if (!LOOT || !ITEMS || !ART) {
+  if (!LOOT || !ITEMS || !ART || DATA.loading) {
     box.innerHTML = loadingBox();
     Promise.all([loadLoot(), loadItems(), loadArt(), loadRuns()]).then(() => { if (state.view === 'runs') { renderRuns(); animate($('#runs')); } });
     return;
@@ -2530,6 +2534,8 @@ const Bnet = (() => {
         <button class="btn gold" data-bn="scout">${t('scSend')}</button>${scMsg ? `<p class="msg">${scMsg}</p>` : ''}</div>` : ''}`;
   }
   async function show() {
+    // goutte de chargement pendant la réponse du serveur (seulement au premier affichage, pas de clignotement ensuite)
+    { const b = box(); if (b.hidden) { b.hidden = false; b.innerHTML = loadingBox(); } }
     if (!(await probe())) { draw(); return; }
     const q = new URLSearchParams(location.search);
     if (q.get('bnet') === 'error') msg = t('bnAuthError');
@@ -2646,15 +2652,19 @@ function writeUrl(push) {
 }
 const RENDER = { rank: renderRank, char: renderChar, guild: renderGuild, runs: renderRuns, news: renderNews, join: () => Bnet.show() };
 const TITLES = { rank: 'tab.rank', char: 'tab.char', guild: 'tab.guild', runs: 'tab.runs', news: 'tab.news', get: 'btn.download', join: 'foot.join', privacy: 'foot.privacy', about: 'foot.about' };
+// onglet sélectionné et page affichée (sans la dessiner) : posé tout de suite au changement de page
+function markNav() {
+  tabs.forEach(b => b.setAttribute('aria-selected', b.dataset.view === state.view && (b.dataset.view !== 'char' || Bnet.isMine(state.c))));
+  const meView = (state.view === 'char' && Bnet.isMine(state.c)) || state.view === 'join';
+  $$('.tabbar [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === 'me' ? meView : b.dataset.go === state.view && !(state.view === 'char')));
+  $$('.view').forEach(v => v.classList.toggle('on', v.id === state.view));
+}
 function render(push) {
   applyStatic();
   renderHome();
   (RENDER[state.view] || (() => {}))();
-  tabs.forEach(b => b.setAttribute('aria-selected', b.dataset.view === state.view && (b.dataset.view !== 'char' || Bnet.isMine(state.c))));
-  const meView = (state.view === 'char' && Bnet.isMine(state.c)) || state.view === 'join';
-  $$('.tabbar [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === 'me' ? meView : b.dataset.go === state.view && !(state.view === 'char')));
+  markNav();
   Bnet.header();
-  $$('.view').forEach(v => v.classList.toggle('on', v.id === state.view));
   $('#sub').textContent = `HISCORES · FOREVER ${state.region.toUpperCase()}`;
   $('#region').value = state.region;
   document.title = state.view === 'home' ? t('title') : `${t(TITLES[state.view])} · Dropamine`;
@@ -2663,9 +2673,20 @@ function render(push) {
   $('#foot-coffee').hidden = !['home', 'get', 'news'].includes(state.view);
   writeUrl(push);
 }
+// changement de page : l'onglet est sélectionné et la page s'affiche tout de suite, avec la goutte de chargement ;
+// le contenu (classement, fiche…) est dessiné à l'image suivante, après que le navigateur a montré le bouton et la goutte
+// (avant : rien ne bougeait pendant le dessin, puis le bouton se sélectionnait d'un coup)
+const PANEL = { rank: '#rank-panel', char: '#char-panel', guild: '#guild-panel', runs: '#runs-panel', news: '#news-list' };
+let goN = 0;
 function go(patch) {
   const changedView = patch.view && patch.view !== state.view;
-  Object.assign(state, patch); render(true);
+  const newPage = changedView || ('c' in patch && patch.c !== state.c) || ('g' in patch && patch.g !== state.g);
+  Object.assign(state, patch);
+  const n = ++goN, box = newPage && PANEL[state.view] && $(PANEL[state.view]);
+  if (box) {
+    markNav(); box.innerHTML = loadingBox();
+    requestAnimationFrame(() => setTimeout(() => { if (n === goN) render(true); }, 0));
+  } else render(true);
   Ribbon.swell(changedView ? 1 : .45);
   // nouvelle page : on repart du haut, tout de suite (un défilement animé se faisait interrompre par le nouvel affichage)
   if (changedView) { scrollTo({ top: 0, behavior: 'auto' }); requestAnimationFrame(() => scrollTo({ top: 0, behavior: 'auto' })); }
