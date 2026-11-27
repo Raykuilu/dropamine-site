@@ -501,7 +501,15 @@
   "pendTitle": "Dalla tua riga /drop hiscores, in attesa dell'armeria",
   "pendTip": "{v} nella tua riga, in attesa dell'armeria",
   "pendTotal": "+{n} dalla tua riga, in attesa dell'armeria",
-  "pendTotal2": "ufficiale: {o} · +{n} dalla tua riga, in attesa dell'armeria"
+  "pendTotal2": "ufficiale: {o} · +{n} dalla tua riga, in attesa dell'armeria",
+  "fSkill": "Classifica",
+  "fMode": "Modalità",
+  "fClass": "Classe",
+  "allM": "Tutte",
+  "allC": "Tutte",
+  "kdBy": "Vittorie / morti",
+  "hpkBy": "Onore / vittoria",
+  "hpkNone": "Ancora nessuno: servono almeno 10 uccisioni onorevoli questa settimana, in una riga /drop hiscores di meno di 7 giorni."
  },
  "names": {
   "Leatherworking": "Conciatura",

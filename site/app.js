@@ -162,7 +162,8 @@ const I18N = {
   clogSrc: ['Loot tables: AtlasLoot Forever (GPL-2.0) · items: Blizzard API.', 'Tables de butin : AtlasLoot Forever (GPL-2.0) · objets : API Blizzard.'],
   obtained: ['Obtained', 'Obtenu'], notObtained: ['Not obtained yet', 'Pas encore obtenu'], itemForever: ['Forever item', 'Objet propre à Forever'], advT: ['Adventure', 'Aventure'], pvpT: ['PvP', 'JcJ'],
   srcArm: ['Armory', 'Armurerie'], srcDecl: ['Dropamine · on trust', 'Dropamine · sur la confiance'],
-  kd: ['K/D ratio', 'Ratio K/D'], kdMin: ['from 20 fights (honorable kills + deaths)', 'dès 20 combats (VH + morts)'], kdHow: ['{k} honorable kills for {d} deaths to players', '{k} victoires honorables pour {d} morts face aux joueurs'],
+  kd: ['K/D ratio', 'Ratio K/D'], kdBy: ['Kills / deaths', 'Victoires / morts'], hpkBy: ['Honor / kill', 'Honneur / victoire'],
+  hpkNone: ['Nobody yet: it takes at least 10 honorable kills this week, in a /drop hiscores line less than 7 days old.', 'Personne pour l’instant : il faut au moins 10 victoires honorables cette semaine, dans une ligne /drop hiscores de moins de 7 jours.'], kdMin: ['from 20 fights (honorable kills + deaths)', 'dès 20 combats (VH + morts)'], kdHow: ['{k} honorable kills for {d} deaths to players', '{k} victoires honorables pour {d} morts face aux joueurs'],
   duelsT: ['Duels won – lost', 'Duels gagnés – perdus'], pvpRank: ['PvP rank', 'Rang JcJ'],
   subWinRate: ['{n}% won', '{n} % de victoires'], subFaction: ['{n} by the opposite faction', '{n} par la faction adverse'],
   subCritters: ['+ {n} critters', '+ {n} bestioles'], subAbandoned: ['{n} abandoned', '{n} abandonnées'], subBosses: ['{n} bosses defeated', '{n} boss vaincus'],
@@ -183,6 +184,7 @@ const I18N = {
   sealPreview: ['GUILD PREVIEW · NOT REGISTERED', 'APERÇU DE GUILDE · NON INSCRIT'],
   previewNote: ['Shown because their guild is followed. Is it you? <a href="?p=join" data-view-link="join">Sign in</a> to register for an exact score, or to hide it.',
     "Affiché parce que sa guilde est suivie. C'est toi ? <a href=\"?p=join\" data-view-link=\"join\">Connecte-toi</a> pour t'inscrire avec un score exact, ou pour le masquer."], allModes: ['All modes', 'Tous les modes'], allClasses: ['All classes', 'Toutes les classes'],
+  fSkill: ['Ranking', 'Classement'], fMode: ['Mode', 'Mode'], fClass: ['Class', 'Classe'], allM: ['All', 'Tous'], allC: ['All', 'Toutes'],
   registered: ['{n} registered', '{n} inscrit{s}'], previewN: ['{n} in preview', '{n} en aperçu'],
   legend: ['Weapons estimated, waiting for the Dropamine file', 'Armes estimées, en attente du fichier Dropamine'], weaponsDef: ['Weapons & Defense', 'Armes et Défense'], professions: ['Professions', 'Métiers'],
   failedT: ['Data unavailable', 'Données indisponibles'], failed: ["The Hiscores couldn't be loaded. Try again in a moment.", "Le classement n'a pas pu être chargé. Réessaie dans un instant."],
@@ -301,7 +303,7 @@ const SKILLS = [
   { id: 'duels', group: 'pvp', label: () => t('duelsWonT'), max: '', icon: 'ability_warrior_challange', note: () => t('duelsNote'),
     get: p => p.stats?.duelsWon ?? null, show: (v, p) => `${fmt(v)}<small> – ${fmt(p.stats.duelsLost || 0)}</small>`,
     ratio: (v, p) => v / ((v + (p.stats.duelsLost || 0)) || 1) },
-  { id: 'hpk', group: 'pvp', label: () => t('hpkT'), max: '', icon: 'spell_holy_sealofwrath', note: () => t('hpkNote'), get: hpkOf,
+  { id: 'hpk', group: 'pvp', with: 'kd', label: () => t('hpkT'), max: '', icon: 'spell_holy_sealofwrath', note: () => t('hpkNote'), get: hpkOf,
     show: (v, p) => `${v.toLocaleString(locale(), { maximumFractionDigits: 1 })}<small class="kdd"> · ${fmt(p.dropamine.pvp.honorWeek)} / ${fmt(p.dropamine.pvp.hkWeek)}</small>${hpkBadge(p)}` },
   { id: 'pvprank', group: 'pvp', label: () => t('pvpRank'), max: '', icon: 'inv_misc_tabardpvp_01', get: p => p.pvpArmory?.rank || null },
   ...STAT_KEYS.map(k => ({ id: k, group: 'stat', label: () => t(k), max: '', icon: STAT_ICON[k], get: p => armoryStat(p, k) })),
@@ -642,6 +644,16 @@ function renderHome() {
 }
 
 /* ---------- Classement ---------- */
+// panneaux de filtres du classement (téléphone) : bouton → panneau ; fond, ✕ ou Échap → fermé ; un choix re-dessine la page
+// le panneau est copié à la racine de la page (la page animée a un « transform » : un « fixed » dedans resterait coincé)
+const fsClose = () => { $$('body > .fsheet').forEach(s => s.remove()); document.documentElement.classList.remove('fs-open'); };
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-fs]');
+  if (b) { fsClose(); const src = $(`#rank-panel .fsheet[data-fsheet="${b.dataset.fs}"]`); if (src) { const s = src.cloneNode(true); s.hidden = false; document.body.append(s); document.documentElement.classList.add('fs-open'); const box = s.querySelector('.fs-in'), on = s.querySelector('.on'); if (box && on) box.scrollTop = Math.max(0, on.offsetTop - box.clientHeight / 2); } return; }
+  if (e.target.closest('[data-fsx]') || e.target.classList?.contains('fsheet')) { fsClose(); return; }
+  if (e.target.closest('.fsheet [data-skill],.fsheet [data-rs],.fsheet [data-cls],.fsheet [data-dg]')) fsClose();   // un choix : le panneau se ferme, la page se re-dessine
+});
+addEventListener('keydown', e => { if (e.key === 'Escape') fsClose(); });
 // groupes de compétences ouverts (retenus sur cet appareil)
 const skFoldKey = 'dropamine.skgroups';
 const skFoldGet = () => { try { return JSON.parse(localStorage.getItem(skFoldKey)) || {}; } catch { return {}; } };
@@ -663,7 +675,8 @@ function renderRank() {
   let nav = '', grp;
   // comme la grille de l'addon : chaque compétence avec son icône ; une arme n'apparaît que si quelqu'un la pratique
   // groupes pliables (Armes, Métiers…) : le groupe de la compétence affichée reste ouvert, les autres suivent le choix du joueur
-  const shown = SKILLS.filter(s => !(s.wpn || s.group === 'book' || s.group === 'pvp') || s.id === sk.id || region.some(p => s.get(p)));
+  const has = s => !!s && region.some(p => s.get(p));
+  const shown = SKILLS.filter(s => !(s.wpn || s.group === 'book' || s.group === 'pvp') || s.id === sk.id || has(s) || (s.with && has(skillById(s.with))));
   shown.forEach(s => {
     if (s.group !== grp) {
       if (grp) nav += '</div>';
@@ -682,6 +695,17 @@ function renderRank() {
   const clsChips = `<span class="chip ${state.cls ? '' : 'on'}" data-cls="0">${t('allClasses')}</span>` +
     classes.map(c => `<span class="chip ${state.cls === c ? 'on' : ''}" data-cls="${c}">${esc(L2(CLASS[c]))}</span>`).join('');
   const isTotal = sk.id === 'total';
+  const kdSw = sk.id === 'kd' || sk.id === 'hpk' ? `<div class="chips kdsw" role="group" aria-label="${t('kd')}"><span class="chip${sk.id === 'kd' ? ' on' : ''}" data-skill="kd" role="button" tabindex="0">${t('kdBy')}</span><span class="chip${sk.id === 'hpk' ? ' on' : ''}" data-skill="hpk" role="button" tabindex="0">${t('hpkBy')}</span></div>` : '';
+  // téléphone : 3 boutons (compétence, mode, classe) qui ouvrent un panneau du bas, au lieu de 3 rangées de pastilles.
+  // Les panneaux reprennent les listes de l'ordinateur (groupes pliables compris).
+  const rsName = state.rs ? L2((RULESETS.find(([id]) => id === state.rs) || [0, ['?', '?']])[1]) : t('allM');
+  const skIc = sk.logo || sk.id === 'total' ? '<i class="sic logo"></i>' : sk.icon ? `<img class="sic" src="${icon(sk.icon)}" alt="" referrerpolicy="no-referrer">` : '';
+  const fbtn = (k, lbl, val, ic = '') => `<button type="button" class="fbtn" data-fs="${k}" aria-haspopup="dialog"><small>${lbl}</small><span>${ic}<b>${val}</b></span><i class="chev" aria-hidden="true"></i></button>`;
+  const sheet = (k, title, body) => `<div class="fsheet" data-fsheet="${k}" hidden role="dialog" aria-label="${esc(title)}"><div class="fs-in"><div class="fs-h"><b>${title}</b><button type="button" class="fs-x" data-fsx aria-label="${t('close')}">✕</button></div>${body}</div></div>`;
+  const fbar = `<div class="fbar">${fbtn('skill', t('fSkill'), esc(sk.label()), skIc)}${fbtn('rs', t('fMode'), esc(rsName) + (state.dg ? ' ▲' : ''))}${fbtn('cls', t('fClass'), state.cls ? esc(L2(CLASS[state.cls])) : t('allC'))}</div>`
+    + sheet('skill', t('fSkill'), `<nav class="skills">${nav}</div></nav>`)
+    + sheet('rs', t('fMode'), `<div class="chips">${rsChips}</div>`)
+    + sheet('cls', t('fClass'), `<div class="chips">${clsChips}</div>`);
   // armes estimées : affichées sous le classement, sans rang
   const pool = state.cls ? byRs.filter(p => p.classId === state.cls) : byRs;
   const estRows = sk.wpn ? pool.filter(p => sk.est(p) && sk.get(p)).sort((a, b) => sk.get(b) - sk.get(a)).map(p => ({ p, v: sk.get(p), r: 0 })) : [];
@@ -697,14 +721,16 @@ function renderRank() {
   const rows = state.dg ? (list.length ? list.map(row).join('') : `<div class="empty">${t('dgNone')}</div>`)
     : (list.length || estRows.length)
     ? list.map(row).join('') + (estRows.length ? `<div class="you-sep est-sep">${t('estSep')}</div>` + estRows.map(row).join('') : '')
-    : nobody();
+    : sk.id === 'hpk' ? `<div class="empty">${t('hpkNone')}</div>` : nobody();
   $('#rank-panel').innerHTML = `
     <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
-    <div class="chips" role="group">${rsChips}</div>
+    ${fbar}
+    ${kdSw}
+    <div class="chips rk-rs" role="group">${rsChips}</div>
     <div class="board">
-      <nav class="skills">${nav}</div></nav>
+      <nav class="skills rk-sk">${nav}</div></nav>
       <div>
-        <div class="chips" role="group" style="margin:0 0 12px">${clsChips}</div>
+        <div class="chips rk-cls" role="group" style="margin:0 0 12px">${clsChips}</div>
         <div class="rows" role="table">
           <div class="row th" role="row"><span>${t('rank')}</span><span>${t('character')}</span><span class="c3">${isTotal ? t('split') : ''}</span><span style="text-align:right">${isTotal ? t('totalH') : t('value')}</span></div>
           ${rows}
@@ -2198,6 +2224,13 @@ function placeTools() {
 }
 wideMq.addEventListener?.('change', placeTools);
 placeTools();
+// hauteur réelle du menu collant (--navh) : le sous-menu de la fiche se colle juste dessous, pas caché derrière
+// (+12 px : le ruban trois couleurs qui pend sous le menu ; sur téléphone le menu est plus haut que les 78 px supposés)
+(() => {
+  const nav = $('.nav'); if (!nav) return;
+  const set = () => document.documentElement.style.setProperty('--navh', (Math.ceil(nav.getBoundingClientRect().height) + 12) + 'px');
+  set(); if (typeof ResizeObserver === 'function') new ResizeObserver(set).observe(nav); else addEventListener('resize', set);
+})();
 addEventListener('resize', () => { clearTimeout(fitNav.t); fitNav.t = setTimeout(fitNav, 120); });
 // langue en plus : ses textes et ses objets, une seule fois par langue
 const i18nCache = {};

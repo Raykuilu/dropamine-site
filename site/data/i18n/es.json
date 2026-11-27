@@ -501,7 +501,15 @@
   "pendTitle": "De tu línea /drop hiscores, a la espera de la armería",
   "pendTip": "{v} en tu línea, a la espera de la armería",
   "pendTotal": "+{n} de tu línea, a la espera de la armería",
-  "pendTotal2": "oficial: {o} · +{n} de tu línea, a la espera de la armería"
+  "pendTotal2": "oficial: {o} · +{n} de tu línea, a la espera de la armería",
+  "fSkill": "Clasificación",
+  "fMode": "Modo",
+  "fClass": "Clase",
+  "allM": "Todos",
+  "allC": "Todas",
+  "kdBy": "Victorias / muertes",
+  "hpkBy": "Honor / victoria",
+  "hpkNone": "Nadie todavía: hacen falta al menos 10 victorias con honor esta semana, en una línea /drop hiscores de menos de 7 días."
  },
  "names": {
   "Leatherworking": "Peletería",

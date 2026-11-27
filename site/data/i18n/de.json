@@ -501,7 +501,15 @@
   "pendTitle": "Aus deiner /drop hiscores-Zeile, wartet auf das Arsenal",
   "pendTip": "{v} in deiner Zeile, wartet auf das Arsenal",
   "pendTotal": "+{n} aus deiner Zeile, wartet auf das Arsenal",
-  "pendTotal2": "offiziell: {o} · +{n} aus deiner Zeile, wartet auf das Arsenal"
+  "pendTotal2": "offiziell: {o} · +{n} aus deiner Zeile, wartet auf das Arsenal",
+  "fSkill": "Rangliste",
+  "fMode": "Modus",
+  "fClass": "Klasse",
+  "allM": "Alle",
+  "allC": "Alle",
+  "kdBy": "Siege / Tode",
+  "hpkBy": "Ehre / Sieg",
+  "hpkNone": "Noch niemand: Es braucht mindestens 10 ehrenhafte Siege diese Woche, in einer /drop hiscores-Zeile, die jünger als 7 Tage ist."
  },
  "names": {
   "Leatherworking": "Lederverarbeitung",

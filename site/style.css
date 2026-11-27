@@ -1121,8 +1121,9 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .npanel button.chip:hover{color:var(--gold);border-color:var(--rim-lo)}
 /* téléphone : les outils tiennent sur une ligne (la recherche rétrécit, le bouton de déconnexion reste à côté du compte) */
 @media (max-width:720px){
-  .nav .tools{flex-wrap:nowrap}
-  .nav .search{flex:1 1 0;min-width:0}
+  /* aussi quand le menu passe sur 2 lignes (rows2, ex. police agrandie du téléphone) : la règle .rows2 l'emportait */
+  .nav .tools,.nav.rows2 .tools{flex-wrap:nowrap}
+  .nav .search,.nav.rows2 .search{flex:1 1 0;min-width:0}
   .nav .tools .acct-out{width:36px;height:36px}
 }
 /* téléphone : le sous-menu de la fiche tient sur une ligne qui défile ; réputations : nom entier, barre dessous */
@@ -1227,3 +1228,36 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .sbar{position:relative}
 .sbar i.pend{position:absolute;left:0;top:0;bottom:0;opacity:.35;font-style:normal}
 .pendnote{margin-top:4px;font-size:13px;font-style:italic;color:var(--muted);opacity:.85}
+
+/* Ratio K/D : bascule victoires / morts ↔ honneur / victoire */
+.kdsw{margin:0 0 12px}
+/* Classement sur téléphone : 3 boutons (compétence, mode, classe) et un panneau qui monte du bas, au lieu de 3 rangées de pastilles */
+.fbar,.fsheet{display:none}
+@media (max-width:720px){
+  .rk-rs,.rk-cls,.rk-sk{display:none!important}
+  .fbar{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:6px;margin:0 0 14px}
+  .fbtn{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:4px;min-width:0;padding:6px 10px 7px;border:1px solid var(--line-2);border-radius:12px;background:rgba(255,255,255,.02)}
+  .fbtn small{grid-column:1/-1;font-family:var(--display);font-variant:small-caps;letter-spacing:.1em;font-size:12px;color:var(--faint);line-height:1.2}
+  .fbtn span{display:flex;align-items:center;gap:6px;min-width:0}
+  .fbtn b{font-weight:600;color:var(--cream);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fbtn .sic{width:18px;height:18px;flex:none;border-radius:3px;border:1px solid #4a3a22;object-fit:cover;background:#0a0806}
+  .fbtn .sic.logo{background:url(Dropamine-Logo.png) center/70% no-repeat #0a0806}
+  .fbtn .chev{width:7px;height:7px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg) translateY(-2px)}
+  .fbtn:focus-visible{outline:2px solid var(--rim);outline-offset:2px}
+  .fsheet:not([hidden]){display:flex;position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.55);align-items:flex-end;animation:fs-fade .2s ease both}
+  .fs-in{box-sizing:border-box;width:100%;max-height:78vh;overflow:auto;overscroll-behavior:contain;padding:6px 14px calc(18px + env(safe-area-inset-bottom));background:#17110b;border-top:1px solid var(--rim-lo);border-radius:18px 18px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.6);animation:fs-up .25s var(--ease) both}
+  .fs-h{position:sticky;top:-6px;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:12px 2px 10px;margin-bottom:6px;background:#17110b;border-bottom:1px solid var(--line-2)}
+  .fs-h b{font-family:var(--display);font-variant:small-caps;letter-spacing:.12em;font-size:17px;color:var(--gold)}
+  .fs-x{all:unset;cursor:pointer;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line-2);color:var(--muted)}
+  .fsheet .skills{display:flex;flex-direction:column;overflow:visible;gap:0;padding:0}
+  .fsheet .skills .grp{display:flex}
+  .fsheet .skills .sg{display:flex}
+  .fsheet .skills .sg.shut a{display:none}
+  .fsheet .skills .sg.shut a.on{display:flex}
+  .fsheet .skills a{border:0;border-radius:6px;padding:10px 12px;gap:10px}
+  .fsheet .chips{flex-wrap:wrap;overflow:visible;gap:8px;padding:6px 0 4px}
+  .fsheet .chips .chip{padding:9px 14px}
+  html.fs-open{overflow:hidden}
+}
+@keyframes fs-up{from{transform:translateY(40px);opacity:0}}
+@keyframes fs-fade{from{opacity:0}}
