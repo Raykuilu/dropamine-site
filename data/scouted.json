@@ -6252,6 +6252,408 @@
       "c": "HUNTER",
       "s": "x",
       "d": 20784
+    },
+    "eu/schpicka-sugarbaby": {
+      "l": 43,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tyveknægten-skattefar": {
+      "l": 1,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ryuujin-forever": {
+      "l": 48,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/oligofrene-mettreteckel": {
+      "l": 9,
+      "c": "HUNTER",
+      "g": "Les Tunnedins",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/jeriah-justjeron": {
+      "l": 45,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/classic-one": {
+      "l": 48,
+      "c": "DRUID",
+      "g": "LA CASTAGNE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kéza-realmadruid": {
+      "l": 60,
+      "c": "DRUID",
+      "g": "Two",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bobiche-bobiche": {
+      "l": 28,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/diminishing-light": {
+      "l": 8,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tréant-dlagalére": {
+      "l": 39,
+      "c": "DRUID",
+      "g": "Bloodhire",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/frout-enflammé": {
+      "l": 60,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kapri-sun": {
+      "l": 60,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tireur-dangereux": {
+      "l": 22,
+      "c": "HUNTER",
+      "g": "LA PAUSE CLOPE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/thousand-truth": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "Bloodhire",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ullan-silentshadow": {
+      "l": 31,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/smeckl-goldstein": {
+      "l": 23,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/aragon-warhammer": {
+      "l": 50,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ironbank-lannister": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/genghiz-khaan": {
+      "l": 50,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/clumsý-iol": {
+      "l": 60,
+      "c": "MAGE",
+      "g": "Pour toujours",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/chako-druid": {
+      "l": 20,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/yi-go": {
+      "l": 14,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/slafhen-bankissa": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/darka-pala": {
+      "l": 38,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/amélee-rodge": {
+      "l": 25,
+      "c": "WARLOCK",
+      "g": "Les Citoyens",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kirð-practeur": {
+      "l": 38,
+      "c": "PRIEST",
+      "g": "LaBave",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/arbo-gius": {
+      "l": 60,
+      "c": "PALADIN",
+      "g": "castle",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/layff-sombrefût": {
+      "l": 51,
+      "c": "PALADIN",
+      "g": "Éphémère",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/laya-burneheal": {
+      "l": 6,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/chill-ou": {
+      "l": 34,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lube-cash": {
+      "l": 1,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/azhora-moonveil": {
+      "l": 36,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/artbjorn-brisragn": {
+      "l": 34,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/trist-somfaen": {
+      "l": 60,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/putrégonde-testiburne": {
+      "l": 37,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/adaon-icydeadppl": {
+      "l": 24,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/john-wixed": {
+      "l": 10,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/manchette-balayette": {
+      "l": 14,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dalou-zogzog": {
+      "l": 34,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/braewyr-shadowfang": {
+      "l": 52,
+      "c": "DRUID",
+      "g": "La Confrérie Noire",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/saerdna-grobx": {
+      "l": 20,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/drob-thewise": {
+      "l": 53,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/zib-zarir": {
+      "l": 12,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/eviscera-slice": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/drok-acta": {
+      "l": 14,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/gc-yfn": {
+      "l": 10,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/хеймдалль-вирдшторм": {
+      "l": 14,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/velannes-haldorin": {
+      "l": 12,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/wisher-paladin": {
+      "l": 20,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mightbe-afurry": {
+      "l": 1,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/grantz-elblanco": {
+      "l": 60,
+      "c": "WARLOCK",
+      "g": "Foréver",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bouffon-delacour": {
+      "l": 44,
+      "c": "ROGUE",
+      "g": "Dawn Forever",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bomba-ekan": {
+      "l": 49,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dot-thatbot": {
+      "l": 48,
+      "c": "PRIEST",
+      "g": "Dark Pulse",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nëya-stalavista": {
+      "l": 60,
+      "c": "DRUID",
+      "g": "Saperlamute",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kilera-shadowsong": {
+      "l": 17,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kira-vexx": {
+      "l": 32,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pivec-kulhanka": {
+      "l": 36,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/fhaya-selecta": {
+      "l": 44,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pille-snorre": {
+      "l": 1,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/valaris-doppelhertz": {
+      "l": 60,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/reanimation-code": {
+      "l": 35,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/rammstein-polizei": {
+      "l": 55,
+      "c": "PRIEST",
+      "g": "Elysiøn",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/wagnouf-ottersson": {
+      "l": 60,
+      "c": "SHAMAN",
+      "g": "Club Sandwich",
+      "s": "x",
+      "d": 20784
     }
   }
 }
