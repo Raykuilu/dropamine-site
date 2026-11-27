@@ -2862,6 +2862,183 @@
       "g": "Legendary Rebirth",
       "s": "x",
       "d": 20784
+    },
+    "eu/tri-flex": {
+      "l": 30,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/crepuscular-stronghold": {
+      "l": 30,
+      "c": "PALADIN",
+      "g": "Feranor",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/rhogar-vhaan": {
+      "l": 29,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bank-gargler": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/razin-muldoon": {
+      "l": 27,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/apolla-phoebus": {
+      "l": 36,
+      "c": "HUNTER",
+      "g": "Tilt Gaming",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bank-morzaw": {
+      "l": 10,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shnollie-heal": {
+      "l": 8,
+      "c": "PRIEST",
+      "g": "Worgen Stanley",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/don-josew": {
+      "l": 53,
+      "c": "PRIEST",
+      "g": "Vanilla Spirit Forever",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/jhin-virtuoso": {
+      "l": 41,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/payment-reminder": {
+      "l": 49,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/marg-tacher": {
+      "l": 1,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mina-swd": {
+      "l": 46,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/zéphirion-lionheart": {
+      "l": 60,
+      "c": "PALADIN",
+      "g": "Two",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lille-slurp": {
+      "l": 59,
+      "c": "WARLOCK",
+      "g": "Tanarisbakken Borettslag",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/cranius-eldarn": {
+      "l": 17,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nobody-sir": {
+      "l": 14,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/floppixx-easy": {
+      "l": 54,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/zerrøw-hunt": {
+      "l": 40,
+      "c": "HUNTER",
+      "g": "Frozen Effect",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/double-thief": {
+      "l": 26,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/brad-almighty": {
+      "l": 32,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shabo-ldihna": {
+      "l": 60,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ploximus-fish": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/maulin-kittyskinner": {
+      "l": 32,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/joffrey-backstein": {
+      "l": 60,
+      "c": "ROGUE",
+      "g": "LES TUER DE HORDE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ragul-unshallach": {
+      "l": 40,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/artousse-méméthil": {
+      "l": 54,
+      "c": "PALADIN",
+      "g": "Two",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kapek-ten": {
+      "l": 43,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
     }
   }
 }
