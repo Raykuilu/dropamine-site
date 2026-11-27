@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["site/**", "scripts/**", "data/registry.json", "data/uploads.json"]
+    paths: ["site/**", "scripts/**", "data/registry.json", "data/uploads.json", "data/settings.json", "data/guilds.json"]
 
 permissions:
   contents: write

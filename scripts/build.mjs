@@ -275,7 +275,7 @@ export function scoutEntries(scouted, taken, optout, day = Math.floor(Date.now()
 export const QUEUE = { NEW: 150, REFRESH: 500, GUILDS: 10, GUILD_EVERY: 7, MAX_PREVIEWS: 3000, MAX_QUEUE: 20000, STALE: 25, GONE_DAYS: 30 };
 const PRIO = { scout: 0, follow: 1, guild: 2 };
 const KEY_RE = /^(eu|us|tw)\/[^/]+-[^/]+$/;
-export function emptyQueue() { return { players: {}, guilds: {}, gone: {} }; }
+export function emptyQueue() { return { players: {}, guilds: {}, gone: {}, runs: [] }; }
 // ajoute des candidats { key, via, l } : ni inscrits, ni retirés, ni déjà montrés, ni introuvables récemment ; garde la meilleure source
 export function enqueue(queue, items, taken, optout, day) {
   let added = 0;
@@ -387,8 +387,13 @@ async function main() {
   for (const g of guildsToRead([...prevList.filter(p => regKeys.has(p.key)), ...plan.keep, ...prevList.filter(p => plan.refresh.some(e => e.key === p.key))], queue, day))
     qAdd += enqueue(queue, await rosterItems(g, 'guild'), shown, optout, day);
   for (const k of shown) delete queue.players[k];
-  const room = Math.max(0, QUEUE.MAX_PREVIEWS - plan.count);
-  const fresh = nextFromQueue(queue, Math.min(QUEUE.NEW, room));
+  // réglages de la page admin (data/settings.json), sinon les valeurs par défaut
+  const settings = await readJson(join(ROOT, 'data/settings.json'), {});
+  const NEW = Number.isInteger(settings.newPerRun) ? settings.newPerRun : QUEUE.NEW;
+  const MAX = Number.isInteger(settings.maxPreviews) ? settings.maxPreviews : QUEUE.MAX_PREVIEWS;
+  const room = Math.max(0, MAX - plan.count);
+  const fresh = nextFromQueue(queue, Math.min(NEW, room));
+  const run = { t: new Date().toISOString(), added: qAdd, refreshed: plan.refresh.length, kept: plan.keep.length, fresh: fresh.length, previews: plan.count };
   console.log(`file : ${Object.keys(queue.players).length} en attente (+${qAdd}) · aperçus : ${plan.count} (${plan.refresh.length} relus, ${plan.keep.length} gardés) · nouveaux : ${fresh.length}`);
   entries.push(...plan.refresh, ...fresh);
   for (const e of fresh) delete queue.players[e.key];
@@ -398,7 +403,17 @@ async function main() {
   // relevé précédent : pour dater les nouveaux loots
   const prevPlayers = new Map(prevList.map(p => [p.key, p]));
   await pool(entries, 6, async e => {
-    const c = await fetchCharacter(tok, e.region, e.slug);
+    // une erreur passagère de l'API (500, délai) ne fait plus échouer tout le relevé : on garde la dernière fiche,
+    // ou le nouveau retourne dans la file pour le relevé suivant
+    let c;
+    try { c = await fetchCharacter(tok, e.region, e.slug); }
+    catch (err) {
+      console.warn(`· ${e.key} : API indisponible (${err.message}), gardé pour le prochain relevé`);
+      const old = prevPlayers.get(e.key);
+      if (old) players.push(old);
+      else if (e.queued) queue.players[e.key] = { via: e.via, l: 0, a: day };
+      return;
+    }
     if (!c) {
       // conditions Blizzard : un personnage qui n'existe plus n'est ni affiché ni conservé
       await rm(join(ROOT, 'data/history', e.region, `${e.slug}.json`), { force: true });
@@ -455,6 +470,9 @@ async function main() {
   for (const p of plan.keep) if (!done.has(p.key)) players.push(p);
   for (const [k, d] of Object.entries(queue.gone)) if (d < day - QUEUE.GONE_DAYS) delete queue.gone[k];
   for (const [k, d] of Object.entries(queue.guilds)) if (d < day - 60) delete queue.guilds[k];
+  run.waiting = Object.keys(queue.players).length; run.published = players.length;
+  run.notFound = Object.values(queue.gone).filter(d => d === day).length;
+  queue.runs = [run, ...(queue.runs ?? [])].slice(0, 20);
   await writeFile(join(ROOT, 'data/queue.json'), JSON.stringify({ _comment: 'File d\'attente des aperçus (scripts/build.mjs, QUEUE) : écrite par le relevé.', ...queue }));
   players.sort((a, b) => b.total - a.total || a.key.localeCompare(b.key));
   await mkdir(join(ROOT, 'site/data'), { recursive: true });

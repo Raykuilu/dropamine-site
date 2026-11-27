@@ -20,7 +20,7 @@ import { createServer } from 'node:http';
 import { gzipSync } from 'node:zlib';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload,
-  applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt, parseScoutLine, applyScout } from './lib.mjs';
+  applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt, parseScoutLine, applyScout, applySettings, applyGuildFollow } from './lib.mjs';
 import { readFileSync, existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { vapidKeys, sendPush, validSub, addSub, removeSub, runEvents, dueReminders } from './push.mjs';
@@ -295,7 +295,7 @@ const server = createServer(async (req, res) => {
     }
 
     // routes de session : appelées par dropamine.app (CORS avec cookie)
-    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit', '/push/subscribe', '/push/unsubscribe', '/hunt/save', '/scout'].includes(url.pathname)) {
+    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit', '/push/subscribe', '/push/unsubscribe', '/hunt/save', '/scout', '/admin/run', '/admin/settings', '/admin/guild', '/admin/hide'].includes(url.pathname)) {
       if (req.method === 'POST' && req.headers.origin !== CFG.siteUrl) return send(res, 403, { error: 'origine refusée' }, cors);
       const s = session(req);
       if (url.pathname === '/logout') {
@@ -356,6 +356,33 @@ const server = createServer(async (req, res) => {
         if (out?.error) return send(res, 400, { error: out.error }, cors);
         if (r.changed) refreshSite();
         return send(res, 200, { ok: true, hunt: out.hunt }, cors);
+      }
+      // Admin (page admin.html) : relancer un relevé, réglages du remplissage, guildes suivies, retirer un personnage
+      if (url.pathname.startsWith('/admin/') && req.method === 'POST') {
+        if (!isAdmin(s)) return send(res, 403, { error: 'admin' }, cors);
+        const body = await readBody(req);
+        if (url.pathname === '/admin/run') { await refreshSite(); return send(res, 200, { ok: true }, cors); }
+        if (url.pathname === '/admin/settings') {
+          let out = null;
+          const r = await updateFile('data/settings.json', {}, d => (out = applySettings(d, body)).error ? { changed: false } : out, 'Hiscores: settings (admin)');
+          if (out?.error) return send(res, 400, { error: out.error }, cors);
+          return send(res, 200, { ok: true, settings: out.registry, changed: !!r.changed }, cors);
+        }
+        if (url.pathname === '/admin/guild') {
+          let out = null;
+          const r = await updateFile('data/guilds.json', { guilds: [] }, d => (out = applyGuildFollow(d, body.key, !!body.follow)).error ? { changed: false } : out, `Hiscores: ${body.follow ? 'follow' : 'unfollow'} guild ${String(body.key ?? '')} (admin)`);
+          if (out?.error) return send(res, 400, { error: out.error }, cors);
+          if (r.changed) refreshSite();
+          return send(res, 200, { ok: true, guilds: out.registry.guilds }, cors);
+        }
+        if (url.pathname === '/admin/hide') {
+          const key = String(body.key ?? '').toLowerCase();
+          if (!validKey(key)) return send(res, 400, { error: 'key' }, cors);
+          const r = await updateRegistry(reg => applyRelease(reg, [key], new Set([key])), `Hiscores: remove ${key} (admin)`);
+          for (const k of r.done ?? []) await deleteHistory(k).catch(() => {});
+          if (r.changed) refreshSite();
+          return send(res, 200, { ok: true, done: r.done ?? [] }, cors);
+        }
       }
       // Scout : la ligne de l'addon privé de l'administrateur → data/scouted.json (joueurs montrés en aperçu au relevé suivant)
       if (url.pathname === '/scout' && req.method === 'POST') {

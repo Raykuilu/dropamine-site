@@ -111,6 +111,27 @@ export function parseScoutLine(line) {
   }).filter(Boolean);
   return { region: f.r, players };
 }
+// Admin : réglages du remplissage (data/settings.json) et guildes suivies (data/guilds.json)
+export const SETTINGS_RANGE = { newPerRun: [0, 500], maxPreviews: [0, 10000] };
+export function applySettings(cur, body) {
+  const out = { ...(cur ?? {}) };
+  for (const [k, [lo, hi]] of Object.entries(SETTINGS_RANGE)) {
+    if (body?.[k] == null || body[k] === '') continue;
+    const n = Number(body[k]);
+    if (!Number.isInteger(n) || n < lo || n > hi) return { error: k };
+    out[k] = n;
+  }
+  return { registry: out, changed: JSON.stringify(out) !== JSON.stringify(cur ?? {}) };
+}
+export function applyGuildFollow(data, key, follow) {
+  key = String(key ?? '').toLowerCase().trim();
+  if (!/^(eu|us|tw)\/[\p{L}\p{N}-]{2,60}$/u.test(key)) return { error: 'guild' };
+  const list = [...new Set((data?.guilds ?? []).map(g => String(g).toLowerCase()))];
+  const has = list.includes(key);
+  if (follow === has) return { registry: data, changed: false };
+  const guilds = follow ? [...list, key] : list.filter(g => g !== key);
+  return { registry: { ...(data ?? {}), guilds }, changed: true };
+}
 export function applyScout(data, region, players, now = Date.now()) {
   const day = Math.floor(now / 864e5), cut = day - SCOUT_KEEP_DAYS;
   const list = { ...(data?.players ?? {}) };

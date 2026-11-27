@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr" data-lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin · Dropamine</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#110d09">
+<link rel="icon" type="image/png" href="Dropamine-Logo.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  .adm{width:min(1180px,100% - 32px);margin:28px auto 60px;display:grid;gap:16px}
+  .adm h1{margin:0;font-family:var(--display);color:var(--gold);font-size:30px;letter-spacing:.06em}
+  .adm-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .adm-top img{width:44px;height:44px}
+  .adm-top .who{margin-left:auto;color:var(--muted);font-style:italic}
+  .adm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+  .adm-k{padding:12px 14px;border:1px solid var(--line-2);border-radius:10px;background:rgba(0,0,0,.25)}
+  .adm-k small{display:block;font-family:var(--display);font-variant:small-caps;letter-spacing:.06em;color:var(--muted)}
+  .adm-k b{font-family:var(--num);font-size:30px;color:var(--gold);line-height:1.1}
+  .adm-k em{display:block;font-size:13px;color:var(--faint)}
+  .adm-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+  .adm-card{padding:16px 18px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel)}
+  .adm-card h2{margin:0 0 10px;font-family:var(--display);color:var(--gold);font-size:20px;letter-spacing:.05em}
+  .adm-card p{margin:6px 0;color:var(--muted)}
+  .adm table{width:100%;border-collapse:collapse;font-size:14px}
+  .adm th{text-align:left;font-family:var(--display);font-variant:small-caps;color:var(--muted);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line-2)}
+  .adm td{padding:5px 6px;border-bottom:1px solid var(--line);color:var(--cream);vertical-align:top}
+  .adm td.n{text-align:right;font-family:var(--num);font-weight:700}
+  .adm .ok{color:#8cc472}.adm .ko{color:#d98a73}.adm .going{color:#e8c88a}
+  .adm-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  .adm input[type=text],.adm input[type=number],.adm textarea{background:#0b0806;color:var(--cream);border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;font:inherit}
+  .adm textarea{width:100%;min-height:80px;font-family:ui-monospace,Consolas,monospace;font-size:12px;box-sizing:border-box}
+  .adm label{display:flex;flex-direction:column;gap:4px;color:var(--muted);font-size:14px}
+  .adm .msg{color:#e8c88a;font-style:italic;margin:8px 0 0}
+  .adm .lnk{all:unset;cursor:pointer;color:var(--rim);text-decoration:underline;font-size:13px}
+  .adm .bar{height:8px;border-radius:4px;background:#0b0806;overflow:hidden;margin-top:6px}
+  .adm .bar i{display:block;height:100%;background:linear-gradient(90deg,#8a6a3a,#e8c88a)}
+  .adm .src{display:inline-block;min-width:64px}
+  .adm-wide{grid-column:1/-1}
+  @media (max-width:860px){.adm-grid{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<main class="adm" id="adm"><p class="note">Chargement…</p></main>
+<script src="admin.js"></script>
+</body>
+</html>
