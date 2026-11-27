@@ -258,9 +258,9 @@ function send(res, status, body, headers = {}) {
   res.end(json ? JSON.stringify(body) : body);
 }
 const cors = { 'Access-Control-Allow-Origin': CFG.siteUrl, 'Access-Control-Allow-Credentials': 'true', Vary: 'Origin, Accept-Encoding' };
-async function readBody(req) {
+async function readBody(req, max = 16e3) {   // max : 16 Ko par défaut ; la ligne Scout a droit à plus
   let size = 0; const chunks = [];
-  for await (const c of req) { size += c.length; if (size > 16e3) throw new Error('requête trop grosse'); chunks.push(c); }
+  for await (const c of req) { size += c.length; if (size > max) throw new Error('requête trop grosse'); chunks.push(c); }
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 }
 const back = (status) => `${CFG.siteUrl}/?p=join&bnet=${status}`;
@@ -360,7 +360,7 @@ const server = createServer(async (req, res) => {
       // Scout : la ligne de l'addon privé de l'administrateur → data/scouted.json (joueurs montrés en aperçu au relevé suivant)
       if (url.pathname === '/scout' && req.method === 'POST') {
         if (!isAdmin(s)) return send(res, 403, { error: 'admin' }, cors);
-        const p = parseScoutLine((await readBody(req)).line);
+        const p = parseScoutLine((await readBody(req, 512e3)).line);   // jusqu'à ~5 000 joueurs
         if (p.error) return send(res, 400, { error: p.error }, cors);
         let out = null;
         const r = await updateFile('data/scouted.json', { players: {} }, d => (out = applyScout(d, p.region, p.players)), `Hiscores: scout (${p.players.length} players)`);
