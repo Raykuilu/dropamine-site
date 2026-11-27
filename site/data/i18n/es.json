@@ -584,7 +584,20 @@
   "xOwnN": "{n} de {t} jugadores de Dropamine lo tienen",
   "xHunt": "{n} jugador(es) lo buscan",
   "xItems": "{n} objetos",
-  "xHunters": "{n} en caza"
+  "xHunters": "{n} en caza",
+  "pgNav": "Páginas de la clasificación",
+  "pgPrev": "Página anterior",
+  "pgNext": "Página siguiente",
+  "pgInfo": "{a}–{b} de {n}",
+  "pgGo": "Ir al puesto",
+  "pgMine": "Mi puesto",
+  "gm.total": "Nivel total",
+  "gm.avg": "Media por miembro",
+  "gm.l60": "Niveles 60",
+  "gm.hk": "Victorias con honor",
+  "gm.prof": "Profesiones",
+  "gm.members": "Miembros",
+  "gmSub": "{n} de nivel 60"
  },
  "names": {
   "Leatherworking": "Peletería",

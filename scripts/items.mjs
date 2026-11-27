@@ -150,7 +150,12 @@ export function splitItems(cache) {
 async function writeItemFiles(cache) {
   const { mkdir } = await import('node:fs/promises');
   const { base, extra } = splitItems(cache);
+  // les lignes d'infobulle (60 % du poids) vont dans items-tips.json, chargé au premier survol d'un objet :
+  // items.json garde nom, qualité, icône… (listes, carnet, groupes) et reste léger pour toutes les pages
+  const tips = {};
+  for (const [id, it] of Object.entries(base)) { if (it.t?.length) tips[id] = it.t; delete it.t; }
   await writeFile(ITEMS_FILE, JSON.stringify(base));
+  await writeFile(ITEMS_FILE.replace(/items\.json$/, 'items-tips.json'), JSON.stringify(tips));
   await mkdir(I18N_DIR, { recursive: true });
   for (const [lang, m] of Object.entries(extra)) await writeFile(join(I18N_DIR, `items.${lang}.json`), JSON.stringify(m));
 }

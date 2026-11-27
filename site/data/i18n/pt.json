@@ -584,7 +584,20 @@
   "xOwnN": "{n} de {t} jogadores do Dropamine têm",
   "xHunt": "{n} jogador(es) caçam",
   "xItems": "{n} itens",
-  "xHunters": "{n} caçando"
+  "xHunters": "{n} caçando",
+  "pgNav": "Páginas do ranking",
+  "pgPrev": "Página anterior",
+  "pgNext": "Próxima página",
+  "pgInfo": "{a}–{b} de {n}",
+  "pgGo": "Ir para a posição",
+  "pgMine": "Minha posição",
+  "gm.total": "Nível total",
+  "gm.avg": "Média por membro",
+  "gm.l60": "Níveis 60",
+  "gm.hk": "Vitórias honrosas",
+  "gm.prof": "Profissões",
+  "gm.members": "Membros",
+  "gmSub": "{n} no nível 60"
  },
  "names": {
   "Leatherworking": "Couraria",

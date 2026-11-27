@@ -112,6 +112,11 @@ const I18N = {
   nHint: ['Joins and departures on your outings, a freed spot, a full group, a reminder 30 min before.', 'Arrivées et départs dans tes sorties, place libérée, groupe complet, rappel 30 min avant.'],
   nJoin: ['joins your {d} outing', 'rejoint ta sortie {d}'], nLeave: ['leaves your {d} outing', 'quitte ta sortie {d}'], nCancel: [': outing cancelled', ' : sortie annulée'],
   nSoon: ['starts in {n} min', 'commence dans {n} min'],
+  'gm.total': ['Total level', 'Niveau total'], 'gm.avg': ['Average per member', 'Moyenne par membre'], 'gm.l60': ['Level 60s', 'Niveaux 60'],
+  'gm.hk': ['Honorable kills', 'Victoires honorables'], 'gm.prof': ['Professions', 'Métiers'], 'gm.members': ['Members', 'Membres'],
+  gmSub: ['{n} at level 60', '{n} au niveau 60'],
+  pgNav: ['Pages of the ranking', 'Pages du classement'], pgPrev: ['Previous page', 'Page précédente'], pgNext: ['Next page', 'Page suivante'],
+  pgInfo: ['{a}–{b} of {n}', '{a} à {b} sur {n}'], pgGo: ['Go to rank', 'Aller au rang'], pgMine: ['My rank', 'Mon rang'],
   rtabRuns: ['Planned outings', 'Sorties prévues'], rtabIdeas: ['Same dungeons', 'Mêmes donjons'], rtabExplore: ['All dungeons', 'Tous les donjons'],
   scPitch: ['Admin only. Paste the line from /scout (Dropamine Scout, private addon): those players show up as previews at the next update.', 'Réservé à l’administrateur. Colle la ligne de /scout (Dropamine Scout, addon privé) : ces joueurs apparaissent en aperçu au prochain relevé.'],
   scSend: ['Send', 'Envoyer'], scOk: ['Received {n} players, {a} new · {t} in the list.', 'Reçu : {n} joueurs, {a} nouveaux · {t} dans la liste.'],
@@ -766,6 +771,27 @@ document.addEventListener('click', e => {
   b.setAttribute('aria-expanded', open);
   const m = skFoldGet(); m[b.dataset.sgt] = open; try { localStorage.setItem(skFoldKey, JSON.stringify(m)); } catch {}
 });
+// guildes : critère du classement, et « voir plus »
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-gm]'); if (c) { state.gm = c.dataset.gm; state.glimit = 100; renderGuild(); return; }
+  if (e.target.closest('[data-gmore]')) { state.glimit = (state.glimit || 100) + 100; renderGuild(); }
+});
+// classement : pages de 50 lignes (il ne dessine plus des milliers de lignes d'un coup)
+const RANK_PER = 50;
+function rankJump(page, hit) {
+  state.pg = page; state.pgHit = hit || null; renderRank(); writeUrl(false);
+  const el = $(hit ? '#rank-panel .row.hit, #rank-panel .row.me' : '#rank-panel .rows');
+  if (el) el.scrollIntoView({ block: hit ? 'center' : 'start', behavior: reduce ? 'auto' : 'smooth' });
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-pg]'); if (b && !b.disabled) { rankJump(+b.dataset.pg); return; }
+  const me = e.target.closest('[data-pgme]'); if (me) { const i = +me.dataset.pgme; rankJump(Math.floor(i / RANK_PER) + 1, i + 1); }
+});
+document.addEventListener('keydown', e => {
+  const inp = e.target.closest?.('[data-pgrank]'); if (!inp || e.key !== 'Enter') return;
+  const r = Math.max(1, Math.min(+inp.max || 1, Math.floor(+inp.value || 1)));
+  rankJump(Math.ceil(r / RANK_PER), r);
+});
 function renderRank() {
   if (DATA.loading) { $('#rank-panel').innerHTML = loadingBox(); return; }
   if (DATA.failed) { $('#rank-panel').innerHTML = failed(); return; }
@@ -813,8 +839,23 @@ function renderRank() {
   // armes estimées : affichées sous le classement, sans rang
   const pool = state.cls ? byRs.filter(p => p.classId === state.cls) : byRs;
   const estRows = sk.wpn ? pool.filter(p => sk.est(p) && sk.get(p)).sort((a, b) => sk.get(b) - sk.get(a)).map(p => ({ p, v: sk.get(p), r: 0 })) : [];
+  // pages de RANK_PER lignes ; un filtre qui change ramène à la page 1 (la page reste dans l'adresse : ?pg=)
+  const sig = [state.region, sk.id, state.rs, state.cls, state.dg, state.dw].join('|');
+  if (state.pgKey && state.pgKey !== sig) state.pg = 1;
+  state.pgKey = sig;
+  const pages = Math.max(1, Math.ceil(list.length / RANK_PER));
+  state.pg = Math.min(Math.max(1, state.pg || 1), pages);
+  const from = (state.pg - 1) * RANK_PER, pageRows = list.slice(from, from + RANK_PER), lastPage = state.pg === pages;
+  const mineK = new Set(Bnet.mine().map(pkey)), myIdx = list.findIndex(x => mineK.has(pkey(x.p)));
+  const pgBtn = n => `<button type="button" class="pg${n === state.pg ? ' on' : ''}" data-pg="${n}"${n === state.pg ? ' aria-current="page"' : ''}>${fmt(n)}</button>`;
+  const nums = [...new Set([1, pages, state.pg - 2, state.pg - 1, state.pg, state.pg + 1, state.pg + 2].filter(n => n >= 1 && n <= pages))].sort((a, b) => a - b);
+  const pager = pages > 1 || myIdx >= 0 ? `<nav class="pager" aria-label="${t('pgNav')}">
+      <div class="pg-n"><button type="button" class="pg" data-pg="${state.pg - 1}"${state.pg === 1 ? ' disabled' : ''} aria-label="${t('pgPrev')}">‹</button>${nums.map((n, i) => (i && n - nums[i - 1] > 1 ? '<span class="pg-gap">…</span>' : '') + pgBtn(n)).join('')}<button type="button" class="pg" data-pg="${state.pg + 1}"${lastPage ? ' disabled' : ''} aria-label="${t('pgNext')}">›</button></div>
+      <div class="pg-x"><span class="pg-i">${t('pgInfo', { a: fmt(list.length ? from + 1 : 0), b: fmt(Math.min(from + RANK_PER, list.length)), n: fmt(list.length) })}</span>
+      ${list.length > RANK_PER ? `<label class="pg-go">${t('pgGo')}<input type="number" min="1" max="${list.length}" inputmode="numeric" data-pgrank aria-label="${t('pgGo')}"></label>` : ''}
+      ${myIdx >= 0 ? `<button type="button" class="btn ghost pg-me" data-pgme="${myIdx}">${t('pgMine')}</button>` : ''}</div></nav>` : '';
   const row = ({ p, v, r, g }) => `
-    <div class="row${r && r <= 3 ? ' top' : ''}${r ? '' : ' unranked'}" data-c="${esc(pkey(p))}" role="row">
+    <div class="row${r && r <= 3 ? ' top' : ''}${r ? '' : ' unranked'}${mineK.has(pkey(p)) ? ' me' : ''}${r && r === state.pgHit ? ' hit' : ''}" data-c="${esc(pkey(p))}" role="row">
       <span class="rk">${r || '–'}</span>
       <span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p, g)}<small>${who(p)}${rulesetName(p) ? ' · ' + esc(rulesetName(p)) : ''}</small></span></span>
       ${isTotal ? tri(p) : sk.prof ? `<span class="mbar"><i style="--w:${(100 * v / (p.professions.find(x => x.id === sk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
@@ -822,9 +863,9 @@ function renderRank() {
         : sk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, sk.ratio(v, p))).toFixed(1)}%"></i></span>` : '<span class="c3"></span>'}
       <span class="tot">${showVal(sk, v, p)}${isTotal ? estTag(p) : sk.wpn && sk.est(p) ? `<em>${t('est')}</em>` : ''}</span>
     </div>`;
-  const rows = state.dg || state.dw ? (list.length ? list.map(row).join('') : `<div class="empty">${t(state.dw ? 'dwNone' : 'dgNone')}</div>`)
+  const rows = state.dg || state.dw ? (list.length ? pageRows.map(row).join('') : `<div class="empty">${t(state.dw ? 'dwNone' : 'dgNone')}</div>`)
     : (list.length || estRows.length)
-    ? list.map(row).join('') + (estRows.length ? `<div class="you-sep est-sep">${t('estSep')}</div>` + estRows.map(row).join('') : '')
+    ? pageRows.map(row).join('') + (estRows.length && lastPage ? `<div class="you-sep est-sep">${t('estSep')}</div>` + estRows.map(row).join('') : '')
     : sk.id === 'hpk' ? `<div class="empty">${t('hpkNone')}</div>` : nobody();
   $('#rank-panel').innerHTML = `
     <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
@@ -839,6 +880,7 @@ function renderRank() {
           <div class="row th" role="row"><span>${t('rank')}</span><span>${t('character')}</span><span class="c3">${isTotal ? t('split') : ''}</span><span style="text-align:right">${isTotal ? t('totalH') : t('value')}</span></div>
           ${rows}
         </div>
+        ${pager}
       </div>
     </div>
     ${isTotal ? `<div class="legend"><span><i style="background:var(--lvl)"></i>${t('level')}</span><span><i style="background:var(--wpn)"></i>${t('weaponsDef')}</span><span><i style="background:var(--prf)"></i>${t('professions')}</span><span><i style="background:repeating-linear-gradient(135deg,var(--wpn) 0 3px,#33435f 3px 6px)"></i>${t('legend')}</span></div>` : ''}`;
@@ -1656,9 +1698,18 @@ function renderGuild() {
   if (DATA.failed) { $('#guild-panel').innerHTML = failed(); return; }
   const all = guilds(), g = all.find(x => x.slug === state.g);
   if (!g) {
-    $('#guild-panel').innerHTML = `<div class="head"><h2>${t('guildsT')}</h2><span class="note">${t('guildsNote', { r: state.region.toUpperCase() })}</span></div>
-      <div class="rows glist">${all.length ? `<div class="row th"><span>${t('rank')}</span><span>${t('guildH')}</span><span style="text-align:right" class="c3">${t('members')}</span><span style="text-align:right">${t('totalH')}</span></div>` +
-        all.map((x, i) => `<div class="row${i < 3 ? ' top' : ''}" data-g="${esc(x.slug)}"><span class="rk">${i + 1}</span><span class="nm"><span><b>${esc(x.name)}</b></span></span><span class="val">${x.members.length}</span><span class="tot">${fmt(x.total)}</span></div>`).join('')
+    // classements de guildes : niveau total cumulé, moyenne par membre (3 membres au moins), niveaux 60, victoires honorables, métiers, membres
+    const GM = { total: x => x.total, avg: x => x.members.length >= 3 ? Math.round(x.total / x.members.length) : null,
+      l60: x => x.members.filter(p => p.level >= 60).length, hk: x => x.members.reduce((n, p) => n + (armoryStat(p, 'hk') || 0), 0),
+      prof: x => x.members.reduce((n, p) => n + (p.parts?.professions || 0), 0), members: x => x.members.length };
+    const gm = GM[state.gm] ? state.gm : 'total';
+    const ranked = all.map(x => ({ x, v: GM[gm](x) })).filter(r => r.v != null && r.v > 0).sort((a, b) => b.v - a.v || b.x.total - a.x.total);
+    const lim = state.glimit || 100;
+    const gmChips = `<div class="chips gm" role="group">${Object.keys(GM).map(k => `<span class="chip${k === gm ? ' on' : ''}" data-gm="${k}" role="button" tabindex="0">${t('gm.' + k)}</span>`).join('')}</div>`;
+    $('#guild-panel').innerHTML = `<div class="head"><h2>${t('guildsT')}</h2><span class="note">${t('guildsNote', { r: state.region.toUpperCase() })}</span></div>${gmChips}
+      <div class="rows glist">${ranked.length ? `<div class="row th"><span>${t('rank')}</span><span>${t('guildH')}</span><span style="text-align:right" class="c3">${t('members')}</span><span style="text-align:right">${t('gm.' + gm)}</span></div>` +
+        ranked.slice(0, lim).map(({ x, v }, i) => `<div class="row${i < 3 ? ' top' : ''}" data-g="${esc(x.slug)}"><span class="rk">${i + 1}</span><span class="nm"><span><b>${esc(x.name)}</b><small>${t('gmSub', { n: x.members.filter(p => p.level >= 60).length })}</small></span></span><span class="val">${x.members.length}</span><span class="tot">${fmt(v)}</span></div>`).join('')
+        + (ranked.length > lim ? `<p class="rmore"><button class="btn ghost" data-gmore>${t('runMoreRuns', { n: Math.min(100, ranked.length - lim) })}</button></p>` : '')
         : `<div class="empty"><b>${t('noGuildT')}</b>${t('noGuild')}</div>`}</div>`;
     return;
   }
@@ -1780,15 +1831,20 @@ async function fillClog(p) {
         `<span class="ci${got.has(i.id) ? ' got' : ''}" data-item="${i.id}" data-boss="${esc(bossName(b))}"${i.rate != null ? ` data-rate="${i.rate}"` : ''} style="--q:${QCOL[ITEMS?.[i.id]?.q] || '#8a7a5a'}"><img src="${itemIcon(i.id)}" alt="${esc(itemName(i.id))}" loading="lazy" referrerpolicy="no-referrer"></span>`).join('')}</div></div>`).join('')}</div></details>`).join('')
     + `<p class="db-note">${t('clogSrc')}</p>`;
 }
-// infobulle d'objet, façon jeu
+// infobulle d'objet, façon jeu. Ses lignes sont dans items-tips.json (60 % du poids des objets), chargé au premier survol
+let TIPS = null, tipsLoad = null;
+const loadTips = () => tipsLoad ??= fetch('data/items-tips.json').then(r => r.ok ? r.json() : {}).then(j => { TIPS = j; }).catch(() => { TIPS = {}; });
 const ItemTip = (() => {
-  let el = null;
+  let el = null, cur = null, cx = 0, cy = 0;
   const show = (t0, x, y) => {
     const id = +t0.dataset.item, it = ITEMS?.[id];
+    cur = t0; cx = x; cy = y;
+    const tl = it?.t || TIPS?.[id], wait = !tl && !TIPS;
+    if (wait) loadTips().then(() => { if (el?.style.display === 'block' && cur === t0) show(t0, cx, cy); });
     if (!el) { el = document.createElement('div'); el.className = 'itip'; document.body.append(el); }
     const lx = extra() && ITEMX?.[id]?.[1];
-    const lines = (it?.t || []).map((l, i) => `<div${l[2] ? ` style="color:${l[2]}"` : ''}>${esc(lx?.[i] || (LANG === 'fr' ? l[1] || l[0] : l[0]))}</div>`).join('');
-    el.innerHTML = `<b style="color:${QCOL[it?.q] || '#e8d9b0'}">${esc(itemName(id))}</b>${lines || `<div class="dim">${t('itemForever')}</div>`}
+    const lines = (tl || []).map((l, i) => `<div${l[2] ? ` style="color:${l[2]}"` : ''}>${esc(lx?.[i] || (LANG === 'fr' ? l[1] || l[0] : l[0]))}</div>`).join('');
+    el.innerHTML = `<b style="color:${QCOL[it?.q] || '#e8d9b0'}">${esc(itemName(id))}</b>${lines || (wait ? '' : `<div class="dim">${t('itemForever')}</div>`)}
       <div class="src">${esc(t0.dataset.boss || '')}${t0.dataset.rate ? ` · ${(+t0.dataset.rate).toLocaleString(locale())} %` : ''}</div>${t0.dataset.stat ? `<div class="dim">${esc(t0.dataset.stat)}</div>` : ''}
       ${t0.classList.contains('xi') ? '' : `<div class="${t0.classList.contains('got') ? 'ok' : 'no'}">${t0.classList.contains('got') ? t('obtained') : t('notObtained')}</div>`}`;
     el.style.display = 'block';
@@ -2655,7 +2711,7 @@ function readUrl() {
   const v = q.get('p');
   state.view = VIEWS.includes(v) ? v : (q.get('bnet') ? 'join' : q.get('c') ? 'char' : q.get('g') ? 'guild' : 'home');
   state.region = ['eu', 'us', 'tw'].includes(q.get('r')) ? q.get('r') : 'eu';
-  state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0; state.dg = q.get('dg') === '1'; state.dw = !state.dg && q.get('dw') === '1';
+  state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0; state.dg = q.get('dg') === '1'; state.dw = !state.dg && q.get('dw') === '1'; state.pg = Math.max(1, +q.get('pg') || 1); state.pgKey = null;
   state.c = q.get('c') || state.c; state.g = q.get('g') || '';
   if (state.view === 'runs') Object.assign(state, { rtab: ['ideas', 'planned', 'explore'].includes(q.get('tab')) ? q.get('tab') : undefined, hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
 }
@@ -2665,7 +2721,7 @@ function writeUrl(push) {
   if (DEMO) q.set('demo', DEMO);
   if (state.view !== 'home') q.set('p', state.view);
   if (state.region !== 'eu') q.set('r', state.region);
-  if (state.view === 'rank') { if (state.dg) q.set('dg', '1'); if (state.dw) q.set('dw', '1'); if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
+  if (state.view === 'rank') { if (state.pg > 1) q.set('pg', state.pg); if (state.dg) q.set('dg', '1'); if (state.dw) q.set('dw', '1'); if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
   if (state.view === 'char' && state.c) q.set('c', state.c);
   if (state.view === 'guild' && state.g) q.set('g', state.g);
   if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['d', 'hd'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.rtab === 'ideas' || state.rtab === 'explore') q.set('tab', state.rtab); if (state.runFocus) q.set('run', state.runFocus); }

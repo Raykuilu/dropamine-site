@@ -584,7 +584,20 @@
   "xOwnN": "{n} von {t} Dropamine-Spielern haben es",
   "xHunt": "{n} Spieler jagen es",
   "xItems": "{n} Gegenstände",
-  "xHunters": "{n} auf der Jagd"
+  "xHunters": "{n} auf der Jagd",
+  "pgNav": "Seiten der Rangliste",
+  "pgPrev": "Vorherige Seite",
+  "pgNext": "Nächste Seite",
+  "pgInfo": "{a}–{b} von {n}",
+  "pgGo": "Zu Rang",
+  "pgMine": "Mein Rang",
+  "gm.total": "Gesamtstufe",
+  "gm.avg": "Schnitt pro Mitglied",
+  "gm.l60": "Stufe-60-Charaktere",
+  "gm.hk": "Ehrenhafte Siege",
+  "gm.prof": "Berufe",
+  "gm.members": "Mitglieder",
+  "gmSub": "{n} auf Stufe 60"
  },
  "names": {
   "Leatherworking": "Lederverarbeitung",
