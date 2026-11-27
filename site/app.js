@@ -304,6 +304,17 @@ function loadDetail(p) {
     .catch(() => { p._full = true; return p; }));   // fiche introuvable : on montre ce que l'index sait
   return DETAIL.get(k);
 }
+// Accueil léger : data/home.json (inscrits, joueurs qui ont bougé, top 5, totaux) suffit à l'accueil ;
+// l'index complet (data/hiscores.json) n'est chargé qu'une fois, en ouvrant une autre page, en cherchant ou une fois connecté.
+let fullLoad = null;
+function loadFull() {
+  if (!DATA.partial && !DATA.loading) return Promise.resolve();
+  return fullLoad ??= fetch('data/hiscores.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => {
+    const done = new Map(DATA.players.filter(p => p._full).map(p => [pkey(p), p]));   // fiches déjà chargées : gardées
+    d.players = d.players.map(p => done.get(pkey(p)) || p);
+    DATA = d;
+  }).catch(() => { fullLoad = null; if (!DATA.partial) DATA = { players: [], failed: true }; });
+}
 const loadingBox = () => `<div class="empty dload"><span class="ldrop" aria-hidden="true"><span class="ld-liq"><span class="ld-fill"><i class="r"></i><i class="b"></i><i class="g"></i></span></span><img src="img/drop-frame.png" alt=""></span><span>${t('loading')}</span></div>`;
 const LOCALES = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES', it: 'it-IT', pt: 'pt-BR', ru: 'ru-RU' };
 const locale = () => LOCALES[LANG] || 'en-GB';
@@ -567,9 +578,9 @@ function renderLive() {
   const region = inRegion(), now = Date.now();
   LIVE = liveFeed();
   const runs = (RUNS || []).filter(r => Date.parse(r.at) > now - 15 * 60e3);
-  const guildsN = new Set(DATA.players.filter(p => p.guild).map(p => (p.region || 'eu') + '/' + p.guild.slug)).size;
-  const found = DATA.players.reduce((n, p) => n + (p.dropamine?.collection?.x || 0), 0);
-  const counters = [[CF_DOWNLOADS, t('lvcDl')], [DATA.players.length, t('lvcChars')], [guildsN, t('lvcGuilds')], [runs.length, t('lvcRuns')], [found, t('lvcItems')]]
+  const guildsN = DATA.counts?.guilds ?? new Set(DATA.players.filter(p => p.guild).map(p => (p.region || 'eu') + '/' + p.guild.slug)).size;
+  const found = DATA.counts?.found ?? DATA.players.reduce((n, p) => n + (p.dropamine?.collection?.x || 0), 0);
+  const counters = [[CF_DOWNLOADS, t('lvcDl')], [DATA.counts?.players ?? DATA.players.length, t('lvcChars')], [guildsN, t('lvcGuilds')], [runs.length, t('lvcRuns')], [found, t('lvcItems')]]
     .map(([n, l]) => `<div><b data-n="${n}">${fmt(n)}</b><span>${l}</span></div>`).join('');
   const feed = LIVE.slice(0, 8).map(e => `<li${e.run ? ` data-runlink="${esc(e.run)}"` : ` data-c="${esc(pkey(e.p))}"`}>${avatar(e.p)}<span>${e.html}</span><time>${dayAgo(e.at)}</time></li>`).join('');
   // les guildes qui montent (le podium de la semaine est dans « Cette semaine », juste au-dessus)
@@ -669,7 +680,7 @@ function renderDash() {
   const p = me.find(x => pkey(x) === state.dc) || [...me].sort((a, b) => b.total - a.total)[0];
   if (p && !p._full) loadDetail(p).then(() => { if (state.view === 'home') renderDash(); });
   const peers = DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu'));
-  const rank = rankBy(SKILLS[0], peers).find(x => x.p === p)?.r, d1 = dayGain(p), d7 = gain7(p);
+  const rank = DATA.partial ? null : rankBy(SKILLS[0], peers).find(x => x.p === p)?.r, d1 = dayGain(p), d7 = gain7(p);
   const chooser = me.length > 1 ? `<div class="chips">${me.map(x => `<span class="chip ${x === p ? 'on' : ''}" data-dc="${esc(pkey(x))}">${full(x)} <small>${x.level}</small></span>`).join('')}</div>` : '';
   const d = p.dropamine || {};
   const old = p.dropamineAt ? (Date.now() - Date.parse(p.dropamineAt)) / 864e5 : null;
@@ -2788,7 +2799,9 @@ function markNav() {
 function render(push) {
   applyStatic();
   if (state.view === 'home') renderHome();
-  (RENDER[state.view] || (() => {}))();
+  const wait = DATA.partial && state.view !== 'home' && state.view !== 'news';
+  if (wait) { const box = PANEL[state.view] && $(PANEL[state.view]); if (box) box.innerHTML = loadingBox(); loadFull().then(() => { if (!DATA.partial) render(false); }); }
+  else (RENDER[state.view] || (() => {}))();
   markNav();
   Bnet.header();
   $('#sub').textContent = `HISCORES · FOREVER ${state.region.toUpperCase()}`;
@@ -2900,7 +2913,9 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
     box.classList.toggle('on', input.value.trim().length > 0);
   };
   const pick = p => { input.value = ''; box.classList.remove('on'); input.blur(); go({ view: 'char', c: pkey(p), region: p.region || 'eu' }); };
+  input.addEventListener('focus', () => { if (DATA.partial) loadFull().then(() => { if (input.value.trim()) input.dispatchEvent(new Event('input')); }); });
   input.addEventListener('input', () => {
+    if (DATA.partial) loadFull().then(() => { if (!DATA.partial) input.dispatchEvent(new Event('input')); });
     const q = fold(input.value.trim()); hl = 0;
     hits = q ? DATA.players.filter(p => fold(`${p.name} ${p.surname} ${p.slug}`).includes(q)).slice(0, 8) : [];
     draw();
@@ -3028,14 +3043,15 @@ readUrl();
 render(false);
 Ribbon.load(true);
 Promise.all([
-  fetch('data/hiscores.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { DATA = d; })
-    .catch(() => { DATA = { players: [], failed: true }; }),
+  state.view === 'home' && !BOOT_HSIMG
+    ? fetch('data/home.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { DATA = d; }).catch(() => loadFull())
+    : loadFull(),
   fetch('data/changelog.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { NEWS = d; })
     .catch(() => { NEWS = { versions: [] }; }),
   Bnet.init(),
   loadLang(LANG),
 ]).then(() => { Ribbon.load(false); return document.fonts.ready; })
-  .then(() => { if (Draft.resume()) writeUrl(false); render(false); freshenNews(); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });
+  .then(() => { if (Draft.resume()) writeUrl(false); render(false); if (DATA.partial && Bnet.logged?.()) loadFull().then(() => { if (state.view === 'home') render(false); }); freshenNews(); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });
 
 /* ---------- Application installable (PWA) ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

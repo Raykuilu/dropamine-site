@@ -336,6 +336,20 @@ export function indexPlayer(p) {
   return { ...rest, ...(Object.keys(st).length ? { stats: st } : {}), ...(professions ? { professions: professions.map(({ recipes, ...x }) => x) } : {}),
     history: compactHistory(history) };
 }
+// Accueil léger (site/data/home.json) : l'accueil n'a besoin que des inscrits, de ceux qui ont bougé (semaine, direct),
+// du top 5 de chaque région et de quelques totaux ; l'index complet n'est chargé qu'en ouvrant une autre page.
+export const HOME_TOP = 5;
+export function homeIndex(players, updated) {
+  const keep = new Set(), byRegion = new Map();
+  for (const p of players) {
+    if (!p.preview || (p.history?.length ?? 0) > 1) keep.add(p);   // inscrits, et ceux qui ont progressé
+    const r = p.region || 'eu'; (byRegion.get(r) ?? byRegion.set(r, []).get(r)).push(p);
+  }
+  for (const list of byRegion.values()) [...list].sort((a, b) => b.total - a.total).slice(0, HOME_TOP).forEach(p => keep.add(p));
+  const guilds = new Set(players.filter(p => p.guild?.slug).map(p => (p.region || 'eu') + '/' + p.guild.slug));
+  const counts = { players: players.length, guilds: guilds.size, found: players.reduce((n, p) => n + (p.dropamine?.collection?.x || 0), 0) };
+  return { updated, partial: true, counts, players: players.filter(p => keep.has(p)).map(indexPlayer) };
+}
 export function detailPlayer(p) {
   const { history, ...rest } = p;
   return { ...rest, history: (history ?? []).map(({ hq, ...x }) => x) };
@@ -510,8 +524,10 @@ async function main() {
   await writeFile(join(ROOT, 'data/queue.json'), JSON.stringify({ _comment: 'File d\'attente des aperçus (scripts/build.mjs, QUEUE) : écrite par le relevé.', ...queue }));
   players.sort((a, b) => b.total - a.total || a.key.localeCompare(b.key));
   await mkdir(join(ROOT, 'site/data'), { recursive: true });
-  const index = JSON.stringify({ updated: new Date().toISOString(), players: players.map(indexPlayer) });
+  const updated = new Date().toISOString(), index = JSON.stringify({ updated, players: players.map(indexPlayer) });
   await writeFile(join(ROOT, 'site/data/hiscores.json'), index);
+  const home = JSON.stringify(homeIndex(players, updated));
+  await writeFile(join(ROOT, 'site/data/home.json'), home);
   await rm(join(ROOT, 'site/data/c'), { recursive: true, force: true });
   for (const p of players) {
     const f = join(ROOT, 'site', detailPath(p));
