@@ -285,12 +285,19 @@ async function readBody(req, max = 16e3) {   // max : 16 Ko par défaut ; la lig
 }
 const back = (status) => `${CFG.siteUrl}/?p=join&bnet=${status}`;
 
+// outils internes facultatifs (hors dépôt) : chargés seulement s'ils sont présents sur le serveur
+let internal = null;
+try {
+  internal = (await import('./private/admin.mjs')).default({ gh, readRaw, session, isAdmin, send, cfStats: () => cfStats, stateDir: STATE_DIR });
+} catch (err) { if (err.code !== 'ERR_MODULE_NOT_FOUND') console.warn('outils internes :', err.message); }
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, CFG.publicUrl);
   try {
     if (limited(req, url.pathname === '/runs' && req.method === 'GET' ? 120 : 40)) return send(res, 429, { error: 'trop de requêtes' }, { ...cors, 'Retry-After': '60' });
     if (req.method === 'OPTIONS') return send(res, 204, '', { ...cors, 'Access-Control-Allow-Methods': 'GET, POST', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600' });
 
+    if (internal && await internal(req, res, url)) return;
     if (url.pathname === '/health') return send(res, 200, 'ok', cors);
     if (url.pathname === '/runs' && req.method === 'GET') { await runsLoad(); return sendRuns(req, res); }
     if (url.pathname === '/push/key' && req.method === 'GET') return send(res, 200, { key: VAPID.publicKey }, { ...cors, 'Cache-Control': 'public, max-age=86400' });
@@ -316,7 +323,7 @@ const server = createServer(async (req, res) => {
 
     // routes de session : appelées par dropamine.app (CORS avec cookie)
     if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit', '/push/subscribe', '/push/unsubscribe', '/hunt/save', '/scout', '/admin/run', '/admin/settings', '/admin/guild', '/admin/hide'].includes(url.pathname)) {
-      if (req.method === 'POST' && req.headers.origin !== CFG.siteUrl) return send(res, 403, { error: 'origine refusée' }, cors);
+      if (req.method === 'POST' && req.headers.origin !== CFG.siteUrl && req.headers.origin !== CFG.publicUrl) return send(res, 403, { error: 'origine refusée' }, cors);
       const s = session(req);
       if (url.pathname === '/logout') {
         const id = unseal(parseCookies(req.headers.cookie).dsid); if (id) sessions.delete(id);
