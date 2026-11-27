@@ -1,6 +1,6 @@
 {
   "eu/ray-kuilu": {
-    "weapons": 519,
+    "weapons": 520,
     "weaponList": [
       {
         "id": "axes",
@@ -32,7 +32,7 @@
       },
       {
         "id": "staves",
-        "rank": 108
+        "rank": 109
       },
       {
         "id": "fist",
@@ -71,7 +71,7 @@
         "rank": 0
       }
     ],
-    "defense": 180,
+    "defense": 182,
     "level": 37,
     "professions": [
       {
@@ -129,9 +129,9 @@
     ],
     "version": "3.12.1",
     "at": "2026-11-27",
-    "played": 510086,
+    "played": 511953,
     "collection": {
-      "x": 7,
+      "x": 8,
       "y": 1499,
       "dungeons": [
         {
@@ -141,7 +141,7 @@
         },
         {
           "name": "Scarlet Monastery Library",
-          "x": 1,
+          "x": 2,
           "y": 28
         },
         {
@@ -153,6 +153,7 @@
       "items": [
         3230,
         7710,
+        7711,
         9446,
         9449,
         9453,
@@ -194,7 +195,7 @@
       "longestCombo": 41,
       "sessions": 68,
       "goalsHit": 5,
-      "playtime": 165859
+      "playtime": 167784
     },
     "hunt": [
       {
@@ -218,7 +219,7 @@
       {
         "id": 2262,
         "name": "",
-        "tries": 0,
+        "tries": 1,
         "drops": 0
       },
       {
@@ -230,7 +231,7 @@
       {
         "id": 7756,
         "name": "",
-        "tries": 1,
+        "tries": 2,
         "drops": 0
       },
       {
@@ -242,7 +243,7 @@
       {
         "id": 7754,
         "name": "",
-        "tries": 9,
+        "tries": 10,
         "drops": 0
       },
       {
@@ -266,7 +267,7 @@
       {
         "id": 252512,
         "name": "",
-        "tries": 9,
+        "tries": 10,
         "drops": 0
       }
     ],
