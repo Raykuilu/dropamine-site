@@ -900,7 +900,7 @@ let SHOW_SPARE = false;
 function skillsBlock(p, peers) {
   const items = skillItems(p, peers), spare = items.filter(i => i.spare);
   const shown = SHOW_SPARE ? items : items.filter(i => !i.spare);
-  const body = SKVIEW === 'grid' ? `<div class="stiles">${shown.map(tileOf).join('')}</div>` : `<div class="slist">${shown.map(lineOf).join('')}</div>`;
+  const body = SKVIEW === 'grid' ? `<div class="tiles">${shown.map(tileOf).join('')}</div>` : `<div class="slist">${shown.map(lineOf).join('')}</div>`;
   const more = spare.length ? `<button class="more" type="button" data-sk="spare">${SHOW_SPARE ? t('lessW') : t('moreW', { n: spare.length })}</button>` : '';
   return `<div class="dpanel">
       <div class="dhead"><h3 class="sub">${t('skillsT')}</h3>
