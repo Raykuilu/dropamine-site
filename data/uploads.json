@@ -120,7 +120,7 @@
       },
       {
         "id": "firstaid",
-        "rank": 211
+        "rank": 217
       },
       {
         "id": "riding",
@@ -129,7 +129,7 @@
     ],
     "version": "3.12.1",
     "at": "2026-11-27",
-    "played": 516208,
+    "played": 516440,
     "collection": {
       "x": 9,
       "y": 1499,
@@ -201,7 +201,7 @@
       "longestCombo": 41,
       "sessions": 68,
       "goalsHit": 5,
-      "playtime": 172063
+      "playtime": 172327
     },
     "hunt": [
       {
