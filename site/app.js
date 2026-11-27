@@ -162,7 +162,43 @@ const I18N = {
   clogSrc: ['Loot tables: AtlasLoot Forever (GPL-2.0) · items: Blizzard API.', 'Tables de butin : AtlasLoot Forever (GPL-2.0) · objets : API Blizzard.'],
   obtained: ['Obtained', 'Obtenu'], notObtained: ['Not obtained yet', 'Pas encore obtenu'], itemForever: ['Forever item', 'Objet propre à Forever'], advT: ['Adventure', 'Aventure'], pvpT: ['PvP', 'JcJ'],
   srcArm: ['Armory', 'Armurerie'], srcDecl: ['Dropamine · on trust', 'Dropamine · sur la confiance'],
-  kd: ['K/D ratio', 'Ratio K/D'], kdBy: ['Kills / deaths', 'Victoires / morts'], hpkBy: ['Honor / kill', 'Honneur / victoire'],
+  kd: ['K/D ratio', 'Ratio K/D'],
+  wkBeat: ["Beat week {n}: {x} profession levels", "Battre la semaine {n} : {x} niveaux de métier"],
+  wkBeatG: ["Beat last week: {x}", "Battre la semaine dernière : {x}"],
+  wkGuildT: ["Guild · {g}", "Guilde · {g}"],
+  wkDaysT: ["Day by day", "Jour par jour"],
+  wkAll: ["See all", "Tout voir"],
+  wkDayNone: ["Nobody gained that day.", "Personne n’a progressé ce jour-là."],
+  wkDayFuture: ["Still to come.", "À venir."],
+  wkToday: ["today", "aujourd’hui"],
+  dwSort: ["This week's best gains", "Meilleurs gains de la semaine"],
+  dwTip: ["Who gained the most this week (armory-verified), in this ranking", "Qui a le plus progressé cette semaine (vérifié par l’armurerie), dans ce classement"],
+  dwNone: ["Nobody has gained here yet this week.", "Personne n’a encore progressé ici cette semaine."],
+  wkKicker: ["Week {n}", "Semaine {n}"],
+  wkTitle: ["This week", "Cette semaine"],
+  wkLeftD: ["resets in {d} d {h} h", "remise à zéro dans {d} j {h} h"],
+  wkLeftH: ["resets in {h} h", "remise à zéro dans {h} h"],
+  wkSoon: ["resetting…", "remise à zéro…"],
+  wkCommonT: ["Shared goal", "Défi commun"],
+  wkCommonGoal: ["+{n} profession levels, all together", "+{n} niveaux de métier, tous ensemble"],
+  wkHelpers: ["{n} contributors", "{n} participants"],
+  wkDone: ["goal reached", "objectif atteint"],
+  wkSkillerT: ["Skiller of the week", "Skiller de la semaine"],
+  wkSkillT: ["Skill of the week", "Compétence de la semaine"],
+  wkFighterT: ["Fighter of the week", "Combattant de la semaine"],
+  wkNoneYet: ["Nobody has gained here yet this week.", "Personne n’a encore progressé ici cette semaine."],
+  wkNoneSkill: ["Nobody yet: train it to take the lead.", "Personne pour l’instant : monte-la pour prendre la tête."],
+  wkNoneHk: ["No honorable kill yet this week.", "Aucune victoire honorable cette semaine pour l’instant."],
+  wkYou: ["You this week", "Toi cette semaine"],
+  wkVerified: ["verified levels", "niveaux vérifiés"],
+  wkYouPos: ["{r} in the {a}-{z} bracket", "{r} de la tranche {a}-{z}"],
+  wkYouNone: ["Not on the board yet this week.", "Pas encore au classement cette semaine."],
+  wkYouCommon: ["+{n} towards the shared goal ({s} %)", "+{n} pour le défi commun ({s} %)"],
+  wkPastT: ["Past champions", "Champions des semaines passées"],
+  wkFoot: ["Monday to Sunday · armory-verified gains only (level, Defense, professions, honorable kills) · weapons are not counted", "Du lundi au dimanche · seuls les gains vérifiés par l’armurerie comptent (niveau, Défense, métiers, victoires honorables) · les armes ne comptent pas"],
+  wkBadgeSkiller: ["Skiller of week {n}", "Skiller de la semaine {n}"],
+  wkBadgeSkill: ["{s} · week {n}", "{s} · semaine {n}"],
+  wkBadgeFighter: ["Fighter of week {n}", "Combattant de la semaine {n}"], kdBy: ['Kills / deaths', 'Victoires / morts'], hpkBy: ['Honor / kill', 'Honneur / victoire'],
   hpkNone: ['Nobody yet: it takes at least 10 honorable kills this week, in a /drop hiscores line less than 7 days old.', 'Personne pour l’instant : il faut au moins 10 victoires honorables cette semaine, dans une ligne /drop hiscores de moins de 7 jours.'], kdMin: ['from 20 fights (honorable kills + deaths)', 'dès 20 combats (VH + morts)'], kdHow: ['{k} honorable kills for {d} deaths to players', '{k} victoires honorables pour {d} morts face aux joueurs'],
   duelsT: ['Duels won – lost', 'Duels gagnés – perdus'], pvpRank: ['PvP rank', 'Rang JcJ'],
   subWinRate: ['{n}% won', '{n} % de victoires'], subFaction: ['{n} by the opposite faction', '{n} par la faction adverse'],
@@ -618,6 +654,7 @@ document.addEventListener('click', e => {
 
 function renderHome() {
   renderDash();
+  renderWeek();
   loadCf();
   renderLive();
   // les chiffres qui montrent que le projet vit (toutes régions)
@@ -630,10 +667,6 @@ function renderHome() {
     $$('[data-pulse]').forEach(el => { el.innerHTML = `<i class="live"></i>${t('pulseDl', { n: fmt(CF_DOWNLOADS) })} · ${t('pulseChars', { n: fmt(DATA.players.length) })} · ${t('pulseGuilds', { n: gs.size })}${when ? ' · ' + when : ''}`; });
   }
   const all = rankBy(SKILLS[0], inRegion()), top = all.slice(0, 5);
-  // les +1 du jour : les plus gros gains depuis la veille, en petits toasts façon addon
-  const gains = inRegion().map(p => ({ p, d: dayGain(p) })).filter(x => x.d > 0).sort((a, b) => b.d - a.d).slice(0, 6);
-  const gainsHtml = gains.length ? `<div class="gains"><p class="kicker">${t('gainsT')}</p><div class="gl">${gains.map(({ p, d }) =>
-    `<a class="gt" href="?p=char&c=${esc(encodeURIComponent(pkey(p)))}" data-c="${esc(pkey(p))}">${avatar(p)}<span><b>${full(p)}</b><small>${esc(className(p))} ${p.level}</small></span><i>+${fmt(d)}</i></a>`).join('')}</div></div>` : '';
   const line = ({ p, v, r }, cls = '') => `<div class="row${r <= 3 ? ' top' : ''}${cls}" data-c="${esc(pkey(p))}" style="grid-template-columns:44px minmax(0,1fr) minmax(90px,160px) 96px"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p)}<small>${who(p)}</small></span></span>${tri(p)}<span class="tot">${fmt(v)}${estTag(p)}</span></div>`;
   // connecté : ton meilleur personnage, sous le top 5 s'il n'y figure pas
   const me = all.find(x => pkey(x.p) === Bnet.best());
@@ -651,7 +684,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-fs]');
   if (b) { fsClose(); const src = $(`#rank-panel .fsheet[data-fsheet="${b.dataset.fs}"]`); if (src) { const s = src.cloneNode(true); s.hidden = false; document.body.append(s); document.documentElement.classList.add('fs-open'); const box = s.querySelector('.fs-in'), on = s.querySelector('.on'); if (box && on) box.scrollTop = Math.max(0, on.offsetTop - box.clientHeight / 2); } return; }
   if (e.target.closest('[data-fsx]') || e.target.classList?.contains('fsheet')) { fsClose(); return; }
-  if (e.target.closest('.fsheet [data-skill],.fsheet [data-rs],.fsheet [data-cls],.fsheet [data-dg]')) fsClose();   // un choix : le panneau se ferme, la page se re-dessine
+  if (e.target.closest('.fsheet [data-skill],.fsheet [data-rs],.fsheet [data-cls],.fsheet [data-dg],.fsheet [data-dw]')) fsClose();   // un choix : le panneau se ferme, la page se re-dessine
 });
 addEventListener('keydown', e => { if (e.key === 'Escape') fsClose(); });
 // groupes de compétences ouverts (retenus sur cet appareil)
@@ -671,6 +704,7 @@ function renderRank() {
   let list = rankBy(sk, state.cls ? byRs.filter(p => p.classId === state.cls) : byRs);
   // tri par meilleur gain du jour (les + verts) : seuls ceux qui ont progressé, rangés par gain
   if (state.dg) list = list.map(x => ({ ...x, g: skillGain(x.p, sk) })).filter(x => x.g > 0).sort((a, b) => b.g - a.g || b.v - a.v).map((x, i) => ({ ...x, r: i + 1 }));
+  else if (state.dw) list = list.map(x => ({ ...x, g: weekGainFor(x.p, sk) })).filter(x => x.g > 0).sort((a, b) => b.g - a.g || b.v - a.v).map((x, i) => ({ ...x, r: i + 1 }));
   const classes = [...new Set(byRs.map(p => p.classId).filter(Boolean))].sort((a, b) => L2(CLASS[a]).localeCompare(L2(CLASS[b])));
   let nav = '', grp;
   // comme la grille de l'addon : chaque compétence avec son icône ; une arme n'apparaît que si quelqu'un la pratique
@@ -691,7 +725,8 @@ function renderRank() {
   const count = id => region.filter(p => p.rulesetId === id).length;
   const rsChips = `<span class="chip ${state.rs ? '' : 'on'}" data-rs="0">${t('allModes')}<span class="n">${region.length}</span></span>` +
     RULESETS.map(([id, names]) => `<span class="chip ${state.rs === id ? 'on' : ''}" data-rs="${id}">${L2(names)}<span class="n">${count(id)}</span></span>`).join('')
-    + `<span class="chip dg${state.dg ? ' on' : ''}" data-dg role="button" tabindex="0" title="${t('dgTip')}">▲ ${t('dgSort')}</span>`;
+    + `<span class="chip dg${state.dg ? ' on' : ''}" data-dg role="button" tabindex="0" title="${t('dgTip')}">▲ ${t('dgSort')}</span>`
+    + `<span class="chip dg${state.dw ? ' on' : ''}" data-dw role="button" tabindex="0" title="${t('dwTip')}">▲ ${t('dwSort')}</span>`;
   const clsChips = `<span class="chip ${state.cls ? '' : 'on'}" data-cls="0">${t('allClasses')}</span>` +
     classes.map(c => `<span class="chip ${state.cls === c ? 'on' : ''}" data-cls="${c}">${esc(L2(CLASS[c]))}</span>`).join('');
   const isTotal = sk.id === 'total';
@@ -701,7 +736,7 @@ function renderRank() {
   const skIc = sk.logo || sk.id === 'total' ? '<i class="sic logo"></i>' : sk.icon ? `<img class="sic" src="${icon(sk.icon)}" alt="" referrerpolicy="no-referrer">` : '';
   const fbtn = (k, lbl, val, ic = '') => `<button type="button" class="fbtn" data-fs="${k}" aria-haspopup="dialog"><small>${lbl}</small><span>${ic}<b>${val}</b></span><i class="chev" aria-hidden="true"></i></button>`;
   const sheet = (k, title, body) => `<div class="fsheet" data-fsheet="${k}" hidden role="dialog" aria-label="${esc(title)}"><div class="fs-in"><div class="fs-h"><b>${title}</b><button type="button" class="fs-x" data-fsx aria-label="${t('close')}">✕</button></div>${body}</div></div>`;
-  const fbar = `<div class="fbar">${fbtn('skill', t('fSkill'), esc(sk.label()), skIc)}${fbtn('rs', t('fMode'), esc(rsName) + (state.dg ? ' ▲' : ''))}${fbtn('cls', t('fClass'), state.cls ? esc(L2(CLASS[state.cls])) : t('allC'))}</div>`
+  const fbar = `<div class="fbar">${fbtn('skill', t('fSkill'), esc(sk.label()), skIc)}${fbtn('rs', t('fMode'), esc(rsName) + (state.dg || state.dw ? ' ▲' : ''))}${fbtn('cls', t('fClass'), state.cls ? esc(L2(CLASS[state.cls])) : t('allC'))}</div>`
     + sheet('skill', t('fSkill'), `<nav class="skills">${nav}</div></nav>`)
     + sheet('rs', t('fMode'), `<div class="chips">${rsChips}</div>`)
     + sheet('cls', t('fClass'), `<div class="chips">${clsChips}</div>`);
@@ -717,14 +752,14 @@ function renderRank() {
         : sk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, sk.ratio(v, p))).toFixed(1)}%"></i></span>` : '<span class="c3"></span>'}
       <span class="tot">${showVal(sk, v, p)}${isTotal ? estTag(p) : sk.wpn && sk.est(p) ? `<em>${t('est')}</em>` : ''}</span>
     </div>`;
-  const rows = state.dg ? (list.length ? list.map(row).join('') : `<div class="empty">${t('dgNone')}</div>`)
+  const rows = state.dg || state.dw ? (list.length ? list.map(row).join('') : `<div class="empty">${t(state.dw ? 'dwNone' : 'dgNone')}</div>`)
     : (list.length || estRows.length)
     ? list.map(row).join('') + (estRows.length ? `<div class="you-sep est-sep">${t('estSep')}</div>` + estRows.map(row).join('') : '')
     : sk.id === 'hpk' ? `<div class="empty">${t('hpkNone')}</div>` : nobody();
   $('#rank-panel').innerHTML = `
     <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
     ${fbar}
-    ${state.dg ? `<span class="dgon" data-dg role="button" tabindex="0" title="${t('dgTip')}">▲ ${t('dgSort')} <i aria-hidden="true">✕</i></span>` : ''}
+    ${state.dg || state.dw ? `<span class="dgon" ${state.dw ? 'data-dw' : 'data-dg'} role="button" tabindex="0" title="${t(state.dw ? 'dwTip' : 'dgTip')}">▲ ${t(state.dw ? 'dwSort' : 'dgSort')} <i aria-hidden="true">✕</i></span>` : ''}
     <div class="chips rk-rs" role="group">${rsChips}</div>
     <div class="board">
       <nav class="skills rk-sk">${nav}</div></nav>
@@ -897,6 +932,7 @@ function renderChar() {
       ${portrait}
       <div><h2>${full(p)}</h2><p>${desc} · ${t('levelN', { n: p.level })}${p.guild ? ` · <a href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${esc(p.guild.name)}</a>` : ''} · ${esc((p.region || 'eu').toUpperCase())}${rulesetName(p) ? ' ' + esc(rulesetName(p)) : ''}</p>
         ${p.preview ? `<span class="seal pv">${t('sealPreview')}</span><p class="pv-note">${t('previewNote')}</p>` : p.complete ? `<span class="seal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>${t('sealOk')}</span>` : `<span class="seal est">${t('sealEst')}</span>`}
+        ${weekBadges(p)}
         <button class="share" type="button" data-share="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button><button class="share hsb" type="button" data-hsimg="${esc(pkey(p))}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h8"/></svg><span>${t('hsBtn')}</span></button>${freshLine(p)}</div>
       ${(() => {
         // ligne collée en attente : le total simulé en grand, discret ; l'officiel (armurerie) dessous.
@@ -1317,6 +1353,206 @@ function guilds() {
   const m = new Map();
   inRegion().forEach(p => { if (!p.guild) return; const g = m.get(p.guild.slug) || { ...p.guild, members: [] }; g.members.push(p); m.set(p.guild.slug, g); });
   return [...m.values()].map(g => ({ ...g, total: g.members.reduce((s, p) => s + p.total, 0) })).sort((a, b) => b.total - a.total);
+}
+// <week>
+// Défis de la semaine (lundi → dimanche, dates du relevé quotidien). Seuls les gains vérifiés par l'armurerie comptent :
+// niveau (l), Défense (d), métiers (p…) et victoires honorables (hk). Les armes (lignes Dropamine) n'entrent pas.
+const WEEK = (() => {
+  const DAY = 864e5;
+  const iso = t => new Date(t).toISOString().slice(0, 10);
+  const at = d => Date.parse(d + 'T00:00:00Z');
+  // lundi (UTC) de la semaine d'une date « AAAA-MM-JJ »
+  const monday = d => iso(at(d) - ((new Date(at(d)).getUTCDay() + 6) % 7) * DAY);
+  const next = m => iso(at(m) + 7 * DAY);
+  const prev = m => iso(at(m) - 7 * DAY);
+  const days = m => Array.from({ length: 7 }, (_, i) => iso(at(m) + i * DAY));
+  // numéro ISO de la semaine (S48)
+  const num = m => { const t = new Date(at(m) + 3 * DAY); const y = Date.UTC(t.getUTCFullYear(), 0, 4);
+    return 1 + Math.round((t - y) / DAY / 7 - 3 / 7 + ((new Date(y).getUTCDay() + 6) % 7) / 7); };
+  const verified = k => k === 'l' || k === 'd' || /^p\d+$/.test(k);
+  // gain vérifié entre deux relevés
+  function diff(a, b) {
+    const by = {}; let total = 0, prof = 0;
+    if (a && b && a !== b) for (const [k, v] of Object.entries(b.s || {})) {
+      if (!verified(k) || !Number.isFinite(v) || !Number.isFinite(a.s?.[k])) continue;
+      const g = Math.max(0, v - a.s[k]); if (!g) continue;
+      by[k] = g; total += g; if (k[0] === 'p') prof += g;
+    }
+    const hk = a && b && a !== b && Number.isFinite(b.hk) && Number.isFinite(a.hk) ? Math.max(0, b.hk - a.hk) : 0;
+    return { total, prof, hk, by };
+  }
+  // gain sur [du, au[ : du dernier relevé avant « du » (sinon le premier de la période) au dernier de la période
+  function gainSpan(hist, from, to) {
+    const h = (hist || []).filter(x => x && x.d), inW = h.filter(x => x.d >= from && x.d < to);
+    if (!inW.length) return diff(null, null);
+    const before = h.filter(x => x.d < from);
+    return diff(before.length ? before[before.length - 1] : inW[0], inW[inW.length - 1]);
+  }
+  const gain = (hist, m) => gainSpan(hist, m, next(m));
+  // gain d'un jour : relevé du jour face au relevé précédent (pas de relevé ce jour-là : rien)
+  function gainDay(hist, d) {
+    const h = (hist || []).filter(x => x && x.d), i = h.findIndex(x => x.d === d);
+    return i > 0 ? diff(h[i - 1], h[i]) : diff(null, null);
+  }
+  const BRACKETS = [[10, 29], [30, 49], [50, 60]];
+  const bracketOf = lvl => BRACKETS.findIndex(([a, b]) => lvl >= a && lvl <= b);
+  // compétence de la semaine : un métier tiré d'après le numéro de semaine, parmi ceux que quelqu'un pratique
+  function skillOf(players, m) {
+    const pool = [...new Set(players.flatMap(p => Object.keys(p.history?.[p.history.length - 1]?.s || {}).filter(k => /^p\d+$/.test(k))))]
+      .filter(k => k !== 'p762').sort((a, b) => +a.slice(1) - +b.slice(1));
+    if (!pool.length) return null;
+    const w = Math.round(at(m) / DAY / 7);
+    return pool[((w * 7 + 3) % pool.length + pool.length) % pool.length];
+  }
+  const top = (rows, f) => rows.map(r => ({ ...r, v: f(r.g) })).filter(r => r.v > 0).sort((a, b) => b.v - a.v || b.p.total - a.p.total);
+  const round50 = n => Math.ceil(n / 50) * 50;
+  // objectif commun : battre la semaine dernière (+10 %) ; sans semaine dernière, ~60 niveaux de métier par joueur actif
+  const goalFor = (last, active) => last > 0 ? round50(last * 1.1) : Math.max(300, round50(Math.max(1, active) * 60));
+  const commonOf = (players, m) => players.reduce((n, p) => n + gain(p.history, m).prof, 0);
+  // tout le tableau d'une semaine (« last » = date du dernier relevé : le jour en cours)
+  function board(players, m, last) {
+    const rows = players.map(p => ({ p, g: gain(p.history, m) }));
+    const active = rows.filter(r => r.g.total > 0 || r.g.hk > 0);
+    const skill = skillOf(players, m);
+    const lastCommon = commonOf(players, prev(m));
+    const common = rows.reduce((n, r) => n + r.g.prof, 0);
+    const dayRows = d => players.map(p => ({ p, g: gainDay(p.history, d) }));
+    const today = last && last >= m && last < next(m) ? last : null;
+    return {
+      m, num: num(m), skill, today,
+      skiller: BRACKETS.map((_, i) => top(rows.filter(r => bracketOf(r.p.level) === i), g => g.total)),
+      skillTop: skill ? top(rows, g => g.by[skill] || 0) : [],
+      fighter: top(rows, g => g.hk),
+      common, lastCommon, goal: goalFor(lastCommon, active.length), active: active.length,
+      helpers: rows.filter(r => r.g.prof > 0).length,
+      commonToday: today ? dayRows(today).reduce((n, r) => n + r.g.prof, 0) : 0,
+      days: days(m).map(d => ({ d, future: !last || d > last, top: top(dayRows(d), g => g.total) })),
+      rows,
+    };
+  }
+  // défi de la guilde : mêmes règles, sur les membres de la guilde
+  function guild(players, m, key) {
+    const mem = players.filter(p => p.guild && (p.region || 'eu') + '/' + p.guild.slug === key);
+    if (!mem.length) return null;
+    const rows = mem.map(p => ({ p, g: gain(p.history, m) }));
+    const last = commonOf(mem, prev(m)), active = rows.filter(r => r.g.total > 0).length;
+    return { name: mem[0].guild.name, common: rows.reduce((n, r) => n + r.g.prof, 0), last,
+      goal: last > 0 ? round50(last * 1.1) : Math.max(100, round50(Math.max(1, active) * 60)), helpers: rows.filter(r => r.g.prof > 0).length };
+  }
+  // champions des semaines passées (l'historique garde 30 jours : 3 semaines complètes au plus)
+  function past(players, m, n = 3) {
+    const out = []; let w = prev(m);
+    for (let i = 0; i < n; i++, w = prev(w)) {
+      const b = board(players, w, null);
+      if (b.skiller.some(x => x.length) || b.skillTop.length || b.fighter.length) out.push(b);
+    }
+    return out;
+  }
+  return { monday, next, prev, days, num, gain, gainDay, board, guild, past, bracketOf, BRACKETS, skillOf, goalFor };
+})();
+// </week>
+// ---------- Accueil : les défis de la semaine ----------
+let WB = null;   // tranche de niveau affichée (null = celle du joueur connecté, sinon la plus disputée)
+let WD = null;   // jour choisi dans la frise (null = aujourd'hui)
+const weekPlayers = () => inRegion().filter(p => p.history?.length);
+const weekNow = players => { const last = players.reduce((d, p) => { const x = p.history[p.history.length - 1].d; return x > d ? x : d; }, ''); return last ? WEEK.monday(last) : null; };
+// remise à zéro : lundi, au relevé de 5 h 17 UTC
+function weekLeft(m) {
+  const ms = Date.parse(WEEK.next(m) + 'T05:17:00Z') - Date.now(); if (ms <= 0) return t('wkSoon');
+  const d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5);
+  return d ? t('wkLeftD', { d, h }) : t('wkLeftH', { h: Math.max(1, h) });
+}
+const wkWho = (r, cls = '') => `<a class="wk-who${cls}" href="?p=char&c=${esc(encodeURIComponent(pkey(r.p)))}" data-c="${esc(pkey(r.p))}">${avatar(r.p)}<span><b>${full(r.p)}</b><small>${esc(className(r.p))} ${r.p.level}</small></span><i>+${fmt(r.v)}</i></a>`;
+const wkList = (rows, empty) => rows.length ? `<ol class="wk-list">${rows.slice(0, 3).map(r => `<li>${wkWho(r)}</li>`).join('')}</ol>` : `<p class="wk-empty">${empty}</p>`;
+function renderWeek() {
+  const box = $('#week'); if (!box) return;
+  const players = weekPlayers(), m = weekNow(players);
+  if (!m || DATA.failed) { box.hidden = true; return; }
+  box.hidden = false;
+  const last = players.reduce((d, p) => { const x = p.history[p.history.length - 1].d; return x > d ? x : d; }, '');
+  const b = WEEK.board(players, m, last), mineKeys = new Set(Bnet.mine().map(pkey));
+  const me = b.rows.filter(r => mineKeys.has(pkey(r.p))).sort((x, y) => y.g.total - x.g.total || y.p.total - x.p.total)[0];
+  if (WB == null) WB = me && WEEK.bracketOf(me.p.level) >= 0 ? WEEK.bracketOf(me.p.level)
+    : [0, 1, 2].sort((x, y) => b.skiller[y].length - b.skiller[x].length || y - x)[0];
+  const dayName = d => new Date(d + 'T12:00:00Z').toLocaleDateString(locale(), { weekday: 'short', timeZone: 'UTC' }).replace('.', '');
+  // 1) la frise : meilleur gain de chaque jour ; un jour choisi montre son top 3
+  const sel = b.days.find(x => x.d === WD) || b.days.find(x => x.d === b.today) || b.days.filter(x => !x.future).pop() || b.days[0];
+  const peak = Math.max(1, ...b.days.map(x => x.top[0]?.v || 0));
+  const cols = b.days.map(x => { const v = x.top[0]?.v || 0, h = x.future || !v ? 4 : Math.max(6, Math.round(88 * v / peak));
+    return `<button type="button" class="wk-day${x.d === b.today ? ' now' : ''}${x.future || !v ? ' fut' : ''}${x.future ? ' later' : ''}${x === sel ? ' sel' : ''}" data-wd="${x.d}"${x.future ? ' disabled' : ''} aria-pressed="${x === sel}">
+      <em>${v ? '+' + fmt(v) : '&nbsp;'}</em><s style="height:${h}px"></s><span>${esc(dayName(x.d))}</span></button>`; }).join('');
+  const selTop = sel.top.length ? `<ol class="wk-list">${sel.top.slice(0, 3).map(r => `<li>${wkWho(r)}</li>`).join('')}</ol>` : `<p class="wk-empty">${t(sel.future ? 'wkDayFuture' : 'wkDayNone')}</p>`;
+  // 2) défis communs : la communauté (battre la semaine dernière), puis ta guilde (connecté)
+  const barOf = (c, goal, todayN) => { const pct = Math.min(100, 100 * c / goal), tp = Math.min(100 - pct, 100 * Math.min(todayN, c) / goal);
+    return `<div class="wk-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${goal}" aria-valuenow="${c}"><i style="--w:${(pct - tp).toFixed(1)}%"></i><u style="left:${(pct - tp).toFixed(1)}%;--w:${tp.toFixed(1)}%"></u>${[25, 50, 75].map(x => `<s style="left:${x}%"${pct >= x ? ' class="ok"' : ''}></s>`).join('')}</div>`; };
+  const commonGoalTxt = b.lastCommon > 0 ? t('wkBeat', { n: b.num - 1, x: fmt(b.lastCommon) }) : t('wkCommonGoal', { n: fmt(b.goal) });
+  let guildHtml = '';
+  if (me?.p.guild) {
+    const gu = WEEK.guild(players, m, (me.p.region || 'eu') + '/' + me.p.guild.slug);
+    if (gu) guildHtml = `<div class="wk-sub"><div class="wk-cl"><p class="wk-lbl">${t('wkGuildT', { g: esc(gu.name) })}</p><p class="wk-goal sm">${gu.last > 0 ? t('wkBeatG', { x: fmt(gu.last) }) : t('wkCommonGoal', { n: fmt(gu.goal) })}</p></div>
+      ${barOf(gu.common, gu.goal, 0)}<p class="wk-line"><b>${fmt(gu.common)}</b> / ${fmt(gu.goal)} · ${t('wkHelpers', { n: gu.helpers })}${gu.common >= gu.goal ? ` · <span class="wk-done">${t('wkDone')}</span>` : ''}</p></div>`;
+  }
+  // 3) titres de la semaine
+  const pod = b.skiller[WB];
+  const podium = pod.length ? `<div class="wk-pod">${[1, 0, 2].map(i => pod[i] ? `<div class="wk-p r${i + 1}">${wkWho(pod[i])}<span class="wk-rk">${ord(i + 1)}</span></div>` : '<div class="wk-p none"></div>').join('')}</div>`
+    : `<p class="wk-empty">${t('wkNoneYet')}</p>`;
+  const chips = WEEK.BRACKETS.map(([a, z], i) => `<span class="chip${i === WB ? ' on' : ''}" data-wb="${i}" role="button" tabindex="0">${a}-${z}<span class="n">${b.skiller[i].length}</span></span>`).join('');
+  const sk = b.skill ? skillById(b.skill) : null;
+  // 4) toi cette semaine : ton gain, ta place, ta propre frise
+  let you = '';
+  if (me) {
+    const br = WEEK.bracketOf(me.p.level), pos = br >= 0 ? b.skiller[br].findIndex(r => r.p === me.p) + 1 : 0;
+    const mine = b.days.map(x => ({ x, v: WEEK.gainDay(me.p.history, x.d).total })), mp = Math.max(1, ...mine.map(y => y.v));
+    you = `<div class="wk-card wk-you"><p class="wk-lbl">${t('wkYou')}</p><div class="wk-yh"><div class="wk-big">+${fmt(me.g.total)}<small>${t('wkVerified')}</small></div>
+      <div class="wk-mini" aria-hidden="true">${mine.map(({ x, v }) => `<s class="${x.d === b.today ? 'now' : ''}${x.future ? ' fut' : ''}" style="height:${x.future ? 2 : Math.max(3, Math.round(34 * v / mp))}px"></s>`).join('')}</div></div>
+      <p class="wk-line">${pos ? t('wkYouPos', { r: ord(pos), a: WEEK.BRACKETS[br][0], z: WEEK.BRACKETS[br][1] }) : t('wkYouNone')}</p>
+      ${me.g.prof ? `<p class="wk-line">${t('wkYouCommon', { n: fmt(me.g.prof), s: b.common ? Math.round(100 * me.g.prof / b.common) : 0 })}</p>` : ''}</div>`;
+  }
+  const past = WEEK.past(players, m).map(w => { const best = w.skiller.map(x => x[0]).filter(Boolean).sort((x, y) => y.v - x.v)[0];
+    return best ? `<li><span class="wk-wn">S${w.num}</span>${wkWho(best, ' sm')}</li>` : ''; }).join('');
+  box.innerHTML = `
+    <div class="wk-head"><div><p class="kicker">${t('wkKicker', { n: b.num })}</p><h2>${t('wkTitle')}</h2></div><p class="wk-cd"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${weekLeft(m)}</p></div>
+    <div class="wk-cols">
+      <div class="wk-main">
+        <div class="wk-card wk-frise"><div class="wk-cl"><p class="wk-lbl">${t('wkDaysT')}</p><a class="wk-all" href="?p=rank&dw=1" data-wall>${t('wkAll')}</a></div>
+          <div class="wk-days">${cols}</div>
+          <div class="wk-sel"><p class="wk-lbl sm">${esc(new Date(sel.d + 'T12:00:00Z').toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }))}</p>${selTop}</div></div>
+        <div class="wk-card wk-common"><div class="wk-cl"><p class="wk-lbl">${t('wkCommonT')}</p><p class="wk-goal">${commonGoalTxt}</p></div>
+          ${barOf(b.common, b.goal, b.commonToday)}
+          <p class="wk-line"><b>${fmt(b.common)}</b> / ${fmt(b.goal)} · ${t('wkHelpers', { n: b.helpers })}${b.commonToday ? ` · <span class="wk-today">+${fmt(b.commonToday)} ${t('wkToday')}</span>` : ''}${b.common >= b.goal ? ` · <span class="wk-done">${t('wkDone')}</span>` : ''}</p>
+          ${guildHtml}</div>
+      </div>
+      <div class="wk-side">
+        ${you}
+        <div class="wk-card wk-skiller"><p class="wk-lbl">${t('wkSkillerT')}</p><div class="chips wk-br" role="group" aria-label="${t('level')}">${chips}</div>${podium}</div>
+        <div class="wk-card"><p class="wk-lbl">${t('wkSkillT')}</p>${sk ? `<p class="wk-skill">${sk.icon ? `<img src="${icon(sk.icon)}" alt="" referrerpolicy="no-referrer">` : ''}<b>${esc(sk.label())}</b></p>` : ''}${wkList(b.skillTop, t('wkNoneSkill'))}
+          <p class="wk-lbl" style="margin-top:14px">${t('wkFighterT')}</p>${wkList(b.fighter, t('wkNoneHk'))}</div>
+      </div>
+    </div>
+    ${past ? `<div class="wk-past"><p class="wk-lbl">${t('wkPastT')}</p><ol>${past}</ol></div>` : ''}
+    <p class="wk-foot">${t('wkFoot')}</p>`;
+}
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-wb]'); if (c) { WB = +c.dataset.wb; renderWeek(); return; }
+  const d = e.target.closest('[data-wd]'); if (d && !d.disabled) { WD = d.dataset.wd; renderWeek(); return; }
+  const a = e.target.closest('[data-wall]'); if (a) { e.preventDefault(); go({ view: 'rank', skill: 'total', dw: true, dg: false }); }
+});
+// gain de la semaine d'un personnage pour une compétence du classement (vérifié seulement : niveau, Défense, métiers, VH)
+function weekGainFor(p, sk) {
+  const m = weekNow(weekPlayers()); if (!m) return 0;
+  const g = WEEK.gain(p.history, m);
+  return sk.id === 'total' ? g.total : sk.id === 'level' ? g.by.l || 0 : sk.id === 'defense' ? g.by.d || 0 : sk.id === 'hk' ? g.hk : /^p\d+$/.test(sk.id) ? g.by[sk.id] || 0 : 0;
+}
+// badges de la fiche : semaines gagnées (skiller, compétence, combattant), sur les 3 dernières semaines complètes
+function weekBadges(p) {
+  const players = weekPlayers(), m = weekNow(players); if (!m) return '';
+  const out = [];
+  for (const w of WEEK.past(players, m)) {
+    if (w.skiller.some(x => x[0]?.p === p)) out.push(t('wkBadgeSkiller', { n: w.num }));
+    if (w.skillTop[0]?.p === p) out.push(t('wkBadgeSkill', { s: skillById(w.skill).label(), n: w.num }));
+    if (w.fighter[0]?.p === p) out.push(t('wkBadgeFighter', { n: w.num }));
+  }
+  return out.length ? `<div class="wk-badges">${out.map(x => `<span class="wk-badge">${esc(x)}</span>`).join('')}</div>` : '';
 }
 function gain7(p) {
   const h = p.history || []; if (h.length < 2) return null;
@@ -1890,7 +2126,8 @@ async function runAction(path, body) {
   renderRuns();
 }
 document.addEventListener('click', e => {
-  const dgb = e.target.closest('[data-dg]'); if (dgb) { state.dg = !state.dg; renderRank(); writeUrl(false); return; }
+  const dgb = e.target.closest('[data-dg]'); if (dgb) { state.dg = !state.dg; if (state.dg) state.dw = false; renderRank(); writeUrl(false); return; }
+  const dwb = e.target.closest('[data-dw]'); if (dwb) { state.dw = !state.dw; if (state.dw) state.dg = false; renderRank(); writeUrl(false); return; }
   const c = e.target.closest('[data-rscope]'); if (c) { state.rscope = c.dataset.rscope; renderRuns(); return; }
   if (e.target.closest('[data-rlvl]')) { state.rlvl = !state.rlvl; renderRuns(); return; }
   const pfc = e.target.closest('[data-pf]'); if (pfc) { state.pf = pfc.dataset.pf; state.plimit = 30; renderRuns(); return; }
@@ -2161,7 +2398,7 @@ function readUrl() {
   const v = q.get('p');
   state.view = VIEWS.includes(v) ? v : (q.get('bnet') ? 'join' : q.get('c') ? 'char' : q.get('g') ? 'guild' : 'home');
   state.region = ['eu', 'us', 'tw'].includes(q.get('r')) ? q.get('r') : 'eu';
-  state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0; state.dg = q.get('dg') === '1';
+  state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0; state.dg = q.get('dg') === '1'; state.dw = !state.dg && q.get('dw') === '1';
   state.c = q.get('c') || state.c; state.g = q.get('g') || '';
   if (state.view === 'runs') Object.assign(state, { rtab: q.get('tab') === 'ideas' ? 'ideas' : q.get('tab') === 'planned' ? 'planned' : undefined, hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
 }
@@ -2171,7 +2408,7 @@ function writeUrl(push) {
   if (DEMO) q.set('demo', DEMO);
   if (state.view !== 'home') q.set('p', state.view);
   if (state.region !== 'eu') q.set('r', state.region);
-  if (state.view === 'rank') { if (state.dg) q.set('dg', '1'); if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
+  if (state.view === 'rank') { if (state.dg) q.set('dg', '1'); if (state.dw) q.set('dw', '1'); if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
   if (state.view === 'char' && state.c) q.set('c', state.c);
   if (state.view === 'guild' && state.g) q.set('g', state.g);
   if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['d', 'hd'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.rtab === 'ideas') q.set('tab', 'ideas'); if (state.runFocus) q.set('run', state.runFocus); }
