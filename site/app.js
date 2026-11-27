@@ -695,7 +695,6 @@ function renderRank() {
   const clsChips = `<span class="chip ${state.cls ? '' : 'on'}" data-cls="0">${t('allClasses')}</span>` +
     classes.map(c => `<span class="chip ${state.cls === c ? 'on' : ''}" data-cls="${c}">${esc(L2(CLASS[c]))}</span>`).join('');
   const isTotal = sk.id === 'total';
-  const kdSw = sk.id === 'kd' || sk.id === 'hpk' ? `<div class="chips kdsw" role="group" aria-label="${t('kd')}"><span class="chip${sk.id === 'kd' ? ' on' : ''}" data-skill="kd" role="button" tabindex="0">${t('kdBy')}</span><span class="chip${sk.id === 'hpk' ? ' on' : ''}" data-skill="hpk" role="button" tabindex="0">${t('hpkBy')}</span></div>` : '';
   // téléphone : 3 boutons (compétence, mode, classe) qui ouvrent un panneau du bas, au lieu de 3 rangées de pastilles.
   // Les panneaux reprennent les listes de l'ordinateur (groupes pliables compris).
   const rsName = state.rs ? L2((RULESETS.find(([id]) => id === state.rs) || [0, ['?', '?']])[1]) : t('allM');
@@ -726,7 +725,6 @@ function renderRank() {
     <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
     ${fbar}
     ${state.dg ? `<span class="dgon" data-dg role="button" tabindex="0" title="${t('dgTip')}">▲ ${t('dgSort')} <i aria-hidden="true">✕</i></span>` : ''}
-    ${kdSw}
     <div class="chips rk-rs" role="group">${rsChips}</div>
     <div class="board">
       <nav class="skills rk-sk">${nav}</div></nav>
