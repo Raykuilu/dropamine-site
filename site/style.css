@@ -1398,3 +1398,8 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .brand-logo .sp-bub circle:nth-child(2){animation-delay:1.5s}.brand-logo .sp-bub circle:nth-child(3){animation-delay:3s}.brand-logo .sp-bub circle:nth-child(4){animation-delay:4.5s}
 .brand-logo:hover .sp-w.r{animation-duration:2.2s}.brand-logo:hover .sp-w.b{animation-duration:2.8s}.brand-logo:hover .sp-w.g{animation-duration:3.4s}
 .brand-logo:hover .sp-bub circle{animation-duration:2.4s}
+/* logo animé : pas de flou ni de flottement sur le conteneur (recalculés à chaque image des vagues → saccades) ;
+   vagues et bulles en calques (transform seulement) */
+.brand-logo.live{filter:none;animation:none}
+.brand-logo.live .drop-frame{filter:drop-shadow(0 6px 10px rgba(0,0,0,.55))}
+.brand-logo .sp-w,.brand-logo .sp-bub circle{will-change:transform}
