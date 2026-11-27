@@ -2047,6 +2047,14 @@ const Draft = (() => {
     },
   };
 })();
+// Tous les donjons : tranches ouvertes / repliées par le visiteur (rang de tranche → ouvert), gardées le temps de la visite
+const XBANDS = new Map();
+document.addEventListener('toggle', e => { const g = e.target; if (g?.matches?.('.xgrp') && g.isConnected) XBANDS.set(+g.dataset.xband, g.open); }, true);
+// un clic qui redessine la page des groupes garde la liste des donjons là où elle était (au lieu de remonter en haut)
+function keepXList(fn) {
+  const y = $('.xlist')?.scrollTop; fn();
+  const l = $('.xlist'); if (l && y != null) l.scrollTop = y;
+}
 function exploreBlock(me) {
   const dr = Draft.get();
   const list = LOOT.dungeons.filter(d => d.bosses?.length && lvlMatch(d, me) && (!state.ht || dunType(d) === state.ht) && (!state.hd || d.key === state.hd) && textMatch(dunText(d)));
@@ -2058,10 +2066,15 @@ function exploreBlock(me) {
   const huntersIn = d => { const ids = new Set(d.bosses.flatMap(b => b.i.map(e => Array.isArray(e) ? e[0] : e))); let n = 0; ids.forEach(id => { n += hunt.get(id) || 0; }); return n; };
   const stat = id => { const o = own.get(id) || 0, h = hunt.get(id) || 0;
     return [base.length >= 10 ? t('xOwnPct', { p: Math.round(100 * o / base.length) }) : base.length ? t('xOwnN', { n: o, t: base.length }) : '', h ? t('xHunt', { n: h }) : ''].filter(Boolean).join(' · '); };
-  // titres de tranche (Donjons niv. 10-29…, Raids) comme le carnet de collection : la liste suit l'ordre de LOOT.dungeons (byLevel)
-  const band = (d, k) => k > 0 && dunRank(list[k - 1]) === dunRank(d) ? '' : `<h5 class="cband xband">${esc(dunBandLabel(d))}</h5>`;
-  const rows = list.map((d, k) => { const [, , hi] = d.lvl || [], lo = dunFrom(d), hn = huntersIn(d);
-    return `${band(d, k)}<button type="button" class="xd${sel?.key === d.key ? ' on' : ''}" data-xd="${esc(d.key)}"><b>${esc(d.name)}</b><small>${lo ? t('runsLvl', { a: lo, b: hi }) : t('optRaid')}${hn ? ' · ' + t('xHunters', { n: hn }) : ''}</small></button>`; }).join('');
+  // tranches repliables (Donjons niv. 10-29…, Raids), comme le carnet de collection en jeu ; la liste suit l'ordre de LOOT.dungeons (byLevel).
+  // Ouverte : ce que le visiteur a choisi (XBANDS), sinon la tranche du donjon choisi (la première sans choix) ; tout ouvert pendant une recherche.
+  const filtering = !!(state.hq || state.hl || state.ht || state.hd);
+  const isOpen = r => XBANDS.has(r) ? XBANDS.get(r) : filtering || (sel ? dunRank(sel) === r : r === dunRank(list[0] || {}));
+  const xrow = d => { const [, , hi] = d.lvl || [], lo = dunFrom(d), hn = huntersIn(d);
+    return `<button type="button" class="xd${sel?.key === d.key ? ' on' : ''}" data-xd="${esc(d.key)}"><b>${esc(d.name)}</b><small>${lo ? t('runsLvl', { a: lo, b: hi }) : t('optRaid')}${hn ? ' · ' + t('xHunters', { n: hn }) : ''}</small></button>`; };
+  const groups = [];
+  for (const d of list) { const r = dunRank(d), g = groups[groups.length - 1]; if (g && g.r === r) g.ds.push(d); else groups.push({ r, ds: [d] }); }
+  const rows = groups.map(g => `<details class="xgrp" data-xband="${g.r}"${isOpen(g.r) ? ' open' : ''}><summary class="cband xband">${esc(dunBandLabel(g.ds[0]))}<span>${g.ds.length}</span></summary>${g.ds.map(xrow).join('')}</details>`).join('');
   const bossName = b => isTrash(b) ? t('runsTrash') : (L2(b.n) || b.n[0]);
   const detail = sel ? `<div class="xdet"${artStyle(sel.key)}><div class="xh"><h3>${esc(sel.name)}</h3>${dunFrom(sel) ? `<span class="lv">${t('runsLvl', { a: dunFrom(sel), b: (sel.lvl || [])[2] })}</span>` : ''}</div>
       ${sel.bosses.map(b => `<div class="cb"><span class="cbn">${esc(bossName(b))}</span><div class="cgrid">${b.i.map(e => { const id = Array.isArray(e) ? e[0] : e, rate = Array.isArray(e) ? e[1] : null, hn = hunt.get(id) || 0;
@@ -2300,10 +2313,10 @@ async function exploreCreate(f) {
 }
 document.addEventListener('click', e => {
   const xd = e.target.closest('[data-xd]');
-  if (xd) { state.xd = xd.dataset.xd; Draft.set({ dun: state.xd }); state.runMsg = ''; renderRuns(); if (innerWidth < 900) $('.xmain')?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' }); return; }
+  if (xd) { state.xd = xd.dataset.xd; Draft.set({ dun: state.xd }); state.runMsg = ''; keepXList(renderRuns); if (innerWidth < 900) $('.xmain')?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' }); return; }
   const xp = e.target.closest('[data-xpick]');
-  if (xp) { if (!Draft.toggle(+xp.dataset.xpick)) state.runMsg = t('xFull'); renderRuns(); return; }
-  if (e.target.closest('[data-xclear]')) { Draft.set({ items: [] }); renderRuns(); return; }
+  if (xp) { if (!Draft.toggle(+xp.dataset.xpick)) state.runMsg = t('xFull'); keepXList(renderRuns); return; }
+  if (e.target.closest('[data-xclear]')) { Draft.set({ items: [] }); keepXList(renderRuns); return; }
   const xc = e.target.closest('[data-xcreate]'); if (xc) { exploreCreate(xc.closest('.pform')); return; }
   if (e.target.closest('[data-xgate-close]') || e.target.matches?.('.xgate')) { state.xgate = false; renderRuns(); }
 });

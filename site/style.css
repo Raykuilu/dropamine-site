@@ -1420,8 +1420,16 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .xd b{font-family:var(--serif);font-weight:500;color:var(--cream);font-size:15px;line-height:1.25}
 .xd small{color:var(--faint);font-style:italic;font-size:13px}
 .xd:hover,.xd:focus-visible{border-color:var(--rim-lo)}
-.xlist>.xband{margin:10px 2px 2px}
-.xlist>.xband:first-child{margin-top:0}
+/* Tous les donjons : tranches repliables, comme le carnet de collection en jeu */
+.xgrp{display:block}
+.xgrp>.xd{box-sizing:border-box;width:100%;margin-top:4px}
+.xgrp>summary.xband{display:flex;align-items:center;gap:8px;margin:6px 2px 2px;padding:4px 2px;cursor:pointer;list-style:none;user-select:none}
+.xgrp>summary.xband::-webkit-details-marker{display:none}
+.xgrp>summary.xband::before{content:'';width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .15s}
+.xgrp[open]>summary.xband::before{transform:rotate(90deg)}
+.xgrp>summary.xband span{margin-left:auto;font-family:var(--num,inherit);font-size:12px;letter-spacing:0;color:var(--faint)}
+.xgrp>summary.xband:hover,.xgrp>summary.xband:focus-visible{color:var(--gold)}
+.xlist>.xgrp:first-child>summary.xband{margin-top:0}
 .xd.on{border-color:var(--rim);background:linear-gradient(180deg,rgba(196,154,92,.16),rgba(0,0,0,.2))}
 .xd.on b{color:var(--gold)}
 .xmain{display:grid;gap:12px;min-width:0}
