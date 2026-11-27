@@ -773,18 +773,35 @@ document.addEventListener('click', e => {
 });
 // guildes : critère du classement, et « voir plus »
 document.addEventListener('click', e => {
-  const c = e.target.closest('[data-gm]'); if (c) { state.gm = c.dataset.gm; state.glimit = 100; renderGuild(); return; }
-  if (e.target.closest('[data-gmore]')) { state.glimit = (state.glimit || 100) + 100; renderGuild(); }
+  const c = e.target.closest('[data-gm]'); if (c) { state.gm = c.dataset.gm; state.gpg = 1; renderGuild(); }
 });
-// classement : pages de 50 lignes (il ne dessine plus des milliers de lignes d'un coup)
+// pagination commune (classement, guildes, membres d'une guilde) : RANK_PER lignes par page ; kind dit quelle liste
 const RANK_PER = 50;
+function pagerNav(kind, page, pages, total, extra = '') {
+  if (pages <= 1 && !extra) return '';
+  const from = (page - 1) * RANK_PER;
+  const btn = n => `<button type="button" class="pg${n === page ? ' on' : ''}" data-pgk="${kind}" data-pg="${n}"${n === page ? ' aria-current="page"' : ''}>${fmt(n)}</button>`;
+  const nums = [...new Set([1, pages, page - 2, page - 1, page, page + 1, page + 2].filter(n => n >= 1 && n <= pages))].sort((a, b) => a - b);
+  return `<nav class="pager" aria-label="${t('pgNav')}">${pages > 1 ? `<div class="pg-n"><button type="button" class="pg" data-pgk="${kind}" data-pg="${page - 1}"${page === 1 ? ' disabled' : ''} aria-label="${t('pgPrev')}">‹</button>${nums.map((n, i) => (i && n - nums[i - 1] > 1 ? '<span class="pg-gap">…</span>' : '') + btn(n)).join('')}<button type="button" class="pg" data-pgk="${kind}" data-pg="${page + 1}"${page === pages ? ' disabled' : ''} aria-label="${t('pgNext')}">›</button></div>` : ''}
+    <div class="pg-x"><span class="pg-i">${t('pgInfo', { a: fmt(total ? from + 1 : 0), b: fmt(Math.min(from + RANK_PER, total)), n: fmt(total) })}</span>${extra}</div></nav>`;
+}
+// page d'une liste : la page demandée ramenée entre 1 et le nombre de pages
+const pageOf = (page, total) => Math.min(Math.max(1, page || 1), Math.max(1, Math.ceil(total / RANK_PER)));
 function rankJump(page, hit) {
-  state.pg = page; state.pgHit = hit || null; renderRank(); writeUrl(false);
+  state.pg = page; state.pgHit = hit || null; renderRank(); animate($("#rank")); writeUrl(false);   // animate : remplit les barres de la nouvelle page
   const el = $(hit ? '#rank-panel .row.hit, #rank-panel .row.me' : '#rank-panel .rows');
   if (el) el.scrollIntoView({ block: hit ? 'center' : 'start', behavior: reduce ? 'auto' : 'smooth' });
 }
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-pg]'); if (b && !b.disabled) { rankJump(+b.dataset.pg); return; }
+  const b = e.target.closest('[data-pg]');
+  if (b && !b.disabled) {
+    const k = b.dataset.pgk || 'rank';
+    if (k === 'rank') { rankJump(+b.dataset.pg); return; }
+    if (k === 'guild') state.gpg = +b.dataset.pg; else state.gmpg = +b.dataset.pg;
+    renderGuild(); animate($('#guild'));
+    $('#guild-panel .rows')?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+    return;
+  }
   const me = e.target.closest('[data-pgme]'); if (me) { const i = +me.dataset.pgme; rankJump(Math.floor(i / RANK_PER) + 1, i + 1); }
 });
 document.addEventListener('keydown', e => {
@@ -847,13 +864,9 @@ function renderRank() {
   state.pg = Math.min(Math.max(1, state.pg || 1), pages);
   const from = (state.pg - 1) * RANK_PER, pageRows = list.slice(from, from + RANK_PER), lastPage = state.pg === pages;
   const mineK = new Set(Bnet.mine().map(pkey)), myIdx = list.findIndex(x => mineK.has(pkey(x.p)));
-  const pgBtn = n => `<button type="button" class="pg${n === state.pg ? ' on' : ''}" data-pg="${n}"${n === state.pg ? ' aria-current="page"' : ''}>${fmt(n)}</button>`;
-  const nums = [...new Set([1, pages, state.pg - 2, state.pg - 1, state.pg, state.pg + 1, state.pg + 2].filter(n => n >= 1 && n <= pages))].sort((a, b) => a - b);
-  const pager = pages > 1 || myIdx >= 0 ? `<nav class="pager" aria-label="${t('pgNav')}">
-      <div class="pg-n"><button type="button" class="pg" data-pg="${state.pg - 1}"${state.pg === 1 ? ' disabled' : ''} aria-label="${t('pgPrev')}">‹</button>${nums.map((n, i) => (i && n - nums[i - 1] > 1 ? '<span class="pg-gap">…</span>' : '') + pgBtn(n)).join('')}<button type="button" class="pg" data-pg="${state.pg + 1}"${lastPage ? ' disabled' : ''} aria-label="${t('pgNext')}">›</button></div>
-      <div class="pg-x"><span class="pg-i">${t('pgInfo', { a: fmt(list.length ? from + 1 : 0), b: fmt(Math.min(from + RANK_PER, list.length)), n: fmt(list.length) })}</span>
-      ${list.length > RANK_PER ? `<label class="pg-go">${t('pgGo')}<input type="number" min="1" max="${list.length}" inputmode="numeric" data-pgrank aria-label="${t('pgGo')}"></label>` : ''}
-      ${myIdx >= 0 ? `<button type="button" class="btn ghost pg-me" data-pgme="${myIdx}">${t('pgMine')}</button>` : ''}</div></nav>` : '';
+  const pager = pagerNav('rank', state.pg, pages, list.length,
+    (list.length > RANK_PER ? `<label class="pg-go">${t('pgGo')}<input type="number" min="1" max="${list.length}" inputmode="numeric" data-pgrank aria-label="${t('pgGo')}"></label>` : '')
+    + (myIdx >= 0 ? `<button type="button" class="btn ghost pg-me" data-pgme="${myIdx}">${t('pgMine')}</button>` : ''));
   const row = ({ p, v, r, g }) => `
     <div class="row${r && r <= 3 ? ' top' : ''}${r ? '' : ' unranked'}${mineK.has(pkey(p)) ? ' me' : ''}${r && r === state.pgHit ? ' hit' : ''}" data-c="${esc(pkey(p))}" role="row">
       <span class="rk">${r || '–'}</span>
@@ -1704,18 +1717,23 @@ function renderGuild() {
       prof: x => x.members.reduce((n, p) => n + (p.parts?.professions || 0), 0), members: x => x.members.length };
     const gm = GM[state.gm] ? state.gm : 'total';
     const ranked = all.map(x => ({ x, v: GM[gm](x) })).filter(r => r.v != null && r.v > 0).sort((a, b) => b.v - a.v || b.x.total - a.x.total);
-    const lim = state.glimit || 100;
+    state.gpg = pageOf(state.gpg, ranked.length);
+    const gFrom = (state.gpg - 1) * RANK_PER;
     const gmChips = `<div class="chips gm" role="group">${Object.keys(GM).map(k => `<span class="chip${k === gm ? ' on' : ''}" data-gm="${k}" role="button" tabindex="0">${t('gm.' + k)}</span>`).join('')}</div>`;
     $('#guild-panel').innerHTML = `<div class="head"><h2>${t('guildsT')}</h2><span class="note">${t('guildsNote', { r: state.region.toUpperCase() })}</span></div>${gmChips}
       <div class="rows glist">${ranked.length ? `<div class="row th"><span>${t('rank')}</span><span>${t('guildH')}</span><span style="text-align:right" class="c3">${t('members')}</span><span style="text-align:right">${t('gm.' + gm)}</span></div>` +
-        ranked.slice(0, lim).map(({ x, v }, i) => `<div class="row${i < 3 ? ' top' : ''}" data-g="${esc(x.slug)}"><span class="rk">${i + 1}</span><span class="nm"><span><b>${esc(x.name)}</b><small>${t('gmSub', { n: x.members.filter(p => p.level >= 60).length })}</small></span></span><span class="val">${x.members.length}</span><span class="tot">${fmt(v)}</span></div>`).join('')
-        + (ranked.length > lim ? `<p class="rmore"><button class="btn ghost" data-gmore>${t('runMoreRuns', { n: Math.min(100, ranked.length - lim) })}</button></p>` : '')
-        : `<div class="empty"><b>${t('noGuildT')}</b>${t('noGuild')}</div>`}</div>`;
+        ranked.slice(gFrom, gFrom + RANK_PER).map(({ x, v }, j) => { const i = gFrom + j; return `<div class="row${i < 3 ? ' top' : ''}" data-g="${esc(x.slug)}"><span class="rk">${i + 1}</span><span class="nm"><span><b>${esc(x.name)}</b><small>${t('gmSub', { n: x.members.filter(p => p.level >= 60).length })}</small></span></span><span class="val">${x.members.length}</span><span class="tot">${fmt(v)}</span></div>`; }).join('')
+        : `<div class="empty"><b>${t('noGuildT')}</b>${t('noGuild')}</div>`}</div>${pagerNav('guild', state.gpg, Math.ceil(ranked.length / RANK_PER), ranked.length)}`;
     return;
   }
   const rank = all.indexOf(g) + 1, members = [...g.members].sort((a, b) => b.total - a.total);
   const gsk = skillById(state.gs), avail = SKILLS.filter(s => s.id === 'total' || members.some(p => s.get(p) && !(s.est && s.est(p))));
   const ranked = gsk.id === 'total' ? members.map((p, i) => ({ p, v: p.total, r: i + 1 })) : rankBy(gsk, members);
+  // membres par pages de RANK_PER ; autre guilde ou autre tri : retour à la page 1
+  const mSig = g.slug + '|' + gsk.id;
+  if (state.gmKey !== mSig) { state.gmpg = 1; state.gmKey = mSig; }
+  state.gmpg = pageOf(state.gmpg, ranked.length);
+  const mFrom = (state.gmpg - 1) * RANK_PER;
   let og = '', grp0;
   avail.forEach(s => {
     const opt = `<option value="${s.id}"${s.id === gsk.id ? ' selected' : ''}>${esc(s.label())}</option>`;
@@ -1753,13 +1771,13 @@ function renderGuild() {
     <div class="gsort"><label for="gs">${t('sortBy')}</label><select id="gs" data-gs>${og}</select>${gsk.group === 'book' && !gsk.armory ? `<span class="note">${t('trustShort')}</span>` : ''}</div>
     <div class="rows" style="margin-top:10px">
       <div class="row th g"><span>${t('rank')}</span><span>${t('member')}</span><span class="c3">${gsk.id === 'total' ? t('split') : ''}</span><span class="c4" style="text-align:right">${gsk.id === 'total' ? t('d7') : ''}</span><span style="text-align:right">${gsk.id === 'total' ? t('totalH') : esc(gsk.label())}</span></div>
-      ${ranked.length ? ranked.map(({ p, v, r }) => { const d = gain7(p), tot = gsk.id === 'total';
+      ${ranked.length ? ranked.slice(mFrom, mFrom + RANK_PER).map(({ p, v, r }) => { const d = gain7(p), tot = gsk.id === 'total';
         const bar = tot ? tri(p) : gsk.prof ? `<span class="mbar"><i style="--w:${(100 * v / (p.professions.find(x => x.id === gsk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
           : gsk.wpn ? `<span class="mbar w"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>`
           : gsk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, gsk.ratio(v, p))).toFixed(1)}%"></i></span>` : '<span class="c3"></span>';
         return `<div class="row g${r <= 3 ? ' top' : ''}" data-c="${esc(pkey(p))}"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b><small>${esc(className(p))} ${p.level}</small></span></span>${bar}<span class="up">${tot ? (d ? (d > 0 ? '+' : '') + fmt(d) : '—') : ''}</span><span class="tot">${showVal(gsk, v, p)}${tot ? estTag(p) : ''}</span></div>`; }).join('')
         : nobody()}
-    </div>`;
+    </div>${pagerNav('gmem', state.gmpg, Math.ceil(ranked.length / RANK_PER), ranked.length)}`;
 }
 
 /* ---------- Runs : les joueurs qui chassent dans le même donjon ---------- */
