@@ -9690,6 +9690,334 @@
       "c": "PRIEST",
       "s": "x",
       "d": 20784
+    },
+    "eu/jay-zucri": {
+      "l": 60,
+      "c": "WARLOCK",
+      "g": "Logarithme",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/shakatra-forever": {
+      "l": 43,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bareface-omni": {
+      "l": 32,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sir-shiftalot": {
+      "l": 51,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/talesya-taldara": {
+      "l": 35,
+      "c": "ROGUE",
+      "g": "THE IRON CRUSADE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mollyy-mus": {
+      "l": 60,
+      "c": "WARLOCK",
+      "g": "No Plan B",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/duck-rammus": {
+      "l": 31,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nexy-hammertime": {
+      "l": 14,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pogna-thebrown": {
+      "l": 60,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/seamless-stormborn": {
+      "l": 59,
+      "c": "SHAMAN",
+      "g": "pilsner",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pyroz-perfide": {
+      "l": 44,
+      "c": "ROGUE",
+      "g": "Pilon Or",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/rockjaw-stew": {
+      "l": 3,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/glacius-shiverveil": {
+      "l": 36,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ozi-liath": {
+      "l": 42,
+      "c": "WARRIOR",
+      "g": "Rush or Die",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/hellranil-duskvine": {
+      "l": 54,
+      "c": "MAGE",
+      "g": "Logarithme",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/killester-barber": {
+      "l": 37,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/imbued-forever": {
+      "l": 25,
+      "c": "DRUID",
+      "g": "White Flower",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/demon-resources": {
+      "l": 60,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ratkosz-forever": {
+      "l": 33,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/asharad-bloodhawk": {
+      "l": 32,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dotdot-legéant": {
+      "l": 46,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kiraz-en": {
+      "l": 50,
+      "c": "ROGUE",
+      "g": "Échec et Wipe",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sneaky-bastard": {
+      "l": 49,
+      "c": "ROGUE",
+      "g": "Alliance Most Wanted",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/worldwar-three": {
+      "l": 60,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/gunnar-krutflinta": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "relax im mythic plåyer",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/alt-ushka": {
+      "l": 35,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/gizmo-potato": {
+      "l": 60,
+      "c": "SHAMAN",
+      "g": "Goobas",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/slav-chubaka": {
+      "l": 43,
+      "c": "HUNTER",
+      "g": "Firma Stecaj",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/axe-vendor": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/eden-pvp": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "Grow Up",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/grothruin-thunderbuss": {
+      "l": 11,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/teju-jagua": {
+      "l": 56,
+      "c": "SHAMAN",
+      "g": "Azora Security Crew",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sampe-blazebeard": {
+      "l": 60,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nettlesome-forever": {
+      "l": 56,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/hero-jeppe": {
+      "l": 41,
+      "c": "SHAMAN",
+      "g": "Jeppe and Heroes",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dee-alliance": {
+      "l": 25,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sushi-kim": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "Unleash",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/momo-nay": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/hepy-opal": {
+      "l": 10,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/zite-zitoune": {
+      "l": 59,
+      "c": "ROGUE",
+      "g": "Elite",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/elanor-ashbloom": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/totoh-legros": {
+      "l": 46,
+      "c": "WARLOCK",
+      "g": "Les combattants du chill",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/thordrun-garrow": {
+      "l": 42,
+      "c": "SHAMAN",
+      "g": "Erebbor",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bigold-hunterman": {
+      "l": 17,
+      "c": "HUNTER",
+      "g": "Celestial Veil",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/borkingmage-zigglertv": {
+      "l": 10,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/holy-nemesies": {
+      "l": 10,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/arkaine-valor": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "Radiant Hymn",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lukier-starveil": {
+      "l": 54,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/date-niaz": {
+      "l": 40,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/qzb-windfury": {
+      "l": 48,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/osy-bob": {
+      "l": 43,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
     }
   }
 }
