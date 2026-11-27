@@ -191,3 +191,15 @@ test('Scout : ligne de l\'addon privé, fusion, 30 jours', async () => {
   assert.equal(r.registry.players['eu/labiere-dubar'].g, 'Les Paluches');
   assert.equal(applyScout(r.registry, 'eu', [], now).changed, false);
 });
+
+import { queueDue, AUTO_RUN_GAP } from './lib.mjs';
+test('queueDue : relance horaire tant que la file a du monde', () => {
+  const now = 10 * AUTO_RUN_GAP, q = { players: { 'eu/a-b': {} }, runs: [{ kept: 100, fresh: 50 }] }, s = { newPerRun: 500, maxPreviews: 9000 };
+  assert.equal(queueDue(q, s, { at: now - AUTO_RUN_GAP, done: true }, now), true);
+  assert.equal(queueDue(q, s, null, now), true);
+  assert.equal(queueDue(q, s, { at: now - 60e3, done: true }, now), false);          // trop tôt
+  assert.equal(queueDue(q, s, { at: now - 2 * AUTO_RUN_GAP, done: false }, now), false); // déjà en cours
+  assert.equal(queueDue({ players: {} }, s, null, now), false);                       // file vide
+  assert.equal(queueDue(q, { ...s, newPerRun: 0 }, null, now), false);                // coupé
+  assert.equal(queueDue(q, { ...s, maxPreviews: 150 }, null, now), false);            // plafond
+});

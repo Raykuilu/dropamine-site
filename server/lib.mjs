@@ -123,6 +123,19 @@ export function applySettings(cur, body) {
   }
   return { registry: out, changed: JSON.stringify(out) !== JSON.stringify(cur ?? {}) };
 }
+// Vidage automatique de la file : le serveur relance la mise à jour toutes les heures tant qu'il reste
+// des personnages en attente (GitHub saute la plupart de ses lancements à heure fixe).
+// queue = data/queue.json, settings = data/settings.json, lastRun = dernier lancement { at, done }.
+export const AUTO_RUN_GAP = 55 * 60e3;
+export function queueDue(queue, settings, lastRun, now = Date.now()) {
+  if (lastRun && !lastRun.done) return false;                                   // une mise à jour tourne déjà
+  if (lastRun && now - lastRun.at < AUTO_RUN_GAP) return false;                 // une par heure au plus
+  if (!Object.keys(queue?.players ?? {}).length) return false;                  // file vide
+  if ((settings?.newPerRun ?? 1) === 0) return false;                           // remplissage coupé dans l'admin
+  const last = queue?.runs?.[0], cap = settings?.maxPreviews ?? 3000;
+  if (last && last.kept + last.fresh >= cap) return false;                      // plafond d'aperçus atteint
+  return true;
+}
 export function applyGuildFollow(data, key, follow) {
   key = String(key ?? '').toLowerCase().trim();
   if (!/^(eu|us|tw)\/[\p{L}\p{N}-]{2,60}$/u.test(key)) return { error: 'guild' };

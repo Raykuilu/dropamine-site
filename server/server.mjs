@@ -20,7 +20,7 @@ import { createServer } from 'node:http';
 import { gzipSync } from 'node:zlib';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload,
-  applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt, parseScoutLine, applyScout, applySettings, applyGuildFollow } from './lib.mjs';
+  applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt, parseScoutLine, applyScout, applySettings, applyGuildFollow, queueDue } from './lib.mjs';
 import { readFileSync, existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { vapidKeys, sendPush, validSub, addSub, removeSub, runEvents, dueReminders } from './push.mjs';
@@ -141,6 +141,26 @@ async function deleteHistory(key) {
   await gh(path, { method: 'DELETE', body: JSON.stringify({ message: `Hiscores: remove history of ${key}`, sha, branch: 'main' }) });
 }
 const refreshSite = () => gh('/actions/workflows/update.yml/dispatches', { method: 'POST', body: JSON.stringify({ ref: 'main' }) }).catch(() => {});
+// vidage automatique de la file : toutes les 10 min on regarde s'il faut relancer (une fois par heure au plus, voir queueDue)
+const readRaw = async (path, fallback) => {
+  const res = await gh(`/contents/${path}?ref=main`, { headers: { Accept: 'application/vnd.github.raw+json' } });
+  if (res.status === 404) return fallback;
+  if (!res.ok) throw new Error(`lecture de ${path} (${res.status})`);
+  return res.json();
+};
+async function autoRun() {
+  try {
+    const runs = await gh('/actions/workflows/update.yml/runs?per_page=1').then(r => r.ok ? r.json() : null);
+    const r = runs?.workflow_runs?.[0];
+    const lastRun = r ? { at: Date.parse(r.created_at), done: r.status === 'completed' } : null;
+    if (lastRun && !lastRun.done) return;
+    const [queue, settings] = await Promise.all([readRaw('data/queue.json', {}), readRaw('data/settings.json', {})]);
+    if (!queueDue(queue, settings, lastRun)) return;
+    console.log(new Date().toISOString(), `file : ${Object.keys(queue.players ?? {}).length} en attente, mise à jour lancée`);
+    await refreshSite();
+  } catch (err) { console.warn('vidage de la file :', err.message); }
+}
+setInterval(autoRun, 10 * 60e3).unref();
 // lecture → modification → écriture, recommencée si quelqu'un a écrit entre-temps
 async function updateFile(path, fallback, fn, message) {
   for (let attempt = 0; attempt < 5; attempt++) {
