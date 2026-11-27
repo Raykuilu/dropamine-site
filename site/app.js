@@ -555,7 +555,7 @@ function renderDash() {
   // 1) le personnage
   const hero = `<div class="dhero"${p.render ? ` style="--fig:url('${esc(p.render)}')"` : ''}>
       <div class="dh-l"><h2>${t('dashHi', { n: esc(p.name) })}</h2><p>${esc(className(p))} · ${t('levelN', { n: p.level })}${p.guild ? ' · ' + esc(p.guild.name) : ''}</p>
-        <div class="dh-n"><b data-n="${p.total}">${fmt(p.total)}</b><small> / ${fmt(p.max || 2460)}</small></div>
+        <div class="dh-n">${totalB(p)}<small> / ${fmt(p.max || 2460)}</small></div>
         <div class="dh-g">${rank ? `<span>${ord(rank)} · ${t('totalLevel')}</span>` : ''}${d1 > 0 ? `<span class="up">+${fmt(d1)} ${t('sinceY')}</span>` : ''}${d7 > 0 ? `<span class="up">+${fmt(d7)} ${t('in7')}</span>` : ''}</div>
         <div class="dh-a"><a class="btn gold" href="?p=char&c=${esc(pkey(p))}" data-c="${esc(pkey(p))}">${t('dashSheet')}</a><button class="btn ghost" data-hsimg="${esc(pkey(p))}">${t('hsBtn')}</button><a class="btn ghost" href="?p=join" data-view-link="join">${t('dashSend')}</a></div>
         ${old == null ? '' : old > 7 ? `<p class="dh-warn">${t('dashOldLine', { n: Math.floor(old) })}</p>` : `<p class="dh-last">${[d.collection && t('dbLog'), d.hunt && t('dbHunt'), d.achievements && t('dbAch'), d.records && t('dbRec'), p.played && t('played')].filter(Boolean).join(', ')} · ${t('dashLast', { d: dayAgo(Date.parse(p.dropamineAt)) })}</p>`}</div></div>`;
@@ -741,7 +741,9 @@ const pendKey = k => 'pendline:' + k;
 function pendingOf(p) {
   let x = null; try { x = JSON.parse(localStorage.getItem(pendKey(pkey(p))) || 'null'); } catch (e) { return null; }
   if (!x) return null;
-  if (DATA.updated && Date.parse(DATA.updated) > x.at) { try { localStorage.removeItem(pendKey(pkey(p))); } catch (e) { /* rien */ } return null; }   // relevé plus récent : fini
+  // Gardée tant qu'elle dépasse l'armurerie (chaque case n'affiche que ce qui est au-dessus de l'officiel) ; oubliée après 7 jours.
+  // Pas de test sur DATA.updated : le serveur reconstruit les données juste après l'envoi, avec l'armurerie encore en retard.
+  if (!(Date.now() - x.at < 7 * 864e5)) { try { localStorage.removeItem(pendKey(pkey(p))); } catch (e) { /* rien */ } return null; }
   return x;
 }
 // Une compétence de la fiche : même données pour la liste et pour la grille
@@ -754,6 +756,13 @@ function skillItems(p, peers) {
   }
   return items;
 }
+// Ligne collée en attente : combien elle ajoute au total (seulement ce qui compte : pas les armes de rechange)
+function pendDelta(p) {
+  if (!p || !p.key || !Bnet.isMine(pkey(p)) || !pendingOf(p)) return 0;
+  return skillItems(p, []).filter(it => it.pend && !it.spare).reduce((n, it) => n + it.pend - it.rank, 0);
+}
+// Total affiché : simulé et discret s'il y a une ligne en attente
+const totalB = (p, d = pendDelta(p)) => `<b${d > 0 ? ` class="pend" title="${esc(t('pendTotal2', { o: fmt(p.total), n: fmt(d) }))}"` : ''} data-n="${p.total + d}">${fmt(p.total + d)}</b>`;
 function skillItems0(p, peers) {
   const place = sk => rankBy(sk, peers).find(x => x.p === p)?.r;
   const items = [{ key: 'level', ava: p.avatar, name: t('level'), rank: p.level, max: 60, group: 'lvl', r: place(skillById('level')) }];
@@ -812,7 +821,7 @@ document.addEventListener('click', e => {
   Tip.hide(); renderChar(); animate($('#char')); Ribbon.swell(.35);   // animate : remplit à nouveau la barre du total
 });
 // barre du bas du panneau : la goutte, le niveau total, la barre trois couleurs
-const dropBar = p => `<div class="dbar"><span class="logo"></span><span class="dn"><b data-n="${p.total}">${fmt(p.total)}</b><small> / ${fmt(p.max || 2460)}</small></span>${tri(p)}</div>`;
+const dropBar = p => `<div class="dbar"><span class="logo"></span><span class="dn">${totalB(p)}<small> / ${fmt(p.max || 2460)}</small></span>${tri(p)}</div>`;
 
 /* Infobulle façon jeu, partagée par toutes les tuiles (survol, focus clavier, toucher) */
 const Tip = (() => {
@@ -864,8 +873,7 @@ function renderChar() {
       ${(() => {
         // ligne collée en attente : le total simulé en grand, discret ; l'officiel (armurerie) dessous.
         // Ne comptent que ce qui compte dans le total : niveau, Défense, les 2 armes en main, les métiers.
-        const its = Bnet.isMine(pkey(p)) ? skillItems(p, []) : [];
-        const d = its.filter(it => it.pend && !it.spare).reduce((n, it) => n + it.pend - it.rank, 0);
+        const d = pendDelta(p);
         const shown = p.total + d;
         return `<div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n${d > 0 ? ' pend' : ''}" data-n="${shown}"${d > 0 ? ` title="${esc(t('pendTitle'))}"` : ''}>${fmt(shown)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div>${d > 0 ? `<div class="pendnote">${t('pendTotal2', { o: fmt(p.total), n: fmt(d) })}</div>` : ''}</div>`;
       })()}
