@@ -572,7 +572,12 @@ const dayAgo = at => { const n = Math.round((new Date().setHours(0, 0, 0, 0) - n
 let liveLoad = null, LIVE = [];
 function renderLive() {
   const box = $('#live'); if (!box) return;
-  if (!liveLoad) liveLoad = Promise.all([loadLoot(), loadItems(), loadArt(), loadRuns()]).then(() => { if (state.view === 'home') { renderLive(); animate(box); } });
+  // items.json (≈ 1 Mo) n'est utile qu'aux trouvailles, bien plus bas que le haut de page : chargé une fois la page posée
+  if (!liveLoad) liveLoad = Promise.all([loadLoot(), loadArt(), loadRuns()]).then(() => {
+    if (state.view === 'home') { renderLive(); animate(box); }
+    const later = window.requestIdleCallback || (f => setTimeout(f, 1200));
+    later(() => loadItems().then(() => { if (state.view === 'home') renderLive(); }), { timeout: 4000 });
+  });
   if (DATA.failed || !DATA.players.length) { box.hidden = true; return; }
   box.hidden = false;
   const region = inRegion(), now = Date.now();
@@ -589,7 +594,7 @@ function renderLive() {
   const rising = [...gmap.values()].sort((a, b) => b.n - a.n).slice(0, 3)
     .map(x => `<li><a href="?p=guild&g=${esc(x.g.slug)}" data-g="${esc(x.g.slug)}"><b>${esc(x.g.name)}</b><small>${t('lvMembers', { n: x.m })}</small><span class="up">+${fmt(x.n)}</span></a></li>`).join('');
   const loots = region.flatMap(p => (p.loots || []).map(([id, d]) => ({ p, id, at: Date.parse(d) }))).sort((a, b) => b.at - a.at).slice(0, 10);
-  const lootRow = loots.length ? `<section class="panel lv-loots"><div class="cathead"><h3 class="sub">${t('lvLoots')}</h3><span class="cx2">${t('lvLootsSub')}</span></div>
+  const lootRow = loots.length && ITEMS ? `<section class="panel lv-loots"><div class="cathead"><h3 class="sub">${t('lvLoots')}</h3><span class="cx2">${t('lvLootsSub')}</span></div>
     <div class="lootrow">${loots.map(x => `<a class="loot" href="?p=char&c=${esc(encodeURIComponent(pkey(x.p)))}" data-c="${esc(pkey(x.p))}">${itemChip(x.id)}<b style="color:${QCOL[ITEMS?.[x.id]?.q] || 'var(--cream)'}">${esc(lootName(x.p, x.id))}</b><small>${esc(x.p.name)} · ${dayAgo(x.at)}</small></a>`).join('')}</div></section>` : '';
   // les chiffres vont sous le titre (#lvc) ; ici : les trouvailles, le fil, les sorties, puis l'annonce des raids en bas
   const lvc = $('#lvc'); if (lvc) { lvc.innerHTML = counters; lvc.hidden = false; }
