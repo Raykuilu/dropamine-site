@@ -1317,6 +1317,7 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .wk-bar s{position:absolute;top:0;bottom:0;width:2px;background:rgba(0,0,0,.6)}
 .wk-bar s.ok{background:rgba(255,255,255,.35)}
 .wk-line{margin:8px 0 0;color:var(--muted);font-size:15px}
+.wk-how{margin:10px 0 0;color:var(--faint);font-size:13px;line-height:1.4}
 .wk-line b{color:var(--gold);font-family:var(--num);font-size:18px}
 .wk-done{color:#7fdc5a;font-style:italic}
 .wk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}

@@ -531,7 +531,7 @@
   "wkYouNone": "Ainda fora da classificação esta semana.",
   "wkYouCommon": "+{n} para o desafio comum ({s} %)",
   "wkPastT": "Campeões das semanas passadas",
-  "wkFoot": "De segunda a domingo · só contam ganhos verificados pelo arsenal (nível, Defesa, profissões, vitórias honrosas) · as armas não contam",
+  "wkFoot": "De segunda a domingo · só contam os ganhos verificados pelo arsenal (nível, Defesa, profissões, vitórias honrosas, itens de caçada vistos equipados) · as armas não contam",
   "wkBadgeSkiller": "Skiller da semana {n}",
   "wkBadgeSkill": "{s} · semana {n}",
   "wkBadgeFighter": "Combatente da semana {n}",
@@ -556,7 +556,14 @@
   "syDownWhat": "Sua caçada ({h} itens) e suas próximas saídas ({r}), num só código.",
   "syDownNone": "Nada para enviar ao jogo por enquanto: escolha itens para caçar ou entre numa saída.",
   "syDownHow": "No jogo: /drop app → Receber do site, Ctrl+V (Dropamine 3.13 ou mais recente).",
-  "syCopy": "Copiar"
+  "syCopy": "Copiar",
+  "wkHunterT": "Caçador da semana",
+  "wkHunterHow": "Para os de nível 60 com Defesa e profissões em 300: itens da sua lista de caçada, confirmados quando o arsenal os vê equipados.",
+  "wkNoneHunter": "Nenhum item de caçada confirmado esta semana ainda.",
+  "wkNoHunters": "Ninguém maximizou tudo ainda. Nível 60, Defesa e profissões em 300 liberam esta etapa.",
+  "wkHuntVerified": "itens de caçada confirmados",
+  "wkYouHunt": "{r} entre os caçadores",
+  "wkBadgeHunter": "Caçador da semana {n}"
  },
  "names": {
   "Leatherworking": "Couraria",

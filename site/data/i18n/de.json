@@ -531,7 +531,7 @@
   "wkYouNone": "Diese Woche noch nicht in der Wertung.",
   "wkYouCommon": "+{n} für das gemeinsame Ziel ({s} %)",
   "wkPastT": "Sieger der letzten Wochen",
-  "wkFoot": "Montag bis Sonntag · nur vom Arsenal geprüfte Gewinne (Stufe, Verteidigung, Berufe, ehrenhafte Siege) · Waffen zählen nicht",
+  "wkFoot": "Montag bis Sonntag · nur vom Arsenal geprüfte Fortschritte zählen (Stufe, Verteidigung, Berufe, ehrenhafte Siege, getragen gesehene Jagdgegenstände) · Waffen zählen nicht",
   "wkBadgeSkiller": "Skiller der Woche {n}",
   "wkBadgeSkill": "{s} · Woche {n}",
   "wkBadgeFighter": "Kämpfer der Woche {n}",
@@ -556,7 +556,14 @@
   "syDownWhat": "Deine Jagd ({h} Gegenstände) und deine kommenden Ausflüge ({r}) in einem Code.",
   "syDownNone": "Noch nichts fürs Spiel: wähle Gegenstände zum Jagen oder tritt einem Ausflug bei.",
   "syDownHow": "Im Spiel: /drop app → Von der Seite empfangen, Strg+V (Dropamine 3.13 oder neuer).",
-  "syCopy": "Kopieren"
+  "syCopy": "Kopieren",
+  "wkHunterT": "Jäger der Woche",
+  "wkHunterHow": "Für Stufe 60 mit Verteidigung und Berufen auf 300: Gegenstände deiner Jagdliste, bestätigt, sobald das Arsenal sie getragen sieht.",
+  "wkNoneHunter": "Diese Woche noch kein Jagdgegenstand bestätigt.",
+  "wkNoHunters": "Noch niemand hat alles gemaxt. Stufe 60, Verteidigung und Berufe auf 300 schalten diese Stufe frei.",
+  "wkHuntVerified": "Jagdgegenstände bestätigt",
+  "wkYouHunt": "{r} unter den Jägern",
+  "wkBadgeHunter": "Jäger der Woche {n}"
  },
  "names": {
   "Leatherworking": "Lederverarbeitung",

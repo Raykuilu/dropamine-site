@@ -169,3 +169,12 @@ test('arme : jamais plus bas que le meilleur rang de l’historique (ligne fauss
   assert.equal(r.weapons, 287);
   assert.equal(weaponFloor(null, hist), null);
 });
+
+test('chasse vérifiée : compte un objet cherché au relevé précédent, vu porté maintenant', async () => {
+  const { huntCheck } = await import('./build.mjs');
+  assert.deepEqual(huntCheck(undefined, '2026-11-26', [5, 6], [5]), { hq: [6] }, 'premier relevé : la base, rien ne compte');
+  assert.deepEqual(huntCheck({ d: '2026-11-25', hq: [6, 7] }, '2026-11-26', [5, 6, 7], [5, 6]), { hq: [7], hf: [6] }, '5 était déjà porté quand il est entré dans la liste');
+  assert.deepEqual(huntCheck({ d: '2026-11-26', hq: [7], hf: [6] }, '2026-11-26', [6, 7], [6, 7]), { hq: [], hf: [6, 7] }, 'cumulé sur la journée');
+  assert.deepEqual(huntCheck({ d: '2026-11-26', hq: [7], hf: [6] }, '2026-11-27', [7], []), { hq: [7] }, 'nouveau jour : on repart à zéro');
+  assert.deepEqual(huntCheck(undefined, '2026-11-26', [], [1]), {}, 'pas de liste : rien');
+});

@@ -92,3 +92,19 @@ test('jours : meilleur gain de chaque jour, jours à venir, apport du jour', () 
   assert.equal(b.days[4].future, true); assert.equal(b.days[3].future, false);
   assert.equal(b.today, '2026-11-26'); assert.equal(b.commonToday, 20);
 });
+
+test('deux étapes : tout monté → Chasseur (objets de chasse confirmés portés), plus Skiller', () => {
+  const mx = { l: 60, d: 300, p186: 300, p185: 300 };
+  const done = { key: 'a', total: 900, level: 60, defense: 300, professions: [{ id: 186, skill: 300 }, { id: 185, skill: 300 }, { id: 762, skill: 75 }],
+    history: [{ d: '2026-11-21', s: mx, hq: [5, 6] }, { d: '2026-11-24', s: mx, hq: [6], hf: [5] }, { d: '2026-11-26', s: mx, hq: [], hf: [6] }] };
+  const almost = { key: 'b', total: 800, level: 60, defense: 300, professions: [{ id: 186, skill: 300 }, { id: 185, skill: 290 }],
+    history: [{ d: '2026-11-21', s: { l: 60, d: 300, p186: 300, p185: 280 } }, { d: '2026-11-25', s: { l: 60, d: 300, p186: 300, p185: 290 } }] };
+  assert.equal(WEEK.maxed(done), true, 'la Monte ne compte pas');
+  assert.equal(WEEK.maxed(almost), false);
+  const b = WEEK.board([done, almost], '2026-11-23', '2026-11-27');
+  assert.equal(b.hunters, 1);
+  assert.equal(b.hunter.length, 1); assert.equal(b.hunter[0].v, 2);
+  assert.equal(b.skiller[2].length, 1); assert.equal(b.skiller[2][0].p, almost, 'le chasseur quitte le Skiller');
+  assert.equal(WEEK.gainDay(done.history, '2026-11-24').hunt, 1);
+  assert.equal(WEEK.gain(done.history, '2026-11-16').hunt, 0, 'semaine d’avant : rien');
+});

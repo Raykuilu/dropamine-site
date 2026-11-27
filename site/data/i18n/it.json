@@ -531,7 +531,7 @@
   "wkYouNone": "Non ancora in classifica questa settimana.",
   "wkYouCommon": "+{n} per la sfida comune ({s} %)",
   "wkPastT": "Campioni delle settimane passate",
-  "wkFoot": "Da lunedì a domenica · contano solo i progressi verificati dall’armeria (livello, Difesa, professioni, uccisioni onorevoli) · le armi non contano",
+  "wkFoot": "Da lunedì a domenica · contano solo i progressi verificati dall’armeria (livello, Difesa, professioni, uccisioni onorevoli, oggetti di caccia visti indossati) · le armi non contano",
   "wkBadgeSkiller": "Skiller della settimana {n}",
   "wkBadgeSkill": "{s} · settimana {n}",
   "wkBadgeFighter": "Combattente della settimana {n}",
@@ -556,7 +556,14 @@
   "syDownWhat": "La tua caccia ({h} oggetti) e le tue prossime uscite ({r}), in un solo codice.",
   "syDownNone": "Ancora niente da inviare al gioco: scegli oggetti da cacciare o unisciti a un’uscita.",
   "syDownHow": "Nel gioco: /drop app → Ricevi dal sito, Ctrl+V (Dropamine 3.13 o successivo).",
-  "syCopy": "Copia"
+  "syCopy": "Copia",
+  "wkHunterT": "Cacciatore della settimana",
+  "wkHunterHow": "Per i livello 60 con Difesa e professioni a 300: oggetti della tua lista di caccia, confermati quando l’armeria li vede indossati.",
+  "wkNoneHunter": "Ancora nessun oggetto di caccia confermato questa settimana.",
+  "wkNoHunters": "Nessuno ha ancora maxato tutto. Livello 60, Difesa e professioni a 300 sbloccano questa fase.",
+  "wkHuntVerified": "oggetti di caccia confermati",
+  "wkYouHunt": "{r} tra i cacciatori",
+  "wkBadgeHunter": "Cacciatore della settimana {n}"
  },
  "names": {
   "Leatherworking": "Conciatura",

@@ -162,6 +162,20 @@ export function skillSnapshot(s) {
   return o;
 }
 
+// chasse vérifiée par l'armurerie : un objet de la liste de chasse compte le jour où on le voit porté, s'il était encore
+// cherché au relevé précédent (hq = objets cherchés et pas encore portés ; hf = trouvés ce jour-là, cumulés sur la journée).
+// Premier relevé : seulement la base (rien ne compte). Un objet déjà porté quand il entre dans la liste ne compte pas.
+export function huntCheck(last, today, huntIds, gearIds) {
+  const want = [...new Set((huntIds ?? []).filter(Number.isFinite))];
+  if (!want.length && !last?.hq) return {};
+  const worn = new Set(gearIds ?? []);
+  const hq = want.filter(id => !worn.has(id));
+  const was = new Set(last?.hq ?? []);
+  const found = last?.hq ? want.filter(id => worn.has(id) && was.has(id)) : [];
+  const hf = [...new Set([...(last?.d === today ? last.hf ?? [] : []), ...found])];
+  return { hq, ...(hf.length ? { hf } : {}) };
+}
+
 // statistiques de l'armurerie, par identifiant (stables quelle que soit la langue)
 export const STAT_IDS = { 107: 'kills', 98: 'quests', 60: 'deaths', 349: 'flights', 932: 'dungeons',
   588: 'hk', 1487: 'killingBlows', 1501: 'pvpDeaths', 318: 'factionDeaths', 319: 'duelsWon', 320: 'duelsLost',
@@ -325,8 +339,10 @@ async function main() {
     const hkNow = pickStats(c.achStats)?.hk ?? c.pvp?.honorable_kills ?? null;   // armurerie : référence des victoires honorables
     // semaine JcJ de l'addon (honneur, victoires), seulement si la ligne a moins de 2 jours : saison semaine par semaine
     const pw = up?.pvp && up.at && Date.now() - Date.parse(up.at) < 2 * 864e5 ? [up.pvp.honorWeek ?? 0, up.pvp.hkWeek ?? 0] : null;
-    if (last?.d === today) { last.t = s.total; last.s = snap; if (hkNow != null) last.hk = hkNow; if (pw) last.pw = pw; }
-    else hist.push({ d: today, t: s.total, s: snap, ...(hkNow != null ? { hk: hkNow } : {}), ...(pw ? { pw } : {}) });
+    // chasse confirmée par l'équipement porté (étape 2 des défis de la semaine)
+    const hc = huntCheck(last, today, (up?.hunt ?? []).map(h => h.id), s.gear.map(g => g[1]));
+    if (last?.d === today) { last.t = s.total; last.s = snap; if (hkNow != null) last.hk = hkNow; if (pw) last.pw = pw; delete last.hq; delete last.hf; Object.assign(last, hc); }
+    else hist.push({ d: today, t: s.total, s: snap, ...(hkNow != null ? { hk: hkNow } : {}), ...(pw ? { pw } : {}), ...hc });
     await writeFile(hfile, JSON.stringify(hist));
 
     const p = c.profile;

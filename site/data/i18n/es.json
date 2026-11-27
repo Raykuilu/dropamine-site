@@ -531,7 +531,7 @@
   "wkYouNone": "Aún no estás en la clasificación esta semana.",
   "wkYouCommon": "+{n} para el reto común ({s} %)",
   "wkPastT": "Campeones de semanas pasadas",
-  "wkFoot": "De lunes a domingo · solo cuentan las ganancias verificadas por la armería (nivel, Defensa, profesiones, victorias con honor) · las armas no cuentan",
+  "wkFoot": "De lunes a domingo · solo cuentan los avances verificados por la armería (nivel, Defensa, profesiones, victorias con honor, objetos de caza vistos equipados) · las armas no cuentan",
   "wkBadgeSkiller": "Skiller de la semana {n}",
   "wkBadgeSkill": "{s} · semana {n}",
   "wkBadgeFighter": "Combatiente de la semana {n}",
@@ -556,7 +556,14 @@
   "syDownWhat": "Tu caza ({h} objetos) y tus próximas salidas ({r}), en un solo código.",
   "syDownNone": "Nada que enviar al juego por ahora: elige objetos que cazar o únete a una salida.",
   "syDownHow": "En el juego: /drop app → Recibir del sitio, Ctrl+V (Dropamine 3.13 o posterior).",
-  "syCopy": "Copiar"
+  "syCopy": "Copiar",
+  "wkHunterT": "Cazador de la semana",
+  "wkHunterHow": "Para los de nivel 60 con Defensa y profesiones a 300: objetos de tu lista de caza, confirmados cuando la armería los ve equipados.",
+  "wkNoneHunter": "Ningún objeto de caza confirmado esta semana todavía.",
+  "wkNoHunters": "Nadie lo ha subido todo todavía. Nivel 60, Defensa y profesiones a 300 abren esta etapa.",
+  "wkHuntVerified": "objetos de caza confirmados",
+  "wkYouHunt": "{r} entre los cazadores",
+  "wkBadgeHunter": "Cazador de la semana {n}"
  },
  "names": {
   "Leatherworking": "Peletería",

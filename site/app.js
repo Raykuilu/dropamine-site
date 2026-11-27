@@ -195,7 +195,14 @@ const I18N = {
   wkYouNone: ["Not on the board yet this week.", "Pas encore au classement cette semaine."],
   wkYouCommon: ["+{n} towards the shared goal ({s} %)", "+{n} pour le défi commun ({s} %)"],
   wkPastT: ["Past champions", "Champions des semaines passées"],
-  wkFoot: ["Monday to Sunday · armory-verified gains only (level, Defense, professions, honorable kills) · weapons are not counted", "Du lundi au dimanche · seuls les gains vérifiés par l’armurerie comptent (niveau, Défense, métiers, victoires honorables) · les armes ne comptent pas"],
+  wkFoot: ["Monday to Sunday · armory-verified gains only (level, Defense, professions, honorable kills, hunt items seen worn) · weapons are not counted", "Du lundi au dimanche · seuls les gains vérifiés par l’armurerie comptent (niveau, Défense, métiers, victoires honorables, objets de chasse vus portés) · les armes ne comptent pas"],
+  wkHunterT: ["Hunter of the week", "Chasseur de la semaine"],
+  wkHunterHow: ["For level 60s with Defense and professions at 300: items from your hunt list, confirmed when the armory sees them worn.", "Pour les 60 avec Défense et métiers à 300 : les objets de ta liste de chasse, confirmés quand l’armurerie les voit portés."],
+  wkNoneHunter: ["No hunt item confirmed yet this week.", "Aucun objet de chasse confirmé cette semaine pour l’instant."],
+  wkNoHunters: ["Nobody has maxed everything yet. Level 60, Defense and professions at 300 unlock this step.", "Personne n’a encore tout monté. Niveau 60, Défense et métiers à 300 ouvrent cette étape."],
+  wkHuntVerified: ["hunt items confirmed", "objets de chasse confirmés"],
+  wkYouHunt: ["{r} among the hunters", "{r} des chasseurs"],
+  wkBadgeHunter: ["Hunter of week {n}", "Chasseur de la semaine {n}"],
   wkBadgeSkiller: ["Skiller of week {n}", "Skiller de la semaine {n}"],
   wkBadgeSkill: ["{s} · week {n}", "{s} · semaine {n}"],
   wkBadgeFighter: ["Fighter of week {n}", "Combattant de la semaine {n}"], kdBy: ['Kills / deaths', 'Victoires / morts'], hpkBy: ['Honor / kill', 'Honneur / victoire'],
@@ -1414,23 +1421,29 @@ const WEEK = (() => {
       by[k] = g; total += g; if (k[0] === 'p') prof += g;
     }
     const hk = a && b && a !== b && Number.isFinite(b.hk) && Number.isFinite(a.hk) ? Math.max(0, b.hk - a.hk) : 0;
-    return { total, prof, hk, by };
+    return { total, prof, hk, by, hunt: 0 };
   }
   // gain sur [du, au[ : du dernier relevé avant « du » (sinon le premier de la période) au dernier de la période
   function gainSpan(hist, from, to) {
     const h = (hist || []).filter(x => x && x.d), inW = h.filter(x => x.d >= from && x.d < to);
     if (!inW.length) return diff(null, null);
     const before = h.filter(x => x.d < from);
-    return diff(before.length ? before[before.length - 1] : inW[0], inW[inW.length - 1]);
+    const r = diff(before.length ? before[before.length - 1] : inW[0], inW[inW.length - 1]);
+    r.hunt = inW.reduce((n, x) => n + (Array.isArray(x.hf) ? x.hf.length : 0), 0);
+    return r;
   }
   const gain = (hist, m) => gainSpan(hist, m, next(m));
   // gain d'un jour : relevé du jour face au relevé précédent (pas de relevé ce jour-là : rien)
   function gainDay(hist, d) {
     const h = (hist || []).filter(x => x && x.d), i = h.findIndex(x => x.d === d);
-    return i > 0 ? diff(h[i - 1], h[i]) : diff(null, null);
+    const r = i > 0 ? diff(h[i - 1], h[i]) : diff(null, null);
+    r.hunt = i >= 0 && Array.isArray(h[i].hf) ? h[i].hf.length : 0;
+    return r;
   }
   const BRACKETS = [[10, 29], [30, 49], [50, 60]];
   const bracketOf = lvl => BRACKETS.findIndex(([a, b]) => lvl >= a && lvl <= b);
+  // deux étapes : on monte tout (Skiller), puis, 60 avec Défense et métiers à 300 (la Monte à part), on chasse (Chasseur)
+  const maxed = p => (p.level ?? 0) >= 60 && (p.defense ?? 0) >= 300 && (p.professions ?? []).filter(x => x.id !== 762).every(x => (x.skill ?? 0) >= 300);
   // compétence de la semaine : un métier tiré d'après le numéro de semaine, parmi ceux que quelqu'un pratique
   function skillOf(players, m) {
     const pool = [...new Set(players.flatMap(p => Object.keys(p.history?.[p.history.length - 1]?.s || {}).filter(k => /^p\d+$/.test(k))))]
@@ -1455,7 +1468,8 @@ const WEEK = (() => {
     const today = last && last >= m && last < next(m) ? last : null;
     return {
       m, num: num(m), skill, today,
-      skiller: BRACKETS.map((_, i) => top(rows.filter(r => bracketOf(r.p.level) === i), g => g.total)),
+      skiller: BRACKETS.map((_, i) => top(rows.filter(r => !maxed(r.p) && bracketOf(r.p.level) === i), g => g.total)),
+      hunter: top(rows.filter(r => maxed(r.p)), g => g.hunt), hunters: rows.filter(r => maxed(r.p)).length,
       skillTop: skill ? top(rows, g => g.by[skill] || 0) : [],
       fighter: top(rows, g => g.hk),
       common, lastCommon, goal: goalFor(lastCommon, active.length), active: active.length,
@@ -1479,11 +1493,11 @@ const WEEK = (() => {
     const out = []; let w = prev(m);
     for (let i = 0; i < n; i++, w = prev(w)) {
       const b = board(players, w, null);
-      if (b.skiller.some(x => x.length) || b.skillTop.length || b.fighter.length) out.push(b);
+      if (b.skiller.some(x => x.length) || b.hunter.length || b.skillTop.length || b.fighter.length) out.push(b);
     }
     return out;
   }
-  return { monday, next, prev, days, num, gain, gainDay, board, guild, past, bracketOf, BRACKETS, skillOf, goalFor };
+  return { monday, next, prev, days, num, gain, gainDay, board, guild, past, bracketOf, BRACKETS, skillOf, goalFor, maxed };
 })();
 // </week>
 // ---------- Accueil : les défis de la semaine ----------
@@ -1536,15 +1550,17 @@ function renderWeek() {
   // 4) toi cette semaine : ton gain, ta place, ta propre frise
   let you = '';
   if (me) {
-    const br = WEEK.bracketOf(me.p.level), pos = br >= 0 ? b.skiller[br].findIndex(r => r.p === me.p) + 1 : 0;
-    const mine = b.days.map(x => ({ x, v: WEEK.gainDay(me.p.history, x.d).total })), mp = Math.max(1, ...mine.map(y => y.v));
-    you = `<div class="wk-card wk-you"><p class="wk-lbl">${t('wkYou')}</p><div class="wk-yh"><div class="wk-big">+${fmt(me.g.total)}<small>${t('wkVerified')}</small></div>
+    const hunt = WEEK.maxed(me.p), br = WEEK.bracketOf(me.p.level);
+    const pos = hunt ? b.hunter.findIndex(r => r.p === me.p) + 1 : br >= 0 ? b.skiller[br].findIndex(r => r.p === me.p) + 1 : 0;
+    const mine = b.days.map(x => ({ x, v: WEEK.gainDay(me.p.history, x.d)[hunt ? 'hunt' : 'total'] })), mp = Math.max(1, ...mine.map(y => y.v));
+    you = `<div class="wk-card wk-you"><p class="wk-lbl">${t('wkYou')}</p><div class="wk-yh"><div class="wk-big">+${fmt(hunt ? me.g.hunt : me.g.total)}<small>${t(hunt ? 'wkHuntVerified' : 'wkVerified')}</small></div>
       <div class="wk-mini" aria-hidden="true">${mine.map(({ x, v }) => `<s class="${x.d === b.today ? 'now' : ''}${x.future ? ' fut' : ''}" style="height:${x.future ? 2 : Math.max(3, Math.round(34 * v / mp))}px"></s>`).join('')}</div></div>
-      <p class="wk-line">${pos ? t('wkYouPos', { r: ord(pos), a: WEEK.BRACKETS[br][0], z: WEEK.BRACKETS[br][1] }) : t('wkYouNone')}</p>
+      <p class="wk-line">${!pos ? t('wkYouNone') : hunt ? t('wkYouHunt', { r: ord(pos) }) : t('wkYouPos', { r: ord(pos), a: WEEK.BRACKETS[br][0], z: WEEK.BRACKETS[br][1] })}</p>
       ${me.g.prof ? `<p class="wk-line">${t('wkYouCommon', { n: fmt(me.g.prof), s: b.common ? Math.round(100 * me.g.prof / b.common) : 0 })}</p>` : ''}</div>`;
   }
   const past = WEEK.past(players, m).map(w => { const best = w.skiller.map(x => x[0]).filter(Boolean).sort((x, y) => y.v - x.v)[0];
-    return best ? `<li><span class="wk-wn">S${w.num}</span>${wkWho(best, ' sm')}</li>` : ''; }).join('');
+    const hu = w.hunter[0];
+    return best || hu ? `<li><span class="wk-wn">S${w.num}</span>${best ? wkWho(best, ' sm') : ''}${hu ? wkWho(hu, ' sm') : ''}</li>` : ''; }).join('');
   box.innerHTML = `
     <div class="wk-head"><div><p class="kicker">${t('wkKicker', { n: b.num })}</p><h2>${t('wkTitle')}</h2></div><p class="wk-cd"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${weekLeft(m)}</p></div>
     <div class="wk-cols">
@@ -1560,6 +1576,7 @@ function renderWeek() {
       <div class="wk-side">
         ${you}
         <div class="wk-card wk-skiller"><p class="wk-lbl">${t('wkSkillerT')}</p><div class="chips wk-br" role="group" aria-label="${t('level')}">${chips}</div>${podium}</div>
+        <div class="wk-card wk-hunter"><p class="wk-lbl">${t('wkHunterT')}</p>${b.hunters ? wkList(b.hunter, t('wkNoneHunter')) : `<p class="wk-empty">${t('wkNoHunters')}</p>`}<p class="wk-how">${t('wkHunterHow')}</p></div>
         <div class="wk-card"><p class="wk-lbl">${t('wkSkillT')}</p>${sk ? `<p class="wk-skill">${sk.icon ? `<img src="${icon(sk.icon)}" alt="" referrerpolicy="no-referrer">` : ''}<b>${esc(sk.label())}</b></p>` : ''}${wkList(b.skillTop, t('wkNoneSkill'))}
           <p class="wk-lbl" style="margin-top:14px">${t('wkFighterT')}</p>${wkList(b.fighter, t('wkNoneHk'))}</div>
       </div>
@@ -1584,6 +1601,7 @@ function weekBadges(p) {
   const out = [];
   for (const w of WEEK.past(players, m)) {
     if (w.skiller.some(x => x[0]?.p === p)) out.push(t('wkBadgeSkiller', { n: w.num }));
+    if (w.hunter[0]?.p === p) out.push(t('wkBadgeHunter', { n: w.num }));
     if (w.skillTop[0]?.p === p) out.push(t('wkBadgeSkill', { s: skillById(w.skill).label(), n: w.num }));
     if (w.fighter[0]?.p === p) out.push(t('wkBadgeFighter', { n: w.num }));
   }
