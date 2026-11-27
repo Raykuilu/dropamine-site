@@ -8913,6 +8913,209 @@
       "c": "ROGUE",
       "s": "x",
       "d": 20784
+    },
+    "eu/patience-disciplïne": {
+      "l": 60,
+      "c": "DRUID",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/sassy-bee": {
+      "l": 20,
+      "c": "DRUID",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/rakshir-noirsillage": {
+      "l": 38,
+      "c": "HUNTER",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/forious-simath": {
+      "l": 18,
+      "c": "MAGE",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/rak-shir": {
+      "l": 31,
+      "c": "WARRIOR",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/ax-pirine": {
+      "l": 15,
+      "c": "HUNTER",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/colìn-maillard": {
+      "l": 33,
+      "c": "PRIEST",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/nagazach-heal": {
+      "l": 32,
+      "c": "SHAMAN",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/spell-cøre": {
+      "l": 33,
+      "c": "MAGE",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/tim-plar": {
+      "l": 36,
+      "c": "PALADIN",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/framb-framb": {
+      "l": 34,
+      "c": "PALADIN",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/yema-lobrah": {
+      "l": 42,
+      "c": "HUNTER",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/drazz-teck": {
+      "l": 42,
+      "c": "ROGUE",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/ptitsupo-simath": {
+      "l": 10,
+      "c": "WARRIOR",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/seretide-ra": {
+      "l": 9,
+      "c": "PRIEST",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/gue-rrier": {
+      "l": 60,
+      "c": "WARRIOR",
+      "g": "Everybody Knows",
+      "s": "u",
+      "d": 20784
+    },
+    "eu/cado-bisou": {
+      "l": 40,
+      "c": "ROGUE",
+      "g": "Savages",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/angry-canadian": {
+      "l": 45,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/laser-bear": {
+      "l": 43,
+      "c": "WARLOCK",
+      "g": "Closure",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/michel-huitdeux": {
+      "l": 24,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/grendl-grendlsen": {
+      "l": 26,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bondzah-lightforge": {
+      "l": 49,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/elyndris-moonshade": {
+      "l": 42,
+      "c": "DRUID",
+      "g": "Jambon Burst",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/neuberus-ravenshade": {
+      "l": 50,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/toutou-pala": {
+      "l": 56,
+      "c": "PALADIN",
+      "g": "Les casseurs flotteurs",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/wish-anarkhia": {
+      "l": 46,
+      "c": "PALADIN",
+      "g": "S P E C T R E",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/solomun-lamenace": {
+      "l": 51,
+      "c": "ROGUE",
+      "g": "Exalté chez Pôle Emploi",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/vlad-wulfheart": {
+      "l": 44,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/thairin-cafalon": {
+      "l": 52,
+      "c": "MAGE",
+      "g": "H D Z",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dilae-briselombre": {
+      "l": 22,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
     }
   }
 }
