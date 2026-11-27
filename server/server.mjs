@@ -20,7 +20,7 @@ import { createServer } from 'node:http';
 import { gzipSync } from 'node:zlib';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload,
-  applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt } from './lib.mjs';
+  applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt, parseScoutLine, applyScout } from './lib.mjs';
 import { readFileSync, existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { vapidKeys, sendPush, validSub, addSub, removeSub, runEvents, dueReminders } from './push.mjs';
@@ -42,7 +42,10 @@ const CFG = {
   ghToken: env('GITHUB_TOKEN'), ghRepo: process.env.GITHUB_REPO || 'Raykuilu/dropamine-site',
   publicUrl: (process.env.PUBLIC_URL || 'https://api.dropamine.app').replace(/\/$/, ''),
   siteUrl: (process.env.SITE_URL || 'https://dropamine.app').replace(/\/$/, ''),
+  // BattleTags administrateurs (outil Scout), séparés par des virgules : réglés sur le serveur, jamais dans le dépôt
+  admins: new Set(String(process.env.ADMIN_TAGS || '').toLowerCase().split(',').map(x => x.trim()).filter(Boolean)),
 };
+const isAdmin = s => !!s?.battletag && CFG.admins.has(String(s.battletag).toLowerCase());
 const REGIONS = ['eu', 'us', 'tw'];
 const SESSION_HOURS = 12;
 
@@ -292,7 +295,7 @@ const server = createServer(async (req, res) => {
     }
 
     // routes de session : appelées par dropamine.app (CORS avec cookie)
-    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit', '/push/subscribe', '/push/unsubscribe', '/hunt/save'].includes(url.pathname)) {
+    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit', '/push/subscribe', '/push/unsubscribe', '/hunt/save', '/scout'].includes(url.pathname)) {
       if (req.method === 'POST' && req.headers.origin !== CFG.siteUrl) return send(res, 403, { error: 'origine refusée' }, cors);
       const s = session(req);
       if (url.pathname === '/logout') {
@@ -306,7 +309,7 @@ const server = createServer(async (req, res) => {
         const reg = new Set((registry.characters ?? []).map(k => String(k).toLowerCase()));
         const out = new Set((registry.optout ?? []).map(k => String(k).toLowerCase()));
         const list = [...s.characters.values()].sort((a, b) => b.level - a.level).map(c => ({ ...c, registered: reg.has(c.key), optout: out.has(c.key) }));
-        return send(res, 200, { battletag: s.battletag, characters: list }, cors);
+        return send(res, 200, { battletag: s.battletag, characters: list, ...(isAdmin(s) ? { admin: true } : {}) }, cors);
       }
       if ((url.pathname === '/claim' || url.pathname === '/release') && req.method === 'POST') {
         const body = await readBody(req);
@@ -353,6 +356,16 @@ const server = createServer(async (req, res) => {
         if (out?.error) return send(res, 400, { error: out.error }, cors);
         if (r.changed) refreshSite();
         return send(res, 200, { ok: true, hunt: out.hunt }, cors);
+      }
+      // Scout : la ligne de l'addon privé de l'administrateur → data/scouted.json (joueurs montrés en aperçu au relevé suivant)
+      if (url.pathname === '/scout' && req.method === 'POST') {
+        if (!isAdmin(s)) return send(res, 403, { error: 'admin' }, cors);
+        const p = parseScoutLine((await readBody(req)).line);
+        if (p.error) return send(res, 400, { error: p.error }, cors);
+        let out = null;
+        const r = await updateFile('data/scouted.json', { players: {} }, d => (out = applyScout(d, p.region, p.players)), `Hiscores: scout (${p.players.length} players)`);
+        if (r.changed) refreshSite();
+        return send(res, 200, { ok: true, received: p.players.length, added: out?.added ?? 0, total: out?.total ?? 0 }, cors);
       }
       if (url.pathname === '/push/subscribe' && req.method === 'POST') {
         const { sub } = await readBody(req);

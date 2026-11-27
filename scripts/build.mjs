@@ -255,6 +255,17 @@ export function previewEntries(rosters, registered, optout) {
   return [...out.values()];
 }
 
+// Scout (data/scouted.json) → aperçus : vus depuis moins de 30 jours, niveau 10+, ni inscrits, ni retirés, ni déjà montrés ;
+// les plus récents d'abord, SCOUT_LIMIT au plus par relevé (appels Blizzard)
+export const SCOUT_LIMIT = 400;
+export function scoutEntries(scouted, taken, optout, day = Math.floor(Date.now() / 864e5)) {
+  return Object.entries(scouted?.players ?? {})
+    .filter(([key, v]) => (v.d ?? 0) >= day - 30 && (v.l ?? 0) >= 10 && !taken.has(key) && !optout.has(key) && /^(eu|us|tw)\/[^/]+-[^/]+$/.test(key))
+    .sort((a, b) => (b[1].d ?? 0) - (a[1].d ?? 0) || (b[1].l ?? 0) - (a[1].l ?? 0))
+    .slice(0, SCOUT_LIMIT)
+    .map(([key, v]) => { const [region, slug] = key.split('/'); return { region, slug, key, preview: true, scout: v.dun ? { dun: v.dun, d: v.d } : { d: v.d } }; });
+}
+
 // n tâches en parallèle au plus (limite d'appels Blizzard : 36 000 par heure)
 async function pool(items, n, fn) {
   let i = 0;
@@ -308,6 +319,11 @@ async function main() {
     if (roster) { rosters.push({ region, roster }); console.log(`guilde ${g} : ${roster.members?.length ?? 0} membre(s)`); }
   }
   entries.push(...previewEntries(rosters, new Set(entries.map(e => e.key)), optout));
+  // joueurs repérés en jeu (Scout, outil de l'administrateur)
+  const scouted = await readJson(join(ROOT, 'data/scouted.json'), { players: {} });
+  const sc = scoutEntries(scouted, new Set(entries.map(e => e.key)), optout);
+  if (sc.length) console.log(`scout : ${sc.length} joueur(s) en aperçu`);
+  entries.push(...sc);
   // un personnage retiré ne garde pas d'historique
   for (const k of optout) { const [r, s] = k.split('/'); await rm(join(ROOT, 'data/history', r, `${s}.json`), { force: true }); }
 

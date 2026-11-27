@@ -113,6 +113,9 @@ const I18N = {
   nJoin: ['joins your {d} outing', 'rejoint ta sortie {d}'], nLeave: ['leaves your {d} outing', 'quitte ta sortie {d}'], nCancel: [': outing cancelled', ' : sortie annulée'],
   nSoon: ['starts in {n} min', 'commence dans {n} min'],
   rtabRuns: ['Planned outings', 'Sorties prévues'], rtabIdeas: ['Same dungeons', 'Mêmes donjons'], rtabExplore: ['All dungeons', 'Tous les donjons'],
+  scPitch: ['Admin only. Paste the line from /scout (Dropamine Scout, private addon): those players show up as previews at the next update.', 'Réservé à l’administrateur. Colle la ligne de /scout (Dropamine Scout, addon privé) : ces joueurs apparaissent en aperçu au prochain relevé.'],
+  scSend: ['Send', 'Envoyer'], scOk: ['Received {n} players, {a} new · {t} in the list.', 'Reçu : {n} joueurs, {a} nouveaux · {t} dans la liste.'],
+  scErr: ['Refused ({e}).', 'Refusé ({e}).'],
   xIntro: ['Pick a dungeon, click the items you want, and set up your outing.', 'Choisis un donjon, clique sur les objets que tu veux et prépare ta sortie.'],
   xPickDun: ['Pick a dungeon in the list.', 'Choisis un donjon dans la liste.'],
   xDraftT: ['Your outing', 'Ta sortie'], xPickHint: ['Click items to add them to your hunt list.', 'Clique sur des objets pour les ajouter à ta liste de chasse.'],
@@ -2453,7 +2456,7 @@ Object.assign(I18N, {
   },
 });
 const Bnet = (() => {
-  let alive = null, me = null, msg = '', upMsg = '';
+  let alive = null, me = null, msg = '', upMsg = '', scMsg = '';
   // affiché sur le site : inscrit, ou en aperçu de guilde (et pas masqué) ; coché = affiché
   const previewed = c => !c.registered && !c.optout && DATA.players.some(p => p.preview && pkey(p) === c.key);
   const shown = c => !!c.registered || previewed(c);
@@ -2485,7 +2488,10 @@ const Bnet = (() => {
       ${msg ? `<p class="msg">${msg}</p>` : ''}
       ${chars.length ? `<div class="paste"><h3>${t('upTitle')}</h3><p>${esc(t('upPitch')).replace('/drop hiscores', '<code>/drop hiscores</code>')}</p>
         <textarea id="hsline" spellcheck="false" placeholder="${t('upPh')}"></textarea>
-        <button class="btn gold" data-bn="upload">${t('upSend')}</button>${upMsg ? `<p class="msg">${upMsg}</p>` : ''}</div>` : ''}`;
+        <button class="btn gold" data-bn="upload">${t('upSend')}</button>${upMsg ? `<p class="msg">${upMsg}</p>` : ''}</div>` : ''}
+      ${me.admin ? `<div class="paste scout"><h3>Scout</h3><p>${t('scPitch')}</p>
+        <textarea id="scoutline" spellcheck="false" placeholder="DROP:SCOUT1:…"></textarea>
+        <button class="btn gold" data-bn="scout">${t('scSend')}</button>${scMsg ? `<p class="msg">${scMsg}</p>` : ''}</div>` : ''}`;
   }
   async function show() {
     if (!(await probe())) { draw(); return; }
@@ -2497,6 +2503,14 @@ const Bnet = (() => {
     const el = e.target.closest('[data-bn]'); if (!el) return;
     e.preventDefault(); const act = el.dataset.bn;
     if (act === 'logout') { await call('/logout', {}).catch(() => {}); me = null; msg = ''; upMsg = ''; draw(); header(); return; }
+    if (act === 'scout') {   // outil privé de l'administrateur
+      const line = $('#scoutline')?.value.trim(); if (!line) return;
+      el.setAttribute('disabled', '');
+      try { const r = await call('/scout', { line }), j = await r.json().catch(() => ({}));
+        scMsg = r.ok ? t('scOk', { n: j.received, a: j.added, t: j.total }) : t('scErr', { e: j.error || r.status });
+      } catch { scMsg = t('bnError'); }
+      draw(); return;
+    }
     if (act === 'upload') {
       const line = $('#hsline')?.value.trim(); if (!line) return;
       el.setAttribute('disabled', '');

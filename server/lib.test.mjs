@@ -173,3 +173,21 @@ test('chasse en codes seuls (Dropamine 3.12.0)', () => {
   const sum = hsChecksum(BODY), p = parseHiscoresLine(HS_PREFIX + BODY + ';c=' + sum);
   assert.deepEqual(p.hunt, [{ id: 9449, name: '', tries: 42, drops: 1 }, { id: 2262, name: '', tries: 0, drops: 0 }]);
 });
+
+test('Scout : ligne de l\'addon privé, fusion, 30 jours', async () => {
+  const { parseScoutLine, applyScout } = await import('./lib.mjs');
+  const day = 20784, now = day * 864e5 + 3600e3;
+  const p = parseScoutLine(`DROP:SCOUT1:r=eu;t=1;p=Labiere Dubar~42~MAGE~Les Paluches~x~${day}~,Ann Dubar~30~PRIEST~~g~${day}~Les Mortemines,Yhnain~51~SHAMAN~~x~${day}~`);
+  assert.equal(p.region, 'eu');
+  assert.equal(p.players.length, 2, 'prénom seul ignoré');
+  assert.equal(parseScoutLine('DROP:HS2:x').error, 'format');
+  assert.equal(parseScoutLine('DROP:SCOUT1:r=zz;p=').error, 'region');
+  const old = { players: { 'eu/vieux-joueur': { l: 20, s: 'x', d: day - 40 }, 'eu/ann-dubar': { l: 28, s: 'x', d: day - 3, g: 'Ancienne' } } };
+  const r = applyScout(old, p.region, p.players, now);
+  assert.equal(r.added, 1);
+  assert.ok(!r.registry.players['eu/vieux-joueur'], 'plus de 30 jours : oublié');
+  const ann = r.registry.players['eu/ann-dubar'];
+  assert.equal(ann.l, 30); assert.equal(ann.s, 'g', 'groupe l\'emporte sur croisé'); assert.equal(ann.dun, 'Les Mortemines'); assert.equal(ann.g, 'Ancienne', 'guilde gardée si absente');
+  assert.equal(r.registry.players['eu/labiere-dubar'].g, 'Les Paluches');
+  assert.equal(applyScout(r.registry, 'eu', [], now).changed, false);
+});

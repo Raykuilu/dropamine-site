@@ -91,6 +91,48 @@ const pairs = s => String(s ?? '').split(',').filter(Boolean).map(x => x.split('
 // 3.11.1 : groupes facultatifs (chacun absent si décoché dans l'addon). Valeurs bornées, textes courts.
 const num = (v, max = 1e9) => { const n = Number(v); return Number.isInteger(n) && n >= 0 && n <= max ? n : null; };
 const txt = (v, max = 48) => String(v ?? '').replace(/[^\p{L}\p{N} '\-\[\]()]/gu, '').trim().slice(0, max);
+
+// Scout : outil privé de l'administrateur (addon non publié). Ligne DROP:SCOUT1:r=eu;t=…;p=nom~niveau~classe~guilde~source~jour~donjon,…
+// « nom » = « Prénom Nom » (Forever) : c'est ce que l'armurerie connaît. Sources : g groupe, u guilde, w /who, x croisé.
+export const SCOUT_KEEP_DAYS = 30, SCOUT_MAX = 5000;
+const SCOUT_RANK = { g: 4, u: 3, w: 2, x: 1 };
+export const scoutSlug = name => String(name ?? '').toLowerCase().replace(/\s+/g, '-').replace(/[^\p{L}\p{N}-]/gu, '').replace(/-+/g, '-').replace(/^-|-$/g, '');
+export function parseScoutLine(line) {
+  const m = String(line ?? '').trim().match(/^DROP:SCOUT1:([\s\S]+)$/);
+  if (!m) return { error: 'format' };
+  const f = {};
+  for (const part of m[1].split(';')) { const i = part.indexOf('='); if (i > 0) f[part.slice(0, i)] = part.slice(i + 1); }
+  if (!['eu', 'us', 'tw'].includes(f.r)) return { error: 'region' };
+  const players = String(f.p ?? '').split(',').slice(0, SCOUT_MAX).map(p => {
+    const [name, l, c, g, s, d, dun] = p.split('~'), n = txt(name, 48);
+    if (!n || !n.includes(' ')) return null;   // prénom seul (ancienne version de Scout) : introuvable dans l'armurerie
+    return { name: n, level: num(l, 100) ?? 0, cls: String(c ?? '').replace(/[^A-Z]/g, '').slice(0, 12), guild: txt(g, 48),
+      src: SCOUT_RANK[s] ? s : 'x', day: num(d, 1e6), dun: txt(dun, 60) };
+  }).filter(Boolean);
+  return { region: f.r, players };
+}
+export function applyScout(data, region, players, now = Date.now()) {
+  const day = Math.floor(now / 864e5), cut = day - SCOUT_KEEP_DAYS;
+  const list = { ...(data?.players ?? {}) };
+  let added = 0;
+  for (const p of players) {
+    const slug = scoutSlug(p.name);
+    if (!slug.includes('-')) continue;
+    const key = `${region}/${slug}`, cur = list[key];
+    if (!cur) added++;
+    list[key] = {
+      l: Math.max(p.level || 0, cur?.l ?? 0),
+      ...((p.cls || cur?.c) ? { c: p.cls || cur.c } : {}),
+      ...((p.guild || cur?.g) ? { g: p.guild || cur.g } : {}),
+      s: (SCOUT_RANK[p.src] ?? 0) >= (SCOUT_RANK[cur?.s] ?? 0) ? p.src : cur.s,
+      d: Math.max(Math.min(day, p.day ?? day), cur?.d ?? 0),
+      ...((p.dun || cur?.dun) ? { dun: p.dun || cur.dun } : {}),
+    };
+  }
+  for (const [k, v] of Object.entries(list)) if ((v.d ?? 0) < cut) delete list[k];   // règle Blizzard : 30 jours au plus
+  const out = { _comment: 'Joueurs repérés en jeu par l\'administrateur (Dropamine Scout) : montrés en aperçu (niveau 10+), oubliés après 30 jours sans être revus.', players: list };
+  return { registry: out, changed: JSON.stringify(out) !== JSON.stringify(data), added, total: Object.keys(list).length };
+}
 const tilde = v => String(v ?? '').split('~');
 export function extras(f) {
   const o = {};

@@ -178,3 +178,13 @@ test('chasse vérifiée : compte un objet cherché au relevé précédent, vu po
   assert.deepEqual(huntCheck({ d: '2026-11-26', hq: [7], hf: [6] }, '2026-11-27', [7], []), { hq: [7] }, 'nouveau jour : on repart à zéro');
   assert.deepEqual(huntCheck(undefined, '2026-11-26', [], [1]), {}, 'pas de liste : rien');
 });
+
+test('Scout : aperçus (récents, niveau 10+, ni inscrits ni retirés)', async () => {
+  const { scoutEntries } = await import('./build.mjs');
+  const day = 20784;
+  const sc = { players: { 'eu/a-b': { l: 30, d: day }, 'eu/c-d': { l: 9, d: day }, 'eu/e-f': { l: 40, d: day - 31 }, 'eu/ray-kuilu': { l: 37, d: day }, 'eu/g-h': { l: 20, d: day - 2, dun: 'Les Mortemines' }, 'eu/x-y': { l: 50, d: day } } };
+  const out = scoutEntries(sc, new Set(['eu/ray-kuilu']), new Set(['eu/x-y']), day);
+  assert.deepEqual(out.map(e => e.key), ['eu/a-b', 'eu/g-h']);
+  assert.equal(out[1].scout.dun, 'Les Mortemines');
+  assert.ok(out.every(e => e.preview));
+});
