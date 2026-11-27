@@ -1492,3 +1492,16 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .rows .row.me{background:linear-gradient(90deg,rgba(232,200,138,.12),transparent 70%)}
 .rows .row.hit{box-shadow:inset 3px 0 0 var(--gold);background:linear-gradient(90deg,rgba(232,200,138,.18),transparent 70%)}
 @media (max-width:560px){.pager{justify-content:center}.pg-x{justify-content:center}}
+/* accueil : la vidéo de présentation (aperçu, puis lecteur YouTube sans cookie au clic) */
+.intro .shot.yt{transform:none}
+.yt-btn{all:unset;box-sizing:border-box;display:block;position:relative;width:100%;cursor:pointer}
+.yt-btn img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;transition:filter .2s}
+.yt-btn:hover img,.yt-btn:focus-visible img{filter:brightness(1.08)}
+.yt-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.yt-play{position:absolute;left:50%;top:50%;width:68px;height:48px;transform:translate(-50%,-50%);border-radius:14px;background:rgba(196,48,43,.92);box-shadow:0 8px 24px rgba(0,0,0,.5);transition:transform .2s var(--ease),background .2s}
+.yt-play::after{content:"";position:absolute;left:27px;top:14px;border-style:solid;border-width:10px 0 10px 17px;border-color:transparent transparent transparent #fff}
+.yt-btn:hover .yt-play{background:#e0362f;transform:translate(-50%,-50%) scale(1.06)}
+.yt-cap{position:absolute;left:0;right:0;bottom:0;padding:26px 16px 12px;background:linear-gradient(transparent,rgba(5,3,2,.85));font-family:var(--display);font-weight:600;letter-spacing:.04em;color:var(--cream);font-size:clamp(14px,1.2vw,17px)}
+.shot.yt iframe{display:block;width:100%;aspect-ratio:16/9;border:0}
+/* les chiffres, désormais sous le titre : un peu d'air au-dessus */
+#lvc{margin-top:clamp(18px,3vw,34px)}

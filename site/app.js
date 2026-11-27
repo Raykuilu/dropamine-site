@@ -112,6 +112,7 @@ const I18N = {
   nHint: ['Joins and departures on your outings, a freed spot, a full group, a reminder 30 min before.', 'Arrivées et départs dans tes sorties, place libérée, groupe complet, rappel 30 min avant.'],
   nJoin: ['joins your {d} outing', 'rejoint ta sortie {d}'], nLeave: ['leaves your {d} outing', 'quitte ta sortie {d}'], nCancel: [': outing cancelled', ' : sortie annulée'],
   nSoon: ['starts in {n} min', 'commence dans {n} min'],
+  ytPlay: ['Play the video', 'Lire la vidéo'], ytCap: ['Share your hunt list, find your group', 'Partage ta chasse, trouve ton groupe'],
   'gm.total': ['Total level', 'Niveau total'], 'gm.avg': ['Average per member', 'Moyenne par membre'], 'gm.l60': ['Level 60s', 'Niveaux 60'],
   'gm.hk': ['Honorable kills', 'Victoires honorables'], 'gm.prof': ['Professions', 'Métiers'], 'gm.members': ['Members', 'Membres'],
   gmSub: ['{n} at level 60', '{n} au niveau 60'],
@@ -571,9 +572,7 @@ function renderLive() {
   const counters = [[CF_DOWNLOADS, t('lvcDl')], [DATA.players.length, t('lvcChars')], [guildsN, t('lvcGuilds')], [runs.length, t('lvcRuns')], [found, t('lvcItems')]]
     .map(([n, l]) => `<div><b data-n="${n}">${fmt(n)}</b><span>${l}</span></div>`).join('');
   const feed = LIVE.slice(0, 8).map(e => `<li${e.run ? ` data-runlink="${esc(e.run)}"` : ` data-c="${esc(pkey(e.p))}"`}>${avatar(e.p)}<span>${e.html}</span><time>${dayAgo(e.at)}</time></li>`).join('');
-  // la semaine : le podium des gains et les guildes qui montent
-  const movers = region.map(p => ({ p, g: gain7(p) || 0 })).filter(x => x.g > 0).sort((a, b) => b.g - a.g).slice(0, 3);
-  const podium = movers.length ? `<ol class="podium">${[movers[1], movers[0], movers[2]].map((x, i) => x ? `<li class="pd${[2, 1, 3][i]}" data-c="${esc(pkey(x.p))}">${avatar(x.p)}<b>${full(x.p)}</b><span class="up">+${fmt(x.g)}</span><i>${[2, 1, 3][i]}</i></li>` : '<li class="pd-empty"></li>').join('')}</ol>` : `<p class="note">${t('lvNoWeek')}</p>`;
+  // les guildes qui montent (le podium de la semaine est dans « Cette semaine », juste au-dessus)
   const gmap = new Map();
   for (const p of region) if (p.guild && gain7(p) > 0) { const g = gmap.get(p.guild.slug) || { g: p.guild, n: 0, m: 0 }; g.n += gain7(p); g.m++; gmap.set(p.guild.slug, g); }
   const rising = [...gmap.values()].sort((a, b) => b.n - a.n).slice(0, 3)
@@ -581,18 +580,25 @@ function renderLive() {
   const loots = region.flatMap(p => (p.loots || []).map(([id, d]) => ({ p, id, at: Date.parse(d) }))).sort((a, b) => b.at - a.at).slice(0, 10);
   const lootRow = loots.length ? `<section class="panel lv-loots"><div class="cathead"><h3 class="sub">${t('lvLoots')}</h3><span class="cx2">${t('lvLootsSub')}</span></div>
     <div class="lootrow">${loots.map(x => `<a class="loot" href="?p=char&c=${esc(encodeURIComponent(pkey(x.p)))}" data-c="${esc(pkey(x.p))}">${itemChip(x.id)}<b style="color:${QCOL[ITEMS?.[x.id]?.q] || 'var(--cream)'}">${esc(lootName(x.p, x.id))}</b><small>${esc(x.p.name)} · ${dayAgo(x.at)}</small></a>`).join('')}</div></section>` : '';
-  box.innerHTML = `${raidBanner()}<div class="lv-count">${counters}</div>${lootRow}
+  // les chiffres vont sous le titre (#lvc) ; ici : les trouvailles, le fil, les sorties, puis l'annonce des raids en bas
+  const lvc = $('#lvc'); if (lvc) { lvc.innerHTML = counters; lvc.hidden = false; }
+  box.innerHTML = `${lootRow}
     <div class="lv-grid">
       <section class="panel lv-feed"><div class="cathead"><h3 class="sub"><i class="live"></i>${t('lvTitle')}</h3><span class="cx2">${t('lvSub')}</span></div>
         ${feed ? `<ul>${feed}</ul>` : `<p class="note">${t('lvEmpty')}</p>`}</section>
       <div class="lv-side">
         <section class="panel"><div class="cathead"><h3 class="sub">${t('lvRuns')}</h3><a class="lnk cx2" href="?p=runs" data-view-link="runs">${t('dashAllRuns')}</a></div>
           ${runs.length ? `<ul class="dlist">${runs.slice(0, 3).map(runLine).join('')}</ul>` : `<p class="note">${RUNS === null ? t('runsApiDown') : t('lvNoRun')}</p>`}</section>
-        <section class="panel"><div class="cathead"><h3 class="sub">${t('lvWeek')}</h3></div>${podium}
-          ${rising ? `<h4 class="lv-h4">${t('lvRising')}</h4><ul class="dlist lv-guilds">${rising}</ul>` : ''}</section>
+        ${rising ? `<section class="panel"><div class="cathead"><h3 class="sub">${t('lvRising')}</h3></div><ul class="dlist lv-guilds">${rising}</ul></section>` : ''}
       </div>
-    </div>`;
+    </div>${raidBanner()}`;
 }
+// accueil : la vidéo ne charge le lecteur YouTube (domaine sans cookie) qu'au clic sur son aperçu
+document.addEventListener('click', e => {
+  const b = e.target.closest('.yt-btn'); if (!b) return;
+  const box = b.closest('[data-yt]'), id = box?.dataset.yt; if (!id || !/^[\w-]{11}$/.test(id)) return;
+  box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&hl=${LANG}" title="${esc(t('ytCap'))}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+});
 // de temps en temps, un toast façon addon reprend une ligne du fil (accueil visiteur seulement)
 let toastN = 0;
 setInterval(() => {

@@ -597,7 +597,9 @@
   "gm.hk": "Uccisioni onorevoli",
   "gm.prof": "Professioni",
   "gm.members": "Membri",
-  "gmSub": "{n} al livello 60"
+  "gmSub": "{n} al livello 60",
+  "ytPlay": "Guarda il video",
+  "ytCap": "Condividi la tua lista di caccia, trova il tuo gruppo"
  },
  "names": {
   "Leatherworking": "Conciatura",

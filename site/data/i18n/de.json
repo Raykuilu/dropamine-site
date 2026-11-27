@@ -597,7 +597,9 @@
   "gm.hk": "Ehrenhafte Siege",
   "gm.prof": "Berufe",
   "gm.members": "Mitglieder",
-  "gmSub": "{n} auf Stufe 60"
+  "gmSub": "{n} auf Stufe 60",
+  "ytPlay": "Video abspielen",
+  "ytCap": "Teile deine Jagdliste, finde deine Gruppe"
  },
  "names": {
   "Leatherworking": "Lederverarbeitung",

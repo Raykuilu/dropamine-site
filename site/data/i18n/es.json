@@ -597,7 +597,9 @@
   "gm.hk": "Victorias con honor",
   "gm.prof": "Profesiones",
   "gm.members": "Miembros",
-  "gmSub": "{n} de nivel 60"
+  "gmSub": "{n} de nivel 60",
+  "ytPlay": "Reproducir el vídeo",
+  "ytCap": "Comparte tu lista de caza, encuentra tu grupo"
  },
  "names": {
   "Leatherworking": "Peletería",

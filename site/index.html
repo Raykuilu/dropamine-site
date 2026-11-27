@@ -100,7 +100,6 @@
 
 <!-- ============ HOME / ACCUEIL ============ -->
 <section class="view on" id="home" aria-label="Dropamine">
-  <section id="week" class="wk" hidden aria-label="Week"></section>
   <div id="dash" class="dash" hidden></div>
   <div class="intro">
     <div lang="en" data-k="b2">
@@ -109,7 +108,6 @@
       <p class="lead">Dropamine puts all your skills on screen at a glance, Old School RuneScape style, and celebrates every point you earn. Collection log, wanted items, groups for the same dungeons, profession guide, Hardcore alerts: everything that makes progress addictive, without ever touching the game's own interface.</p>
       <div class="actions"><a class="btn gold" href="https://www.curseforge.com/wow/addons/dropamine" rel="noopener">Download on CurseForge</a><a class="btn ghost" href="?p=rank" data-view-link="rank">See the Hiscores</a></div>
       <p class="meta" data-meta>Free · open source (MIT) · 7 languages · <a href="https://buymeacoffee.com/raykuilu" rel="noopener">buy me a coffee</a></p>
-      <p class="pulse" data-pulse></p>
     </div>
     <div lang="fr">
       <p class="kicker">ADDON GRATUIT · WOW FOREVER</p>
@@ -117,10 +115,17 @@
       <p class="lead">Dropamine affiche toutes tes compétences d'un coup d'œil, façon Old School RuneScape, et fête chaque point gagné. Carnet de collection, objets recherchés, groupes pour les mêmes donjons, guide de métier, alerte Hardcore : tout ce qui rend la progression addictive, sans jamais toucher à l'interface du jeu.</p>
       <div class="actions"><a class="btn gold" href="https://www.curseforge.com/wow/addons/dropamine" rel="noopener">Télécharger sur CurseForge</a><a class="btn ghost" href="?p=rank" data-view-link="rank">Voir les classements</a></div>
       <p class="meta" data-meta>Gratuit · open source (MIT) · 7 langues · <a href="https://buymeacoffee.com/raykuilu" rel="noopener">m'offrir un café</a></p>
-      <p class="pulse" data-pulse></p>
     </div>
-    <div class="shot"><img src="img/grid.jpg" alt="Dropamine panel" width="1200" height="537"></div>
+    <!-- la vidéo : seulement son aperçu au chargement ; le lecteur YouTube (sans cookie) ne vient qu'au clic -->
+    <div class="shot yt" data-yt="TOmBhrwmvlc">
+      <button type="button" class="yt-btn" data-t-title="ytPlay" aria-label="Play the video">
+        <img src="https://i.ytimg.com/vi/TOmBhrwmvlc/maxresdefault.jpg" alt="Share your hunt list, find your group — dropamine.app" width="1280" height="720" fetchpriority="high" decoding="async">
+        <span class="yt-play" aria-hidden="true"></span><span class="yt-cap" data-t="ytCap">Share your hunt list, find your group</span>
+      </button>
+    </div>
   </div>
+  <!-- les chiffres du site, juste sous le titre (remplis par renderLive) -->
+  <div id="lvc" class="lv-count" hidden></div>
   <section class="howit reveal" lang="en" data-k="b3">
     <p class="kicker">THE POINT</p><h3>Find the people who need the same dungeons as you</h3><p class="hw-lead">An item that will not drop, a collection log to fill: you will run the same dungeon again and again. So will other players. Dropamine brings you together.</p>
     <ol class="hw-steps"><li><span class="hw-n">1</span><img src="https://render.worldofwarcraft.com/eu/icons/56/inv_misc_book_09.jpg" alt="" loading="lazy" width="44" height="44" referrerpolicy="no-referrer"><div><b>The addon tracks what you are missing</b><p>Your collection log fills itself, and you add the items you want (Hunt tab).</p></div></li><li><span class="hw-n">2</span><img src="https://render.worldofwarcraft.com/eu/icons/56/achievement_guildperk_everybodysfriend.jpg" alt="" loading="lazy" width="44" height="44" referrerpolicy="no-referrer"><div><b>The site finds who needs the same dungeons</b><p>One line copied from the game (/drop hiscores), and you show up with everyone aiming at the same dungeon, at your level, in your guild or everywhere.</p></div></li><li><span class="hw-n">3</span><img src="https://render.worldofwarcraft.com/eu/icons/56/inv_misc_groupneedmore.jpg" alt="" loading="lazy" width="44" height="44" referrerpolicy="no-referrer"><div><b>You go together, as many times as it takes</b><p>An outing to join by role, an in-game reminder, a notification on your phone. And again until the item drops.</p></div></li></ol>
@@ -131,6 +136,8 @@
     <ol class="hw-steps"><li><span class="hw-n">1</span><img src="https://render.worldofwarcraft.com/eu/icons/56/inv_misc_book_09.jpg" alt="" loading="lazy" width="44" height="44" referrerpolicy="no-referrer"><div><b>L’addon note ce qu’il te manque</b><p>Ton carnet de collection se remplit tout seul, et tu ajoutes les objets que tu veux (onglet Chasse).</p></div></li><li><span class="hw-n">2</span><img src="https://render.worldofwarcraft.com/eu/icons/56/achievement_guildperk_everybodysfriend.jpg" alt="" loading="lazy" width="44" height="44" referrerpolicy="no-referrer"><div><b>Le site trouve qui a besoin des mêmes donjons</b><p>Une ligne copiée depuis le jeu (/drop hiscores), et tu apparais avec tous ceux qui visent le même donjon, à ton niveau, dans ta guilde ou partout.</p></div></li><li><span class="hw-n">3</span><img src="https://render.worldofwarcraft.com/eu/icons/56/inv_misc_groupneedmore.jpg" alt="" loading="lazy" width="44" height="44" referrerpolicy="no-referrer"><div><b>Vous y allez ensemble, autant de fois qu’il faut</b><p>Une sortie à rejoindre par rôle, un rappel en jeu, une notification sur ton téléphone. Et on recommence jusqu’à ce que l’objet tombe.</p></div></li></ol>
     <div class="actions"><a class="btn gold" href="?p=runs" data-view-link="runs">Trouver un groupe</a><a class="btn ghost" href="https://www.curseforge.com/wow/addons/dropamine" rel="noopener">Installer l’addon</a></div>
   </section>
+  <!-- la communauté : défis de la semaine, puis ce qui se passe en ce moment (et l'annonce des raids en bas) -->
+  <section id="week" class="wk" hidden aria-label="Week"></section>
   <div id="live" class="lvbox" hidden></div>
 
   <article class="feature reveal">
