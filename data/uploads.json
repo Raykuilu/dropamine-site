@@ -112,7 +112,7 @@
       },
       {
         "id": "cooking",
-        "rank": 218
+        "rank": 224
       },
       {
         "id": "fishing",
@@ -129,7 +129,7 @@
     ],
     "version": "3.12.1",
     "at": "2026-11-27",
-    "played": 516440,
+    "played": 523193,
     "collection": {
       "x": 9,
       "y": 1499,
@@ -199,9 +199,9 @@
       "bestHour": 79,
       "bestDay": 116,
       "longestCombo": 41,
-      "sessions": 68,
+      "sessions": 74,
       "goalsHit": 5,
-      "playtime": 172327
+      "playtime": 178987
     },
     "hunt": [
       {
@@ -237,7 +237,7 @@
       {
         "id": 7756,
         "name": "",
-        "tries": 2,
+        "tries": 3,
         "drops": 0
       },
       {
@@ -283,7 +283,7 @@
       "honor": 69,
       "dkLife": 0,
       "highest": 0,
-      "hkToday": 5,
+      "hkToday": 0,
       "honorToday": 0
     }
   }
