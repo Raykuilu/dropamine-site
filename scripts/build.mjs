@@ -345,7 +345,7 @@ async function main() {
       ...(c.pvp ? { pvpArmory: { hk: c.pvp.honorable_kills ?? 0, rank: c.pvp.pvp_rank ?? 0 } } : {}),
       ...(() => { const l = newLoots(prevPlayers.get(e.key), up, today); return l.length ? { loots: l } : {}; })(),
       // huntSite : liste d'objets recherchés modifiée sur le site (pas encore dans le jeu)
-      ...(up ? { dropamine: Object.fromEntries(['collection', 'achievements', 'records', 'hunt', 'huntSite', 'pvp'].filter(k => up[k]).map(k => [k, up[k]])), dropamineAt: up.at ?? null } : {}),
+      ...(up ? { dropamine: Object.fromEntries(['collection', 'achievements', 'records', 'hunt', 'huntSite', 'pvp', 'lc'].filter(k => up[k]).map(k => [k, up[k]])), dropamineAt: up.at ?? null } : {}),
     });
     console.log(`✓ ${e.key} : ${s.total}${s.complete ? '' : ' (estimé)'}${e.preview ? ' [aperçu]' : ''}`);
   });

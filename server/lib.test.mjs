@@ -57,6 +57,10 @@ test('ligne du jeu : nouveau préfixe DROP:HS2 (Dropamine 3.13+), ancien toujour
     assert.equal(p.name, 'Ray'); assert.equal(p.level, 37);
   }
   assert.equal(parseHiscoresLine('DROP:XX9:' + body + ';c=' + hsChecksum(body)).error, 'format');
+  const b2 = body + ';lc=frFR;hu=274599~Brassards féaux~3~0,7756~2~0';
+  const p2 = parseHiscoresLine('DROP:HS2:' + b2 + ';c=' + hsChecksum(b2));
+  assert.equal(p2.lc, 'frFR');
+  assert.equal(p2.hunt[0].name, 'Brassards féaux'); assert.equal(p2.hunt[1].name, '');
 });
 const hsLine = body => HS_PREFIX + body + ';c=' + hsChecksum(body);
 const BODY = 'n=Ray;l=36;r=eu;g=Everybody Knows;d=177;ws=278;w=136=176,54=102;p=393=223,129=208;v=3.11.0;t=1795600000';

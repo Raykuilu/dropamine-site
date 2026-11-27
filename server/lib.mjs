@@ -151,6 +151,8 @@ export function parseHiscoresLine(raw) {
     weapons: weapons.reduce((a, w) => a + w.rank, 0), weaponList: weapons, professions: pairs(f.p), version: f.v || null, time: +f.t || 0,
     // /played (Dropamine 3.11.1+, facultatif) : secondes, plafonné à 10 ans
     played: /^\d+$/.test(f.tp ?? '') && +f.tp > 0 && +f.tp < 315360000 ? +f.tp : null,
+    // Dropamine 3.13+ : langue du client (frFR, enUS…) : les noms des objets propres à Forever arrivent dans cette langue
+    lc: /^[a-z]{2}[A-Z]{2}$/.test(f.lc ?? '') ? f.lc : null,
     ...extras(f) };
 }
 // À quel personnage du compte connecté appartient la ligne ? (même région, même prénom ; niveau pour départager)

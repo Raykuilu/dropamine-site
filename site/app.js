@@ -511,7 +511,7 @@ function liveFeed() {
   // les plus récents d'abord ; le même jour, les loots puis les plus gros gains
   return out.sort((a, b) => b.at - a.at || (b.item ? 1 : 0) - (a.item ? 1 : 0) || (b.gain || 0) - (a.gain || 0));
 }
-const lootName = (p, id) => { const h = (p.dropamine?.hunt || []).find(x => x.id === id); return h ? huntName(h) : itemName(id); };
+const lootName = (p, id) => { const h = (p.dropamine?.hunt || []).find(x => x.id === id); return h ? huntName(h, p.dropamine?.lc) : itemName(id); };
 const dayAgo = at => { const n = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(at).setHours(0, 0, 0, 0)) / 864e5);
   return n <= 0 ? t('lvToday') : n === 1 ? t('lvYesterday') : t('lvDays', { n }); };
 let liveLoad = null, LIVE = [];
@@ -1013,7 +1013,7 @@ function weekGain(p, key) {
 function hsBook(p) {
   const d = p.dropamine || {}, fr = LANG === 'fr';
   const book = { collection: d.collection, achievements: d.achievements, played: p.played, playedText: p.played ? playedText(p.played) : '',
-    records: d.records, hunt: d.hunt?.map(h => ({ ...h, name: huntName(h) })), stats: { ...(p.stats || {}), hk: armoryStat(p, 'hk') }, reps: p.reps || [] };
+    records: d.records, hunt: d.hunt?.map(h => ({ ...h, name: huntName(h, p.dropamine?.lc) })), stats: { ...(p.stats || {}), hk: armoryStat(p, 'hk') }, reps: p.reps || [] };
   return { book, BL: fr
     ? { locale: 'fr-FR', li: 1, sessionS: 'Session', dayS: 'Jour', hourS: 'Heure', kb: 'Coups fatals', pvpDeaths: 'Tué par joueurs', duels: 'Duels G / P', dungeons: 'Donjons', reps: 'Réputations', factions: 'factions', title: 'Progression Dropamine', log: 'Carnet de collection', ach: 'Succès', played: 'Temps de jeu', hk: 'Victoires honorables', week: 'cette sem.',
         rec: 'Records', sessions: 'sessions', session: 'Meilleure session', day: 'Meilleur jour', hour: 'Meilleure heure', combo: 'Plus long combo',
@@ -1232,7 +1232,12 @@ function canUse(p, it) {
 }
 const cleanName = s => String(s || '').replace(/\s*\([^)]*\)\s*$/, '');
 // nom de la fiche officielle s'il existe ; sinon (objet propre à Forever) le nom envoyé par le jeu, en français sur le site français
-const huntName = h => { const x = ITEMS?.[h.id], own = cleanName(h.name); if (x?.q) return itemName(h.id); return (LANG === 'fr' ? own : extra() ? ITEMX?.[h.id]?.[0] || x?.n?.[0] : x?.n?.[0]) || own || x?.n?.[0] || '#' + h.id; };
+// 3.13 : objet propre à Forever que l'API ne traduit pas (même nom dans toutes les langues) : le nom vu par le jeu du joueur,
+// s'il joue dans la langue du visiteur (lc frFR → site français)
+const untranslated = id => { const x = ITEMS?.[id]; return !!(x?.n && x.n.length > 1 && x.n.every(n => n === x.n[0])); };
+const huntName = (h, lc) => { const x = ITEMS?.[h.id], own = cleanName(h.name);
+  if (own && lc && String(lc).slice(0, 2) === LANG && untranslated(h.id)) return own;
+  if (x?.q) return itemName(h.id); return (LANG === 'fr' ? own : extra() ? ITEMX?.[h.id]?.[0] || x?.n?.[0] : x?.n?.[0]) || own || x?.n?.[0] || '#' + h.id; };
 const bestSrc = id => (LOOT?.idx?.get(id) || []).slice().sort((a, b) => (b.rate || 0) - (a.rate || 0))[0];
 const bossName = b => isTrash(b) ? t('runsTrash') : (L2(b.n) || b.n[0]);
 const rateTxt = r => r ? r.toLocaleString(locale(), { maximumFractionDigits: r < 10 ? 1 : 0 }) + ' %' : '';
@@ -1276,7 +1281,7 @@ function huntPanel(p) {
   for (const h of hunt) { const k = SLOT_OF[ITEMS[h.id]?.s]; if (k) (bySlot[k] ||= []).push(h); }
   const tile = (k, side) => { const hs = bySlot[k] || [], h = hs[0];
     return `<div class="hslot ${side}${h ? ' on' : ''}${h?.drops ? ' got' : ''}">${h ? itemChip(h.id) : '<span class="ci none" aria-hidden="true"></span>'}
-      <span class="hs-t"><small>${t('slot.' + k)}</small>${h ? `<b>${esc(huntName(h))}</b>${hs.length > 1 ? `<em>${t('hsMore', { n: hs.length - 1 })}</em>` : ''}` : ''}</span></div>`; };
+      <span class="hs-t"><small>${t('slot.' + k)}</small>${h ? `<b>${esc(huntName(h, p.dropamine?.lc))}</b>${hs.length > 1 ? `<em>${t('hsMore', { n: hs.length - 1 })}</em>` : ''}` : ''}</span></div>`; };
   const found = hunt.filter(h => h.drops > 0).length, tries = hunt.reduce((n, h) => n + (h.tries || 0), 0), slots = Object.keys(bySlot).length;
   const doll = `<div class="hdoll">
       <div class="hcol">${DOLL_L.map(k => tile(k, 'l')).join('')}</div>
@@ -1286,7 +1291,7 @@ function huntPanel(p) {
       <div class="hcol r">${DOLL_R.map(k => tile(k, 'r')).join('')}</div>
       <div class="hbot">${DOLL_B.map(k => tile(k, 'l')).join('')}</div></div>`;
   const rows = hunt.map(h => { const s = bestSrc(h.id);
-    return `<li class="${h.drops ? 'got' : ''}">${itemChip(h.id)}<b style="color:${QCOL[ITEMS[h.id]?.q] || 'var(--cream)'}">${esc(huntName(h))}</b>
+    return `<li class="${h.drops ? 'got' : ''}">${itemChip(h.id)}<b style="color:${QCOL[ITEMS[h.id]?.q] || 'var(--cream)'}">${esc(huntName(h, p.dropamine?.lc))}</b>
       <span class="src">${s ? `${esc(bossName(s.b))} · ${esc(s.d.name)}` : ''}</span><span class="rt">${s?.rate ? t('hsRate', { r: rateTxt(s.rate) }) : t('hsRateNo')}</span>
       <span class="st">${h.drops ? '✓ ' + t('huFound') : h.tries ? t('huTries', { n: fmt(h.tries) }) : t('hsToTry')}${mine ? `<button class="hdel" type="button" data-hdel="${h.id}" title="${t('hsDel')}" aria-label="${t('hsDel')}">×</button>` : ''}</span></li>`; }).join('');
   const list = hunt.length ? `<ul class="hlist">${rows}</ul>` : `<p class="note">${t('hsEmpty')}</p>`;
@@ -1956,7 +1961,7 @@ function lvlMatch(d, me) {
 // tous les mots cherchés doivent se trouver quelque part dans le texte de la carte
 const textMatch = hay => { const q = fold(state.hq).split(/\s+/).filter(Boolean); if (!q.length) return true; const h = fold(hay); return q.every(w => h.includes(w)); };
 const dunText = d => [...(d.names || [d.name]), ...d.bosses.map(b => b.n.join(' '))].join(' ');   // recherche dans les deux langues
-const huntsText = p => (p?.dropamine?.hunt || []).map(h => huntName(h) + ' ' + itemName(h.id)).join(' ');
+const huntsText = p => (p?.dropamine?.hunt || []).map(h => huntName(h, p.dropamine?.lc) + ' ' + itemName(h.id)).join(' ');
 const searchActive = () => !!(state.hq || state.hl || state.ht || state.hd || state.hr || state.hw || (state.pf && state.pf !== 'all'));
 // liste des donjons pour la recherche : donjons, donjons Forever, raids ; chacun par niveau
 function dunOptions() {

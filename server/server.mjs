@@ -336,7 +336,7 @@ const server = createServer(async (req, res) => {
         await updateRegistry(reg => applyClaim(reg, [c.key], ownerOf(s), s.characters), `Hiscores: register ${c.key} (Battle.net)`);
         const entry = { weapons: p.weapons, weaponList: p.weaponList, defense: p.defense, level: p.level,
           professions: p.professions, version: p.version, at: new Date().toISOString().slice(0, 10),
-          ...(p.played ? { played: p.played } : {}),
+          ...(p.played ? { played: p.played } : {}), ...(p.lc ? { lc: p.lc } : {}),
           ...Object.fromEntries(['collection', 'achievements', 'records', 'hunt', 'pvp'].filter(k => p[k]).map(k => [k, p[k]])) };
         await updateUploads(u => ({ registry: { ...u, [c.key]: keepSiteHunt(entry, u[c.key]) }, changed: true }), `Hiscores: Dropamine line for ${c.key}`);
         refreshSite();
