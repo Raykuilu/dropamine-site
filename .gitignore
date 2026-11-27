@@ -17,3 +17,10 @@ server/.state/
 
 # fiches complètes par personnage : écrites par le relevé (scripts/build.mjs), publiées avec le site, jamais versionnées
 site/data/c/
+
+# pages de partage des guildes et des sections : écrites par le relevé (scripts/preview.mjs), publiées avec le site
+site/g/
+site/classements/
+site/guildes/
+site/groupes/
+site/nouveautes/

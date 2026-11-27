@@ -14,3 +14,15 @@ test('aperçu de lien : titre, résumé, buste et renvoi vers la fiche', () => {
   assert.equal(previewPath({ region: 'eu', slug: 'patience-disciplïne' }), '/c/eu/patience-discipline/');
   assert.ok(!previewHtml({ ...p, name: '<b>' }, 1).includes('<b>'), 'texte échappé');
 });
+
+import { guildPreviewHtml, guildPath, writePreviews } from './preview.mjs';
+test('aperçu de guilde : nom, membres, rang, carte Guilde et renvoi vers la guilde', () => {
+  const m = [{ name: 'Ray', surname: 'Kuilu', total: 1366, level: 36 }, { name: 'Fra', surname: 'Mb', total: 2300, level: 60 }];
+  const h = guildPreviewHtml({ name: 'Everybody Knows', slug: 'everybody-knows', region: 'eu', members: m, total: 3666 }, 2);
+  assert.match(h, /og:title" content="Everybody Knows · guilde EU · 2 membres · Dropamine"/);
+  assert.match(h, /2e guilde au niveau total \(3 666\) · 1 au niveau 60 · meilleur : Fra Mb \(2 300\)/);
+  assert.match(h, /og-guild\.png/);
+  assert.match(h, /summary_large_image/);
+  assert.match(h, /url=https:\/\/dropamine\.app\/\?p=guild&amp;g=everybody-knows/);
+  assert.equal(guildPath('eu', 'L’Ordre du Pain'), '/g/eu/lordre-du-pain/'.replace('lordre-du-pain', 'lordredupain'));
+});

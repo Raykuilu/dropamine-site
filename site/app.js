@@ -1091,11 +1091,20 @@ function renderChar() {
 }
 
 document.addEventListener('click', async e => {
-  const b = e.target.closest('[data-share]'); if (!b) return;
-  const p = DATA.players.find(x => pkey(x) === b.dataset.share); if (!p) return;
-  // lien d'aperçu : une page par personnage avec son propre résumé et son buste (WhatsApp, Discord…), qui mène à la fiche
-  const url = `https://dropamine.app/c/${p.region || 'eu'}/${String(p.slug).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9-]/g, '')}/`;
-  const text = `${p.name} ${p.surname} · ${fmt(p.total)} / ${fmt(p.max || 2460)} · Dropamine Hiscores`;
+  const b = e.target.closest('[data-share], [data-gshare]'); if (!b) return;
+  const slug = s => String(s).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+  let url, text;
+  if (b.dataset.gshare) {
+    // guilde : sa page d'aperçu (nom, membres, rang, carte « Guilde ») qui mène à la page de la guilde
+    const g = guilds().find(x => x.slug === b.dataset.gshare); if (!g) return;
+    url = `https://dropamine.app/g/${state.region}/${slug(g.slug)}/`;
+    text = `${g.name} · ${t('membersN', { n: g.members.length })} · Dropamine`;
+  } else {
+    // personnage : sa page d'aperçu avec son résumé et son buste (WhatsApp, Discord…), qui mène à la fiche
+    const p = DATA.players.find(x => pkey(x) === b.dataset.share); if (!p) return;
+    url = `https://dropamine.app/c/${p.region || 'eu'}/${slug(p.slug)}/`;
+    text = `${p.name} ${p.surname} · ${fmt(p.total)} / ${fmt(p.max || 2460)} · Dropamine Hiscores`;
+  }
   try {
     if (navigator.share && matchMedia('(pointer:coarse)').matches) { await navigator.share({ title: text, url }); return; }
     await navigator.clipboard.writeText(url);
@@ -1613,8 +1622,15 @@ function weekLeft(m) {
 }
 const wkWho = (r, cls = '') => `<a class="wk-who${cls}" href="?p=char&c=${esc(encodeURIComponent(pkey(r.p)))}" data-c="${esc(pkey(r.p))}">${avatar(r.p)}<span><b>${full(r.p)}</b><small>${esc(className(r.p))} ${r.p.level}</small></span><i>+${fmt(r.v)}</i></a>`;
 const wkList = (rows, empty) => rows.length ? `<ol class="wk-list">${rows.slice(0, 3).map(r => `<li>${wkWho(r)}</li>`).join('')}</ol>` : `<p class="wk-empty">${empty}</p>`;
+// la semaine ne change qu'avec les données, la langue, la région, l'onglet choisi ou le compte : sinon on garde l'affichage (≈ 150 ms de calcul)
 function renderWeek() {
   const box = $('#week'); if (!box) return;
+  const key = () => [DATA.updated, DATA.players.length, DATA.loading, DATA.failed, state.region, LANG, WB, WD, Bnet.mine().map(pkey).join(',')].join('|');
+  if (box.dataset.k === key()) return;
+  renderWeekNow(box);
+  box.dataset.k = key();   // après le dessin : il choisit la tranche (WB) la première fois
+}
+function renderWeekNow(box) {
   const players = weekPlayers(), m = weekNow(players);
   if (!m || DATA.failed) { box.hidden = true; return; }
   box.hidden = false;
@@ -1690,16 +1706,25 @@ document.addEventListener('click', e => {
   const a = e.target.closest('[data-wall]'); if (a) { e.preventDefault(); go({ view: 'rank', skill: 'total', dw: true, dg: false }); }
 });
 // gain de la semaine d'un personnage pour une compétence du classement (vérifié seulement : niveau, Défense, métiers, VH)
+// semaine en cours : calculée une fois par jeu de données et région (sinon tout le monde est reparcouru pour chaque ligne)
+let weekMemo = null;
+function weekMonday() {
+  const k = (DATA.updated || '') + '|' + state.region + '|' + DATA.players.length;
+  if (weekMemo?.k !== k) weekMemo = { k, m: weekNow(weekPlayers()) };
+  return weekMemo.m;
+}
 function weekGainFor(p, sk) {
-  const m = weekNow(weekPlayers()); if (!m) return 0;
+  const m = weekMonday(); if (!m) return 0;
   const g = WEEK.gain(p.history, m);
   return sk.id === 'total' ? g.total : sk.id === 'level' ? g.by.l || 0 : sk.id === 'defense' ? g.by.d || 0 : sk.id === 'hk' ? g.hk : /^p\d+$/.test(sk.id) ? g.by[sk.id] || 0 : 0;
 }
 // badges de la fiche : semaines gagnées (skiller, compétence, combattant), sur les 3 dernières semaines complètes
+let pastMemo = null;   // les semaines passées ne changent pas d'une fiche à l'autre : calculées une fois
 function weekBadges(p) {
-  const players = weekPlayers(), m = weekNow(players); if (!m) return '';
+  const m = weekMonday(); if (!m) return '';
+  if (pastMemo?.k !== weekMemo.k) pastMemo = { k: weekMemo.k, w: WEEK.past(weekPlayers(), m) };
   const out = [];
-  for (const w of WEEK.past(players, m)) {
+  for (const w of pastMemo.w) {
     if (w.skiller.some(x => x[0]?.p === p)) out.push(t('wkBadgeSkiller', { n: w.num }));
     if (w.hunter[0]?.p === p) out.push(t('wkBadgeHunter', { n: w.num }));
     if (w.skillTop[0]?.p === p) out.push(t('wkBadgeSkill', { s: skillById(w.skill).label(), n: w.num }));
@@ -1765,7 +1790,7 @@ function renderGuild() {
   $('#guild-panel').innerHTML = `
     <span class="back" data-g="">${t('allGuilds')}</span>
     <div class="who gh">
-      <div><h2>${esc(g.name)}</h2><p>${t('membersN', { n: members.length })}</p></div>
+      <div><h2>${esc(g.name)}</h2><p>${t('membersN', { n: members.length })}</p><button class="share gshare" type="button" data-gshare="${esc(g.slug)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button></div>
       <div class="score"><div class="n" data-n="${g.total}">${fmt(g.total)}</div><div class="r">${t('guildTotal', { r: ord(rank) })}</div></div>
     </div>
     <div class="feats">
@@ -2762,7 +2787,7 @@ function markNav() {
 }
 function render(push) {
   applyStatic();
-  renderHome();
+  if (state.view === 'home') renderHome();
   (RENDER[state.view] || (() => {}))();
   markNav();
   Bnet.header();

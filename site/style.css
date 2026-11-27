@@ -1505,3 +1505,6 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .shot.yt iframe{display:block;width:100%;aspect-ratio:16/9;border:0}
 /* les chiffres, désormais sous le titre : un peu d'air au-dessus */
 #lvc{margin-top:clamp(18px,3vw,34px)}
+
+/* guilde : bouton partager sous le nombre de membres */
+.who.gh .gshare{margin:10px 0 0}
