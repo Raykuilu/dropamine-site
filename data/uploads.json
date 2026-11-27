@@ -1,6 +1,6 @@
 {
   "eu/ray-kuilu": {
-    "weapons": 520,
+    "weapons": 521,
     "weaponList": [
       {
         "id": "axes",
@@ -32,7 +32,7 @@
       },
       {
         "id": "staves",
-        "rank": 109
+        "rank": 110
       },
       {
         "id": "fist",
@@ -71,7 +71,7 @@
         "rank": 0
       }
     ],
-    "defense": 182,
+    "defense": 185,
     "level": 37,
     "professions": [
       {
@@ -129,9 +129,9 @@
     ],
     "version": "3.12.1",
     "at": "2026-11-27",
-    "played": 512236,
+    "played": 515965,
     "collection": {
-      "x": 8,
+      "x": 9,
       "y": 1499,
       "dungeons": [
         {
@@ -143,6 +143,11 @@
           "name": "Scarlet Monastery Library",
           "x": 2,
           "y": 28
+        },
+        {
+          "name": "Scarlet Monastery Cathedral",
+          "x": 1,
+          "y": 32
         },
         {
           "name": "Shadowfang Keep",
@@ -158,6 +163,7 @@
         9449,
         9453,
         9461,
+        10331,
         251352,
         253976,
         274049,
@@ -195,7 +201,7 @@
       "longestCombo": 41,
       "sessions": 68,
       "goalsHit": 5,
-      "playtime": 168028
+      "playtime": 171762
     },
     "hunt": [
       {
@@ -225,7 +231,7 @@
       {
         "id": 19508,
         "name": "",
-        "tries": 0,
+        "tries": 1,
         "drops": 0
       },
       {
