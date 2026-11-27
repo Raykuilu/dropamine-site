@@ -316,6 +316,32 @@ export function guildsToRead(players, queue, day, n = QUEUE.GUILDS) {
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, n).map(([k]) => k);
 }
 
+// ---------------------------------------------------------------------------
+// Données du site en deux niveaux (le site reste rapide quand le nombre de personnages grandit) :
+//  - site/data/hiscores.json : l'index léger, chargé par toutes les pages (classements, recherche, accueil, groupes) ;
+//  - site/data/c/<région>/<slug>.json : la fiche complète, chargée à la demande (fiche, image Hiscores, page Moi).
+// Statistiques gardées dans l'index : celles des classements (le reste n'est montré que sur la fiche)
+export const RANK_STATS = ['killingBlows', 'kills', 'quests', 'dungeons', 'flights', 'hk', 'pvpDeaths', 'duelsWon', 'duelsLost'];
+// historique compact : seuls les points où une valeur change (le dernier d'une série et le premier de la suivante),
+// plus le premier et le dernier. Les gains (jour, semaine, défis) donnent le même résultat : entre deux points gardés, rien n'a bougé.
+export function compactHistory(hist) {
+  const h = (hist ?? []).map(({ hq, ...x }) => x);   // hq ne sert qu'au relevé (fichiers data/history)
+  const key = x => JSON.stringify([x.t, x.s, x.hk, x.pw, x.hf]);
+  return h.filter((x, i) => i === 0 || i === h.length - 1 || key(x) !== key(h[i - 1]) || key(x) !== key(h[i + 1]));
+}
+export function indexPlayer(p) {
+  const { reps, gear, render, inset, stats, history, professions, ...rest } = p;
+  const st = {};
+  for (const k of RANK_STATS) if (stats?.[k] != null) st[k] = stats[k];
+  return { ...rest, ...(Object.keys(st).length ? { stats: st } : {}), ...(professions ? { professions: professions.map(({ recipes, ...x }) => x) } : {}),
+    history: compactHistory(history) };
+}
+export function detailPlayer(p) {
+  const { history, ...rest } = p;
+  return { ...rest, history: (history ?? []).map(({ hq, ...x }) => x) };
+}
+export const detailPath = p => `data/c/${p.region}/${p.slug}.json`;
+
 // n tâches en parallèle au plus (limite d'appels Blizzard : 36 000 par heure)
 async function pool(items, n, fn) {
   let i = 0;
@@ -467,7 +493,15 @@ async function main() {
   });
 
   const done = new Set(players.map(p => p.key));
-  for (const p of plan.keep) if (!done.has(p.key)) players.push(p);
+  // aperçus gardés tels quels : leur fiche complète vient du site en ligne (l'index n'a plus tout)
+  await pool(plan.keep.filter(p => !done.has(p.key)), 16, async p => {
+    let full = null;
+    try {
+      const r = await fetch(`https://dropamine.app/${detailPath(p).split('/').map(encodeURIComponent).join('/')}?v=${day}`);
+      if (r.ok) full = await r.json();
+    } catch { /* hors ligne */ }
+    players.push(full && full.key === p.key ? full : p);
+  });
   for (const [k, d] of Object.entries(queue.gone)) if (d < day - QUEUE.GONE_DAYS) delete queue.gone[k];
   for (const [k, d] of Object.entries(queue.guilds)) if (d < day - 60) delete queue.guilds[k];
   run.waiting = Object.keys(queue.players).length; run.published = players.length;
@@ -476,9 +510,15 @@ async function main() {
   await writeFile(join(ROOT, 'data/queue.json'), JSON.stringify({ _comment: 'File d\'attente des aperçus (scripts/build.mjs, QUEUE) : écrite par le relevé.', ...queue }));
   players.sort((a, b) => b.total - a.total || a.key.localeCompare(b.key));
   await mkdir(join(ROOT, 'site/data'), { recursive: true });
-  await writeFile(join(ROOT, 'site/data/hiscores.json'),
-    JSON.stringify({ updated: new Date().toISOString(), players }, null, 1));
-  console.log(`${players.length} personnage(s) écrit(s) dans site/data/hiscores.json`);
+  const index = JSON.stringify({ updated: new Date().toISOString(), players: players.map(indexPlayer) });
+  await writeFile(join(ROOT, 'site/data/hiscores.json'), index);
+  await rm(join(ROOT, 'site/data/c'), { recursive: true, force: true });
+  for (const p of players) {
+    const f = join(ROOT, 'site', detailPath(p));
+    await mkdir(dirname(f), { recursive: true });
+    await writeFile(f, JSON.stringify(detailPlayer(p)));
+  }
+  console.log(`${players.length} personnage(s) : index ${(index.length / 1e6).toFixed(2)} Mo (site/data/hiscores.json), fiches dans site/data/c/`);
 
   await writeFile(join(ROOT, 'site/sitemap.xml'), sitemap(players, today));
   // aperçus de liens par personnage (WhatsApp, Discord…) : site/c/<région>/<slug>/

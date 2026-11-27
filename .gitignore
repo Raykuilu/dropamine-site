@@ -14,3 +14,6 @@ site/c/
 
 # runs du serveur (mémoire sauvegardée sur disque)
 server/.state/
+
+# fiches complètes par personnage : écrites par le relevé (scripts/build.mjs), publiées avec le site, jamais versionnées
+site/data/c/

@@ -286,6 +286,18 @@ const dropMark = (size) => { const id = 'dl' + (++dropN); return `<span class="d
 (() => { const a = $(".brand-logo"); if (!a || a.classList.contains("live")) return; a.innerHTML = dropMark(72); a.classList.add("live"); })();
 // chargement : la goutte se remplit en boucle. Animation sur des éléments HTML (transform) : elle tourne dans le compositeur
 // et continue même quand la page est occupée (lecture du gros fichier des classements), là où l'animation SVG se figeait.
+// Données en deux niveaux : hiscores.json est l'index léger (toutes les pages) ; la fiche complète d'un personnage
+// (réputations, équipement, rendu 3D, toutes les statistiques, tout l'historique) est dans data/c/<région>/<slug>.json,
+// chargée à la demande et fusionnée dans l'objet du personnage : le reste du code ne voit pas la différence.
+const DETAIL = new Map();
+function loadDetail(p) {
+  if (!p || p._full) return Promise.resolve(p);
+  const k = pkey(p);
+  if (!DETAIL.has(k)) DETAIL.set(k, fetch(`data/c/${encodeURIComponent(p.region || 'eu')}/${encodeURIComponent(p.slug)}.json?v=${encodeURIComponent(DATA.updated || '')}`)
+    .then(r => r.ok ? r.json() : null).then(d => { if (d && d.key === p.key) Object.assign(p, d); p._full = true; return p; })
+    .catch(() => { p._full = true; return p; }));   // fiche introuvable : on montre ce que l'index sait
+  return DETAIL.get(k);
+}
 const loadingBox = () => `<div class="empty dload"><span class="ldrop" aria-hidden="true"><span class="ld-liq"><span class="ld-fill"><i class="r"></i><i class="b"></i><i class="g"></i></span></span><img src="img/drop-frame.png" alt=""></span><span>${t('loading')}</span></div>`;
 const LOCALES = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES', it: 'it-IT', pt: 'pt-BR', ru: 'ru-RU' };
 const locale = () => LOCALES[LANG] || 'en-GB';
@@ -316,8 +328,9 @@ const STAT_ICON = { killingBlows: 'ability_backstab', kills: 'inv_misc_bone_skul
 // Toujours recoupé avec l'armurerie Blizzard : victoires honorables gagnées sur les 7 derniers jours (historique quotidien).
 // L'addon compte en direct et l'armurerie est relue une fois par jour : marge des victoires du jour (+3).
 const armoryWeekHK = p => { const h = (p.history || []).filter(x => x.hk != null); if (h.length < 2) return null;
-  const b = h[h.length - 1], start = Date.parse(b.d) - 7 * 864e5, a = h.find(x => Date.parse(x.d) >= start);
-  if (!a || a === b || Date.parse(a.d) > start + 864e5) return null;   // moins de 6 jours d'historique : pas encore vérifiable
+  // le dernier point au plus tard un jour après le début de la fenêtre (historique compact : les jours sans changement n'ont pas de point)
+  const b = h[h.length - 1], start = Date.parse(b.d) - 7 * 864e5, a = [...h].reverse().find(x => Date.parse(x.d) <= start + 864e5);
+  if (!a || a === b) return null;   // moins de 6 jours d'historique : pas encore vérifiable
   return Math.max(0, b.hk - a.hk); };
 // 'ok' vérifié, 'pending' pas encore vérifiable, 'over' l'addon déclare plus que l'armurerie (exclu du classement)
 const hpkCheck = p => { const v = p.dropamine?.pvp, arm = armoryWeekHK(p); if (!v) return null; if (arm == null) return 'pending';
@@ -643,6 +656,7 @@ function renderDash() {
   box.hidden = false;
   if (!LOOT || !ITEMS || !ART || !runsLoad) Promise.all([loadLoot(), loadItems(), loadArt(), loadRuns()]).then(() => { if (state.view === 'home') renderDash(); });
   const p = me.find(x => pkey(x) === state.dc) || [...me].sort((a, b) => b.total - a.total)[0];
+  if (p && !p._full) loadDetail(p).then(() => { if (state.view === 'home') renderDash(); });
   const peers = DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu'));
   const rank = rankBy(SKILLS[0], peers).find(x => x.p === p)?.r, d1 = dayGain(p), d7 = gain7(p);
   const chooser = me.length > 1 ? `<div class="chips">${me.map(x => `<span class="chip ${x === p ? 'on' : ''}" data-dc="${esc(pkey(x))}">${full(x)} <small>${x.level}</small></span>`).join('')}</div>` : '';
@@ -973,6 +987,11 @@ function renderChar() {
   const p = DATA.players.find(x => pkey(x) === state.c || x.slug === state.c) || DATA.players.find(x => pkey(x) === Bnet.best());
   if (!p) { $('#char-panel').innerHTML = `<div class="empty"><b>${t('noCharT')}</b>${t('noChar')}</div>`; return; }
   state.c = pkey(p);
+  if (!p._full) {
+    $('#char-panel').innerHTML = loadingBox();
+    loadDetail(p).then(() => { if (state.view === 'char' && state.c === pkey(p)) { renderChar(); animate($('#char')); } });
+    return;
+  }
   const peers = DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu'));
   const totalRank = rankBy(SKILLS[0], peers).find(x => x.p === p)?.r;
   const hist = p.history || [], gained = hist.length > 1 ? hist[hist.length - 1].t - hist[0].t : 0;
@@ -1096,7 +1115,7 @@ const HsImage = (() => {
   }
   async function open(player) {
     if (!window.DropShare) return;
-    await loadItems();   // noms d'objets dans la langue de l'image
+    await Promise.all([loadItems(), loadDetail(player)]);   // noms d'objets dans la langue de l'image ; fiche complète
     if (!dlg) build();
     p = player;
     let files = false; try { files = !!navigator.canShare?.({ files: [new File([''], 'x.png', { type: 'image/png' })] }) && matchMedia('(pointer:coarse)').matches; } catch (e) { /* pas de partage de fichier */ }

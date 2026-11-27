@@ -108,3 +108,22 @@ test('deux étapes : tout monté → Chasseur (objets de chasse confirmés port�
   assert.equal(WEEK.gainDay(done.history, '2026-11-24').hunt, 1);
   assert.equal(WEEK.gain(done.history, '2026-11-16').hunt, 0, 'semaine d’avant : rien');
 });
+
+test('historique compact (index du site) : mêmes gains de jour et de semaine qu\'avec l\'historique complet', async () => {
+  const { compactHistory } = await import('./build.mjs');
+  const day = i => new Date(Date.UTC(2026, 10, 1 + i)).toISOString().slice(0, 10);
+  // 30 jours : longues périodes sans changement, quelques montées, des VH
+  const full = []; let s = { l: 30, d: 150, p185: 100 }, hk = 10;
+  for (let i = 0; i < 30; i++) {
+    if ([3, 4, 12, 20, 21, 22, 29].includes(i)) s = { ...s, p185: s.p185 + i, l: s.l + (i % 2) };
+    if (i === 15) hk += 7;
+    full.push({ d: day(i), t: s.l + s.d + s.p185, s: { ...s }, hk, ...(i === 21 ? { hf: [5] } : {}) });
+  }
+  const small = compactHistory(full);
+  assert.ok(small.length < full.length / 2, 'compact : ' + small.length + ' points sur ' + full.length);
+  for (const m of ['2026-10-27', '2026-11-03', '2026-11-10', '2026-11-17', '2026-11-24'])
+    assert.equal(JSON.stringify(WEEK.gain(small, m)), JSON.stringify(WEEK.gain(full, m)), 'semaine ' + m);
+  for (let i = 0; i < 30; i++)
+    assert.equal(JSON.stringify(WEEK.gainDay(small, day(i))), JSON.stringify(WEEK.gainDay(full, day(i))), 'jour ' + day(i));
+  assert.equal(small[small.length - 1].d, full[full.length - 1].d, 'le dernier point reste');
+});

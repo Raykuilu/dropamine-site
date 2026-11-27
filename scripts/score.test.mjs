@@ -212,3 +212,21 @@ test('file d\'attente : entrée, ordre, relectures, guildes (un seul niveau)', a
   assert.deepEqual(guildsToRead(players, q, day), ['eu/g1'], 'pas de boule de neige, pas relue avant 7 jours');
   assert.ok(QUEUE.NEW <= 150 && QUEUE.MAX_PREVIEWS >= 1000);
 });
+
+test('index léger / fiche complète : ce qui part de l\'index, ce que garde la fiche', async () => {
+  const { indexPlayer, detailPlayer, detailPath, RANK_STATS } = await import('./build.mjs');
+  const p = { key: 'eu/ray-kuilu', region: 'eu', slug: 'ray-kuilu', name: 'Ray', total: 1470, reps: [{ id: 1 }], gear: [['HEAD', 1]], render: 'r.jpg', inset: 'i.jpg',
+    stats: { kills: 5, hk: 29, mounts: 2, critters: 9 }, professions: [{ id: 185, skill: 224, max: 225, recipes: 40, name: 'Cooking' }],
+    history: [{ d: '2026-11-01', t: 1, hq: [5] }, { d: '2026-11-02', t: 1 }, { d: '2026-11-03', t: 1 }, { d: '2026-11-04', t: 2 }], dropamine: { collection: { x: 9, y: 1499, items: [1, 2] } } };
+  const i = indexPlayer(p);
+  assert.equal(i.reps, undefined); assert.equal(i.gear, undefined); assert.equal(i.render, undefined); assert.equal(i.inset, undefined);
+  assert.deepEqual(i.stats, { kills: 5, hk: 29 }, 'seulement les statistiques des classements');
+  assert.ok(RANK_STATS.includes('kills') && !RANK_STATS.includes('mounts'));
+  assert.equal(i.professions[0].recipes, undefined); assert.equal(i.professions[0].skill, 224);
+  assert.deepEqual(i.history.map(h => h.d), ['2026-11-01', '2026-11-03', '2026-11-04'], 'historique compact');
+  assert.equal(i.history[0].hq, undefined, 'hq reste au relevé');
+  assert.deepEqual(i.dropamine.collection.items, [1, 2], 'le carnet reste (explorateur, groupes)');
+  const d = detailPlayer(p);
+  assert.equal(d.reps.length, 1); assert.equal(d.history.length, 4); assert.equal(d.history[0].hq, undefined);
+  assert.equal(detailPath(p), 'data/c/eu/ray-kuilu.json');
+});
