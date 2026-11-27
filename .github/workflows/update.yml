@@ -66,7 +66,7 @@ jobs:
           git add data/history data/items-cache.json site/data/items.json site/data/i18n site/data/art.json
           git diff --cached --quiet || git commit -m "Hiscores: daily history $(date -u +%F)"
           # le serveur peut écrire entre-temps (ligne collée, objets recherchés) : on se remet à jour et on réessaie
-          for i in 1 2 3 4 5; do git push && break; sleep $((i * 3)); git pull --rebase --quiet; done
+          for i in 1 2 3 4 5; do git push && break; sleep $((i * 3)); git pull --rebase --autostash --quiet; done
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

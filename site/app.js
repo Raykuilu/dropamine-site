@@ -112,7 +112,18 @@ const I18N = {
   nHint: ['Joins and departures on your outings, a freed spot, a full group, a reminder 30 min before.', 'Arrivées et départs dans tes sorties, place libérée, groupe complet, rappel 30 min avant.'],
   nJoin: ['joins your {d} outing', 'rejoint ta sortie {d}'], nLeave: ['leaves your {d} outing', 'quitte ta sortie {d}'], nCancel: [': outing cancelled', ' : sortie annulée'],
   nSoon: ['starts in {n} min', 'commence dans {n} min'],
-  rtabRuns: ['Planned outings', 'Sorties prévues'], rtabIdeas: ['Same dungeons', 'Mêmes donjons'], pfAtLvl: ['{n} at your level', '{n} à ton niveau'], needT: ['needs {x}', 'cherche {x}'], needDps: ['{n} dps', '{n} dégât{s}'],
+  rtabRuns: ['Planned outings', 'Sorties prévues'], rtabIdeas: ['Same dungeons', 'Mêmes donjons'], rtabExplore: ['All dungeons', 'Tous les donjons'],
+  xIntro: ['Pick a dungeon, click the items you want, and set up your outing.', 'Choisis un donjon, clique sur les objets que tu veux et prépare ta sortie.'],
+  xPickDun: ['Pick a dungeon in the list.', 'Choisis un donjon dans la liste.'],
+  xDraftT: ['Your outing', 'Ta sortie'], xPickHint: ['Click items to add them to your hunt list.', 'Clique sur des objets pour les ajouter à ta liste de chasse.'],
+  xPicked: ['{n} wanted · click one to remove it', '{n} voulu(s) · clic pour retirer'], xFull: ['20 items at most.', '20 objets au plus.'], xClear: ['Clear', 'Vider'],
+  xGateT: ['One last step', 'Encore une étape'],
+  xGate: ['To publish your outing, sign in with Battle.net: your Forever characters are verified. Your outing and your hunt list are kept meanwhile.', 'Pour publier ta sortie, connecte-toi avec Battle.net : tes personnages Forever sont vérifiés. Ta sortie et ta liste de chasse sont gardées en attendant.'],
+  xLater: ['Later', 'Plus tard'],
+  xResume: ['Welcome back! Your outing is ready: pick your character and publish it.', 'Te revoilà ! Ta sortie est prête : choisis ton personnage et publie-la.'],
+  xNoChar: ['No Forever character of level 10 or more on this Battle.net account.', 'Aucun personnage Forever de niveau 10 ou plus sur ce compte Battle.net.'],
+  xOwnPct: ['{p} % of Dropamine players have it', '{p} % des joueurs Dropamine l’ont'], xOwnN: ['{n} of {t} Dropamine players have it', '{n} joueur(s) Dropamine sur {t} l’ont'],
+  xHunt: ['{n} player(s) hunting it', '{n} joueur(s) le chassent'], xItems: ['{n} item(s)', '{n} objet(s)'], xHunters: ['{n} hunting', '{n} en chasse'], pfAtLvl: ['{n} at your level', '{n} à ton niveau'], needT: ['needs {x}', 'cherche {x}'], needDps: ['{n} dps', '{n} dégât{s}'],
   runIn: ['Signed up', 'Inscrit'], runWaitBtn: ['Waitlist', 'Attente'], runSee: ['See', 'Voir'], runBy: ['by {n}', 'par {n}'],
   raidK: ['FOREVER · RAIDS', 'FOREVER · RAIDS'], raidT: ['Raids open soon', 'Les raids ouvrent bientôt'], raidSub: ['Barrow Deeps (10), Hyjal Summit (20) and Onyxia’s Lair (40, attunement) open on {d}, level 60. Time not announced yet.', 'Barrow Deeps (10), Hyjal Summit (20) et le Repaire d’Onyxia (40, harmonisation) ouvrent le {d}, niveau 60. Heure pas encore annoncée.'],
   raidOpenT: ['Raids are open!', 'Les raids sont ouverts !'], raidOpenSub: ['Barrow Deeps, Hyjal Summit and Onyxia’s Lair: get your group together.', 'Barrow Deeps, Hyjal Summit et le Repaire d’Onyxia : rassemble ton groupe.'],
@@ -1745,8 +1756,8 @@ const ItemTip = (() => {
     const lx = extra() && ITEMX?.[id]?.[1];
     const lines = (it?.t || []).map((l, i) => `<div${l[2] ? ` style="color:${l[2]}"` : ''}>${esc(lx?.[i] || (LANG === 'fr' ? l[1] || l[0] : l[0]))}</div>`).join('');
     el.innerHTML = `<b style="color:${QCOL[it?.q] || '#e8d9b0'}">${esc(itemName(id))}</b>${lines || `<div class="dim">${t('itemForever')}</div>`}
-      <div class="src">${esc(t0.dataset.boss || '')}${t0.dataset.rate ? ` · ${(+t0.dataset.rate).toLocaleString(locale())} %` : ''}</div>
-      <div class="${t0.classList.contains('got') ? 'ok' : 'no'}">${t0.classList.contains('got') ? t('obtained') : t('notObtained')}</div>`;
+      <div class="src">${esc(t0.dataset.boss || '')}${t0.dataset.rate ? ` · ${(+t0.dataset.rate).toLocaleString(locale())} %` : ''}</div>${t0.dataset.stat ? `<div class="dim">${esc(t0.dataset.stat)}</div>` : ''}
+      ${t0.classList.contains('xi') ? '' : `<div class="${t0.classList.contains('got') ? 'ok' : 'no'}">${t0.classList.contains('got') ? t('obtained') : t('notObtained')}</div>`}`;
     el.style.display = 'block';
     const w = el.offsetWidth, h = el.offsetHeight;
     el.style.left = Math.min(innerWidth - w - 8, x + 16) + 'px'; el.style.top = Math.min(innerHeight - h - 8, y + 16) + 'px';
@@ -1990,6 +2001,64 @@ function dunOptions() {
       return `<option value="${esc(d.key)}"${state.hd === d.key ? ' selected' : ''}>${esc(d.name)}${lo ? ` (${dunFrom(d)}–${hi})` : ''}</option>`; }).join('')}</optgroup>` : '';
   }).join('');
 }
+// 3.13 : brouillon de sortie (donjon, objets voulus, date, rôle, note) gardé dans le navigateur, même sans compte :
+// la connexion Battle.net n'est demandée qu'au clic final, puis le brouillon revient tout seul au retour.
+const Draft = (() => {
+  const K = 'dropRunDraft', blank = () => ({ dun: '', items: [], at: '', role: 'dps', note: '', pending: false });
+  let d = blank();
+  try { const v = JSON.parse(localStorage.getItem(K) || 'null'); if (v && typeof v === 'object') d = { ...blank(), ...v, items: Array.isArray(v.items) ? v.items.filter(Number.isFinite).slice(0, 20) : [] }; } catch (e) { /* stockage indisponible */ }
+  const save = () => { try { localStorage.setItem(K, JSON.stringify(d)); } catch (e) { /* rien */ } };
+  return {
+    get: () => d,
+    set(p) { Object.assign(d, p); save(); },
+    toggle(id) { const i = d.items.indexOf(id); if (i >= 0) d.items.splice(i, 1); else if (d.items.length < 20) d.items.push(id); else return false; save(); return true; },
+    clear() { d = blank(); save(); },
+    // retour de Battle.net : la page Groupes rouvre la sortie préparée
+    resume() {
+      if (!d.pending || !Bnet.logged()) return false;
+      d.pending = false; save();
+      Object.assign(state, { view: 'runs', rtab: 'explore', xd: d.dun, runMsg: t('xResume') });
+      return true;
+    },
+  };
+})();
+function exploreBlock(me) {
+  const dr = Draft.get();
+  const list = LOOT.dungeons.filter(d => d.bosses?.length && lvlMatch(d, me) && (!state.ht || dunType(d) === state.ht) && (!state.hd || d.key === state.hd) && textMatch(dunText(d)));
+  const sel = LOOT.dungeons.find(d => d.key === (state.xd || state.hd || dr.dun)) || null;
+  // chiffres de la communauté : qui a l'objet (carnet envoyé), qui le chasse encore
+  const base = DATA.players.filter(p => p.dropamine?.collection?.items?.length), own = new Map(), hunt = new Map();
+  base.forEach(p => p.dropamine.collection.items.forEach(id => own.set(id, (own.get(id) || 0) + 1)));
+  DATA.players.forEach(p => (p.dropamine?.hunt || []).forEach(h => { if (!h.drops) hunt.set(h.id, (hunt.get(h.id) || 0) + 1); }));
+  const huntersIn = d => { const ids = new Set(d.bosses.flatMap(b => b.i.map(e => Array.isArray(e) ? e[0] : e))); let n = 0; ids.forEach(id => { n += hunt.get(id) || 0; }); return n; };
+  const stat = id => { const o = own.get(id) || 0, h = hunt.get(id) || 0;
+    return [base.length >= 10 ? t('xOwnPct', { p: Math.round(100 * o / base.length) }) : base.length ? t('xOwnN', { n: o, t: base.length }) : '', h ? t('xHunt', { n: h }) : ''].filter(Boolean).join(' · '); };
+  const rows = list.map(d => { const [, , hi] = d.lvl || [], lo = dunFrom(d), hn = huntersIn(d);
+    return `<button type="button" class="xd${sel?.key === d.key ? ' on' : ''}" data-xd="${esc(d.key)}"><b>${esc(d.name)}</b><small>${lo ? t('runsLvl', { a: lo, b: hi }) : t('optRaid')}${hn ? ' · ' + t('xHunters', { n: hn }) : ''}</small></button>`; }).join('');
+  const bossName = b => isTrash(b) ? t('runsTrash') : (L2(b.n) || b.n[0]);
+  const detail = sel ? `<div class="xdet"${artStyle(sel.key)}><div class="xh"><h3>${esc(sel.name)}</h3>${dunFrom(sel) ? `<span class="lv">${t('runsLvl', { a: dunFrom(sel), b: (sel.lvl || [])[2] })}</span>` : ''}</div>
+      ${sel.bosses.map(b => `<div class="cb"><span class="cbn">${esc(bossName(b))}</span><div class="cgrid">${b.i.map(e => { const id = Array.isArray(e) ? e[0] : e, rate = Array.isArray(e) ? e[1] : null, hn = hunt.get(id) || 0;
+        return `<button type="button" class="ci xi${dr.items.includes(id) ? ' pick' : ''}" data-xpick="${id}" data-item="${id}" data-boss="${esc(bossName(b))}"${rate != null ? ` data-rate="${rate}"` : ''} data-stat="${esc(stat(id))}" style="--q:${QCOL[ITEMS?.[id]?.q] || '#8a7a5a'}" aria-pressed="${dr.items.includes(id)}"><img src="${itemIcon(id)}" alt="${esc(itemName(id))}" loading="lazy" referrerpolicy="no-referrer">${hn ? `<em>${hn}</em>` : ''}</button>`; }).join('')}</div></div>`).join('')}</div>` : `<p class="note xpick">${t('xPickDun')}</p>`;
+  // le formulaire : identique pour tous ; le personnage n'apparaît qu'une fois connecté
+  const chars = Bnet.chars();
+  const picked = dr.items.length ? `<div class="cgrid xpicked">${dr.items.map(id => `<button type="button" class="ci got" data-xpick="${id}" data-item="${id}" style="--q:${QCOL[ITEMS?.[id]?.q] || '#8a7a5a'}"><img src="${itemIcon(id)}" alt="${esc(itemName(id))}" loading="lazy" referrerpolicy="no-referrer"></button>`).join('')}</div>
+      <p class="note">${t('xPicked', { n: dr.items.length })} · <button type="button" class="lnk" data-xclear>${t('xClear')}</button></p>` : `<p class="note">${t('xPickHint')}</p>`;
+  const draft = sel ? `<div class="xdraft"><p class="wk-lbl">${t('xDraftT')} · ${esc(sel.name)}</p>${picked}
+      <div class="pform xform" data-dun="${esc(sel.key)}">
+        <label>${t('runWhen')}<input type="datetime-local" data-run-at value="${esc(dr.at || localInput(nextEvening()))}" min="${localInput(new Date())}"></label>
+        ${Bnet.logged() && chars.length ? `<label>${t('runChar')}<select data-x-char>${chars.map(c => `<option value="${esc(c.key)}">${esc(c.name || c.slug)} (${c.level})</option>`).join('')}</select></label>` : ''}
+        <label>${t('runRole')}<select data-run-role>${['dps', 'tank', 'heal'].map(x => `<option value="${x}"${dr.role === x ? ' selected' : ''}>${t('role.' + x)}</option>`).join('')}</select></label>
+        <label class="wide">${t('runNote')}<input type="text" maxlength="140" data-run-note value="${esc(dr.note || '')}" placeholder="${t('runNotePh')}"></label>
+        <button class="btn gold" type="button" data-xcreate>${t('runCreate')}</button></div></div>` : '';
+  // fenêtre de connexion : seulement au clic final, avec le résumé de ce qui est préparé
+  const when = dr.at ? new Date(dr.at).toLocaleString(locale(), { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : '';
+  exploreBlock.gate = state.xgate ? `<div class="xgate" role="dialog" aria-modal="true" aria-labelledby="xgate-t"><div class="xgate-c">
+      <h3 id="xgate-t">${t('xGateT')}</h3><p>${t('xGate')}</p>
+      <p class="xsum"><b>${esc(sel?.name || '')}</b>${when ? ' · ' + esc(when) : ''}${dr.items.length ? ' · ' + t('xItems', { n: dr.items.length }) : ''}</p>
+      <div class="xgate-a"><a class="btn bnet-btn" href="${API}/auth/login">${t('bnLogin')}</a><button type="button" class="btn ghost" data-xgate-close>${t('xLater')}</button></div></div></div>` : '';
+  return `<p class="note rideas-n">${t('xIntro')}</p>${state.runMsg ? `<p class="msg">${state.runMsg}</p>` : ''}
+    <div class="xwrap"><div class="xlist">${rows || `<p class="note">${t('hsNone')}</p>`}</div><div class="xmain">${detail}${draft}</div></div>`;
+}
 function renderRuns() {
   const box = $('#runs-panel');
   if (!LOOT || !ITEMS || !ART) {
@@ -2144,12 +2213,15 @@ function renderRuns() {
       <ul>${rows}</ul>
       <div class="rf"><span class="glabel">${t('runsGroup')}</span>${gp('tank', g.tank)}${gp('heal', g.heal)}${g.dps.map(p => gp('dps', p)).join('')}${form}</div></div>`;
   };
-  const rtab = state.rtab === 'ideas' || state.rtab === 'planned' ? state.rtab : (filtered.length ? 'planned' : 'ideas');
+  const rtab = ['ideas', 'planned', 'explore'].includes(state.rtab) ? state.rtab : (filtered.length ? 'planned' : 'ideas');
   box.innerHTML = `<div class="head"><h2>${t('runsT')}</h2><span class="note">${t('runsNote')} · Forever ${state.region.toUpperCase()}</span></div>
-    <div class="rtabs" role="tablist"><button role="tab" data-rtab="planned" aria-selected="${rtab === 'planned'}">${t('rtabRuns')}<em>${filtered.length}</em></button><button role="tab" data-rtab="ideas" aria-selected="${rtab === 'ideas'}">${t('rtabIdeas')}<em>${runs.length}</em></button></div>
-    ${Notif.panel()}${chips}${pfilters}${note}${rtab === 'planned' ? plannedBlock : `<p class="note rideas-n">${t('runsIdeasNote')}</p>
+    <div class="rtabs" role="tablist"><button role="tab" data-rtab="planned" aria-selected="${rtab === 'planned'}">${t('rtabRuns')}<em>${filtered.length}</em></button><button role="tab" data-rtab="ideas" aria-selected="${rtab === 'ideas'}">${t('rtabIdeas')}<em>${runs.length}</em></button><button role="tab" data-rtab="explore" aria-selected="${rtab === 'explore'}">${t('rtabExplore')}</button></div>
+    ${Notif.panel()}${rtab === 'explore' ? '' : chips}${pfilters}${note}${rtab === 'explore' ? exploreBlock(me) : rtab === 'planned' ? plannedBlock : `<p class="note rideas-n">${t('runsIdeasNote')}</p>
     ${!runs.length && searchActive() ? `<p class="note">${t('hsNone')}</p>` : ''}${runs.length ? `<div class="runs">${runs.slice(0, state.ilimit || 8).map(card).join('')}</div>${runs.length > (state.ilimit || 8) ? `<button class="btn ghost more" data-imore>${t('runMoreDun', { n: runs.length - (state.ilimit || 8) })}</button>` : ''}` : `<div class="empty"><b>${t('runsEmptyT')}</b>${t('runsEmpty')}</div>`}
     `}<p class="runs-src">${t('runsSrc')}</p>`;
+  { let g = document.getElementById('xgate-root');
+    if (!g) { g = document.createElement('div'); g.id = 'xgate-root'; document.body.append(g); }
+    g.innerHTML = rtab === 'explore' && state.xgate ? exploreBlock.gate || '' : ''; }
   if (state.runFocus && !state.runFocused) { const el = document.getElementById('run-' + state.runFocus); if (el) { state.runFocused = true; el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } }
 }
 document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('[data-ropen]')) { e.preventDefault(); e.target.click(); } });
@@ -2175,9 +2247,44 @@ async function runAction(path, body) {
     state.runMsg = r.ok ? t(path === '/runs/create' ? 'runCreated' : path === '/runs/edit' ? 'runSaved' : path === '/runs/join' ? (body.change ? 'runRoleChanged' : 'runJoined') : j.cancelled ? 'runCancelled' : 'runLeft') : t('runErr.' + (j.error || 'x'));
     if (r.ok && j.id) state.runFocus = j.id;
     if (r.ok) { RUNS = j.runs || RUNS; Ribbon.swell(.7); }
+    renderRuns();
+    return r.ok;
   } catch { state.runMsg = t('runErr.x'); }
   renderRuns();
+  return false;
 }
+// 3.13 : explorateur : choisir un donjon, des objets, puis créer la sortie (connexion demandée seulement ici)
+async function exploreCreate(f) {
+  const at = $('[data-run-at]', f).value, role = $('[data-run-role]', f).value, note = $('[data-run-note]', f).value, dun = f.dataset.dun;
+  Draft.set({ dun, at: at || '', role, note });
+  if (!Bnet.logged()) { Draft.set({ pending: true }); state.xgate = true; state.runMsg = ''; renderRuns(); return; }
+  const key = $('[data-x-char]', f)?.value;
+  if (!key) { state.runMsg = t('xNoChar'); renderRuns(); return; }
+  if (!at) { state.runMsg = t('runErr.date'); renderRuns(); return; }
+  const items = [...Draft.get().items];
+  const ok = await runAction('/runs/create', { dungeon: dun, at: new Date(at).toISOString(), key, role, note });
+  if (!ok) return;
+  // les objets choisis rejoignent la liste de chasse du personnage (que l'addon récupère avec « Recevoir du site »)
+  if (items.length) {
+    const p = DATA.players.find(x => pkey(x) === key), cur = (p?.dropamine?.hunt || []).map(h => h.id);
+    const ids = [...new Set([...cur, ...items])].slice(0, 20);
+    try { await Bnet.call('/hunt/save', { key, items: ids.map(id => ({ id, name: itemName(id) })) }); } catch (e) { /* la sortie est créée ; la liste suivra */ }
+  }
+  Draft.clear(); state.rtab = 'planned'; renderRuns(); writeUrl(false);
+}
+document.addEventListener('click', e => {
+  const xd = e.target.closest('[data-xd]');
+  if (xd) { state.xd = xd.dataset.xd; Draft.set({ dun: state.xd }); state.runMsg = ''; renderRuns(); if (innerWidth < 900) $('.xmain')?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' }); return; }
+  const xp = e.target.closest('[data-xpick]');
+  if (xp) { if (!Draft.toggle(+xp.dataset.xpick)) state.runMsg = t('xFull'); renderRuns(); return; }
+  if (e.target.closest('[data-xclear]')) { Draft.set({ items: [] }); renderRuns(); return; }
+  const xc = e.target.closest('[data-xcreate]'); if (xc) { exploreCreate(xc.closest('.pform')); return; }
+  if (e.target.closest('[data-xgate-close]') || e.target.matches?.('.xgate')) { state.xgate = false; renderRuns(); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.xgate) { state.xgate = false; renderRuns(); } });
+// garder date, rôle et note du brouillon pendant qu'on tape
+document.addEventListener('change', e => { const f = e.target.closest('.xform'); if (!f) return;
+  Draft.set({ at: $('[data-run-at]', f).value, role: $('[data-run-role]', f).value, note: $('[data-run-note]', f).value }); });
 document.addEventListener('click', e => {
   const dgb = e.target.closest('[data-dg]'); if (dgb) { state.dg = !state.dg; if (state.dg) state.dw = false; renderRank(); animate($("#rank")); writeUrl(false); return; }
   const dwb = e.target.closest('[data-dw]'); if (dwb) { state.dw = !state.dw; if (state.dw) state.dg = false; renderRank(); animate($("#rank")); writeUrl(false); return; }
@@ -2442,7 +2549,8 @@ const Bnet = (() => {
     await load(); header();
     return res;
   }
-  return { show, init, header, mine, best, isMine, refresh, call, upload, logged: () => !!me };
+  const chars = () => (me?.characters || []).filter(c => c.level >= 10);
+  return { show, init, header, mine, best, isMine, refresh, call, upload, chars, logged: () => !!me };
 })();
 
 /* ---------- Animations d'arrivée ---------- */
@@ -2472,7 +2580,7 @@ function readUrl() {
   state.region = ['eu', 'us', 'tw'].includes(q.get('r')) ? q.get('r') : 'eu';
   state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0; state.dg = q.get('dg') === '1'; state.dw = !state.dg && q.get('dw') === '1';
   state.c = q.get('c') || state.c; state.g = q.get('g') || '';
-  if (state.view === 'runs') Object.assign(state, { rtab: q.get('tab') === 'ideas' ? 'ideas' : q.get('tab') === 'planned' ? 'planned' : undefined, hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
+  if (state.view === 'runs') Object.assign(state, { rtab: ['ideas', 'planned', 'explore'].includes(q.get('tab')) ? q.get('tab') : undefined, hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
 }
 function writeUrl(push) {
   if (SHOT) return;
@@ -2483,7 +2591,7 @@ function writeUrl(push) {
   if (state.view === 'rank') { if (state.dg) q.set('dg', '1'); if (state.dw) q.set('dw', '1'); if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
   if (state.view === 'char' && state.c) q.set('c', state.c);
   if (state.view === 'guild' && state.g) q.set('g', state.g);
-  if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['d', 'hd'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.rtab === 'ideas') q.set('tab', 'ideas'); if (state.runFocus) q.set('run', state.runFocus); }
+  if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['d', 'hd'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.rtab === 'ideas' || state.rtab === 'explore') q.set('tab', state.rtab); if (state.runFocus) q.set('run', state.runFocus); }
   history[push ? 'pushState' : 'replaceState'](null, '', q.toString() ? '?' + q : location.pathname);
 }
 const RENDER = { rank: renderRank, char: renderChar, guild: renderGuild, runs: renderRuns, news: renderNews, join: () => Bnet.show() };
@@ -2730,7 +2838,7 @@ Promise.all([
   Bnet.init(),
   loadLang(LANG),
 ]).then(() => { Ribbon.load(false); return document.fonts.ready; })
-  .then(() => { render(false); freshenNews(); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });
+  .then(() => { if (Draft.resume()) writeUrl(false); render(false); freshenNews(); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });
 
 /* ---------- Application installable (PWA) ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
