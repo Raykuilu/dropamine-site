@@ -1416,6 +1416,8 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 /* 3.13 : Groupes › Tous les donjons : explorateur, objets à choisir, brouillon de sortie, connexion au clic final */
 .xwrap{display:grid;grid-template-columns:minmax(0,270px) minmax(0,1fr);gap:14px;align-items:start}
 .xlist{display:flex;flex-direction:column;gap:4px;max-height:640px;overflow:auto;padding-right:4px}
+/* la liste suit le défilement à côté d'un long butin : collée sous la barre de navigation, sur la hauteur de l'écran */
+@media (min-width:901px){.xlist{position:sticky;top:calc(var(--navh,78px) + 12px);max-height:calc(100vh - var(--navh,78px) - 24px)}}
 .xd{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:1px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.2)}
 .xd b{font-family:var(--serif);font-weight:500;color:var(--cream);font-size:15px;line-height:1.25}
 .xd small{color:var(--faint);font-style:italic;font-size:13px}
