@@ -240,7 +240,7 @@ async function readJson(file, fallback) {
   return existsSync(file) ? JSON.parse(await readFile(file, 'utf8')) : fallback;
 }
 
-// Guildes suivies (data/guilds.json) → personnages à montrer en aperçu : niveau 10+, ni inscrits, ni retirés
+// (avant la file d'attente) Guildes suivies (data/guilds.json) → personnages à montrer en aperçu : niveau 10+, ni inscrits, ni retirés
 export function previewEntries(rosters, registered, optout) {
   const out = new Map();
   for (const { region, roster } of rosters) {
@@ -264,6 +264,56 @@ export function scoutEntries(scouted, taken, optout, day = Math.floor(Date.now()
     .sort((a, b) => (b[1].d ?? 0) - (a[1].d ?? 0) || (b[1].l ?? 0) - (a[1].l ?? 0))
     .slice(0, SCOUT_LIMIT)
     .map(([key, v]) => { const [region, slug] = key.split('/'); return { region, slug, key, preview: true, scout: v.dun ? { dun: v.dun, d: v.d } : { d: v.d } }; });
+}
+
+// ---------------------------------------------------------------------------
+// File d'attente des aperçus (data/queue.json) : le site se remplit tout seul, au rythme que l'API supporte.
+// Sources : Scout (repérés en jeu), guildes suivies (data/guilds.json), puis les membres des guildes de ces joueurs
+// et des inscrits (un seul niveau : un membre ajouté par sa guilde n'ouvre pas la sienne).
+// À chaque relevé : NEW nouveaux vérifiés, REFRESH aperçus relus (les plus anciens ; une fois par jour au plus), les autres
+// gardent leur dernière fiche. Un aperçu pas relu depuis STALE jours est retiré (conditions Blizzard : 30 jours au plus).
+export const QUEUE = { NEW: 150, REFRESH: 500, GUILDS: 10, GUILD_EVERY: 7, MAX_PREVIEWS: 3000, MAX_QUEUE: 20000, STALE: 25, GONE_DAYS: 30 };
+const PRIO = { scout: 0, follow: 1, guild: 2 };
+const KEY_RE = /^(eu|us|tw)\/[^/]+-[^/]+$/;
+export function emptyQueue() { return { players: {}, guilds: {}, gone: {} }; }
+// ajoute des candidats { key, via, l } : ni inscrits, ni retirés, ni déjà montrés, ni introuvables récemment ; garde la meilleure source
+export function enqueue(queue, items, taken, optout, day) {
+  let added = 0;
+  for (const it of items) {
+    const key = String(it.key ?? '').toLowerCase();
+    if (!KEY_RE.test(key) || taken.has(key) || optout.has(key)) continue;
+    if (queue.gone[key] != null && queue.gone[key] >= day - QUEUE.GONE_DAYS) continue;
+    const cur = queue.players[key];
+    if (!cur) { if (Object.keys(queue.players).length >= QUEUE.MAX_QUEUE) continue; added++; }
+    queue.players[key] = { via: cur && PRIO[cur.via] <= PRIO[it.via] ? cur.via : it.via, l: Math.max(it.l ?? 0, cur?.l ?? 0), a: cur?.a ?? day };
+  }
+  return added;
+}
+// les n suivants : source d'abord (Scout, guildes suivies, membres de guilde), puis les plus hauts niveaux, puis les plus anciens
+export function nextFromQueue(queue, n) {
+  return Object.entries(queue.players)
+    .sort((a, b) => PRIO[a[1].via] - PRIO[b[1].via] || (b[1].l ?? 0) - (a[1].l ?? 0) || (a[1].a ?? 0) - (b[1].a ?? 0) || a[0].localeCompare(b[0]))
+    .slice(0, Math.max(0, n))
+    .map(([key, v]) => { const [region, slug] = key.split('/'); return { region, slug, key, preview: true, via: v.via, queued: true }; });
+}
+// aperçus du relevé précédent : à relire (jamais relus aujourd'hui, les plus anciens d'abord, REFRESH au plus) ou gardés tels quels
+export function planPreviews(prev, taken, optout, day) {
+  const live = prev.filter(p => p.preview && !taken.has(p.key) && !optout.has(p.key) && (p.fetched ?? day) >= day - QUEUE.STALE);
+  const due = live.filter(p => (p.fetched ?? 0) < day).sort((a, b) => (a.fetched ?? 0) - (b.fetched ?? 0)).slice(0, QUEUE.REFRESH);
+  const dueKeys = new Set(due.map(p => p.key));
+  return { refresh: due.map(p => ({ region: p.region, slug: p.slug, key: p.key, preview: true, via: p.via ?? 'follow' })),
+    keep: live.filter(p => !dueKeys.has(p.key)), count: live.length };
+}
+// guildes à lire : celles des inscrits et des aperçus venus de Scout ou des guildes suivies, pas lues depuis GUILD_EVERY jours
+export function guildsToRead(players, queue, day, n = QUEUE.GUILDS) {
+  const seen = new Map();
+  for (const p of players) {
+    if (!p.guild?.slug || (p.preview && p.via === 'guild')) continue;
+    const k = `${p.region}/${p.guild.slug}`;
+    seen.set(k, (seen.get(k) ?? 0) + 1);
+  }
+  return [...seen.entries()].filter(([k]) => (queue.guilds[k] ?? -1e9) < day - QUEUE.GUILD_EVERY)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, n).map(([k]) => k);
 }
 
 // n tâches en parallèle au plus (limite d'appels Blizzard : 36 000 par heure)
@@ -312,29 +362,48 @@ async function main() {
     if (e) entries.push(e); else console.warn(`· entrée ignorée : ${raw}`);
   }
   const optout = new Set((registry.optout ?? []).map(k => String(k).toLowerCase()));
-  const rosters = [];
-  for (const g of guilds) {
-    const [region, slug] = String(g).toLowerCase().split('/');
-    const roster = await get(tok, region, `/data/wow/guild/${encodeURIComponent(slug)}/roster`).catch(err => { console.warn(`· guilde ${g} : ${err.message}`); return null; });
-    if (roster) { rosters.push({ region, roster }); console.log(`guilde ${g} : ${roster.members?.length ?? 0} membre(s)`); }
-  }
-  entries.push(...previewEntries(rosters, new Set(entries.map(e => e.key)), optout));
-  // joueurs repérés en jeu (Scout, outil de l'administrateur)
+  const regKeys = new Set(entries.map(e => e.key));
+  const day = Math.floor(Date.now() / 864e5);
+  // relevé précédent : celui du site en ligne (le fichier du dépôt n'est pas versionné), sinon la copie locale
+  let prevList = null;
+  try { const r = await fetch(`https://dropamine.app/data/hiscores.json?nc=${Date.now()}`); if (r.ok) prevList = (await r.json()).players; } catch { /* hors ligne */ }
+  if (!Array.isArray(prevList)) prevList = (await readJson(join(ROOT, 'site/data/hiscores.json'), { players: [] })).players ?? [];
+  // file d'attente : guildes suivies et Scout y entrent ; puis les guildes des joueurs connus (un seul niveau)
+  const queue = { ...emptyQueue(), ...(await readJson(join(ROOT, 'data/queue.json'), emptyQueue())) };
+  const plan = planPreviews(prevList, regKeys, optout, day);
+  const shown = new Set([...regKeys, ...plan.keep.map(p => p.key), ...plan.refresh.map(e => e.key)]);
+  const rosterItems = async (gkey, via) => {
+    const [region, slug] = gkey.split('/');
+    const roster = await get(tok, region, `/data/wow/guild/${encodeURIComponent(slug)}/roster`).catch(err => { console.warn(`· guilde ${gkey} : ${err.message}`); return null; });
+    queue.guilds[gkey] = day;
+    return (roster?.members ?? []).map(m => m.character).filter(c => c?.slug && (c.level ?? 0) >= 10)
+      .map(c => ({ key: `${region}/${c.slug.toLowerCase()}`, via, l: c.level }));
+  };
+  let qAdd = 0;
+  for (const g of guilds) qAdd += enqueue(queue, await rosterItems(String(g).toLowerCase(), 'follow'), shown, optout, day);
   const scouted = await readJson(join(ROOT, 'data/scouted.json'), { players: {} });
-  const sc = scoutEntries(scouted, new Set(entries.map(e => e.key)), optout);
-  if (sc.length) console.log(`scout : ${sc.length} joueur(s) en aperçu`);
-  entries.push(...sc);
+  qAdd += enqueue(queue, Object.entries(scouted.players ?? {}).filter(([, v]) => (v.d ?? 0) >= day - 30 && (v.l ?? 0) >= 10)
+    .map(([key, v]) => ({ key, via: 'scout', l: v.l })), shown, optout, day);
+  for (const g of guildsToRead([...prevList.filter(p => regKeys.has(p.key)), ...plan.keep, ...prevList.filter(p => plan.refresh.some(e => e.key === p.key))], queue, day))
+    qAdd += enqueue(queue, await rosterItems(g, 'guild'), shown, optout, day);
+  for (const k of shown) delete queue.players[k];
+  const room = Math.max(0, QUEUE.MAX_PREVIEWS - plan.count);
+  const fresh = nextFromQueue(queue, Math.min(QUEUE.NEW, room));
+  console.log(`file : ${Object.keys(queue.players).length} en attente (+${qAdd}) · aperçus : ${plan.count} (${plan.refresh.length} relus, ${plan.keep.length} gardés) · nouveaux : ${fresh.length}`);
+  entries.push(...plan.refresh, ...fresh);
+  for (const e of fresh) delete queue.players[e.key];
   // un personnage retiré ne garde pas d'historique
   for (const k of optout) { const [r, s] = k.split('/'); await rm(join(ROOT, 'data/history', r, `${s}.json`), { force: true }); }
 
   // relevé précédent : pour dater les nouveaux loots
-  const prevPlayers = new Map(((await readJson(join(ROOT, 'site/data/hiscores.json'), { players: [] })).players ?? []).map(p => [p.key, p]));
+  const prevPlayers = new Map(prevList.map(p => [p.key, p]));
   await pool(entries, 6, async e => {
     const c = await fetchCharacter(tok, e.region, e.slug);
     if (!c) {
       // conditions Blizzard : un personnage qui n'existe plus n'est ni affiché ni conservé
       await rm(join(ROOT, 'data/history', e.region, `${e.slug}.json`), { force: true });
       console.warn(`· ${e.key} : introuvable (niveau < 10, pas encore visible ou supprimé)`);
+      if (e.preview) queue.gone[e.key] = day;
       return;
     }
     const upRaw = uploads[e.key] ?? uploads[e.slug];
@@ -368,9 +437,9 @@ async function main() {
       gender: p.gender?.type ?? null, faction: p.faction?.type,
       guild: p.guild ? { name: p.guild.name, slug: p.guild.slug } : null,
       ruleset: p.ruleset?.name ?? null, rulesetId: p.ruleset?.id ?? null,
-      ...s, stats: pickStats(c.achStats), reps: pickReps(c.reputations), history: hist,
+      ...s, stats: pickStats(c.achStats), reps: e.preview ? pickReps(c.reputations).slice(0, 5) : pickReps(c.reputations), history: hist,
       render: asset('main-raw'), avatar: asset('avatar'), inset: asset('inset'),   // buste : image des aperçus de liens
-      ...(e.preview ? { preview: true } : {}),
+      ...(e.preview ? { preview: true, via: e.via ?? 'follow' } : {}), fetched: day,
       // /played : seulement si le joueur l'a laissé dans sa ligne Dropamine (case cochée dans l'addon)
       ...(up?.played > 0 ? { played: up.played, playedAt: up.at ?? null } : {}),
       // JcJ de l'armurerie (pour tous) ; le reste vient de la ligne Dropamine, groupe par groupe (cases de l'addon)
@@ -382,6 +451,11 @@ async function main() {
     console.log(`✓ ${e.key} : ${s.total}${s.complete ? '' : ' (estimé)'}${e.preview ? ' [aperçu]' : ''}`);
   });
 
+  const done = new Set(players.map(p => p.key));
+  for (const p of plan.keep) if (!done.has(p.key)) players.push(p);
+  for (const [k, d] of Object.entries(queue.gone)) if (d < day - QUEUE.GONE_DAYS) delete queue.gone[k];
+  for (const [k, d] of Object.entries(queue.guilds)) if (d < day - 60) delete queue.guilds[k];
+  await writeFile(join(ROOT, 'data/queue.json'), JSON.stringify({ _comment: 'File d\'attente des aperçus (scripts/build.mjs, QUEUE) : écrite par le relevé.', ...queue }));
   players.sort((a, b) => b.total - a.total || a.key.localeCompare(b.key));
   await mkdir(join(ROOT, 'site/data'), { recursive: true });
   await writeFile(join(ROOT, 'site/data/hiscores.json'),

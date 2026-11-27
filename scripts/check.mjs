@@ -2,7 +2,7 @@
 // Pour chaque personnage publié : 3 petits appels (fiche, métiers, statistiques), comparés au site en ligne.
 // Rien n'a changé → on s'arrête là (pas de reconstruction, pas de commit). Sinon → « changed=true » pour le workflow.
 // L'armurerie de Blizzard ne se met à jour qu'à la déconnexion : c'est ce moment qu'on attrape.
-import { appendFile } from 'node:fs/promises';
+import { appendFile , readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { token, get } from './build.mjs';
 
@@ -34,9 +34,15 @@ async function main() {
   const res = await fetch(`${SITE}?nc=${Date.now()}`);
   if (!res.ok) { console.log(`site illisible (${res.status}) : reconstruction`); return out(true); }
   const pub = await res.json();
+  // file d'attente non vide, ou aperçus pas relus aujourd'hui : le relevé continue de remplir le site
+  const day = Math.floor(Date.now() / 864e5);
+  let waiting = 0;
+  try { waiting = Object.keys(JSON.parse(await readFile(new URL('../data/queue.json', import.meta.url), 'utf8')).players ?? {}).length; } catch { /* pas encore de file */ }
+  const stale = (pub.players ?? []).filter(p => p.preview && (p.fetched ?? 0) < day).length;
+  if (waiting || stale) { console.log(`file : ${waiting} en attente, ${stale} aperçu(s) à relire : reconstruction`); return out(true); }
   const tok = await token();
   let changed = false;
-  for (const p of pub.players ?? []) {
+  for (const p of (pub.players ?? []).filter(x => !x.preview)) {   // les inscrits seulement : 3 appels chacun
     const base = `/profile/wow/character/${encodeURIComponent(p.slug)}`;
     try {
       const [summary, profs, stats] = await Promise.all([get(tok, p.region, base), get(tok, p.region, base + '/professions'), get(tok, p.region, base + '/statistics')]);

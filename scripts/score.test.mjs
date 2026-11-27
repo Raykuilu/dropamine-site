@@ -188,3 +188,27 @@ test('Scout : aperçus (récents, niveau 10+, ni inscrits ni retirés)', async (
   assert.equal(out[1].scout.dun, 'Les Mortemines');
   assert.ok(out.every(e => e.preview));
 });
+
+test('file d\'attente : entrée, ordre, relectures, guildes (un seul niveau)', async () => {
+  const { emptyQueue, enqueue, nextFromQueue, planPreviews, guildsToRead, QUEUE } = await import('./build.mjs');
+  const day = 20784, q = emptyQueue(), taken = new Set(['eu/ray-kuilu']), optout = new Set(['eu/no-thanks']);
+  q.gone['eu/old-gone'] = day - 2;
+  const n = enqueue(q, [{ key: 'eu/a-b', via: 'guild', l: 60 }, { key: 'eu/c-d', via: 'scout', l: 20 }, { key: 'eu/ray-kuilu', via: 'scout', l: 37 },
+    { key: 'eu/no-thanks', via: 'scout', l: 50 }, { key: 'eu/old-gone', via: 'scout', l: 50 }, { key: 'eu/solo', via: 'scout', l: 50 }], taken, optout, day);
+  assert.equal(n, 2, 'ni inscrit, ni retiré, ni introuvable récent, ni prénom seul');
+  enqueue(q, [{ key: 'eu/a-b', via: 'scout', l: 10 }], taken, optout, day);
+  assert.equal(q.players['eu/a-b'].via, 'scout', 'la meilleure source l\'emporte');
+  assert.equal(q.players['eu/a-b'].l, 60, 'le plus haut niveau est gardé');
+  assert.deepEqual(nextFromQueue(q, 5).map(e => e.key), ['eu/a-b', 'eu/c-d'], 'Scout d\'abord, puis niveau');
+  const prev = [{ key: 'eu/p-1', region: 'eu', slug: 'p-1', preview: true, fetched: day - 3 }, { key: 'eu/p-2', region: 'eu', slug: 'p-2', preview: true, fetched: day },
+    { key: 'eu/p-3', region: 'eu', slug: 'p-3', preview: true, fetched: day - 40 }, { key: 'eu/ray-kuilu', region: 'eu', slug: 'ray-kuilu' }];
+  const plan = planPreviews(prev, taken, optout, day);
+  assert.deepEqual(plan.refresh.map(e => e.key), ['eu/p-1'], 'relu une fois par jour, le plus ancien d\'abord');
+  assert.deepEqual(plan.keep.map(p => p.key), ['eu/p-2'], 'gardé tel quel');
+  assert.equal(plan.count, 2, 'trop vieux (plus de 25 jours) : retiré');
+  const players = [{ region: 'eu', guild: { slug: 'g1' } }, { region: 'eu', preview: true, via: 'scout', guild: { slug: 'g2' } },
+    { region: 'eu', preview: true, via: 'guild', guild: { slug: 'g3' } }, { region: 'eu', guild: { slug: 'g1' } }];
+  q.guilds['eu/g2'] = day - 1;
+  assert.deepEqual(guildsToRead(players, q, day), ['eu/g1'], 'pas de boule de neige, pas relue avant 7 jours');
+  assert.ok(QUEUE.NEW <= 150 && QUEUE.MAX_PREVIEWS >= 1000);
+});
