@@ -4663,6 +4663,448 @@
       "g": "Déluge",
       "s": "x",
       "d": 20784
+    },
+    "eu/apex-cat": {
+      "l": 37,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/corvus-coronatus": {
+      "l": 40,
+      "c": "PALADIN",
+      "g": "Le Troisième oeil",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nyssedine-elathice": {
+      "l": 38,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/yeah-bwoii": {
+      "l": 1,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/brabus-mercedes": {
+      "l": 16,
+      "c": "MAGE",
+      "g": "Real Friends Online",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/cuthen-fawnsigh": {
+      "l": 11,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/scrooger-mcduckist": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bocanc-salbaticul": {
+      "l": 20,
+      "c": "HUNTER",
+      "g": "Baked Goods",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ganaxq-lostarcovich": {
+      "l": 43,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dot-come": {
+      "l": 49,
+      "c": "WARLOCK",
+      "g": "Piton Rochenoire",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nox-bang": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lynalea-dreadmoor": {
+      "l": 18,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/plugas-lepeshka": {
+      "l": 22,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ylva-starhunter": {
+      "l": 44,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/cash-nasty": {
+      "l": 10,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mini-wizzard": {
+      "l": 60,
+      "c": "MAGE",
+      "g": "Crucial",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ishula-soarer": {
+      "l": 16,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/fenouil-furtif": {
+      "l": 56,
+      "c": "MAGE",
+      "g": "Manuel Feralas",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/namefor-banking": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/thyron-bank": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/star-black": {
+      "l": 45,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/oguz-vigorouz": {
+      "l": 40,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/flynn-cross": {
+      "l": 14,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/spiàl-lakeborn": {
+      "l": 40,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/trouble-ozi": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "NiceTry",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/boski-bankier": {
+      "l": 1,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/qing-ping": {
+      "l": 27,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lethani-starfall": {
+      "l": 1,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/storm-boom": {
+      "l": 6,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tommy-tobacco": {
+      "l": 10,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/cis-us": {
+      "l": 46,
+      "c": "DRUID",
+      "g": "Prime Legacy",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kamilius-forever": {
+      "l": 24,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/funguy-pilaf": {
+      "l": 55,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/kiddrock-jr": {
+      "l": 59,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/fætter-diesel": {
+      "l": 1,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/miss-accounted": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ange-hegels": {
+      "l": 19,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/elyth-kaeryn": {
+      "l": 25,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/capitano-bror": {
+      "l": 36,
+      "c": "WARRIOR",
+      "g": "Särskilda Utredningar",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mun-yanyo": {
+      "l": 40,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sven-svenne": {
+      "l": 14,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/regular-degenerate": {
+      "l": 60,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sophie-stique": {
+      "l": 10,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/schibby-schib": {
+      "l": 51,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/cruorz-cruozencore": {
+      "l": 51,
+      "c": "ROGUE",
+      "g": "Farces et attrapes",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/nox-nemoris": {
+      "l": 60,
+      "c": "DRUID",
+      "g": "La Confrérie Noire",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/dodo-lightbringa": {
+      "l": 44,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/wee-mahn": {
+      "l": 40,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/tjuk-tjuu": {
+      "l": 60,
+      "c": "MAGE",
+      "g": "K A O S",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/hoardy-misc": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/mornsul-morningsun": {
+      "l": 44,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/riitta-rietasriitti": {
+      "l": 1,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/naerys-silvermoon": {
+      "l": 54,
+      "c": "HUNTER",
+      "g": "Pøchtrons et Dragøns",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pippis-langstrømper": {
+      "l": 10,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/daium-melitas": {
+      "l": 44,
+      "c": "MAGE",
+      "g": "Les Citoyens",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/zagzz-slagzz": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/lancinate-sa": {
+      "l": 60,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/warrën-buffëtt": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/anymotion-armada": {
+      "l": 42,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/ontima-gen": {
+      "l": 16,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/naab-wanabe": {
+      "l": 24,
+      "c": "WARRIOR",
+      "g": "Hitokiri",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/bankeeman-sachs": {
+      "l": 1,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/pus-cass": {
+      "l": 15,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/placebo-banking": {
+      "l": 1,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/og-albin": {
+      "l": 54,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/adendria-andrad": {
+      "l": 13,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/laela-elkforest": {
+      "l": 17,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/father-bebbe": {
+      "l": 13,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/barbabière-brassebarbe": {
+      "l": 28,
+      "c": "WARRIOR",
+      "g": "XVIIeme Compagnie",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/airness-windfresh": {
+      "l": 8,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/divine-boba": {
+      "l": 32,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20784
     }
   }
 }
