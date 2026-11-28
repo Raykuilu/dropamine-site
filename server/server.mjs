@@ -303,6 +303,30 @@ async function notify(events) {
   }
   if (gone) subsSave();
 }
+// Alerte Blizzard (28/11) : les comptes admins (empreintes, jamais l'identifiant) reçoivent une notification push quand
+// Blizzard bloque le serveur, puis quand l'accès revient. Un compte devient « admin à prévenir » en se connectant
+// ou en activant les notifications. L'état est lu toutes les 5 min dans le relevé (status.blizzard).
+const ADMINS_FILE = STATE_DIR + 'admins.json';
+let ADMIN_OWNERS = new Set(); try { ADMIN_OWNERS = new Set(JSON.parse(readFileSync(ADMINS_FILE, 'utf8'))); } catch { /* aucun encore */ }
+function rememberAdmin(s) {
+  if (!isAdmin(s) || !s.bnetId || s.bnetId === 'admin-link') return;
+  const o = ownerOf(s); if (ADMIN_OWNERS.has(o)) return;
+  ADMIN_OWNERS.add(o); mkdirSync(STATE_DIR, { recursive: true }); writeFileSync(ADMINS_FILE, JSON.stringify([...ADMIN_OWNERS]));
+}
+let blizzPrev = null;
+setInterval(async () => {
+  const b = crawl ? (await crawl.call('status').catch(() => null))?.blizzard : null;
+  if (!b) return;
+  const blocked = !!b.blocked;
+  if (blizzPrev !== null && blocked !== blizzPrev) {
+    const msg = blocked
+      ? { title: 'Dropamine : Blizzard bloque le serveur', body: 'Connexions Battle.net et relevé en pause. Prévenu dès que ça revient.', url: '/', tag: 'blizzard' }
+      : { title: 'Dropamine : accès Blizzard rétabli', body: 'Connexion Battle.net revenue. Le relevé peut reprendre (vitesse dans l\'admin).', url: '/', tag: 'blizzard' };
+    console.warn(new Date().toISOString(), msg.title);
+    notify([...ADMIN_OWNERS].map(owner => ({ owner, msg }))).catch(err => console.warn('alerte Blizzard :', err.message));
+  }
+  blizzPrev = blocked;
+}, 5 * 60e3).unref();
 // rappels 30 min avant, vérifiés chaque minute
 const reminded = new Set();
 setInterval(() => { if (RUNS) notify(dueReminders(RUNS.runs ?? [], reminded, Date.now(), dunName)).catch(() => {}); }, 60e3).unref();
@@ -446,6 +470,7 @@ const server = createServer(async (req, res) => {
       sessions.set(id, { exp: Date.now() + SESSION_HOURS * 3600e3, bnetId: String(user?.id ?? user?.sub ?? ''), battletag: user?.battletag ?? '',
         characters: new Map(characters.map(c => [c.key, c])) });
       AUDIT.log('login', user?.battletag ?? '', `${characters.length} personnage(s)`);
+      rememberAdmin(sessions.get(id));
       // le jeton Battle.net n'est pas gardé : seule la liste des personnages l'est, pour la durée de la session
       const toAdmin = parseCookies(req.headers.cookie).dto === 'admin';
       return send(res, 302, '', { Location: toAdmin ? `${CFG.publicUrl}/admin` : back('ok'), 'Set-Cookie': [cookie('dsid', seal(id), SESSION_HOURS * 3600), cookie('dstate', '', 0), cookie('dto', '', 0)] });
@@ -570,7 +595,7 @@ const server = createServer(async (req, res) => {
         if (!validSub(sub)) return send(res, 400, { error: 'abonnement invalide' }, cors);
         const r = addSub(SUBS, ownerOf(s), sub);
         if (r.error) return send(res, 503, { error: r.error }, cors);
-        SUBS = r.store; subsSave(); AUDIT.log('push-on', s.battletag);
+        SUBS = r.store; subsSave(); AUDIT.log('push-on', s.battletag); rememberAdmin(s);
         return send(res, 200, { ok: true }, cors);
       }
       if (url.pathname === '/push/unsubscribe' && req.method === 'POST') {

@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { openStats, recordCaps, backfillCaps, purgeCaps, wall, weekSkill, quantiles, compare, computeScores, scoreParts } from './hs-stats.mjs';
 import { openIndex, indexChar, indexStale, reindexAll, loadOverlay, refreshGuilds, rulesetCounts, pickRs, rankList, guildList, guildSkillList, guildFull, movers, meDash, merged, ranksOf } from './hs-index.mjs';
-import { CRAWL, SRC_PRIO, dayOf, isoDay, charKey, validCharKey, nextVisit, rosterMembers, crawlPlayer, histPoint, moved, discoverOrder, crawlEta, lookupSlug, HOUR_CAP, HOUR_MAX, slowDown, speedUp, regMode } from './crawl-lib.mjs';
+import { CRAWL, SRC_PRIO, dayOf, isoDay, charKey, validCharKey, nextVisit, rosterMembers, crawlPlayer, histPoint, moved, discoverOrder, crawlEta, lookupSlug, HOUR_CAP, HOUR_MAX, slowDown, speedUp, regMode, makeBreaker } from './crawl-lib.mjs';
 
 const LOCALE = { eu: 'fr_FR', us: 'en_US', tw: 'zh_TW' };
 export const fold = s => String(s ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
@@ -248,6 +248,10 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
   // les ouvriers attendent la fin de la pause au lieu de frapper à la porte en boucle
   let tokFails = 0, tokWait = 0;
   const tokenPause = msg => Object.assign(new Error(msg), { tokenPause: true });
+  // disjoncteur des appels Blizzard (crawl-lib.makeBreaker) et sonde de déblocage (toutes les 15 min)
+  const brk = makeBreaker();
+  const probe = { at: null, status: null, unblockedAt: null };
+  const pauseUntil = () => Math.max(tokWait, brk.until);
   async function token() {
     if (tok && Date.now() < tokExp) return tok;
     if (Date.now() < tokWait) throw tokenPause('jeton Blizzard en pause');
@@ -255,6 +259,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
       headers: { Authorization: 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64') }, body: new URLSearchParams({ grant_type: 'client_credentials' }) });
     if (!res.ok) {
       tokFails++; tokWait = Date.now() + Math.min(30 * 60e3, 30e3 * 2 ** Math.min(tokFails - 1, 6));
+      brk.fail(res.status);
       log.warn(`jeton Blizzard refusé (${res.status}), nouvel essai dans ${Math.round((tokWait - Date.now()) / 1000)} s`);
       throw tokenPause(`jeton Blizzard refusé (${res.status})`);
     }
@@ -263,15 +268,25 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     return tok;
   }
   async function get(region, path, manual = false) {
+    if (!brk.allow()) throw tokenPause('Blizzard en pause (disjoncteur)');
     await take(1, manual);
     const sep = path.includes('?') ? '&' : '?';
     const url = `https://${region}.api.blizzard.com${path}${sep}namespace=profile-forever-${region}&locale=${LOCALE[region] || 'en_US'}`;
     for (let attempt = 0; attempt < 3; attempt++) {
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${await token()}` }, signal: AbortSignal.timeout(20e3) });
-      if (res.status === 404) return null;
+      let res;
+      try { res = await fetch(url, { headers: { Authorization: `Bearer ${await token()}` }, signal: AbortSignal.timeout(20e3) }); }
+      catch (err) { if (!err.tokenPause) brk.fail(0); throw err; }   // réseau, délai dépassé (le jeton compte déjà de son côté)
+      if (res.status === 404) { brk.ok(); return null; }
       if (res.status === 401) { tok = null; continue; }
       if (res.status === 429) { refused++; last429 = Date.now(); note({ type: 'refused', rate: slowDown(rate) }); rate = slowDown(rate); await sleep(2000 * (attempt + 1)); continue; }   // Blizzard freine : débit divisé par deux
-      if (!res.ok) throw new Error(`${region}${path} → ${res.status}`);
+      if (!res.ok) {
+        if (res.status === 403 || res.status >= 500) {
+          if (brk.fail(res.status)) { log.warn(`Blizzard : ${brk.fails} échecs d'affilée (${res.status}), pause jusqu'à ${new Date(brk.until).toISOString()}`); note({ type: 'blizzard', state: 'pause', status: res.status }); }
+          throw tokenPause(`${region}${path} → ${res.status}`);
+        }
+        throw new Error(`${region}${path} → ${res.status}`);
+      }
+      brk.ok();
       return res.json();
     }
     throw new Error(`${region}${path} → trop de requêtes`);
@@ -311,13 +326,13 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
         inflight.add(w.key); busy++;
         try { await readChar(w); }
         catch (err) {
-          if (err.tokenPause) { await sleep(Math.max(5e3, tokWait - Date.now())); continue; }   // pas la faute du personnage : on attend
+          if (err.tokenPause) { await sleep(Math.max(5e3, Math.min(15 * 60e3, pauseUntil() - Date.now()))); continue; }   // pas la faute du personnage : on attend
           errors++; lastErr = `${new Date().toISOString()} ${err.message}`;
           db.prepare('UPDATE chars SET fails = fails + 1, next_at = ? WHERE key = ?').run(dayOf() + 1, w.key);   // réessayé demain
         } finally { inflight.delete(w.key); busy--; }
       } catch (err) {
         if (stopped) return;
-        if (err.tokenPause) { lastErr = `${new Date().toISOString()} ${err.message}`; await sleep(Math.max(5e3, tokWait - Date.now())); continue; }
+        if (err.tokenPause) { lastErr = `${new Date().toISOString()} ${err.message}`; await sleep(Math.max(5e3, Math.min(15 * 60e3, pauseUntil() - Date.now()))); continue; }
         errors++; lastErr = `${new Date().toISOString()} ${err.message}`; await sleep(5e3);
       }
     }
@@ -359,14 +374,33 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
   }
   // Score global : refait pour tout le monde toutes les 30 min (quelques secondes ; seul le relevé attend, jamais le site)
   function scores() { try { const t = Date.now(), n = computeScores(db); log.info?.(`score global : ${n} personnages, ${Date.now() - t} ms`); } catch (err) { log.warn('score global :', err.message); } }
+  async function probeBlizzard() {
+    if (!(brk.blocked || tokFails > 0 || rate <= 0 || brk.fails > 0)) return;
+    const was = brk.blocked || tokFails > 0;
+    probe.at = new Date().toISOString();
+    try {
+      const res = await fetch('https://oauth.battle.net/token', { method: 'POST', signal: AbortSignal.timeout(20e3),
+        headers: { Authorization: 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64') }, body: new URLSearchParams({ grant_type: 'client_credentials' }) });
+      probe.status = res.status;
+      if (res.ok) {
+        const j = await res.json(); tok = j.access_token; tokExp = Date.now() + Math.max(60, (j.expires_in ?? 3600) - 300) * 1000;
+        tokFails = 0; tokWait = 0; brk.ok();
+        if (was) { probe.unblockedAt = new Date().toISOString(); log.info?.('Blizzard : accès rétabli'); note({ type: 'blizzard', state: 'ok' }); }
+      } else {
+        if (res.status === 403 && !brk.blocked) { brk.blocked = true; brk.blockedSince = Date.now(); note({ type: 'blizzard', state: 'blocked', status: 403 }); }
+        log.warn(`Blizzard : sonde refusée (${res.status})`);
+      }
+    } catch (err) { probe.status = 'réseau'; }
+  }
   function guildsAgg() { try { refreshGuilds(db); } catch (err) { log.warn('guildes agrégées :', err.message); } }
   (async () => {
     await settings(); await seed(); purgeOld(db);
     // index des classements : refait en entier si sa version a changé (par lots, le fil reste disponible)
     if (indexStale(db)) { try { const n = await reindexAll(db); log.info?.(`index des classements : ${n} personnages`); } catch (err) { log.warn('index des classements :', err.message); } }
     try { const n = backfillCaps(db); if (n) log.info?.(`caps (page Stats) : ${n} amorcés depuis l'historique`); } catch (err) { log.warn('caps :', err.message); }
+    probeBlizzard().catch(() => {});
     await overlay(); guildsAgg(); scores();
-    timers.push(setInterval(overlay, 3600e3), setInterval(guildsAgg, 10 * 60e3), setInterval(scores, 30 * 60e3));
+    timers.push(setInterval(overlay, 3600e3), setInterval(() => probeBlizzard().catch(() => {}), 15 * 60e3), setInterval(guildsAgg, 10 * 60e3), setInterval(scores, 30 * 60e3));
     timers.push(setInterval(() => { rate = speedUp(rate, target, Date.now() - last429); }, 60e3), setInterval(settings, 10 * 60e3), setInterval(seed, 6 * 3600e3), setInterval(() => purgeOld(db), 6 * 3600e3));
     timers.forEach(t => t.unref?.());
     for (let i = 0; i < 12; i++) worker();
@@ -379,6 +413,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
       const perMin = Array.from({ length: 30 }, (_, i) => minutes[(curMin - 29 + i + 60) % 60]);
       return { ...c, rate, target, perHour: Math.round(rate * 3600), callsLastHour: calls, refused, busy, errors, lastErr,
         tokenPausedUntil: tokWait > Date.now() ? new Date(tokWait).toISOString() : null,
+        blizzard: { ...brk.state(), tokenPaused: tokWait > Date.now(), probeAt: probe.at, probeStatus: probe.status, unblockedAt: probe.unblockedAt },
         mode: regMode({ rate, target, hourCalls: calls, manualLastMin: manual }), manualLastMin: manual, perMin, last429: last429 ? new Date(last429).toISOString() : null,
         etaHours: crawlEta(c.waiting, callsLast10() * 6), since: Number(db.prepare("SELECT v FROM meta WHERE k = 'since'").get()?.v ?? 0) || null,
         seeded: db.prepare("SELECT v FROM meta WHERE k = 'seeded'").get()?.v ?? null };

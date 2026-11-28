@@ -4,8 +4,8 @@ import { score, pickStats, skillSnapshot } from '../scripts/build.mjs';
 
 export const DAY = 864e5;
 export const CRAWL = {
-  RATE: 8,              // appels Blizzard par seconde (≈ 28 800 / h ; limite Blizzard 36 000 / h, la mise à jour GitHub ne lit plus que les inscrits)
-  RATE_MAX: 9,          // plafond du réglage admin (≈ 32 400 / h)
+  RATE: 5,              // appels Blizzard par seconde (≈ 18 000 / h) : loin de la limite Blizzard (36 000 / h) ; 28/11 : 9/s a mené à un blocage
+  RATE_MAX: 6,          // plafond du réglage admin (≈ 21 600 / h, le plafond horaire ci-dessous coupe de toute façon à 20 000)
   CALLS_CHAR: 5,        // profil, métiers, équipement, statistiques, statistiques de hauts faits
   MIN_LEVEL: 10,        // l'armurerie ne montre rien en dessous
   REFRESH_ACTIVE: 1,    // jours entre deux relectures d'un personnage actif
@@ -79,7 +79,7 @@ export function discoverOrder(a, b) {
 // Régulateur du débit, recalculé chaque minute (comme la difficulté de Bitcoin, en très simple) :
 // un refus de Blizzard divise le débit par deux, chaque minute sans refus le remonte d'un demi-cran jusqu'au réglage ;
 // au-delà de HOUR_CAP appels sur l'heure glissante, le relevé de fond s'arrête (les visiteurs gardent leur marge jusqu'à HOUR_MAX).
-export const HOUR_CAP = 34000, HOUR_MAX = 35500;
+export const HOUR_CAP = 20000, HOUR_MAX = 22000;   // 28/11 : large marge sous les 36 000 / h de Blizzard
 export const slowDown = rate => Math.max(1, rate / 2);
 export const speedUp = (rate, target, since429) => (since429 > 60e3 && rate < target ? Math.min(target, rate + 0.5) : Math.min(rate, target));
 export function regMode({ rate, target, hourCalls, manualLastMin }) {
@@ -93,4 +93,26 @@ export function regMode({ rate, target, hourCalls, manualLastMin }) {
 export function crawlEta(waiting, callsPerHour, callsPerChar = CRAWL.CALLS_CHAR) {
   const perHour = callsPerHour / callsPerChar;
   return perHour > 0 ? Math.ceil(waiting / perHour) : null;   // en heures
+}
+
+// Disjoncteur (28/11, blocage Blizzard) : après THRESHOLD échecs d'affilée (403, 5xx, réseau, jeton refusé), plus aucun
+// appel pendant 15 min, puis UN seul essai ; s'il échoue, la pause double (jusqu'à 2 h). Un succès remet tout à zéro.
+// `blocked` : Blizzard refuse en 403 (adresse ou clé bloquée) — c'est ce qu'on surveille pour l'alerte de déblocage.
+export function makeBreaker({ threshold = 20, base = 15 * 60e3, max = 2 * 3600e3 } = {}) {
+  const b = { fails: 0, trips: 0, until: 0, blocked: false, blockedSince: null, probing: false };
+  b.allow = (now = Date.now()) => {
+    if (now < b.until) return false;
+    if (b.fails >= threshold) { if (b.probing) return false; b.probing = true; }   // demi-ouvert : un seul essai à la fois
+    return true;
+  };
+  b.ok = () => { b.fails = 0; b.trips = 0; b.until = 0; b.probing = false; b.blocked = false; b.blockedSince = null; };
+  b.fail = (status, now = Date.now()) => {
+    b.fails++; b.probing = false;
+    if (status === 403 && !b.blocked) { b.blocked = true; b.blockedSince = now; }
+    if (b.fails >= threshold) { b.trips++; b.until = now + Math.min(max, base * 2 ** (b.trips - 1)); return true; }   // disjoncte
+    return false;
+  };
+  b.state = (now = Date.now()) => ({ open: now < b.until, until: b.until > now ? new Date(b.until).toISOString() : null, fails: b.fails, trips: b.trips,
+    blocked: b.blocked, blockedSince: b.blockedSince ? new Date(b.blockedSince).toISOString() : null });
+  return b;
 }
