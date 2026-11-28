@@ -149,6 +149,50 @@ const I18N = {
   'gm.total': ['Total level', 'Niveau total'], 'gm.avg': ['Average per member', 'Moyenne par membre'], 'gm.l60': ['Level 60s', 'Niveaux 60'],
   'gm.hk': ['Honorable kills', 'Victoires honorables'], 'gm.prof': ['Professions', 'Métiers'], 'gm.members': ['Members', 'Membres'],
   gmSub: ['{n} at level 60', '{n} au niveau 60'],
+  wallT: ["The wall of {c}", "Le mur des {c}"],
+  wallAt: ["characters at the maximum, out of {n}", "personnages au maximum, sur {n}"],
+  wallWeek: ["+{n} this week", "+{n} cette semaine"],
+  wallNoRecent: ["New arrivals show up here, dated, as soon as the daily read sees one reach the maximum.", "Les nouveaux arrivés s’affichent ici, datés, dès que le relevé quotidien en voit un atteindre le maximum."],
+  wallNext: ["The next ones", "Les prochains"],
+  wallStill: ["no gain this week", "pas de gain cette semaine"],
+  wallEta: ["≈ {n} d", "≈ {n} j"],
+  wallLeft: ["{n} to go", "encore {n}"],
+  wallFine: ["Arrival dates are only known for what the daily read saw happen (last 30 days). Estimate based on the gain of the last 7 days.", "Les dates d’arrivée ne sont connues que pour ce que le relevé quotidien a vu se produire (30 derniers jours). Estimation d’après le gain des 7 derniers jours."],
+  wskT: ["Skill of the week", "Compétence de la semaine"],
+  wskLeft: ["{n} day{s} left", "encore {n} jour{s}"],
+  wskLast: ["last day", "dernier jour"],
+  wskTotal: ["gained together · {n} players", "gagnés ensemble · {n} joueurs"],
+  wskNone: ["Nobody has gained a point in this skill yet this week. The first one takes the lead.", "Personne n’a encore gagné de point dans cette compétence cette semaine. Le premier prend la tête."],
+  wskMe: ["You ({n})", "Toi ({n})"],
+  wskMeNone: ["no gain yet", "pas encore de gain"],
+  wskFine: ["A new skill every Monday (UTC), by realm type. Gains seen by the daily read since Monday.", "Une nouvelle compétence chaque lundi (UTC), par type de royaume. Gains vus par le relevé quotidien depuis lundi."],
+  qT: ["Your place in the world · {n}", "Ta place dans le monde · {n}"],
+  qAmongC: ["compared with other {c} · {m}", "face aux autres : {c} · {m}"],
+  qAmong: ["compared with everyone · {m}", "face à tout le monde · {m}"],
+  qBetter: ["better than {n} %", "mieux que {n} %"],
+  qTop: ["top {n} %", "top {n} %"],
+  qLow: ["room to grow", "de la marge"],
+  qKb: ["Killing blows", "Coups fatals"],
+  qFine: ["Your values from the armory, placed among the read characters of your realm type (your class when it has at least 20).", "Tes valeurs de l’armurerie, placées parmi les personnages lus de ton type de royaume (ta classe quand elle en compte au moins 20)."],
+  stProgT: ["Progress records", "Records de progression"],
+  stProgSub: ["gains, not levels: open to everyone", "des gains, pas des niveaux : ouvert à tous"],
+  stG1: ["Best gain of the day", "Plus gros gain du jour"],
+  stG7: ["Best gain of the week", "Plus gros gain de la semaine"],
+  stLow: ["Leveling: best total (10–59)", "Leveling : meilleur total (10–59)"],
+  stLowFast: ["Leveling: fastest this week (10–59)", "Leveling : les plus rapides de la semaine (10–59)"],
+  stNoGain: ["Nobody yet.", "Personne pour l’instant."],
+  cmpT: ["Face to face", "Face à face"],
+  cmpSub: ["each column counts one realm type only, never added up", "chaque colonne compte un seul type de royaume, jamais additionnés"],
+  cmpTypes: ["Realm types · {r}", "Types de royaume · {r}"],
+  cmpRegions: ["EU vs US · {m}", "EU contre US · {m}"],
+  cmpL60: ["Share at level 60", "Part au niveau 60"],
+  cmpMax: ["At the maximum", "Au maximum"],
+  cmpAvg: ["Average total", "Total moyen"],
+  cmpG7: ["Average gain in 7 days", "Gain moyen sur 7 jours"],
+  cmpMovers: ["Progressed this week", "Ont progressé cette semaine"],
+  cmpTopCls: ["Most played class", "Classe la plus jouée"],
+  cmpSmall: ["small sample", "petit échantillon"],
+  cmpSmallTip: ["Fewer than 300 characters: percentages move a lot.", "Moins de 300 personnages : les pourcentages bougent beaucoup."],
   gNoMatchG: ['No guild matches these filters.', 'Aucune guilde ne correspond à ces filtres.'],
   gRanked: ['{n} ranked', '{n} classés'], gBest: ['best {v}', 'meilleur {v}'], gAvg: ['Average', 'Moyenne'],
   gAvgNote: ['average of the {top} best members · {min} ranked members minimum', 'moyenne des {top} meilleurs membres · {min} membres classés minimum'],
@@ -875,6 +919,122 @@ function renderHome() {
 const CLASS_COL = { 1: '#c79c6e', 2: '#f58cba', 3: '#abd473', 4: '#fff569', 5: '#ffffff', 7: '#3f9dff', 8: '#69ccf0', 9: '#a796e6', 11: '#ff7d0a' };   // Chaman et Démoniste éclaircis : lisibles sur le fond sombre
 const FACTION_COL = { ALLIANCE: '#4a7bd0', HORDE: '#c0392b' };
 const STATS = {};
+// ---------- Stats : les surprises (mur des 2 460, compétence de la semaine, ta place, face à face, progression) ----------
+// Chaque bloc a sa petite requête (/hs/wall, /hs/weekskill, /hs/quantiles, /hs/compare, /hs/rank), gardée 10 min ;
+// toujours par région ET type de royaume, jamais mélangés. Un bloc qui n'a pas répondu ne s'affiche pas (le reste oui).
+const STX_PEND = new Set(), STX_FAIL = new Set();
+function stx(path, ttl = 10 * 60e3) {
+  const v = Hs.peek(path); if (v) return v;
+  if (STX_FAIL.has(path)) return null;
+  if (!STX_PEND.has(path)) {
+    STX_PEND.add(path);
+    Hs.get(path, ttl).then(j => { if (j?.rows) remember(j.rows.map(x => x.p)); }, () => STX_FAIL.add(path))
+      .finally(() => { STX_PEND.delete(path); if (state.view === 'stats') renderStats(); });
+  }
+  return undefined;   // en cours
+}
+const stWait = n => `<div class="skel sk-mini" aria-hidden="true">${Array.from({ length: n }, () => '<i class="sk sk-l"></i>').join('')}</div>`;
+const stWho = p => `<a href="?p=char&c=${esc(encodeURIComponent(pkey(p)))}" data-c="${esc(pkey(p))}" style="--c:${CLASS_COL[p.classId] || 'var(--cream)'}">${esc(p.name)} ${esc(p.surname || '')}</a>`;
+// mon personnage dans ce type de royaume et cette région (le meilleur), pour « ta place » et « toi » dans la compétence de la semaine
+const stMine = rs => Bnet.mine().filter(p => (p.region || 'eu') === state.region && p.rulesetId === rs).sort((a, b) => b.total - a.total)[0] || null;
+
+// A. le mur des 2 460 : combien au maximum, les derniers arrivés (datés par le relevé), les prochains
+function stWall(rs) {
+  const j = stx(`/hs/wall?r=${state.region}&rs=${rs}`);
+  if (j === null) return '';
+  const head = `<h3>${t('wallT', { c: fmt(j?.cap || 2460) })} <small>${esc(rsLabel(rs))} · Forever ${state.region.toUpperCase()}</small></h3>`;
+  if (!j) return `<section class="st-sec st-wall">${head}${stWait(3)}</section>`;
+  const recent = j.recent?.length ? `<ul class="wall-faces">${j.recent.map(x => `<li><a href="?p=char&c=${esc(encodeURIComponent(pkey(x.p)))}" data-c="${esc(pkey(x.p))}" title="${esc(full(x.p))}">${avatar(x.p)}<b style="color:${CLASS_COL[x.p.classId] || 'inherit'}">${esc(x.p.name)}</b><small>${dayAgo(x.at + 'T12:00:00Z')}</small></a></li>`).join('')}</ul>`
+    : `<p class="note">${t('wallNoRecent')}</p>`;
+  const next = j.next?.length ? `<h4>${t('wallNext')}</h4><ol class="wall-next">${j.next.map(x => `<li>${avatar(x.p)}<span>${stWho(x.p)}<small>${esc(className(x.p))} · ${x.g7 > 0 ? `<span class="up">+${fmt(x.g7)} ${t('d7s')}</span>` : t('wallStill')}</small></span>
+      <i class="lbar"><i style="width:${(100 * (j.cap - x.left) / j.cap).toFixed(2)}%"></i></i><b>${fmt(j.cap - x.left)}</b><em>${x.eta != null ? t('wallEta', { n: fmt(Math.max(1, Math.ceil(x.eta))) }) : t('wallLeft', { n: fmt(x.left) })}</em></li>`).join('')}</ol>` : '';
+  return `<section class="st-sec st-wall">${head}
+    <div class="wall-big"><b>${fmt(j.atMax)}</b><span>${t('wallAt', { n: fmt(j.players) })}${j.week ? ` · <span class="up">${t('wallWeek', { n: fmt(j.week) })}</span>` : ''}</span></div>
+    ${recent}${next}<p class="st-fine">${t('wallFine')}</p></section>`;
+}
+
+// B. la compétence de la semaine : une compétence par semaine (lundi → dimanche, UTC), podium des gains, jauge commune
+function stWeekSkill(rs) {
+  const me = stMine(rs), j = stx(`/hs/weekskill?r=${state.region}&rs=${rs}${me ? '&k=' + encodeURIComponent(pkey(me)) : ''}`);
+  if (j === null) return '';
+  if (!j) return `<section class="st-sec st-wsk"><h3>${t('wskT')}</h3>${stWait(3)}</section>`;
+  const sk = skillById(j.skill), ic = sk.icon ? `<img src="${icon(sk.icon)}" alt="" decoding="async" referrerpolicy="no-referrer">` : '';
+  const pod = j.podium || [], top3 = [1, 0, 2].map(i => pod[i] ? `<div class="wsk-p r${Math.min(3, pod[i].r)}">${avatar(pod[i].p)}${stWho(pod[i].p)}<b>+${fmt(pod[i].gain)}</b><span>${ord(pod[i].r)}</span></div>` : '<div class="wsk-p none"></div>').join('');
+  const rest = pod.slice(3).map(x => `<li><span>${ord(x.r)}</span>${stWho(x.p)}<b>+${fmt(x.gain)}</b></li>`).join('');
+  const mine = me && j.me ? `<p class="wsk-me">${t('wskMe', { n: esc(me.name) })} : ${j.me.gain > 0 ? `<b>+${fmt(j.me.gain)}</b>${j.me.r ? ` · ${ord(j.me.r)}` : ''}` : t('wskMeNone')}</p>` : '';
+  const day = d => new Date(d + 'T12:00:00Z').toLocaleDateString(locale(), { day: 'numeric', month: 'long', timeZone: 'UTC' });
+  return `<section class="st-sec st-wsk"><h3>${t('wskT')} <small>${esc(rsLabel(rs))} · ${day(j.start)} – ${day(j.end)}</small></h3>
+    <div class="wsk-head">${ic}<div><b>${esc(sk.label())}</b><span>${j.daysLeft > 0 ? t('wskLeft', { n: j.daysLeft }) : t('wskLast')}</span></div>
+      ${j.total > 0 ? `<div class="wsk-tot"><b>+${fmt(j.total)}</b><span>${t('wskTotal', { n: fmt(j.players || 0) })}</span></div>` : ''}</div>
+    ${pod.length ? `<div class="wsk-pod">${top3}</div>${rest ? `<ol class="wsk-rest">${rest}</ol>` : ''}` : `<p class="note">${t('wskNone')}</p>`}
+    ${mine}<p class="st-fine">${t('wskFine')}</p></section>`;
+}
+
+// C. ta place dans le monde (connecté) : centiles dans ton type de royaume, et dans ta classe quand elle compte assez de joueurs
+const Q_KEYS = [['total', p => p.total, () => skillById('total').label()], ['level', p => p.level, 'level'], ['defense', p => p.defense, 'defense'], ['hk', p => skillById('hk').get(p), 'stHk'],
+  ['killingBlows', p => p.stats?.killingBlows, 'qKb'], ['kills', p => p.stats?.kills, 'stKills'], ['quests', p => p.stats?.quests, 'stQuests'], ['dungeons', p => p.stats?.dungeons, 'stDungeons'], ['flights', p => p.stats?.flights, 'stFlights']];
+const capF = x => x.charAt(0).toLocaleUpperCase(locale()) + x.slice(1);
+const qTier = c => c >= 99 ? 'q5' : c >= 95 ? 'q4' : c >= 75 ? 'q3' : c >= 50 ? 'q2' : 'q1';
+function stPlace(rs) {
+  const me = stMine(rs); if (!me) return '';
+  const j = stx(`/hs/quantiles?r=${state.region}&rs=${rs}`, 30 * 60e3);
+  if (j === null) return '';
+  if (!j) return `<section class="st-sec st-place">${stWait(4)}</section>`;
+  const rows = Q_KEYS.map(([k, get, lbl]) => {
+    const s = j.skills?.[k], v = get(me); if (!s || v == null) return '';
+    const src = s.cls?.[me.classId] || s;   // la classe d'abord (20 joueurs au moins), sinon tout le type de royaume
+    let c = 0; j.points.forEach((pt, i) => { if (v >= src.q[i]) c = pt; });
+    const txt = c >= 95 ? t('qTop', { n: 100 - c }) : c ? t('qBetter', { n: c }) : t('qLow');
+    return `<li class="${qTier(c)}"><span>${capF(typeof lbl === 'function' ? lbl() : t(lbl))}</span><i class="qbar"><i style="width:${Math.max(3, c)}%"></i></i><b>${fmt(v)}</b><em>${txt}</em></li>`;
+  }).join('');
+  if (!rows) return '';
+  const byCls = !!j.skills?.total?.cls?.[me.classId];
+  return `<section class="st-sec st-place"><h3>${t('qT', { n: esc(full(me)) })} <small>${byCls ? t('qAmongC', { c: esc(className(me)), m: esc(rsLabel(rs)) }) : t('qAmong', { m: esc(rsLabel(rs)) })}</small></h3>
+    <ul class="qlist">${rows}</ul><p class="st-fine">${t('qFine')}</p></section>`;
+}
+
+// Records de progression et Leveling (10–59) : petites listes tirées des classements (même rang pour une même valeur)
+function stProgress(rs) {
+  const base = `/hs/rank?r=${state.region}&rs=${rs}&pg=1&per=10`;
+  const lists = [['stG1', base + '&skill=total&sort=g1', 'g1'], ['stG7', base + '&skill=total&sort=g7', 'g7'], ['stLow', base + '&skill=total&low=1', 'v'], ['stLowFast', base + '&skill=level&sort=g7&low=1', 'g7']];
+  const cards = lists.map(([lbl, path, f]) => {
+    const j = stx(path); if (j === null) return '';
+    const body = !j ? stWait(3) : j.rows.length ? `<ol>${j.rows.slice(0, 5).map(x => `<li>${stWho(x.p)}<b>${f === 'v' ? fmt(x.v) : '+' + fmt(x[f])}</b></li>`).join('')}</ol>` : `<p class="note">${t('stNoGain')}</p>`;
+    return `<div class="st-rec"><h4>${t(lbl)}</h4>${body}</div>`;
+  }).join('');
+  return cards ? `<section class="st-sec"><h3>${t('stProgT')} <small>${t('stProgSub')}</small></h3><div class="st-recs">${cards}</div></section>` : '';
+}
+
+// Face à face : les types de royaume d'une région côte à côte, ou EU contre US pour un même type. Chaque colonne est calculée
+// dans un seul type ; on compare des colonnes, on n'additionne jamais. Valeurs rapportées à la population.
+function stCompare(rs) {
+  const vs = state.stvs === 'reg';
+  const eu = stx('/hs/compare?r=eu'), us = vs || state.region === 'us' ? stx('/hs/compare?r=us') : undefined;
+  const mine = state.region === 'us' ? us : eu;
+  if (mine === null) return '';
+  const tabs = `<div class="chips st-vs" role="group"><span class="chip${vs ? '' : ' on'}" data-stvs="rs" role="button" tabindex="0">${t('cmpTypes', { r: state.region.toUpperCase() })}</span><span class="chip${vs ? ' on' : ''}" data-stvs="reg" role="button" tabindex="0">${t('cmpRegions', { m: esc(rsLabel(rs)) })}</span></div>`;
+  const head = `<h3>${t('cmpT')} <small>${t('cmpSub')}</small></h3>${tabs}`;
+  if (!mine || (vs && !(eu && us))) return `<section class="st-sec st-cmp">${head}${(vs && (eu === null || us === null)) ? '' : stWait(4)}</section>`;
+  const cols = vs ? [['EU', eu.types?.[rs]], ['US', us.types?.[rs]]] : RULESETS.map(([id, names]) => [L2(names), mine.types?.[id], id]);
+  const shown = cols.filter(([, c]) => c && c.n);
+  if (!shown.length) return '';
+  const pc = (a, b) => b ? `${(100 * a / b).toLocaleString(locale(), { maximumFractionDigits: 1 })} %` : '—';
+  const topCls = c => { const e = Object.entries(c.classes || {}).sort((a, b) => b[1] - a[1])[0]; return e ? `<span style="color:${CLASS_COL[e[0]]}">${esc(L2(CLASS[e[0]]))}</span> <small>${pc(e[1], c.n)}</small>` : '—'; };
+  const lines = [
+    [capF(t('stChars')), c => fmt(c.n)],
+    [t('cmpL60'), c => pc(c.l60, c.n)],
+    [t('cmpMax'), c => `${fmt(c.atMax)} <small>${pc(c.atMax, c.n)}</small>`],
+    [t('cmpAvg'), c => fmt(Math.round(c.avgTotal))],
+    [t('cmpG7'), c => c.avgG7 ? '+' + c.avgG7.toLocaleString(locale(), { maximumFractionDigits: 1 }) : '—'],
+    [t('cmpMovers'), c => pc(c.movers, c.n)],
+    ['Alliance', c => pc(c.factions?.ALLIANCE || 0, c.n)],
+    [t('cmpTopCls'), topCls],
+  ];
+  const on = id => !vs && id === rs;
+  return `<section class="st-sec st-cmp">${head}<div class="st-scroll"><table class="st-table cmp"><thead><tr><th></th>${shown.map(([n, c, id]) => `<th class="${on(id) ? 'on' : ''}">${esc(n)}${c.small ? `<small class="cmp-small" title="${esc(t('cmpSmallTip'))}">${t('cmpSmall')}</small>` : ''}</th>`).join('')}</tr></thead>
+    <tbody>${lines.map(([l, f]) => `<tr><th>${l}</th>${shown.map(([, c, id]) => `<td class="${on(id) ? 'on' : ''}">${f(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-stvs]'); if (!b) return; state.stvs = b.dataset.stvs; renderStats(); });
 function renderStats() {
   const box = $('#stats-panel'); if (!box) return;
   const r = state.region, sk = r + '/' + (state.rs || ''), d = STATS[sk];   // par région et type de royaume (jamais mélangés)
@@ -938,10 +1098,10 @@ function renderStats() {
     <div class="st-tiles">${tile(fmt(kN), t('stChars'))}${tile(fmt(K ? K.lvl60 : d.lvl60), t('stLvl60'))}${tile(fmt(K ? Math.max(K.guilds, d.guilds.n) : d.guilds.n), t('stGuilds'))}${K ? tile(fmt(d.n), t('stRead')) : ''}${tile(fmt(d.pvp.hk), t('stHk'))}${tile(fmt(duels), t('stDuels'))}</div>
     ${K && d.n < K.n ? `<div class="st-progress"><span>${t('stProgress', { r: fmt(d.n), n: fmt(K.n) })}</span><i style="--w:${(100 * d.n / K.n).toFixed(1)}%"></i></div>` : ''}
     <p class="st-bias">${t('stBias')}</p>
+    ${stPlace(d.rs || state.rs)}${stWall(d.rs || state.rs)}${stWeekSkill(d.rs || state.rs)}${stProgress(d.rs || state.rs)}${stCompare(d.rs || state.rs)}
     <section class="st-sec"><h3>${t('stClasses')} <small>${t('stClassesSub')}</small></h3>
       <div class="st-scroll"><table class="st-table"><thead><tr><th>${t('stColClass')}</th><th>${t('stColShare')}</th><th>${t('stColLvl')}</th><th>${t('stCol60')}</th><th>${t('stColHk')}</th><th title="${esc(t('stKdTip'))}">${t('stColKd')}</th><th>${t('stColDuel')}</th></tr></thead><tbody>${classRows}</tbody></table></div></section>
     <div class="st-grid">
-      <section class="st-sec"><h3>${t('stByMode')}</h3>${byMode}</section>
       <section class="st-sec"><h3>${t('stDuelBest')}</h3><ul class="st-list">${duelList}</ul></section>
       <section class="st-sec"><h3>${t('stFactions')}</h3>${facBar}<h3>${t('stRaces')}</h3><ul class="st-list">${races}</ul></section>
       <section class="st-sec"><h3>${t('stLevels')}</h3>${levels}</section>
