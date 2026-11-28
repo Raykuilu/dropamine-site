@@ -22,6 +22,7 @@ const API = {
   feed: since => ({ status: crawl.status(), events: crawl.feed(since) }),
   search: (q, limit) => crawl.search(q, limit),
   char: k => crawl.char(k) ?? crawl.readNow(k),
+  guild: gkey => crawl.guild(gkey),
   rank: (r, pg, per) => crawl.rank(r, pg, per),
   lookup: (r, name) => crawl.lookup(r, name),
   // tout ce qui est lu, déjà compressé (mise à jour du site) : refait au plus toutes les 10 min

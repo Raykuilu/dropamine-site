@@ -82,3 +82,14 @@ test('régulateur : refus → débit / 2, remontée d’un demi-cran par minute,
   assert.equal(regMode({ rate: 9, target: 9, hourCalls: 1000, manualLastMin: 200 }), 'afflux');
   assert.equal(regMode({ rate: 9, target: 9, hourCalls: 1000, manualLastMin: 10 }), 'normal');
 });
+
+import { guildMembers } from './crawl.mjs';
+test('guilde : tous les membres connus, lus ou seulement vus dans la liste', () => {
+  const db = openCrawlDb(':memory:');
+  addGuild(db, 'eu', 'krijgers', 'Krijgers', 'follow');
+  addChars(db, [{ key: 'eu/frosty-wizard', level: 53, name: 'Frosty', surname: 'Wizard', cls: 8, race: 8, faction: 'HORDE', gname: 'Krijgers', gkey: 'eu/krijgers' }], 'guild', 100);
+  saveChar(db, crawlPlayer('eu', 'ray-kuilu', api({ profile: { guild: { name: 'Krijgers', slug: 'krijgers' } } })), 100);
+  const g = guildMembers(db, 'eu/krijgers');
+  assert.equal(g.name, 'Krijgers');
+  assert.deepEqual(g.members.map(m => [m.key, m.read]), [['eu/ray-kuilu', true], ['eu/frosty-wizard', false]]);
+});

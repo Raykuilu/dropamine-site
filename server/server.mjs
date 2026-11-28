@@ -370,6 +370,10 @@ async function crawlRoute(req, res, url) {
       s ? sendPublic(req, res, s, 600) : send(res, 404, { error: 'inconnu' }, cors);
     }
     else if (p === '/hs/search') sendPublic(req, res, { results: await crawl.call('search', String(url.searchParams.get('q') || '').slice(0, 40), 20) }, 60);
+    else if (p === '/hs/guild') {
+      const k = String(url.searchParams.get('k') || '').toLowerCase();
+      /^(eu|us|tw)\/[\p{L}\p{N}' -]{1,60}$/u.test(k) ? sendPublic(req, res, await crawl.call('guild', k), 300) : send(res, 400, { error: 'clé' }, cors);
+    }
     else if (p === '/hs/char') {
       const k = String(url.searchParams.get('k') || '').toLowerCase();
       const c = validKey(k) ? await crawl.call('char', k) : null;

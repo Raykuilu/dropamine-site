@@ -21,7 +21,13 @@ const li = () => Math.max(0, LANGS.indexOf(LANG));
 let I18X = null, ITEMX = null;   // langue en plus : textes et noms, puis ses objets
 const extra = () => LANG !== 'en' && LANG !== 'fr';
 const I18N = {
-  'tab.rank': ['Hiscores', 'Classements'], lvlH: ['LEVEL', 'NIVEAU'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'], 'acct.out': ['Sign out', 'Se déconnecter'],
+  'tab.rank': ['Hiscores', 'Classements'],
+  'gt.members': ['Members', 'Membres'], 'gt.stats': ['Stats', 'Stats'], 'gt.progress': ['This week', 'Cette semaine'],
+  gq: ['Find a member…', 'Chercher un membre…'], only60: ['Level 60 only', 'Niveau 60 seulement'], d7s: ['in 7 days', 'en 7 jours'],
+  gUnread: ['Not read yet ({n})', 'Pas encore lus ({n})'], gUnreadSub: ['known from the guild roster; click to read them now', 'connus par la liste de la guilde ; clique pour les lire tout de suite'],
+  gNoMatch: ['No member matches these filters.', 'Aucun membre ne correspond à ces filtres.'], gNoneRead: ['No member read in detail yet.', 'Aucun membre lu en détail pour l’instant.'],
+  gKnown: ['members known', 'membres connus'], gOnSite: ['read in detail', 'lus en détail'], gOnKnown: ['{n} known members', '{n} membres connus'], gOnRead: ['{n} members read', '{n} membres lus'],
+  gPvp: ['PvP', 'JcJ'], gKb: ['Killing blows', 'Coups fatals'], gTopWeek: ['Biggest gains of the week', 'Plus gros gains de la semaine'], lvlH: ['LEVEL', 'NIVEAU'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'], 'acct.out': ['Sign out', 'Se déconnecter'],
   myChars: ['My characters', 'Mes personnages'],
   youHere: ['YOU', 'TOI'],
   pulseDl: ['{n} downloads', '{n} téléchargements'], pulseChars: ['{n} characters tracked', '{n} personnages suivis'], pulseGuilds: ['{n} guild{s}', '{n} guilde{s}'],
@@ -1864,6 +1870,8 @@ function gain7(p) {
   const last = h[h.length - 1], cut = new Date(new Date(last.d) - 7 * 864e5).toISOString().slice(0, 10);
   return histDiff(p, [...h].reverse().find(x => x.d <= cut) || h[0], last);
 }
+const GUILD_KNOWN = new Map();   // membres connus du relevé serveur, par guilde (« région/slug »)
+const foldTxt = s => String(s ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 function renderGuild() {
   if (DATA.loading) { $('#guild-panel').innerHTML = loadingBox(); return; }
   if (DATA.failed) { $('#guild-panel').innerHTML = failed(); return; }
@@ -1885,57 +1893,113 @@ function renderGuild() {
     return;
   }
   const rank = all.indexOf(g) + 1, members = [...g.members].sort((a, b) => b.total - a.total);
+  // membres connus du relevé serveur (liste de la guilde) : chargés une fois, en plus de ceux publiés sur le site
+  const gk = `${state.region}/${g.slug}`;
+  if (!GUILD_KNOWN.has(gk)) {
+    GUILD_KNOWN.set(gk, null);
+    fetch(`${API}/hs/guild?k=${encodeURIComponent(gk)}`).then(r => r.ok ? r.json() : null).catch(() => null)
+      .then(j => { GUILD_KNOWN.set(gk, j || { members: [] }); if (state.view === 'guild' && state.g === g.slug) renderGuild(); });
+  }
+  const known = GUILD_KNOWN.get(gk), pubKeys = new Set(members.map(pkey));
+  const unread = (known?.members || []).filter(m => !pubKeys.has(m.key)).sort((a, b) => b.level - a.level);
+  const everyone = [...members.map(p => ({ level: p.level, classId: p.classId })), ...unread];
+  const n60 = everyone.filter(p => p.level >= 60).length, avgLvl = everyone.length ? everyone.reduce((s, p) => s + p.level, 0) / everyone.length : 0;
+  const faction = members.find(p => p.faction)?.faction || unread.find(p => p.faction)?.faction || null;
+  const hk = members.reduce((n, p) => n + (armoryStat(p, 'hk') || 0), 0);
+  const tab = ['members', 'stats', 'progress'].includes(state.gt) ? state.gt : 'members';
   const gsk = skillById(state.gs), avail = SKILLS.filter(s => s.id === 'total' || members.some(p => s.get(p) && !(s.est && s.est(p))));
-  const ranked = gsk.id === 'total' ? members.map((p, i) => ({ p, v: p.total, r: i + 1 })) : rankBy(gsk, members);
-  // membres par pages de RANK_PER ; autre guilde ou autre tri : retour à la page 1
-  const mSig = g.slug + '|' + gsk.id;
+  // filtres de la liste des membres : recherche, classe, niveau 60 seulement
+  const q = foldTxt(state.gq || ''), cl = +state.gcl || 0, only60 = !!state.g60;
+  const keep = p => (!q || foldTxt(`${p.name} ${p.surname}`).includes(q)) && (!cl || p.classId === cl) && (!only60 || p.level >= 60);
+  const ranked = (gsk.id === 'total' ? members.map((p, i) => ({ p, v: p.total, r: i + 1 })) : rankBy(gsk, members)).filter(x => keep(x.p));
+  const unreadShown = unread.filter(keep);
+  const mSig = [g.slug, gsk.id, q, cl, only60].join('|');
   if (state.gmKey !== mSig) { state.gmpg = 1; state.gmKey = mSig; }
   state.gmpg = pageOf(state.gmpg, ranked.length);
   const mFrom = (state.gmpg - 1) * RANK_PER;
   let og = '', grp0;
   avail.forEach(s => {
     const opt = `<option value="${s.id}"${s.id === gsk.id ? ' selected' : ''}>${esc(s.label())}</option>`;
-    if (!s.group) { og += opt; return; }   // « Niveau total » seul, hors groupe
+    if (!s.group) { og += opt; return; }
     if (s.group !== grp0) { if (grp0) og += '</optgroup>'; grp0 = s.group; og += `<optgroup label="${t('g.' + s.group)}">`; }
     og += opt; });
   if (grp0) og += '</optgroup>';
-  let best = null; members.forEach(p => p.professions?.forEach(pr => { if (!best || pr.skill > best.pr.skill) best = { p, pr }; }));
-  const gains = members.map(p => ({ p, d: gain7(p) })).filter(x => x.d > 0).sort((a, b) => b.d - a.d);
-  const feat = (k, v, s) => `<div class="feat"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
-  // la guilde comme un seul grand personnage : sa barre trois couleurs, et le meilleur de chaque métier
-  const sum = k => members.reduce((a, p) => a + (p.parts?.[k] || 0), 0);
-  const gp = { total: g.total, max: members.length * 2460, parts: { level: sum('level'), combat: sum('combat'), professions: sum('professions') }, complete: members.every(p => p.complete) };
-  const bestOf = [];
-  for (const id of PROF_ORDER) {
-    let b = null; members.forEach(p => { const pr = p.professions?.find(x => x.id === id); if (pr && (!b || pr.skill > b.pr.skill)) b = { p, pr }; });
-    if (b) bestOf.push({ key: 'p' + id, img: PROF_ICON[id], name: profName(id, b.pr.name), rank: b.pr.skill, max: b.pr.max || 300, group: 'prf', tier: `${b.p.name} ${b.p.surname}` });
+  const tile = (n, l) => `<div class="st-tile"><b>${n}</b><span>${l}</span></div>`;
+  const tabs = `<div class="gtabs" role="tablist">${['members', 'stats', 'progress'].map(k => `<button type="button" role="tab" class="gtab${k === tab ? ' on' : ''}" data-gt="${k}" aria-selected="${k === tab}">${t('gt.' + k)}</button>`).join('')}</div>`;
+  let body = '';
+  if (tab === 'members') {
+    const classes = [...new Set(everyone.map(p => p.classId).filter(Boolean))].sort((a, b) => a - b);
+    const tools = `<div class="gtools">
+      <label class="gq"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" data-gq value="${esc(state.gq || '')}" placeholder="${esc(t('gq'))}" aria-label="${esc(t('gq'))}"></label>
+      <div class="chips gcl" role="group"><span class="chip${!cl ? ' on' : ''}" data-gcl="0" role="button" tabindex="0">${t('allClasses')}</span>${classes.map(id => `<span class="chip${cl === id ? ' on' : ''}" data-gcl="${id}" role="button" tabindex="0" style="--c:${CLASS_COL[id] || 'var(--cream)'}">${esc(L2(CLASS[id]) || '?')}</span>`).join('')}</div>
+      <span class="chip${only60 ? ' on' : ''}" data-g60 role="button" tabindex="0">★ ${t('only60')}</span>
+      <div class="gsort"><label for="gs">${t('sortBy')}</label><select id="gs" data-gs>${og}</select></div></div>`;
+    const rows = ranked.slice(mFrom, mFrom + RANK_PER).map(({ p, v, r }) => {
+      const d = gain7(p), tot = gsk.id === 'total';
+      const bar = tot ? tri(p) : gsk.prof ? `<span class="mbar"><i style="--w:${(100 * v / (p.professions.find(x => x.id === gsk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
+        : gsk.wpn ? `<span class="mbar w"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>`
+        : gsk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, gsk.ratio(v, p))).toFixed(1)}%"></i></span>` : '<span class="c3"></span>';
+      return `<div class="row${r <= 3 ? ' top' : ''}" data-c="${esc(pkey(p))}" role="row"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b style="color:${CLASS_COL[p.classId] || 'inherit'}">${full(p)}</b><small>${esc(className(p))}${d > 0 ? ` · <span class="up">+${fmt(d)} ${t('d7s')}</span>` : ''}</small></span></span><span class="lv${p.level >= 60 ? ' max' : ''}">${p.level}</span>${bar}<span class="tot">${showVal(gsk, v, p)}</span></div>`;
+    }).join('');
+    const UNREAD_MAX = 150;
+    const unreadBox = unreadShown.length ? `<section class="gunread"><h3>${t('gUnread', { n: fmt(unreadShown.length) })} <small>${t('gUnreadSub')}</small></h3>
+      <div class="gu-list">${unreadShown.slice(0, UNREAD_MAX).map(m => `<a class="gu" href="?p=char&c=${esc(encodeURIComponent(m.key))}" data-c="${esc(m.key)}" style="--c:${CLASS_COL[m.classId] || 'var(--cream)'}"><b>${esc(m.name || '')} ${esc(m.surname || '')}</b><span>${m.level >= 60 ? '★ ' : ''}${m.level}</span></a>`).join('')}${unreadShown.length > UNREAD_MAX ? `<span class="gu more">+${fmt(unreadShown.length - UNREAD_MAX)}</span>` : ''}</div></section>` : '';
+    body = `${tools}
+      <div class="rows rk-lv" role="table" style="margin-top:10px">
+        <div class="row th" role="row"><span>${t('rank')}</span><span>${t('member')}</span><span class="lv">${t('lvlH')}</span><span class="c3">${gsk.id === 'total' ? t('split') : ''}</span><span style="text-align:right">${gsk.id === 'total' ? t('totalH') : esc(gsk.label())}</span></div>
+        ${rows || `<div class="empty">${t(members.length ? 'gNoMatch' : 'gNoneRead')}</div>`}
+      </div>${pagerNav('gmem', state.gmpg, Math.ceil(ranked.length / RANK_PER), ranked.length)}${unreadBox}`;
+  } else if (tab === 'stats') {
+    // la guilde comme un seul grand personnage : sa barre trois couleurs, et le meilleur de chaque métier
+    const sum = k => members.reduce((a, p) => a + (p.parts?.[k] || 0), 0);
+    const gp = { total: g.total, max: members.length * 2460, parts: { level: sum('level'), combat: sum('combat'), professions: sum('professions') }, complete: members.every(p => p.complete) };
+    const bestOf = [];
+    for (const id of PROF_ORDER) {
+      let b = null; members.forEach(p => { const pr = p.professions?.find(x => x.id === id); if (pr && (!b || pr.skill > b.pr.skill)) b = { p, pr }; });
+      if (b) bestOf.push({ key: 'p' + id, img: PROF_ICON[id], name: profName(id, b.pr.name), rank: b.pr.skill, max: b.pr.max || 300, group: 'prf', tier: `${b.p.name} ${b.p.surname}` });
+    }
+    const bd = members.reduce((b, p) => (p.defense || 0) > (b?.defense || 0) ? p : b, null);
+    if (bd?.defense) bestOf.unshift({ key: 'defense', img: DEF_ICON, name: t('defense'), rank: bd.defense, max: 5 * bd.level, group: 'wpn', tier: `${bd.name} ${bd.surname}` });
+    // classes de tous les membres connus
+    const byCls = {}; everyone.forEach(p => { if (p.classId) byCls[p.classId] = (byCls[p.classId] || 0) + 1; });
+    const maxC = Math.max(1, ...Object.values(byCls));
+    const clsBars = Object.entries(byCls).sort((a, b) => b[1] - a[1]).map(([id, n]) => `<li><span style="color:${CLASS_COL[id]}">${esc(L2(CLASS[id]) || '?')}</span><span class="st-bar"><i style="width:${Math.max(2, n / maxC * 100)}%;background:${CLASS_COL[id]}"></i></span><small>${fmt(n)} · ${Math.round(100 * n / everyone.length)} %</small></li>`).join('');
+    // métiers : combien les ont, combien au maximum
+    const profs = PROF_ORDER.map(id => { const w = members.filter(p => p.professions?.some(x => x.id === id)); return { id, n: w.length, max: w.filter(p => p.professions.find(x => x.id === id).skill >= 300).length }; }).filter(x => x.n);
+    const profList = profs.sort((a, b) => b.n - a.n).map(x => `<li>${PROF_ICON[x.id] ? `<img src="${icon(PROF_ICON[x.id])}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span></span>'}<span>${esc(profName(x.id))}</span><small>${fmt(x.n)} · ${fmt(x.max)} × 300</small></li>`).join('');
+    // JcJ
+    const top = (k) => members.map(p => ({ p, v: armoryStat(p, k) || 0 })).filter(x => x.v > 0).sort((a, b) => b.v - a.v)[0];
+    const tHk = top('hk'), tDuel = top('duelsWon'), tKb = top('killingBlows');
+    const pvp = [[t('stRecHk'), tHk], [t('stRecDuels'), tDuel], [t('gKb'), tKb]].filter(([, x]) => x)
+      .map(([l, x]) => `<div class="feat"><div class="k">${l}</div><div class="v">${full(x.p)}</div><div class="s">${fmt(x.v)}</div></div>`).join('');
+    body = `<div class="gstats">
+      <section class="dpanel guildp"><div class="dhead"><h3 class="sub">${t('bestByProf')}</h3></div><div class="slist">${bestOf.map(lineOf).join('')}</div>${dropBar(gp)}</section>
+      <section class="dpanel"><div class="dhead"><h3 class="sub">${t('stClasses')}</h3><span class="note">${t('gOnKnown', { n: fmt(everyone.length) })}</span></div><ul class="st-list">${clsBars}</ul></section>
+      <section class="dpanel"><div class="dhead"><h3 class="sub">${t('stProfs')}</h3><span class="note">${t('gOnRead', { n: fmt(members.length) })}</span></div><ul class="st-list st-prof gprof">${profList}</ul></section>
+      ${pvp ? `<section class="dpanel"><div class="dhead"><h3 class="sub">${t('gPvp')}</h3><span class="note">${fmt(hk)} ${t('stHk')}</span></div><div class="feats">${pvp}</div></section>` : ''}
+    </div>`;
+  } else {
+    let best = null; members.forEach(p => p.professions?.forEach(pr => { if (!best || pr.skill > best.pr.skill) best = { p, pr }; }));
+    const gains = members.map(p => ({ p, d: gain7(p) })).filter(x => x.d > 0).sort((a, b) => b.d - a.d);
+    const feat = (k, v, s) => `<div class="feat"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+    body = `<div class="feats">
+        ${members[0] ? feat(t('bestTotal'), full(members[0]), fmt(members[0].total)) : ''}
+        ${best ? feat(t('bestProf'), full(best.p), `${esc(profName(best.pr.id, best.pr.name))} · ${best.pr.skill}`) : ''}
+        ${gains.length ? feat(t('bestWeek'), full(gains[0].p), t('inWeek', { n: fmt(gains[0].d) })) : feat(t('bestWeek'), '—', t('notEnough'))}
+      </div>
+      <section class="dpanel"><div class="dhead"><h3 class="sub">${t('gTopWeek')}</h3></div>
+        ${gains.length ? `<ol class="gweek">${gains.slice(0, 15).map(x => `<li data-c="${esc(pkey(x.p))}"><span><b style="color:${CLASS_COL[x.p.classId] || 'inherit'}">${full(x.p)}</b><small>${esc(className(x.p))} ${x.p.level}</small></span><span class="up">+${fmt(x.d)}</span></li>`).join('')}</ol>` : `<p class="note">${t('notEnough')}</p>`}
+      </section>`;
   }
-  const bd = members.reduce((b, p) => (p.defense || 0) > (b?.defense || 0) ? p : b, null);
-  if (bd?.defense) bestOf.unshift({ key: 'defense', img: DEF_ICON, name: t('defense'), rank: bd.defense, max: 5 * bd.level, group: 'wpn', tier: `${bd.name} ${bd.surname}` });
-  const clan = `<div class="dpanel guildp"><div class="dhead"><h3 class="sub">${t('bestByProf')}</h3></div>
-      <div class="slist">${bestOf.map(lineOf).join('')}</div>${dropBar(gp)}</div>`;
   $('#guild-panel').innerHTML = `
     <span class="back" data-g="">${t('allGuilds')}</span>
     <div class="who gh">
-      <div><h2>${esc(g.name)}</h2><p>${t('membersN', { n: members.length })}</p><button class="share gshare" type="button" data-gshare="${esc(g.slug)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button></div>
-      <div class="score"><div class="n" data-n="${g.total}">${fmt(g.total)}</div><div class="r">${t('guildTotal', { r: ord(rank) })}</div></div>
+      <div><h2>${esc(g.name)}</h2><p>${faction ? `<span class="gfac ${faction === 'HORDE' ? 'h' : 'a'}">${faction === 'HORDE' ? 'Horde' : 'Alliance'}</span> · ` : ''}${state.region.toUpperCase()} · ${t('guildTotal', { r: ord(rank) })}</p><button class="share gshare" type="button" data-gshare="${esc(g.slug)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button></div>
+      <div class="score"><div class="n" data-n="${g.total}">${fmt(g.total)}</div><div class="r">${t('totalH')}</div></div>
     </div>
-    <div class="feats">
-      ${feat(t('bestTotal'), full(members[0]), fmt(members[0].total))}
-      ${best ? feat(t('bestProf'), full(best.p), `${esc(profName(best.pr.id, best.pr.name))} · ${best.pr.skill}`) : ''}
-      ${gains.length ? feat(t('bestWeek'), full(gains[0].p), t('inWeek', { n: fmt(gains[0].d) })) : feat(t('bestWeek'), '—', t('notEnough'))}
-    </div>
-    ${clan}
-    <div class="gsort"><label for="gs">${t('sortBy')}</label><select id="gs" data-gs>${og}</select>${gsk.group === 'book' && !gsk.armory ? `<span class="note">${t('trustShort')}</span>` : ''}</div>
-    <div class="rows" style="margin-top:10px">
-      <div class="row th g"><span>${t('rank')}</span><span>${t('member')}</span><span class="c3">${gsk.id === 'total' ? t('split') : ''}</span><span class="c4" style="text-align:right">${gsk.id === 'total' ? t('d7') : ''}</span><span style="text-align:right">${gsk.id === 'total' ? t('totalH') : esc(gsk.label())}</span></div>
-      ${ranked.length ? ranked.slice(mFrom, mFrom + RANK_PER).map(({ p, v, r }) => { const d = gain7(p), tot = gsk.id === 'total';
-        const bar = tot ? tri(p) : gsk.prof ? `<span class="mbar"><i style="--w:${(100 * v / (p.professions.find(x => x.id === gsk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
-          : gsk.wpn ? `<span class="mbar w"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>`
-          : gsk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, gsk.ratio(v, p))).toFixed(1)}%"></i></span>` : '<span class="c3"></span>';
-        return `<div class="row g${r <= 3 ? ' top' : ''}" data-c="${esc(pkey(p))}"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b><small>${esc(className(p))} ${p.level}</small></span></span>${bar}<span class="up">${tot ? (d ? (d > 0 ? '+' : '') + fmt(d) : '—') : ''}</span><span class="tot">${showVal(gsk, v, p)}${tot ? estTag(p) : ''}</span></div>`; }).join('')
-        : nobody()}
-    </div>${pagerNav('gmem', state.gmpg, Math.ceil(ranked.length / RANK_PER), ranked.length)}`;
+    <div class="st-tiles gtiles">${tile(fmt(everyone.length), t('gKnown'))}${tile(fmt(members.length), t('gOnSite'))}${tile(fmt(n60), t('stLvl60'))}${tile(avgLvl ? avgLvl.toLocaleString(locale(), { maximumFractionDigits: 1 }) : '—', t('stColLvl'))}${tile(fmt(hk), t('stHk'))}</div>
+    ${tabs}
+    <div class="gbody">${body}</div>`;
 }
 
 /* ---------- Runs : les joueurs qui chassent dans le même donjon ---------- */
@@ -2639,6 +2703,16 @@ function renderNews() {
     `<p style="margin:18px 0 0;color:var(--faint);font-style:italic">${t('fullHistory')} <a href="https://github.com/Raykuilu/Dropamine/blob/main/${LANG === 'fr' ? 'CHANGELOG.fr.md' : 'CHANGELOG.md'}" rel="noopener">GitHub</a>.</p>`;
 }
 document.addEventListener('click', e => { const a = e.target.closest('[data-sec]'); if (!a) return; e.preventDefault(); document.getElementById(a.dataset.sec)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); });
+document.addEventListener('click', e => {
+  const gt = e.target.closest('[data-gt]'); if (gt) { state.gt = gt.dataset.gt; renderGuild(); animate($('#guild')); return; }
+  const gc = e.target.closest('[data-gcl]'); if (gc) { state.gcl = +gc.dataset.gcl || 0; renderGuild(); animate($('#guild')); return; }
+  if (e.target.closest('[data-g60]')) { state.g60 = !state.g60; renderGuild(); animate($('#guild')); }
+});
+let gqT = 0;
+document.addEventListener('input', e => {
+  const i = e.target.closest('[data-gq]'); if (!i) return;
+  clearTimeout(gqT); gqT = setTimeout(() => { state.gq = i.value; const pos = i.selectionStart; renderGuild(); const n = $('[data-gq]'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 200);
+});
 document.addEventListener('change', e => { const sel = e.target.closest('[data-gs]'); if (!sel) return; state.gs = sel.value; renderGuild(); animate($('#guild-panel')); });
 document.addEventListener('click', e => { const x = e.target.closest('.release.folded .toggle'); if (x) { x.closest('.release').classList.remove('folded'); x.remove(); } });
 
@@ -2962,6 +3036,7 @@ let goN = 0;
 function go(patch) {
   const changedView = patch.view && patch.view !== state.view;
   const newPage = changedView || ('c' in patch && patch.c !== state.c) || ('g' in patch && patch.g !== state.g);
+  if ('g' in patch && patch.g !== state.g) Object.assign(state, { gq: '', gcl: 0, g60: false, gt: 'members' });
   Object.assign(state, patch);
   const n = ++goN, box = newPage && PANEL[state.view] && $(PANEL[state.view]);
   if (box) {

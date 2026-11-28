@@ -1575,3 +1575,31 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .st-progress{position:relative;margin:4px 0 12px;padding:8px 12px;border:1px solid var(--line-2);border-radius:10px;background:#0d0a07;overflow:hidden;font-size:14px;color:var(--muted)}
 .st-progress span{position:relative;z-index:1}
 .st-progress i{position:absolute;left:0;bottom:0;height:3px;width:var(--w);background:linear-gradient(90deg,var(--gold),#9a7440)}
+
+/* page guilde façon Hiscores : onglets, outils, membres pas encore lus */
+.gtiles{margin:12px 0 4px}
+.gfac{display:inline-block;padding:1px 8px;border-radius:999px;font-size:13px;font-style:normal;color:#fff}
+.gfac.a{background:#2f5aa8}.gfac.h{background:#9c2f24}
+.gtabs{display:flex;gap:6px;margin:16px 0 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.gtab{all:unset;cursor:pointer;padding:8px 14px;font-family:var(--display);font-weight:600;letter-spacing:.06em;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.gtab:hover{color:var(--cream)}.gtab.on{color:var(--gold);border-bottom-color:var(--gold)}
+.gtab:focus-visible{outline:2px solid var(--rim);outline-offset:2px}
+.gtools{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.gq{display:flex;align-items:center;gap:6px;border:1px solid var(--line-2);border-radius:999px;padding:4px 12px;color:var(--muted);background:#0b0806}
+.gq input{all:unset;width:180px;color:var(--cream);font:inherit}
+.gcl .chip{color:var(--c,inherit)}
+.gtools .gsort{margin:0 0 0 auto}
+.gunread{margin-top:22px}
+.gunread h3{font-family:var(--display);color:var(--cream);font-size:18px;margin:0 0 10px}
+.gunread h3 small{font-family:inherit;color:var(--muted);font-size:14px;font-style:italic;margin-left:6px}
+.gu-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}
+.gu{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;text-decoration:none;color:var(--c)}
+.gu b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gu span{color:var(--muted);font-family:var(--num)}
+.gu:hover{border-color:var(--rim)}.gu.more{color:var(--muted);justify-content:center}
+.gstats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.gstats .guildp{grid-row:span 2}
+.gprof li{grid-template-columns:22px minmax(90px,1fr) auto}
+.gweek{margin:0;padding-left:22px}.gweek li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.gweek li small{display:block;color:var(--muted);font-style:italic}
+@media (max-width:820px){.gstats{grid-template-columns:minmax(0,1fr)}.gstats .guildp{grid-row:auto}.gtools .gsort{margin:0}.gq input{width:130px}}
+@media (max-width:560px){.gtabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.gtab{padding:8px 10px;white-space:nowrap}.gtiles{grid-template-columns:repeat(2,minmax(0,1fr))}}

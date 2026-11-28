@@ -44,12 +44,12 @@ export function openCrawlDb(file) {
 
 // ajoute des personnages à découvrir (une meilleure source fait passer devant)
 export function addChars(db, items, src, today = dayOf()) {
-  const ins = db.prepare(`INSERT INTO chars (key, region, slug, src, prio, level, found, next_at, name, surname, cls, race, faction, gname, nf, sf)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  const ins = db.prepare(`INSERT INTO chars (key, region, slug, src, prio, level, found, next_at, name, surname, cls, race, faction, gname, nf, sf, guild)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET prio = MIN(prio, excluded.prio), src = CASE WHEN excluded.prio < prio THEN excluded.src ELSE src END,
       level = MAX(level, excluded.level), name = COALESCE(excluded.name, name), surname = COALESCE(excluded.surname, surname),
       cls = COALESCE(excluded.cls, cls), race = COALESCE(excluded.race, race), faction = COALESCE(excluded.faction, faction),
-      gname = COALESCE(excluded.gname, gname), nf = COALESCE(nf, excluded.nf), sf = COALESCE(sf, excluded.sf)`);
+      gname = COALESCE(excluded.gname, gname), nf = COALESCE(nf, excluded.nf), sf = COALESCE(sf, excluded.sf), guild = COALESCE(excluded.guild, guild)`);
   let n = 0;
   db.exec('BEGIN');
   try {
@@ -57,7 +57,7 @@ export function addChars(db, items, src, today = dayOf()) {
       if (!validCharKey(it.key)) continue;
       const [region, slug] = it.key.split('/');
       ins.run(it.key, region, slug, src, SRC_PRIO[src] ?? 9, it.level ?? 0, today, today, it.name ?? null, it.surname ?? null, it.cls ?? null,
-        it.race ?? null, it.faction ?? null, it.gname ?? null, it.name ? fold(it.name) : null, it.surname ? fold(it.surname) : null);
+        it.race ?? null, it.faction ?? null, it.gname ?? null, it.name ? fold(it.name) : null, it.surname ? fold(it.surname) : null, it.gkey ?? null);
       n++;
     }
     db.exec('COMMIT');
@@ -172,6 +172,14 @@ export function knownCounts(db, region) {
     guilds: db.prepare("SELECT COUNT(DISTINCT gname) AS n FROM chars WHERE region = ? AND gone = 0 AND gname IS NOT NULL").get(region).n,
   };
 }
+export function guildMembers(db, gkey) {
+  const g = db.prepare('SELECT key, name, members, roster_at FROM guilds WHERE key = ?').get(gkey);
+  const region = gkey.split('/')[0];
+  const rows = db.prepare(`SELECT key, name, surname, level, cls, race, faction, total, data IS NOT NULL AS isread FROM chars
+    WHERE gone = 0 AND region = ? AND (guild = ? OR (guild IS NULL AND gname = ?)) ORDER BY total DESC, level DESC LIMIT 2000`).all(region, gkey, g?.name ?? '');
+  return { key: gkey, name: g?.name ?? null, roster: g?.members ?? null, rosterAt: g?.roster_at ?? null,
+    members: rows.map(r => ({ key: r.key, name: r.name, surname: r.surname, level: r.level, classId: r.cls, raceId: r.race, faction: r.faction, total: r.total, read: !!r.isread })) };
+}
 export function rankPage(db, region, page = 1, per = 50) {
   const n = db.prepare('SELECT COUNT(*) AS n FROM chars WHERE region = ? AND data IS NOT NULL').get(region).n;
   const rows = db.prepare('SELECT data FROM chars WHERE region = ? AND data IS NOT NULL ORDER BY total DESC, key LIMIT ? OFFSET ?').all(region, per, (page - 1) * per);
@@ -263,7 +271,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
   async function readGuild(g) {
     const roster = await get(g.region, `/data/wow/guild/${encodeURIComponent(g.slug)}/roster`);
     const members = rosterMembers(g.region, roster);
-    addChars(db, members, g.src === 'follow' ? 'follow' : 'guild');
+    addChars(db, members.map(m => ({ ...m, gkey: g.key })), g.src === 'follow' ? 'follow' : 'guild');
     db.prepare('UPDATE guilds SET roster_at = ?, members = ? WHERE key = ?').run(dayOf(), roster ? (roster.members ?? []).length : 0, g.key);
     note({ type: 'guild', key: g.key, name: roster?.guild?.name ?? g.slug, faction: roster?.guild?.faction?.type ?? null, members: members.length });
   }
@@ -342,6 +350,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
       return charByKey(db, key);
     },
     known: region => knownCounts(db, region),
+    guild: gkey => guildMembers(db, gkey),
     feed: since => feed.filter(x => x.id > (since || 0)),
     // recherche directe : un joueur que le relevé ne connaît pas encore est lu tout de suite chez Blizzard (5 appels)
     async lookup(region, name) {
