@@ -274,7 +274,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     if (prev?.mediaAt) Object.assign(player, { avatar: prev.avatar, inset: prev.inset, render: prev.render, mediaAt: prev.mediaAt });
     const { active } = saveChar(db, player);
     note({ type: 'char', key: player.key, name: player.name, surname: player.surname, cls: player.classId, level: player.level, total: player.total,
-      guild: player.guild?.name ?? null, faction: player.faction ?? null, active, manual, first: !prev });
+      guild: player.guild?.name ?? null, faction: player.faction ?? null, rs: player.rulesetId ?? null, active, manual, first: !prev });
     if (active && needsMedia(player)) setMedia(db, w.key, await get(w.region, `${base}/character-media`).catch(() => null));
   }
   async function readGuild(g) {
