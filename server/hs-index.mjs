@@ -85,7 +85,9 @@ export function merged(db, key, data) {
 function mergeWith(data, r) {
   // le relevé est plus frais pour l'armurerie ; l'inscrit apporte ce que l'armurerie n'a pas
   return data ? { ...data, ...pick(r, ['weaponList', 'weapons', 'weaponsSource', 'complete', 'parts', 'total', 'max', 'dropamine', 'dropamineAt', 'played', 'playedAt',
-    'pvpArmory', 'loots', 'reps', 'render', 'avatar', 'inset']), preview: r.preview ?? data.preview, via: r.via ?? data.via } : r;
+    'pvpArmory', 'loots', 'reps', 'render', 'avatar', 'inset']),
+    // présent dans le fichier des inscrits : inscrit, donc jamais un « aperçu » du relevé
+    preview: r.preview ?? false, via: r.via ?? undefined } : r;
 }
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] != null).map(k => [k, o[k]]));
 

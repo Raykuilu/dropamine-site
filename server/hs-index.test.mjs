@@ -63,8 +63,8 @@ test('inscrits : données riches, gains, tableau de bord, réindex', async () =>
   const db = openCrawlDb(':memory:'), today = 20785;
   saveChar(db, P('eu/a-b', { total: 1500 }), today - 7);
   saveChar(db, P('eu/a-b', { total: 1600 }), today - 1);
-  saveChar(db, P('eu/a-b', { total: 1650 }), today);
-  saveChar(db, P('eu/c-d', { total: 1200 }), today);
+  saveChar(db, P('eu/a-b', { total: 1650, preview: true, via: 'crawl' }), today);
+  saveChar(db, P('eu/c-d', { total: 1200, preview: true, via: 'crawl' }), today);
   const keys = loadOverlay(db, { players: [{ ...P('eu/a-b', { total: 1700, weaponList: [{ id: 'swords', rank: 290 }] }), dropamine: { collection: { x: 12, y: 1499 } }, history: [1, 2] }] });
   keys.forEach(k => indexChar(db, k));
   const r = rankList(db, { region: 'eu', rs: 1 });
@@ -74,6 +74,10 @@ test('inscrits : données riches, gains, tableau de bord, réindex', async () =>
   assert.equal(rankList(db, { region: 'eu', rs: 1, skill: 'wswords' }).rows[0].v, 290);
   assert.equal(rankList(db, { region: 'eu', rs: 1, skill: 'clog' }).rows[0].v, 12);
   assert.equal(charByKey(db, 'eu/a-b').dropamine.collection.x, 12, 'fiche enrichie');
+  assert.equal(charByKey(db, 'eu/a-b').preview, false, 'inscrit : plus un aperçu du relevé');
+  assert.equal(charByKey(db, 'eu/a-b').via, undefined);
+  assert.equal(charByKey(db, 'eu/c-d').preview, true, 'non inscrit : reste un aperçu');
+  assert.equal(r.rows[0].p.preview, false, 'listes : inscrit aussi');
   refreshGuilds(db);
   const mv = movers(db, { region: 'eu', rs: 1, today });
   assert.deepEqual(mv.day.map(x => [x.p.key, x.g1]), [['eu/a-b', 50]]);
