@@ -362,7 +362,7 @@ function startCrawlWorker() {
   };
 }
 // fil de lecture : connexion SQLite en lecture seule, jamais bloquée par les écritures du relevé
-const READ_FNS = new Set(['search', 'rsinfo', 'rankList', 'guilds', 'guildSkills', 'movers', 'meDash', 'ranks', 'guildFull', 'char', 'guild', 'rank']);
+const READ_FNS = new Set(['search', 'rsinfo', 'rankList', 'guilds', 'guildSkills', 'wall', 'weekSkill', 'quantiles', 'compare', 'movers', 'meDash', 'ranks', 'guildFull', 'char', 'guild', 'rank']);
 let reader = null;
 function startReader() {
   const w = new Worker(new URL('./hs-reader.mjs', import.meta.url), { workerData: { stateDir: STATE_DIR } });
@@ -391,7 +391,7 @@ const crawlRoute = hsRoutes({ getCrawl: () => crawl, send, cors, validKey, regio
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, CFG.publicUrl);
   try {
-    const frequent = ['/runs', '/hs/search', '/hs/feed', '/hit', '/hs/rank', '/hs/guilds', '/hs/movers', '/hs/me-dash', '/hs/rsinfo', '/hs/char', '/hs/guild'].includes(url.pathname);   // lectures fréquentes et visites : compteur à part (120 / min)
+    const frequent = ['/runs', '/hs/search', '/hs/feed', '/hit', '/hs/rank', '/hs/guilds', '/hs/movers', '/hs/me-dash', '/hs/rsinfo', '/hs/char', '/hs/guild', '/hs/wall', '/hs/weekskill', '/hs/quantiles', '/hs/compare'].includes(url.pathname);   // lectures fréquentes et visites : compteur à part (120 / min)
     if (limited(req, frequent ? 120 : 40, frequent ? '|f' : '')) return send(res, 429, { error: 'trop de requêtes' }, { ...cors, 'Retry-After': '60' });
     if (req.method === 'OPTIONS') return send(res, 204, '', { ...cors, 'Access-Control-Allow-Methods': 'GET, POST', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600' });
 

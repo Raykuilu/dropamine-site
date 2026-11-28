@@ -206,7 +206,7 @@ export function rulesetCounts(db, region) {
 export const pickRs = (db, region, rs) => RULESETS.includes(+rs) ? +rs : rulesetCounts(db, region).def;
 
 // ligne de classement : la fiche (sans historique) + valeur, rang, gains
-function rowOut(db, r, extra = {}) {
+export function rowOut(db, r, extra = {}) {
   const p = merged(db, r.key, r.data ? JSON.parse(r.data) : null);
   if (!p) return null;
   delete p.history;
@@ -218,10 +218,12 @@ const facFilter = fac => (fac === 'ALLIANCE' || fac === 'HORDE' ? ` AND fac = '$
 
 // une page d'un classement ; `k` : renvoie la page qui contient ce personnage (et son rang)
 // sort = g1 | g7 : seulement ceux qui ont progressé dans cette compétence, triés par gain ; est : armes estimées (sans rang)
-export function rankList(db, { region, rs, skill = 'total', cls = null, fac = null, page = 1, per = 50, k = null, sort = null, est = false }) {
+// low : seulement les personnages pas encore 60 (catégorie Leveling)
+export function rankList(db, { region, rs, skill = 'total', cls = null, fac = null, page = 1, per = 50, k = null, sort = null, est = false, low = false }) {
   rs = pickRs(db, region, rs);
   const sk = est ? '~' + skill : skill, by = sort === 'g1' || sort === 'g7' ? sort : null;
-  const from = `FROM sk WHERE region = ? AND rs = ? AND skill = ?${clsFilter(cls)}${facFilter(fac)}${by ? ` AND ${by} > 0` : ''}`;
+  const lowF = low ? ' AND key IN (SELECT key FROM chars WHERE level < 60 AND data IS NOT NULL)' : '';
+  const from = `FROM sk WHERE region = ? AND rs = ? AND skill = ?${clsFilter(cls)}${facFilter(fac)}${by ? ` AND ${by} > 0` : ''}${lowF}`;
   const order = by ? `${by} DESC, v DESC, key` : 'v DESC, key';
   const args = [region, rs, sk];
   const total = st(db, `SELECT COUNT(*) AS n ${from}`).get(...args).n;
@@ -243,7 +245,7 @@ export function rankList(db, { region, rs, skill = 'total', cls = null, fac = nu
   const above = v => st(db, `SELECT COUNT(*) AS n ${from} AND v > ?`).get(...args, v).n;
   let prev = null, rk = 0;
   const rankAt = (r, i) => { if (by) return (page - 1) * per + i + 1; if (r.v !== prev) { rk = i ? (page - 1) * per + i + 1 : above(r.v) + 1; prev = r.v; } return rk; };
-  return { region, rs, skill, cls, fac, sort: by, est: !!est, total, page, per, pages: Math.ceil(total / per), me,
+  return { region, rs, skill, cls, fac, sort: by, est: !!est, low: !!low, total, page, per, pages: Math.ceil(total / per), me,
     rows: rows.map((r, i) => rowOut(db, r, est ? { v: r.v } : { r: rankAt(r, i), v: r.v })).filter(Boolean) };
 }
 // rang d'un personnage dans ses classements (tous si skills est absent), dans son type de royaume

@@ -12,6 +12,7 @@ import { reindexAll, refreshGuilds, loadOverlay, indexChar, indexStale, rulesetC
 import { dayOf, validCharKey } from './crawl-lib.mjs';
 import { computeStats } from './stats-lib.mjs';
 import { hsRoutes } from './hs-routes.mjs';
+import { backfillCaps, wall, weekSkill, quantiles, compare } from './hs-stats.mjs';
 
 const DIR = fileURLToPath(new URL('./.state-dev/', import.meta.url)), FILE = DIR + 'crawl.db';
 const PORT = +(process.env.PORT || 8787);
@@ -52,6 +53,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   }
   const db = openCrawlDb(FILE);
   if (indexStale(db)) { console.log('index des classements : nouvelle version, réindex…'); await reindexAll(db, { yieldFn: async () => {} }); refreshGuilds(db); }
+  backfillCaps(db);
+  const devToday = () => Number(db.prepare('SELECT MAX(fetched) AS d FROM chars').get().d) || dayOf();
   const REGIONS = ['eu', 'us'];
   let statsCache = null;
   const API = {
@@ -62,6 +65,10 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     rankList: o => rankList(db, o),
     guilds: o => guildList(db, o),
     guildSkills: o => guildSkillList(db, o),
+    wall: o => wall(db, { ...o, today: devToday() }),
+    weekSkill: o => weekSkill(db, { ...o, today: devToday() }),
+    quantiles: o => quantiles(db, o),
+    compare: o => compare(db, o),
     movers: o => movers(db, { ...o, today: Number(db.prepare('SELECT MAX(fetched) AS d FROM chars').get().d) || dayOf() }),
     meDash: keys => meDash(db, keys, k => charByKey(db, k)),
     ranks: k => ranksOf(db, k),

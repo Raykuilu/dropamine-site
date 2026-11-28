@@ -11,6 +11,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
+import { openStats, recordCaps, backfillCaps, purgeCaps, wall, weekSkill, quantiles, compare } from './hs-stats.mjs';
 import { openIndex, indexChar, indexStale, reindexAll, loadOverlay, refreshGuilds, rulesetCounts, pickRs, rankList, guildList, guildSkillList, guildFull, movers, meDash, merged, ranksOf } from './hs-index.mjs';
 import { CRAWL, SRC_PRIO, dayOf, isoDay, charKey, validCharKey, nextVisit, rosterMembers, crawlPlayer, histPoint, moved, discoverOrder, crawlEta, lookupSlug, HOUR_CAP, HOUR_MAX, slowDown, speedUp, regMode } from './crawl-lib.mjs';
 
@@ -41,6 +42,7 @@ export function openCrawlDb(file) {
   }
   db.exec('CREATE INDEX IF NOT EXISTS chars_known ON chars (region, cls)');
   openIndex(db);   // classements, guildes et gains servis au site (hs-index.mjs)
+  openStats(db);   // caps atteints (page Stats, hs-stats.mjs)
   return db;
 }
 
@@ -92,6 +94,7 @@ export function saveChar(db, player, today = dayOf()) {
     .run(player.name ?? null, player.surname ?? null, player.classId ?? null, player.raceId ?? null, player.faction ?? null, player.guild?.name ?? null, player.key);
   if (gkey) addGuild(db, player.region, player.guild.slug, player.guild.name, 'char');
   indexChar(db, player.key);
+  recordCaps(db, player, prevPt, pt, today);
   return { active: active != null && today - active <= CRAWL.ACTIVE_DAYS };
 }
 // introuvable (supprimé, renommé, sous le niveau 10) : conditions Blizzard, on efface tout ce qu'on savait
@@ -111,6 +114,7 @@ export function goneChar(db, key, today = dayOf()) {
 export function purgeOld(db, today = dayOf()) {
   const cut = today - CRAWL.KEEP_DAYS;
   db.prepare('DELETE FROM hist WHERE d < ?').run(cut);
+  purgeCaps(db, cut);
   db.prepare('UPDATE chars SET data = NULL, total = NULL, fetched = NULL, nf = NULL, sf = NULL, name = NULL, surname = NULL, cls = NULL, race = NULL, faction = NULL, gname = NULL, next_at = ? WHERE fetched IS NOT NULL AND fetched < ?').run(today, cut);
   db.prepare('UPDATE chars SET gone = 0 WHERE gone > 0 AND next_at <= ?').run(today);   // introuvables : retentés après 30 jours
   db.prepare('DELETE FROM sk WHERE key IN (SELECT key FROM chars WHERE data IS NULL)').run();
@@ -343,6 +347,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     await settings(); await seed(); purgeOld(db);
     // index des classements : refait en entier si sa version a changé (par lots, le fil reste disponible)
     if (indexStale(db)) { try { const n = await reindexAll(db); log.info?.(`index des classements : ${n} personnages`); } catch (err) { log.warn('index des classements :', err.message); } }
+    try { const n = backfillCaps(db); if (n) log.info?.(`caps (page Stats) : ${n} amorcés depuis l'historique`); } catch (err) { log.warn('caps :', err.message); }
     await overlay(); guildsAgg();
     timers.push(setInterval(overlay, 3600e3), setInterval(guildsAgg, 10 * 60e3));
     timers.push(setInterval(() => { rate = speedUp(rate, target, Date.now() - last429); }, 60e3), setInterval(settings, 10 * 60e3), setInterval(seed, 6 * 3600e3), setInterval(() => purgeOld(db), 6 * 3600e3));
@@ -368,6 +373,10 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     rankList: o => rankList(db, o),
     guilds: o => guildList(db, o),
     guildSkills: o => guildSkillList(db, o),
+    wall: o => wall(db, { ...o, today: dayOf() }),
+    weekSkill: o => weekSkill(db, { ...o, today: dayOf() }),
+    quantiles: o => quantiles(db, o),
+    compare: o => compare(db, o),
     movers: o => movers(db, { ...o, today: dayOf() }),
     meDash: keys => meDash(db, keys, k => charByKey(db, k)),
     ranksOf: (key, skills) => ranksOf(db, key, skills),
