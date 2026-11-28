@@ -244,11 +244,21 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
       }
     } finally { if (manual) manualWaiting--; }
   }
+  // jeton refusé (Blizzard bloque, panne…) : pause qui double à chaque refus (30 s → 30 min), sans redemander entre-temps ;
+  // les ouvriers attendent la fin de la pause au lieu de frapper à la porte en boucle
+  let tokFails = 0, tokWait = 0;
+  const tokenPause = msg => Object.assign(new Error(msg), { tokenPause: true });
   async function token() {
     if (tok && Date.now() < tokExp) return tok;
+    if (Date.now() < tokWait) throw tokenPause('jeton Blizzard en pause');
     const res = await fetch('https://oauth.battle.net/token', { method: 'POST',
       headers: { Authorization: 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64') }, body: new URLSearchParams({ grant_type: 'client_credentials' }) });
-    if (!res.ok) throw new Error(`jeton Blizzard refusé (${res.status})`);
+    if (!res.ok) {
+      tokFails++; tokWait = Date.now() + Math.min(30 * 60e3, 30e3 * 2 ** Math.min(tokFails - 1, 6));
+      log.warn(`jeton Blizzard refusé (${res.status}), nouvel essai dans ${Math.round((tokWait - Date.now()) / 1000)} s`);
+      throw tokenPause(`jeton Blizzard refusé (${res.status})`);
+    }
+    tokFails = 0;
     const j = await res.json(); tok = j.access_token; tokExp = Date.now() + Math.max(60, (j.expires_in ?? 3600) - 300) * 1000;
     return tok;
   }
@@ -301,10 +311,15 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
         inflight.add(w.key); busy++;
         try { await readChar(w); }
         catch (err) {
+          if (err.tokenPause) { await sleep(Math.max(5e3, tokWait - Date.now())); continue; }   // pas la faute du personnage : on attend
           errors++; lastErr = `${new Date().toISOString()} ${err.message}`;
           db.prepare('UPDATE chars SET fails = fails + 1, next_at = ? WHERE key = ?').run(dayOf() + 1, w.key);   // réessayé demain
         } finally { inflight.delete(w.key); busy--; }
-      } catch (err) { if (stopped) return; errors++; lastErr = `${new Date().toISOString()} ${err.message}`; await sleep(5e3); }
+      } catch (err) {
+        if (stopped) return;
+        if (err.tokenPause) { lastErr = `${new Date().toISOString()} ${err.message}`; await sleep(Math.max(5e3, tokWait - Date.now())); continue; }
+        errors++; lastErr = `${new Date().toISOString()} ${err.message}`; await sleep(5e3);
+      }
     }
   }
   // graines : ce que le site connaît déjà (inscrits, Scout, guildes suivies, file d'attente, joueurs publiés)
@@ -363,6 +378,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
       const manual = manualLastMin();
       const perMin = Array.from({ length: 30 }, (_, i) => minutes[(curMin - 29 + i + 60) % 60]);
       return { ...c, rate, target, perHour: Math.round(rate * 3600), callsLastHour: calls, refused, busy, errors, lastErr,
+        tokenPausedUntil: tokWait > Date.now() ? new Date(tokWait).toISOString() : null,
         mode: regMode({ rate, target, hourCalls: calls, manualLastMin: manual }), manualLastMin: manual, perMin, last429: last429 ? new Date(last429).toISOString() : null,
         etaHours: crawlEta(c.waiting, callsLast10() * 6), since: Number(db.prepare("SELECT v FROM meta WHERE k = 'since'").get()?.v ?? 0) || null,
         seeded: db.prepare("SELECT v FROM meta WHERE k = 'seeded'").get()?.v ?? null };
