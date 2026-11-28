@@ -16,6 +16,25 @@ then triggers the site update.
 | `POST /upload` `{ "line": "DROPAMINE-HS1:…" }` | the `/drop hiscores` line from Dropamine 3.11+: checksum checked, matched to a character of the account (region + first name, level to break ties), weapon ranks capped at 5 × level; stored in `data/uploads.json`, character registered on the way |
 | `POST /logout` | ends the session |
 
+### Hiscores read API (`/hs/*`, public, gzip, ETag / 304)
+
+Served from the crawler's SQLite base (`hs-index.mjs`, routes in `hs-routes.mjs`), so the site never loads a full index.
+`r` = `eu` | `us`; `rs` = realm type (1 PvP, 2 Normal, 3 RP, 15 RP-PvP). Types are never mixed: without `rs`, the most
+populated type of the region is used, and every answer says which `rs` it used.
+
+| Route | Answer |
+|---|---|
+| `GET /hs/rsinfo?r` | characters read per realm type, and the default type |
+| `GET /hs/rank?r&rs&skill&cls&fac&pg&per&k` | one ranking page (`skill` = the site's `SKILLS` ids); `k=<key>` jumps to that character's page |
+| `GET /hs/guilds?r&rs&m&q&fac&pg&per` | guild list (`m` = total, avg, l60, hk, prof, members, g7), rank kept when filtered by name |
+| `GET /hs/movers?r&rs&n` | best gains of the day and of the week, rising guilds |
+| `GET /hs/me-dash?k=key1,key2` | signed-in dashboard in one call: full sheet, ranks, gains, guild (10 keys max) |
+| `GET /hs/search?q&rs`, `/hs/char?k`, `/hs/guild?k`, `/hs/stats?r&rs` | search (chosen type first), sheet, guild members, server stats per type |
+
+Registered players' extra data (Dropamine line, real weapon skills, /played) comes from `site/data/reg.json`,
+published by the daily build and read every hour. Local test API with the same routes, no secret and no Blizzard call:
+`node server/dev-api.mjs --seed` (fills `server/.state-dev/` from the public export), then `http://localhost:8787`.
+
 Security: the Battle.net token is never stored (only the character list, in memory, for the session);
 signed HttpOnly cookies; POST only from `https://dropamine.app`; 40 requests per minute per address.
 GitHub writes are retried (5 tries, growing delay) on conflicts and GitHub server errors.
@@ -53,4 +72,4 @@ Console SSH du site Node.js (Manager → le site Node.js → Ouvrir la console S
 
 ## Tester
 
-`node --test server/lib.test.mjs scripts/score.test.mjs` (sans réseau).
+`node --test server/ scripts/` (sans réseau).

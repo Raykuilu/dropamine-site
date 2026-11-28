@@ -349,6 +349,9 @@ export function indexPlayer(p) {
 // Accueil léger (site/data/home.json) : l'accueil n'a besoin que des inscrits, de ceux qui ont bougé (semaine, direct),
 // du top 5 de chaque région et de quelques totaux ; l'index complet n'est chargé qu'en ouvrant une autre page.
 export const HOME_TOP = 5;
+export function regIndex(players, updated) {
+  return { updated, players: players.filter(p => !p.preview).map(({ history, reps, ...p }) => p) };
+}
 export function homeIndex(players, updated) {
   const keep = new Set(), byRegion = new Map();
   for (const p of players) {
@@ -558,6 +561,8 @@ async function main() {
   await writeFile(join(ROOT, 'site/data/hiscores.json'), index);
   const home = JSON.stringify(homeIndex(players, updated));
   await writeFile(join(ROOT, 'site/data/home.json'), home);
+  // inscrits, avec ce que l'armurerie n'a pas (ligne Dropamine, vraies armes, /played) : repris par l'API (server/hs-index.mjs, table ov)
+  await writeFile(join(ROOT, 'site/data/reg.json'), JSON.stringify(regIndex(players, updated)));
   await rm(join(ROOT, 'site/data/c'), { recursive: true, force: true });
   for (const p of players) {
     const f = join(ROOT, 'site', detailPath(p));

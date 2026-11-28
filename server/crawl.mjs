@@ -11,6 +11,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
+import { openIndex, indexChar, indexStale, reindexAll, loadOverlay, refreshGuilds, rulesetCounts, pickRs, rankList, guildList, movers, meDash, merged, ranksOf } from './hs-index.mjs';
 import { CRAWL, SRC_PRIO, dayOf, isoDay, charKey, validCharKey, nextVisit, rosterMembers, crawlPlayer, histPoint, moved, discoverOrder, crawlEta, lookupSlug, HOUR_CAP, HOUR_MAX, slowDown, speedUp, regMode } from './crawl-lib.mjs';
 
 const LOCALE = { eu: 'fr_FR', us: 'en_US', tw: 'zh_TW' };
@@ -19,7 +20,7 @@ export const fold = s => String(s ?? '').normalize('NFD').replace(/\p{M}/gu, '')
 export function openCrawlDb(file) {
   const db = new DatabaseSync(file);
   db.exec(`
-    PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;
+    PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA cache_size = -65536;
     CREATE TABLE IF NOT EXISTS chars (
       key TEXT PRIMARY KEY, region TEXT NOT NULL, slug TEXT NOT NULL, src TEXT, prio INTEGER DEFAULT 9, level INTEGER DEFAULT 0,
       found INTEGER, fetched INTEGER, next_at INTEGER, active_at INTEGER, gone INTEGER DEFAULT 0, fails INTEGER DEFAULT 0,
@@ -39,6 +40,7 @@ export function openCrawlDb(file) {
     try { db.exec(`ALTER TABLE chars ADD COLUMN ${col}`); } catch { /* déjà là */ }
   }
   db.exec('CREATE INDEX IF NOT EXISTS chars_known ON chars (region, cls)');
+  openIndex(db);   // classements, guildes et gains servis au site (hs-index.mjs)
   return db;
 }
 
@@ -89,6 +91,7 @@ export function saveChar(db, player, today = dayOf()) {
   db.prepare('UPDATE chars SET name = ?, surname = ?, cls = ?, race = ?, faction = ?, gname = ? WHERE key = ?')
     .run(player.name ?? null, player.surname ?? null, player.classId ?? null, player.raceId ?? null, player.faction ?? null, player.guild?.name ?? null, player.key);
   if (gkey) addGuild(db, player.region, player.guild.slug, player.guild.name, 'char');
+  indexChar(db, player.key);
   return { active: active != null && today - active <= CRAWL.ACTIVE_DAYS };
 }
 // introuvable (supprimé, renommé, sous le niveau 10) : conditions Blizzard, on efface tout ce qu'on savait
@@ -102,6 +105,7 @@ export const needsMedia = (p, today = dayOf()) => !p.mediaAt || today - p.mediaA
 export function goneChar(db, key, today = dayOf()) {
   db.prepare('UPDATE chars SET gone = ?, data = NULL, total = NULL, fetched = NULL, next_at = ?, nf = NULL, sf = NULL, name = NULL, surname = NULL, cls = NULL, race = NULL, faction = NULL, gname = NULL WHERE key = ?').run(today, today + CRAWL.GONE_RETRY, key);
   db.prepare('DELETE FROM hist WHERE key = ?').run(key);
+  indexChar(db, key);
 }
 // ménage quotidien : rien de plus vieux que 30 jours
 export function purgeOld(db, today = dayOf()) {
@@ -109,6 +113,8 @@ export function purgeOld(db, today = dayOf()) {
   db.prepare('DELETE FROM hist WHERE d < ?').run(cut);
   db.prepare('UPDATE chars SET data = NULL, total = NULL, fetched = NULL, nf = NULL, sf = NULL, name = NULL, surname = NULL, cls = NULL, race = NULL, faction = NULL, gname = NULL, next_at = ? WHERE fetched IS NOT NULL AND fetched < ?').run(today, cut);
   db.prepare('UPDATE chars SET gone = 0 WHERE gone > 0 AND next_at <= ?').run(today);   // introuvables : retentés après 30 jours
+  db.prepare('DELETE FROM sk WHERE key IN (SELECT key FROM chars WHERE data IS NULL)').run();
+  db.prepare('UPDATE chars SET rs = NULL, g1 = NULL, g7 = NULL, hk = NULL, prof = NULL WHERE data IS NULL AND rs IS NOT NULL').run();
 }
 
 // prochains travaux : d'abord la découverte, puis les relectures dues
@@ -125,7 +131,7 @@ export function dueGuild(db, today = dayOf()) {
 
 // lectures pour le site
 const hydrate = (db, row) => {
-  const p = JSON.parse(row.data);
+  const p = merged(db, row.key, JSON.parse(row.data));
   p.history = db.prepare('SELECT d, t, s, hk FROM hist WHERE key = ? ORDER BY d').all(row.key)
     .map(h => ({ d: isoDay(h.d), t: h.t, s: JSON.parse(h.s), ...(h.hk != null ? { hk: h.hk } : {}) }));
   p.fetched = row.fetched;
@@ -148,15 +154,17 @@ export function charByKey(db, key) {
   const r = db.prepare('SELECT key, data, fetched FROM chars WHERE key = ? AND data IS NOT NULL').get(key);
   return r ? hydrate(db, r) : null;
 }
-export function searchChars(db, q, limit = 20) {
+// rs : le type de royaume choisi passe d'abord (un personnage pas encore lu prend le type de sa guilde)
+export function searchChars(db, q, limit = 20, rs = 0) {
   const words = fold(q).trim().split(/\s+/).filter(Boolean);
   if (!words.length || words[0].length < 2) return [];
   const [a, b] = words, hi = s => s + '\u{10FFFF}';
-  const cols = 'key, region, slug, name, surname, level, cls, total, gname, data IS NOT NULL AS isread';
+  const cols = 'c.key, c.region, c.slug, c.name, c.surname, c.level, c.cls, c.total, c.gname, c.data IS NOT NULL AS isread, COALESCE(c.rs, g.rs) AS rsx';
+  const from = 'FROM chars c LEFT JOIN (SELECT key, MAX(rs) AS rs FROM gagg GROUP BY key) g ON g.key = c.guild', rsN = Number(rs) || 0;
   const rows = b
-    ? db.prepare(`SELECT ${cols} FROM chars WHERE nf = ? AND sf >= ? AND sf < ? AND gone = 0 ORDER BY isread DESC, total DESC, level DESC LIMIT ?`).all(a, b, hi(b), limit)
-    : db.prepare(`SELECT ${cols} FROM chars WHERE gone = 0 AND ((nf >= ? AND nf < ?) OR (sf >= ? AND sf < ?)) ORDER BY isread DESC, total DESC, level DESC LIMIT ?`).all(a, hi(a), a, hi(a), limit);
-  return rows.map(r => ({ key: r.key, region: r.region, slug: r.slug, name: r.name, surname: r.surname, level: r.level, classId: r.cls, total: r.total, guild: r.gname, read: !!r.isread }));
+    ? db.prepare(`SELECT ${cols} ${from} WHERE c.nf = ? AND c.sf >= ? AND c.sf < ? AND c.gone = 0 ORDER BY (rsx = ?) DESC, isread DESC, c.total DESC, c.level DESC LIMIT ?`).all(a, b, hi(b), rsN, limit)
+    : db.prepare(`SELECT ${cols} ${from} WHERE c.gone = 0 AND ((c.nf >= ? AND c.nf < ?) OR (c.sf >= ? AND c.sf < ?)) ORDER BY (rsx = ?) DESC, isread DESC, c.total DESC, c.level DESC LIMIT ?`).all(a, hi(a), a, hi(a), rsN, limit);
+  return rows.map(r => ({ key: r.key, region: r.region, slug: r.slug, name: r.name, surname: r.surname, level: r.level, classId: r.cls, total: r.total, guild: r.gname, read: !!r.isread, rs: r.rsx ?? null }));
 }
 export function knownCounts(db, region) {
   const q = sql => db.prepare(sql).all(region);
@@ -174,10 +182,11 @@ export function knownCounts(db, region) {
 }
 export function guildMembers(db, gkey) {
   const g = db.prepare('SELECT key, name, members, roster_at FROM guilds WHERE key = ?').get(gkey);
+  const agg = db.prepare('SELECT rs, faction FROM gagg WHERE key = ? ORDER BY n DESC LIMIT 1').get(gkey);
   const region = gkey.split('/')[0];
   const rows = db.prepare(`SELECT key, name, surname, level, cls, race, faction, total, data IS NOT NULL AS isread FROM chars
     WHERE gone = 0 AND region = ? AND (guild = ? OR (guild IS NULL AND gname = ?)) ORDER BY total DESC, level DESC LIMIT 2000`).all(region, gkey, g?.name ?? '');
-  return { key: gkey, name: g?.name ?? null, roster: g?.members ?? null, rosterAt: g?.roster_at ?? null,
+  return { key: gkey, name: g?.name ?? null, roster: g?.members ?? null, rosterAt: g?.roster_at ?? null, rs: agg?.rs ?? null, faction: agg?.faction ?? null,
     members: rows.map(r => ({ key: r.key, name: r.name, surname: r.surname, level: r.level, classId: r.cls, raceId: r.race, faction: r.faction, total: r.total, read: !!r.isread })) };
 }
 export function rankPage(db, region, page = 1, per = 50) {
@@ -320,8 +329,22 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     catch { /* on garde le réglage courant */ }
   }
   const timers = [];
+  // inscrits (données riches publiées chaque jour par la mise à jour du site) : réindexés quand ils changent
+  async function overlay() {
+    try {
+      const reg = await fetch('https://dropamine.app/data/reg.json', { signal: AbortSignal.timeout(60e3) }).then(r => r.ok ? r.json() : null);
+      if (!reg) return;
+      const keys = loadOverlay(db, reg);
+      db.exec('BEGIN'); try { for (const k of keys) indexChar(db, k); db.exec('COMMIT'); } catch (err) { db.exec('ROLLBACK'); throw err; }
+    } catch (err) { log.warn('inscrits (reg.json) :', err.message); }
+  }
+  function guildsAgg() { try { refreshGuilds(db); } catch (err) { log.warn('guildes agrégées :', err.message); } }
   (async () => {
     await settings(); await seed(); purgeOld(db);
+    // index des classements : refait en entier si sa version a changé (par lots, le fil reste disponible)
+    if (indexStale(db)) { try { const n = await reindexAll(db); log.info?.(`index des classements : ${n} personnages`); } catch (err) { log.warn('index des classements :', err.message); } }
+    await overlay(); guildsAgg();
+    timers.push(setInterval(overlay, 3600e3), setInterval(guildsAgg, 10 * 60e3));
     timers.push(setInterval(() => { rate = speedUp(rate, target, Date.now() - last429); }, 60e3), setInterval(settings, 10 * 60e3), setInterval(seed, 6 * 3600e3), setInterval(() => purgeOld(db), 6 * 3600e3));
     timers.forEach(t => t.unref?.());
     for (let i = 0; i < 12; i++) worker();
@@ -340,7 +363,14 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     active: days => activePlayers(db, days),
     all: () => allPlayers(db),
     char: key => charByKey(db, key),
-    search: (q, limit) => searchChars(db, q, limit),
+    search: (q, limit, rs) => searchChars(db, q, limit, rs),
+    rsinfo: region => ({ region, ...rulesetCounts(db, region) }),
+    rankList: o => rankList(db, o),
+    guilds: o => guildList(db, o),
+    movers: o => movers(db, { ...o, today: dayOf() }),
+    meDash: keys => meDash(db, keys, k => charByKey(db, k)),
+    ranksOf: (key, skills) => ranksOf(db, key, skills),
+    pickRs: (region, rs) => pickRs(db, region, rs),
     rank: (region, page, per) => rankPage(db, region, page, per),
     add: (items, src) => addChars(db, items, src),
     async readNow(key) {

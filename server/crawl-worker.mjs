@@ -7,7 +7,8 @@ import { gzipSync } from 'node:zlib';
 import { startCrawl } from './crawl.mjs';
 import { computeStats } from './stats-lib.mjs';
 
-const REGIONS = ['eu', 'us', 'tw'];
+const REGIONS = ['eu', 'us'];
+const RULESETS = [1, 2, 3, 15];
 const waiting = new Map(); let n = 0;
 const readRaw = (path, fallback) => new Promise(res => {
   const id = ++n; waiting.set(id, res);
@@ -20,7 +21,12 @@ let allCache = null, statsCache = null;
 const API = {
   status: () => crawl.status(),
   feed: since => ({ status: crawl.status(), events: crawl.feed(since) }),
-  search: (q, limit) => crawl.search(q, limit),
+  search: (q, limit, rs) => crawl.search(q, limit, rs),
+  rsinfo: r => crawl.rsinfo(r),
+  rankList: o => crawl.rankList(o),
+  guilds: o => crawl.guilds(o),
+  movers: o => crawl.movers(o),
+  meDash: keys => crawl.meDash(keys),
   char: k => crawl.char(k) ?? crawl.readNow(k),
   guild: gkey => crawl.guild(gkey),
   rank: (r, pg, per) => crawl.rank(r, pg, per),
@@ -33,13 +39,23 @@ const API = {
     }
     return allCache.gz;
   },
-  // statistiques de tout le serveur, par région : refaites au plus toutes les 30 min
-  stats(r) {
+  // statistiques de tout le serveur, par région et par type de royaume (jamais mélangés) : refaites au plus toutes les 30 min.
+  // Sans type : celles de la région entière (ancien format, gardé pour l'admin actuelle).
+  stats(r, rs) {
     if (!statsCache || Date.now() - statsCache.at > 30 * 60e3) {
-      const all = crawl.all();
-      statsCache = { at: Date.now(), by: Object.fromEntries(REGIONS.map(x => [x, { ...computeStats(all, x), known: crawl.known(x) }])) };
+      const all = crawl.all(), by = {};
+      for (const x of REGIONS) {
+        by[x] = { ...computeStats(all, x), known: crawl.known(x) };
+        for (const t of RULESETS) {
+          const part = all.filter(p => (p.region || 'eu') === x && p.rulesetId === t);
+          if (part.length) by[x + '/' + t] = { ...computeStats(part, x), rs: t, known: null };
+        }
+      }
+      statsCache = { at: Date.now(), by };
     }
-    return statsCache.by[r] ?? null;
+    if (rs == null) return statsCache.by[r] ?? null;
+    const t = crawl.pickRs(r, rs);
+    return statsCache.by[r + '/' + t] ?? { rs: t, n: 0, empty: true };
   },
 };
 

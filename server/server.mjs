@@ -20,6 +20,7 @@ import { createServer } from 'node:http';
 import { gzipSync } from 'node:zlib';
 import { Worker } from 'node:worker_threads';
 import { createAnalytics } from './analytics.mjs';
+import { hsRoutes } from './hs-routes.mjs';
 import { randomBytes, createHmac, createHash, timingSafeEqual } from 'node:crypto';
 import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload,
   sealSecret, openSecret, openRegistry, sealRegistry, applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt, parseScoutLine, applyScout, applySettings, applyGuildFollow, queueDue } from './lib.mjs';
@@ -345,63 +346,12 @@ function startCrawlWorker() {
 if (process.env.CRAWL !== 'off') {
   try { startCrawlWorker(); } catch (err) { console.warn('relevé serveur indisponible :', err.message); }
 }
-// réponses publiques du relevé (données de l'armurerie, comme le site) ; compressées si le client l'accepte
-function sendPublic(req, res, body, maxAge = 60) {
-  const text = JSON.stringify(body), h = { ...cors, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': `public, max-age=${maxAge}` };
-  if (/\bgzip\b/.test(req.headers['accept-encoding'] || '')) { res.writeHead(200, { ...h, 'Content-Encoding': 'gzip' }); return res.end(gzipSync(text)); }
-  res.writeHead(200, h); res.end(text);
-}
-const lookups = { hour: 0, n: 0, by: new Map() };   // quotas de la recherche directe chez Blizzard
-const regionOf = url => REGIONS.includes(url.searchParams.get('r')) ? url.searchParams.get('r') : 'eu';
-async function crawlRoute(req, res, url) {
-  if (!url.pathname.startsWith('/hs/') || req.method !== 'GET') return false;
-  if (!crawl) { send(res, 503, { error: 'relevé indisponible' }, cors); return true; }
-  const p = url.pathname;
-  try {
-    if (p === '/hs/status') sendPublic(req, res, await crawl.call('status'), 30);
-    else if (p === '/hs/feed') sendPublic(req, res, await crawl.call('feed', Math.max(0, Math.floor(+url.searchParams.get('since') || 0))), 0);
-    else if (p === '/hs/all.gz') {
-      // le fichier compressé tel quel (le proxy d'Infomaniak retire la compression HTTP « Content-Encoding »)
-      const gz = Buffer.from(await crawl.call('allGz'));
-      res.writeHead(200, { ...cors, 'Content-Type': 'application/gzip', 'Content-Length': gz.length, 'Cache-Control': 'public, max-age=300' }); res.end(gz);
-    }
-    else if (p === '/hs/stats') {
-      const s = await crawl.call('stats', regionOf(url));
-      s ? sendPublic(req, res, s, 600) : send(res, 404, { error: 'inconnu' }, cors);
-    }
-    else if (p === '/hs/search') sendPublic(req, res, { results: await crawl.call('search', String(url.searchParams.get('q') || '').slice(0, 40), 20) }, 60);
-    else if (p === '/hs/guild') {
-      const k = String(url.searchParams.get('k') || '').toLowerCase();
-      /^(eu|us|tw)\/[\p{L}\p{N}' -]{1,60}$/u.test(k) ? sendPublic(req, res, await crawl.call('guild', k), 300) : send(res, 400, { error: 'clé' }, cors);
-    }
-    else if (p === '/hs/char') {
-      const k = String(url.searchParams.get('k') || '').toLowerCase();
-      const c = validKey(k) ? await crawl.call('char', k) : null;
-      c ? sendPublic(req, res, c, 300) : send(res, 404, { error: 'inconnu' }, cors);
-    }
-    else if (p === '/hs/lookup') {
-      // recherche directe chez Blizzard (5 appels) : 10 par heure et par adresse, 300 par heure en tout
-      const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '?', hour = Math.floor(Date.now() / 3600e3);
-      if (lookups.hour !== hour) { lookups.hour = hour; lookups.n = 0; lookups.by.clear(); }
-      if (lookups.n >= 300 || (lookups.by.get(ip) || 0) >= 10) { send(res, 429, { error: 'trop de recherches, réessaie dans une heure' }, cors); return true; }
-      const name = String(url.searchParams.get('n') || '').slice(0, 40);
-      lookups.n++; lookups.by.set(ip, (lookups.by.get(ip) || 0) + 1);
-      const c = await crawl.call('lookup', regionOf(url), name).catch(() => null);
-      c ? sendPublic(req, res, c, 300) : send(res, 404, { error: 'introuvable' }, cors);
-    }
-    else if (p === '/hs/rank') {
-      const pg = Math.max(1, Math.min(10000, Math.floor(+url.searchParams.get('pg') || 1)));
-      sendPublic(req, res, await crawl.call('rank', regionOf(url), pg, 50), 120);
-    }
-    else send(res, 404, { error: 'inconnu' }, cors);
-  } catch (err) { send(res, 503, { error: 'relevé indisponible' }, cors); }
-  return true;
-}
+const crawlRoute = hsRoutes({ getCrawl: () => crawl, send, cors, validKey, regions: REGIONS });
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, CFG.publicUrl);
   try {
-    const frequent = ['/runs', '/hs/search', '/hs/feed', '/hit'].includes(url.pathname);   // lectures fréquentes et visites : compteur à part (120 / min)
+    const frequent = ['/runs', '/hs/search', '/hs/feed', '/hit', '/hs/rank', '/hs/guilds', '/hs/movers', '/hs/me-dash', '/hs/rsinfo', '/hs/char', '/hs/guild'].includes(url.pathname);   // lectures fréquentes et visites : compteur à part (120 / min)
     if (limited(req, frequent ? 120 : 40, frequent ? '|f' : '')) return send(res, 429, { error: 'trop de requêtes' }, { ...cors, 'Retry-After': '60' });
     if (req.method === 'OPTIONS') return send(res, 204, '', { ...cors, 'Access-Control-Allow-Methods': 'GET, POST', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600' });
 

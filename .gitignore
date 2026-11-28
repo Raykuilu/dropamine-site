@@ -25,3 +25,5 @@ site/guildes/
 site/groupes/
 site/nouveautes/
 site/data/home.json
+site/data/reg.json
+server/.state-dev/
