@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openCrawlDb, saveChar, goneChar, purgeOld, charByKey, searchChars } from './crawl.mjs';
-import { skillValues, gains, loadOverlay, indexChar, refreshGuilds, rulesetCounts, rankList, guildList, movers, meDash, reindexAll, indexStale, ranksOf } from './hs-index.mjs';
+import { skillValues, gains, loadOverlay, indexChar, refreshGuilds, rulesetCounts, rankList, guildList, guildFull, movers, meDash, reindexAll, indexStale, ranksOf } from './hs-index.mjs';
 
 const P = (key, o = {}) => ({ key, region: key.split('/')[0], slug: key.split('/')[1], name: key.split('/')[1].split('-')[0], surname: 'zed', classId: 1, raceId: 1,
   faction: 'ALLIANCE', guild: { name: 'Les Gens', slug: 'les-gens' }, rulesetId: 1, level: 60, total: 1000, defense: 300,
@@ -91,4 +91,29 @@ test('inscrits : données riches, gains, tableau de bord, réindex', async () =>
   // fin d'inscription : l'inscrit n'apparaît plus dans reg.json, ses données riches disparaissent
   loadOverlay(db, { players: [] }).forEach(k => indexChar(db, k));
   assert.equal(rankList(db, { region: 'eu', rs: 1, skill: 'clog' }).total, 0);
+});
+
+test('fiche : rangs de toutes ses compétences ; gains par compétence ; armes estimées ; guilde complète', () => {
+  const db = openCrawlDb(':memory:'), today = 20785;
+  const prof = s => [{ id: 186, skill: s }];
+  saveChar(db, P('eu/a-b', { total: 1500, professions: prof(100), weaponList: [{ id: 'swords', rank: 200, est: true }] }), today - 1);
+  saveChar(db, P('eu/a-b', { total: 1510, professions: prof(110), weaponList: [{ id: 'swords', rank: 210, est: true }] }), today);
+  saveChar(db, P('eu/c-d', { total: 1800, professions: prof(250) }), today - 1);
+  saveChar(db, P('eu/c-d', { total: 1801, professions: prof(250), level: 60 }), today);
+  const r = ranksOf(db, 'eu/a-b');
+  assert.deepEqual([r.total.r, r.total.of, r.p186.r], [2, 2, 2]);
+  assert.ok(!Object.keys(r).some(k => k.startsWith('~')), 'les armes estimées n\'ont pas de rang');
+  const g = rankList(db, { region: 'eu', rs: 1, skill: 'p186', sort: 'g1' });
+  assert.deepEqual(g.rows.map(x => [x.p.key, x.g1]), [['eu/a-b', 10]], 'seuls ceux qui ont progressé dans ce métier');
+  assert.equal(g.rows[0].p.g1, 10, 'p.g1 : gain du niveau total');
+  assert.deepEqual(rankList(db, { region: 'eu', rs: 1, skill: 'total', sort: 'g1' }).rows.map(x => x.p.key), ['eu/a-b', 'eu/c-d']);
+  const e = rankList(db, { region: 'eu', rs: 1, skill: 'wswords', est: true });
+  assert.deepEqual(e.rows.map(x => [x.p.key, x.v, x.r]), [['eu/c-d', 300, undefined], ['eu/a-b', 210, undefined]]);
+  assert.equal(rankList(db, { region: 'eu', rs: 1, skill: 'wswords' }).total, 0, 'pas dans le classement de l\'arme');
+  refreshGuilds(db);
+  const f = guildFull(db, 'eu/les-gens');
+  assert.equal(f.rs, 1); assert.equal(f.rank, 1); assert.equal(f.of, 1);
+  assert.deepEqual(f.players.map(p => p.key), ['eu/c-d', 'eu/a-b']);
+  assert.ok(f.players.every(p => !('history' in p) && 'g1' in p && 'g7' in p));
+  assert.deepEqual(guildFull(db, 'eu/inconnue').players, []);
 });

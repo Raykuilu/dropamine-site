@@ -8,7 +8,7 @@ import { gunzipSync } from 'node:zlib';
 import { mkdirSync, rmSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { openCrawlDb, saveChar, charByKey, searchChars, guildMembers, crawlCounts, allPlayers, knownCounts } from './crawl.mjs';
-import { reindexAll, refreshGuilds, loadOverlay, indexChar, indexStale, rulesetCounts, rankList, guildList, movers, meDash, pickRs } from './hs-index.mjs';
+import { reindexAll, refreshGuilds, loadOverlay, indexChar, indexStale, rulesetCounts, rankList, guildList, guildFull, movers, meDash, pickRs, ranksOf } from './hs-index.mjs';
 import { dayOf, validCharKey } from './crawl-lib.mjs';
 import { computeStats } from './stats-lib.mjs';
 import { hsRoutes } from './hs-routes.mjs';
@@ -63,6 +63,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     guilds: o => guildList(db, o),
     movers: o => movers(db, { ...o, today: Number(db.prepare('SELECT MAX(fetched) AS d FROM chars').get().d) || dayOf() }),
     meDash: keys => meDash(db, keys, k => charByKey(db, k)),
+    ranks: k => ranksOf(db, k),
+    guildFull: k => guildFull(db, k),
     char: k => charByKey(db, k),
     guild: k => guildMembers(db, k),
     rank: (r, pg, per) => rankList(db, { region: r, page: pg, per }),

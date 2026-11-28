@@ -11,7 +11,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
-import { openIndex, indexChar, indexStale, reindexAll, loadOverlay, refreshGuilds, rulesetCounts, pickRs, rankList, guildList, movers, meDash, merged, ranksOf } from './hs-index.mjs';
+import { openIndex, indexChar, indexStale, reindexAll, loadOverlay, refreshGuilds, rulesetCounts, pickRs, rankList, guildList, guildFull, movers, meDash, merged, ranksOf } from './hs-index.mjs';
 import { CRAWL, SRC_PRIO, dayOf, isoDay, charKey, validCharKey, nextVisit, rosterMembers, crawlPlayer, histPoint, moved, discoverOrder, crawlEta, lookupSlug, HOUR_CAP, HOUR_MAX, slowDown, speedUp, regMode } from './crawl-lib.mjs';
 
 const LOCALE = { eu: 'fr_FR', us: 'en_US', tw: 'zh_TW' };
@@ -370,6 +370,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     movers: o => movers(db, { ...o, today: dayOf() }),
     meDash: keys => meDash(db, keys, k => charByKey(db, k)),
     ranksOf: (key, skills) => ranksOf(db, key, skills),
+    guildFull: gkey => guildFull(db, gkey),
     pickRs: (region, rs) => pickRs(db, region, rs),
     rank: (region, page, per) => rankPage(db, region, page, per),
     add: (items, src) => addChars(db, items, src),

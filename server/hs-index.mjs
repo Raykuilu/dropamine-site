@@ -13,7 +13,7 @@ import { isoDay } from './crawl-lib.mjs';
 
 export const RULESETS = [1, 2, 3, 15];
 export const STAT_KEYS = ['killingBlows', 'kills', 'quests', 'dungeons', 'flights'];
-export const INDEX_VERSION = '2';
+export const INDEX_VERSION = '3';
 // requêtes préparées une fois par base (les recompiler à chaque appel coûtait l'essentiel du temps)
 const STMTS = new WeakMap();
 const st = (db, sql) => { let m = STMTS.get(db); if (!m) STMTS.set(db, m = new Map()); let s = m.get(sql); if (!s) m.set(sql, s = db.prepare(sql)); return s; };
@@ -58,10 +58,10 @@ export function gains(hist, complete) {
 export function openIndex(db) {
   // ancienne forme de la table de classement : refaite (elle se reconstruit depuis les fiches)
   const cols = db.prepare("SELECT name FROM pragma_table_info('sk')").all().map(r => r.name);
-  if (cols.length && !cols.includes('cls')) { db.exec("DROP TABLE sk; DELETE FROM meta WHERE k = 'hsidx'"); }
+  if (cols.length && !cols.includes('g7')) { db.exec("DROP TABLE sk; DELETE FROM meta WHERE k = 'hsidx'"); }
   db.exec(`
     CREATE TABLE IF NOT EXISTS sk (region TEXT NOT NULL, rs INTEGER NOT NULL, skill TEXT NOT NULL, v REAL NOT NULL, key TEXT NOT NULL,
-      cls INTEGER, fac TEXT, PRIMARY KEY (region, rs, skill, v DESC, key)) WITHOUT ROWID;
+      cls INTEGER, fac TEXT, g1 REAL, g7 REAL, PRIMARY KEY (region, rs, skill, v DESC, key)) WITHOUT ROWID;
     CREATE INDEX IF NOT EXISTS sk_key ON sk (key);
     CREATE INDEX IF NOT EXISTS sk_cls ON sk (region, rs, skill, cls, v DESC, key);
     CREATE TABLE IF NOT EXISTS ov (key TEXT PRIMARY KEY, data TEXT NOT NULL, at INTEGER);
@@ -97,14 +97,26 @@ export function indexChar(db, key) {
   const hist = st(db, 'SELECT d, t, s FROM hist WHERE key = ? ORDER BY d').all(key);
   writeIndex(db, key, row.region, merged(db, key, JSON.parse(row.data)), hist);
 }
+// clé de l'instantané quotidien (hist.s) d'une compétence classée ; les autres prennent le gain du niveau total
+const snapKey = sk => sk === 'level' ? 'l' : sk === 'defense' ? 'd' : /^[pw][a-z0-9]+$/.test(sk) && sk !== 'pvprank' && sk !== 'played' ? sk : null;
+export function skillGains(hist, sk, total) {
+  const key = snapKey(sk); if (!key || hist.length < 2) return total;
+  const b = hist[hist.length - 1], a = hist[hist.length - 2];
+  const diff = (x, y) => (y.s?.[key] != null && x.s?.[key] != null ? Math.max(0, y.s[key] - x.s[key]) : 0);
+  const cut = new Date(Date.parse(b.d) - 7 * 864e5).toISOString().slice(0, 10);
+  return { g1: Date.parse(b.d) - Date.parse(a.d) <= 1.5 * 864e5 ? diff(a, b) : 0, g7: diff([...hist].reverse().find(x => x.d <= cut) || hist[0], b) };
+}
 // hist : lignes brutes de la table hist (d en jours, s en JSON)
-function writeIndex(db, key, region, p, hist, table = 'sk') {
-  const { g1, g7 } = gains(hist.map(h => ({ d: isoDay(h.d), t: h.t, s: JSON.parse(h.s) })), p.complete);
+function writeIndex(db, key, region, p, rawHist, table = 'sk') {
+  const hist = rawHist.map(h => ({ d: isoDay(h.d), t: h.t, s: JSON.parse(h.s) }));
+  const tg = gains(hist, p.complete), { g1, g7 } = tg;
   const rs = RULESETS.includes(p.rulesetId) ? p.rulesetId : 0;
   // total : celui de l'inscrit s'il a envoyé ses vraies compétences d'armes (même chiffre partout : classement, guilde, recherche)
   st(db, 'UPDATE chars SET rs = ?, g1 = ?, g7 = ?, hk = ?, prof = ?, total = ? WHERE key = ?').run(rs, g1, g7, hkOf(p) ?? 0, p.parts?.professions ?? 0, p.total ?? null, key);
-  const ins = st(db, `INSERT OR REPLACE INTO ${table} (region, rs, skill, v, key, cls, fac) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-  for (const [k, v] of Object.entries(skillValues(p))) ins.run(region, rs, k, v, key, p.classId ?? null, p.faction ?? null);
+  const ins = st(db, `INSERT OR REPLACE INTO ${table} (region, rs, skill, v, key, cls, fac, g1, g7) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  for (const [k, v] of Object.entries(skillValues(p))) { const g = skillGains(hist, k, tg); ins.run(region, rs, k, v, key, p.classId ?? null, p.faction ?? null, g.g1, g.g7); }
+  // armes estimées (pas de rang) : listées à part sous « ~w<arme> », affichées sous le classement de l'arme
+  for (const w of p.weaponList ?? []) if (w.est && w.rank > 0) ins.run(region, rs, '~w' + w.id, w.rank, key, p.classId ?? null, p.faction ?? null, 0, 0);
 }
 // Tout réindexer (nouvelle version de l'index) : une seule passe sur les fiches et l'historique, sans requête par personnage,
 // le fil rendant la main entre deux lots. Les lignes vont d'abord dans une table sans index, puis sont recopiées triées
@@ -116,7 +128,7 @@ export async function reindexAll(db, { batch = 2000, yieldFn = () => new Promise
   const rows = db.prepare('SELECT key, region, data FROM chars WHERE data IS NOT NULL ORDER BY key').all();
   const histOf = new Map();
   for (const h of db.prepare('SELECT key, d, t, s FROM hist ORDER BY key, d').iterate()) (histOf.get(h.key) ?? histOf.set(h.key, []).get(h.key)).push(h);
-  db.exec(`DROP TABLE IF EXISTS sk_tmp; CREATE TABLE sk_tmp (region TEXT, rs INTEGER, skill TEXT, v REAL, key TEXT, cls INTEGER, fac TEXT);`);
+  db.exec(`DROP TABLE IF EXISTS sk_tmp; CREATE TABLE sk_tmp (region TEXT, rs INTEGER, skill TEXT, v REAL, key TEXT, cls INTEGER, fac TEXT, g1 REAL, g7 REAL);`);
   for (let i = 0; i < rows.length; i += batch) {
     db.exec('BEGIN');
     try {
@@ -130,7 +142,7 @@ export async function reindexAll(db, { batch = 2000, yieldFn = () => new Promise
   }
   db.exec(`BEGIN;
     DROP INDEX IF EXISTS sk_key; DROP INDEX IF EXISTS sk_cls; DELETE FROM sk;
-    INSERT OR REPLACE INTO sk (region, rs, skill, v, key, cls, fac) SELECT region, rs, skill, v, key, cls, fac FROM sk_tmp ORDER BY region, rs, skill, v DESC, key;
+    INSERT OR REPLACE INTO sk (region, rs, skill, v, key, cls, fac, g1, g7) SELECT region, rs, skill, v, key, cls, fac, g1, g7 FROM sk_tmp ORDER BY region, rs, skill, v DESC, key;
     CREATE INDEX sk_key ON sk (key); CREATE INDEX sk_cls ON sk (region, rs, skill, cls, v DESC, key);
     DROP TABLE sk_tmp; COMMIT;`);
   db.prepare("INSERT INTO meta (k, v) VALUES ('hsidx', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(INDEX_VERSION);
@@ -196,19 +208,23 @@ function rowOut(db, r, extra = {}) {
   const p = merged(db, r.key, r.data ? JSON.parse(r.data) : null);
   if (!p) return null;
   delete p.history;
+  p.g1 = r.cg1 ?? r.g1 ?? 0; p.g7 = r.cg7 ?? r.g7 ?? 0;   // gains du niveau total (le site s'en sert quand l'historique manque)
   return { ...extra, g1: r.g1 ?? 0, g7: r.g7 ?? 0, p };
 }
 const clsFilter = cls => (Number.isInteger(cls) && cls > 0 ? ' AND cls = ' + cls : '');
 const facFilter = fac => (fac === 'ALLIANCE' || fac === 'HORDE' ? ` AND fac = '${fac}'` : '');
 
 // une page d'un classement ; `k` : renvoie la page qui contient ce personnage (et son rang)
-export function rankList(db, { region, rs, skill = 'total', cls = null, fac = null, page = 1, per = 50, k = null }) {
+// sort = g1 | g7 : seulement ceux qui ont progressé dans cette compétence, triés par gain ; est : armes estimées (sans rang)
+export function rankList(db, { region, rs, skill = 'total', cls = null, fac = null, page = 1, per = 50, k = null, sort = null, est = false }) {
   rs = pickRs(db, region, rs);
-  const from = `FROM sk WHERE region = ? AND rs = ? AND skill = ?${clsFilter(cls)}${facFilter(fac)}`;
-  const args = [region, rs, skill];
+  const sk = est ? '~' + skill : skill, by = sort === 'g1' || sort === 'g7' ? sort : null;
+  const from = `FROM sk WHERE region = ? AND rs = ? AND skill = ?${clsFilter(cls)}${facFilter(fac)}${by ? ` AND ${by} > 0` : ''}`;
+  const order = by ? `${by} DESC, v DESC, key` : 'v DESC, key';
+  const args = [region, rs, sk];
   const total = st(db, `SELECT COUNT(*) AS n ${from}`).get(...args).n;
   let me = null;
-  if (k) {
+  if (k && !by) {
     const mine = st(db, `SELECT v ${from} AND key = ?`).get(...args, k);
     if (mine) {
       const r = st(db, `SELECT COUNT(*) AS n ${from} AND (v > ? OR (v = ? AND key < ?))`).get(...args, mine.v, mine.v, k).n + 1;
@@ -216,16 +232,17 @@ export function rankList(db, { region, rs, skill = 'total', cls = null, fac = nu
     }
   }
   page = Math.max(1, Math.min(page, Math.max(1, Math.ceil(total / per))));
-  const one = st(db, 'SELECT key, data, g1, g7 FROM chars WHERE key = ?');
-  const rows = st(db, `SELECT key, v ${from} ORDER BY v DESC, key LIMIT ? OFFSET ?`).all(...args, per, (page - 1) * per)
-    .map(s => ({ ...one.get(s.key), v: s.v }));
-  return { region, rs, skill, cls, fac, total, page, per, pages: Math.ceil(total / per), me,
-    rows: rows.map((r, i) => rowOut(db, r, { r: (page - 1) * per + i + 1, v: r.v })).filter(Boolean) };
+  const one = st(db, 'SELECT key, data, g1 AS cg1, g7 AS cg7 FROM chars WHERE key = ?');
+  const rows = st(db, `SELECT key, v, g1, g7 ${from} ORDER BY ${order} LIMIT ? OFFSET ?`).all(...args, per, (page - 1) * per)
+    .map(s => ({ ...one.get(s.key), v: s.v, g1: s.g1, g7: s.g7 }));
+  return { region, rs, skill, cls, fac, sort: by, est: !!est, total, page, per, pages: Math.ceil(total / per), me,
+    rows: rows.map((r, i) => rowOut(db, r, est ? { v: r.v } : { r: (page - 1) * per + i + 1, v: r.v })).filter(Boolean) };
 }
-// rang d'un personnage dans quelques classements (fiche, tableau de bord)
-export function ranksOf(db, key, skills = ['total']) {
+// rang d'un personnage dans ses classements (tous si skills est absent), dans son type de royaume
+export function ranksOf(db, key, skills = null) {
   const c = st(db, 'SELECT region, rs FROM chars WHERE key = ? AND data IS NOT NULL').get(key); if (!c) return {};
   const out = {};
+  skills ??= st(db, "SELECT skill FROM sk WHERE key = ? AND skill NOT LIKE '~%'").all(key).map(r => r.skill);
   for (const sk of skills) {
     const mine = st(db, 'SELECT v FROM sk WHERE region = ? AND rs = ? AND skill = ? AND key = ?').get(c.region, c.rs, sk, key);
     if (!mine) continue;
@@ -247,6 +264,17 @@ export function guildList(db, { region, rs, m = 'total', q = '', fac = null, pag
   const total = ranked.length, pages = Math.ceil(total / per);
   page = Math.max(1, Math.min(page, Math.max(1, pages)));
   return { region, rs, m, total, page, per, pages, rows: ranked.slice((page - 1) * per, page * per).map(({ nf, ...g }) => ({ ...g, avg: g.n ? Math.round(g.total / g.n) : 0 })) };
+}
+
+// page d'une guilde : fiches complètes des membres lus de son type (sans historique), rang de la guilde
+export function guildFull(db, gkey) {
+  const g = st(db, 'SELECT key, slug, name, faction, rs, region, n, l60, total, hk, prof, g7 FROM gagg WHERE key = ? ORDER BY n DESC LIMIT 1').get(gkey);
+  if (!g) return { rs: null, rank: null, of: null, players: [] };
+  const players = st(db, 'SELECT key, data, g1, g7 FROM chars WHERE guild = ? AND rs = ? AND data IS NOT NULL ORDER BY total DESC, key').all(gkey, g.rs)
+    .map(r => rowOut(db, r)?.p).filter(Boolean);
+  const rank = st(db, 'SELECT COUNT(*) AS n FROM gagg WHERE region = ? AND rs = ? AND (total > ? OR (total = ? AND key < ?))').get(g.region, g.rs, g.total, g.total, g.key).n + 1;
+  const of = st(db, 'SELECT COUNT(*) AS n FROM gagg WHERE region = ? AND rs = ?').get(g.region, g.rs).n;
+  return { rs: g.rs, rank, of, agg: g, players };
 }
 
 // meilleurs gains : du jour (lus hier ou aujourd'hui), de la semaine, et guildes qui montent
@@ -272,7 +300,7 @@ export function meDash(db, keys, hydrate) {
       guild = { ...(g ?? { key: c.guild, name: p.guild?.name ?? null }), rank: mates.findIndex(m => m.key === key) + 1, members: mates.length,
         movers: [...mates].filter(m => m.g7 > 0).sort((a, b) => b.g7 - a.g7).slice(0, 3).map(r => rowOut(db, r)).filter(Boolean) };
     }
-    out[key] = { p, g1: c?.g1 ?? 0, g7: c?.g7 ?? 0, rs: c?.rs ?? null, ranks: ranksOf(db, key, ['total', 'level', 'hk']), guild };
+    out[key] = { p, g1: c?.g1 ?? 0, g7: c?.g7 ?? 0, rs: c?.rs ?? null, ranks: ranksOf(db, key), guild };
   }
   return out;
 }

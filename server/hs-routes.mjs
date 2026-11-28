@@ -55,12 +55,14 @@ return async function crawlRoute(req, res, url) {
     }
     else if (p === '/hs/search') sendPublic(req, res, { results: await crawl.call('search', String(url.searchParams.get('q') || '').slice(0, 40), 20, rsParam(url)) }, 60);
     else if (p === '/hs/rsinfo') await sendHs(req, res, url, 600, () => crawl.call('rsinfo', regionOf(url)));
-    else if (p === '/hs/rank' && ['skill', 'rs', 'k', 'cls', 'fac', 'per'].some(x => url.searchParams.has(x))) {
+    else if (p === '/hs/rank' && ['skill', 'rs', 'k', 'cls', 'fac', 'per', 'sort', 'est'].some(x => url.searchParams.has(x))) {
       // classement complet par compétence, région et type de royaume (pagination, ou page d'un personnage avec k=)
       const skill = String(url.searchParams.get('skill') || 'total'), k = String(url.searchParams.get('k') || '').toLowerCase();
       if (!SKILL_RE.test(skill) || (k && !validKey(k))) { send(res, 400, { error: 'paramètre' }, cors); return true; }
       await sendHs(req, res, url, 60, () => crawl.call('rankList', { region: regionOf(url), rs: rsParam(url), skill, cls: intParam(url, 'cls', null, 1, 20),
-        fac: facParam(url), page: intParam(url, 'pg', 1, 1, 100000), per: intParam(url, 'per', 50, 10, 100), k: k || null }));
+        fac: facParam(url), page: intParam(url, 'pg', 1, 1, 100000), per: intParam(url, 'per', 50, 10, 100), k: k || null,
+        // sort=g1|g7 : meilleurs gains dans cette compétence ; est=1 : armes estimées (sans rang)
+        sort: ['g1', 'g7'].includes(url.searchParams.get('sort')) ? url.searchParams.get('sort') : null, est: url.searchParams.get('est') === '1' && /^w/.test(skill) }));
     }
     else if (p === '/hs/guilds') {
       const m = String(url.searchParams.get('m') || 'total');
@@ -75,11 +77,15 @@ return async function crawlRoute(req, res, url) {
     }
     else if (p === '/hs/guild') {
       const k = String(url.searchParams.get('k') || '').toLowerCase();
-      /^(eu|us|tw)\/[\p{L}\p{N}' -]{1,60}$/u.test(k) ? sendPublic(req, res, await crawl.call('guild', k), 300) : send(res, 400, { error: 'clé' }, cors);
+      if (!/^(eu|us|tw)\/[\p{L}\p{N}' -]{1,60}$/u.test(k)) { send(res, 400, { error: 'clé' }, cors); return true; }
+      // full=1 : fiches complètes des membres lus (onglets Membres, Stats et Semaine de la page guilde) et rang de la guilde
+      if (url.searchParams.get('full') === '1') await sendHs(req, res, url, 120, async () => ({ ...(await crawl.call('guild', k)), ...(await crawl.call('guildFull', k)) }));
+      else sendPublic(req, res, await crawl.call('guild', k), 300);
     }
     else if (p === '/hs/char') {
       const k = String(url.searchParams.get('k') || '').toLowerCase();
       const c = validKey(k) ? await crawl.call('char', k) : null;
+      if (c && url.searchParams.get('ranks') === '1') c.ranks = await crawl.call('ranks', k);   // rang dans chaque classement, dans son type
       c ? sendPublic(req, res, c, 300) : send(res, 404, { error: 'inconnu' }, cors);
     }
     else if (p === '/hs/lookup') {
