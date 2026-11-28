@@ -148,6 +148,8 @@ export function compare(db, { region }) {
 // - métiers : moyenne des deux meilleurs, comparés à tout le type (ne pas l'avoir compte en dessous ; aucun = 0).
 // Refait en tâche de fond (fil du relevé), rangé dans sk sous skill = 'score' : tous les classements, filtres et rangs
 // existants marchent tels quels. Le détail des notes est gardé dans scp, pour l'expliquer sur la fiche.
+// au maximum d'une compétence plafonnée (niveau 60, défense 300, métier 300, total maximal) : la note vaut 100
+export const SCORE_CAPS = { level: 60, defense: 300 };
 export const SCORE_ALL = ['total', 'level', 'defense', 'hk', 'duels', 'killingBlows', 'kills', 'quests', 'dungeons', 'flights'];
 export const SCORE_OPT = ['kd'];
 const pctOf = (sorted, v, absent, n) => {
@@ -171,11 +173,14 @@ export function computeScores(db) {
     for (const [k, p] of people) if (p.v.total == null) people.delete(k);   // classé seulement avec un total
     for (const vs of by.values()) vs.sort((a, b) => a - b);
     const n = people.size;
+    const capOf = { ...SCORE_CAPS, total: st(db, `SELECT json_extract(data, '$.max') AS m, COUNT(*) AS c FROM chars WHERE region = ? AND rs = ? AND data IS NOT NULL
+      GROUP BY m ORDER BY c DESC LIMIT 1`).get(region, rs)?.m ?? Infinity };
+    const note = (sk, vs, v, absent, of) => (v >= (capOf[sk] ?? (/^p\d+$/.test(sk) ? PROF_CAP : Infinity)) ? 100 : pctOf(vs, v, absent, of));
     for (const [key, p] of people) {
       const c = {};
-      for (const sk of SCORE_ALL) { const vs = by.get(sk) ?? []; c[sk] = p.v[sk] != null ? pctOf(vs, p.v[sk], n - vs.length, n) : 100 * (n - vs.length) / 2 / n; }
+      for (const sk of SCORE_ALL) { const vs = by.get(sk) ?? []; c[sk] = p.v[sk] != null ? note(sk, vs, p.v[sk], n - vs.length, n) : 100 * (n - vs.length) / 2 / n; }
       for (const sk of SCORE_OPT) if (p.v[sk] != null) { const vs = by.get(sk); c[sk] = pctOf(vs, p.v[sk], 0, vs.length); }
-      const pr = Object.keys(p.v).filter(k => /^p\d+$/.test(k)).map(k => pctOf(by.get(k), p.v[k], n - by.get(k).length, n)).sort((a, b) => b - a);
+      const pr = Object.keys(p.v).filter(k => /^p\d+$/.test(k)).map(k => note(k, by.get(k), p.v[k], n - by.get(k).length, n)).sort((a, b) => b - a);
       c.prof = ((pr[0] ?? 0) + (pr[1] ?? 0)) / 2;
       const vals = Object.values(c), score = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10;
       rows.push([region, rs, score, key, p.cls, p.fac]);

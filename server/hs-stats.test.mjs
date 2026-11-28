@@ -92,7 +92,7 @@ test('Score global : moyenne des notes, K/D facultatif, deux meilleurs métiers,
   assert.ok(r.rows[0].v > r.rows[1].v && r.rows[1].v > r.rows[2].v);
   assert.ok(r.rows.every(x => x.v >= 0 && x.v <= 100));
   const a = scoreParts(db, 'eu/aa-z'), c = scoreParts(db, 'eu/cc-z');
-  assert.equal(a.total, 83); assert.equal(a.weapon, undefined, 'armes non comptées (rang réel des inscrits seulement)'); assert.equal(a.prof, 83);
+  assert.equal(a.total, 83); assert.equal(a.weapon, undefined, 'armes non comptées (rang réel des inscrits seulement)'); assert.equal(a.prof, 100, 'deux métiers au max'); assert.equal(a.level, 100, 'un 60 est au max'); assert.equal(a.defense, 100);
   assert.ok('kd' in a && !('kd' in c), 'K/D seulement s\'il existe');
   assert.equal(c.prof, 0);
   assert.equal(rankList(db, { region: 'eu', rs: 3, skill: 'score' }).total, 1, 'jamais mélangé');
