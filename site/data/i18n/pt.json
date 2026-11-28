@@ -628,7 +628,8 @@
   "gTopWeek": "Maiores ganhos da semana",
   "glq": "Procurar uma guilda…",
   "allFactions": "Ambas as facções",
-  "gCount": "{n} guildas"
+  "gCount": "{n} guildas",
+  "bnSafe": "A ligação entre a tua conta e as tuas personagens é cifrada no nosso servidor: nada é guardado em claro e o teu token Battle.net nunca é conservado."
  },
  "names": {
   "Leatherworking": "Couraria",

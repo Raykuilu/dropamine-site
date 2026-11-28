@@ -628,7 +628,8 @@
   "gTopWeek": "Mayores progresos de la semana",
   "glq": "Buscar una hermandad…",
   "allFactions": "Ambas facciones",
-  "gCount": "{n} hermandades"
+  "gCount": "{n} hermandades",
+  "bnSafe": "El vínculo entre tu cuenta y tus personajes está cifrado en nuestro servidor: nada se guarda en claro y tu token de Battle.net nunca se conserva."
  },
  "names": {
   "Leatherworking": "Peletería",

@@ -628,7 +628,8 @@
   "gTopWeek": "Maggiori progressi della settimana",
   "glq": "Cerca una gilda…",
   "allFactions": "Entrambe le fazioni",
-  "gCount": "{n} gilde"
+  "gCount": "{n} gilde",
+  "bnSafe": "Il collegamento tra il tuo account e i tuoi personaggi è cifrato sul nostro server: niente è salvato in chiaro e il tuo token Battle.net non viene mai conservato."
  },
  "names": {
   "Leatherworking": "Conciatura",

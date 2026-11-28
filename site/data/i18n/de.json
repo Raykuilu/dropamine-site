@@ -628,7 +628,8 @@
   "gTopWeek": "Größte Zuwächse der Woche",
   "glq": "Gilde suchen…",
   "allFactions": "Beide Fraktionen",
-  "gCount": "{n} Gilden"
+  "gCount": "{n} Gilden",
+  "bnSafe": "Die Verbindung zwischen deinem Konto und deinen Charakteren ist auf unserem Server verschlüsselt: nichts wird im Klartext gespeichert, und dein Battle.net-Token wird nie aufbewahrt."
  },
  "names": {
   "Leatherworking": "Lederverarbeitung",

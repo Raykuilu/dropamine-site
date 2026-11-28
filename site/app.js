@@ -2815,6 +2815,8 @@ Object.assign(I18N, {
   bnTitle: ['Register with Battle.net', 'Inscription avec Battle.net'],
   bnPitch: ['Sign in with Blizzard: your Forever characters are listed, tick the ones to show. We never see your password.',
     'Connecte-toi chez Blizzard : tes personnages Forever s\'affichent, coche ceux à montrer. Nous ne voyons jamais ton mot de passe.'],
+  bnSafe: ['The link between your account and your characters is encrypted on our server: nothing is stored in clear, and your Battle.net token is never kept.',
+    'Le lien entre ton compte et tes personnages est chiffré sur notre serveur : rien n\'est stocké en clair, et ton jeton Battle.net n\'est jamais conservé.'],
   bnLogin: ['Sign in with Battle.net', 'Se connecter avec Battle.net'], bnLogout: ['Sign out', 'Se déconnecter'],
   bnNone: ['No Forever character on this account (level 10+, logged out at least once).', 'Aucun personnage Forever sur ce compte (niveau 10 minimum, déconnecté au moins une fois).'],
   bnListed: ['LISTED', 'INSCRIT'], bnPreview: ['GUILD PREVIEW', 'APERÇU'], bnHidden: ['HIDDEN', 'MASQUÉ'], bnLow: ['level 10 required', 'niveau 10 requis'],
@@ -2869,7 +2871,7 @@ const Bnet = (() => {
     if (!alive) { b.innerHTML = `<div class="head"><h2>${t('bnTitle')}</h2></div><p class="lead">${t('bnDown')}</p>`; return; }
     if (!me) {
       b.innerHTML = `<div class="head"><h2>${t('bnTitle')}</h2></div><p class="lead">${t('bnPitch')}</p>
-        <a class="btn bnet-btn" href="${API}/auth/login">${t('bnLogin')}</a>${msg ? `<p class="msg">${msg}</p>` : ''}`;
+        <a class="btn bnet-btn" href="${API}/auth/login">${t('bnLogin')}</a><p class="bnsafe"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>${t('bnSafe')}</p>${msg ? `<p class="msg">${msg}</p>` : ''}`;
       return;
     }
     const chars = me.characters || [];
