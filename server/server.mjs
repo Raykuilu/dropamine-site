@@ -21,6 +21,7 @@ import { gzipSync } from 'node:zlib';
 import { Worker } from 'node:worker_threads';
 import { createAnalytics } from './analytics.mjs';
 import { hsRoutes } from './hs-routes.mjs';
+import { consumeAdminLink } from './admin-link.mjs';
 import { randomBytes, createHmac, createHash, timingSafeEqual } from 'node:crypto';
 import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload,
   sealSecret, openSecret, openRegistry, sealRegistry, applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt, parseScoutLine, applyScout, applySettings, applyGuildFollow, queueDue } from './lib.mjs';
@@ -419,6 +420,15 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/push/key' && req.method === 'GET') return send(res, 200, { key: VAPID.publicKey }, { ...cors, 'Cache-Control': 'public, max-age=86400' });
     if (url.pathname === '/stats' && req.method === 'GET') return send(res, 200, { curseforge: cfStats }, { ...cors, 'Cache-Control': 'public, max-age=900' });
 
+    // accès admin de secours sans Battle.net : lien à usage unique créé dans la console SSH (node server/admin-link.mjs)
+    if (url.pathname === '/auth/admin-link' && req.method === 'GET') {
+      const tag = [...CFG.admins][0];
+      if (!tag || !consumeAdminLink(STATE_DIR, url.searchParams.get('t'))) return send(res, 403, { error: 'lien invalide, expiré ou déjà utilisé' });
+      const id = randomBytes(24).toString('base64url');
+      sessions.set(id, { exp: Date.now() + SESSION_HOURS * 3600e3, bnetId: 'admin-link', battletag: tag, characters: new Map(), viaLink: true });
+      AUDIT.log('login', tag, 'lien admin de secours');
+      return send(res, 302, '', { Location: `${CFG.publicUrl}/admin`, 'Set-Cookie': [cookie('dsid', seal(id), SESSION_HOURS * 3600)] });
+    }
     if (url.pathname === '/auth/login' && req.method === 'GET') {
       const state = randomBytes(18).toString('base64url');
       const q = new URLSearchParams({ client_id: CFG.clientId, response_type: 'code', scope: 'openid wow.profile', state, redirect_uri: `${CFG.publicUrl}/auth/callback` });
