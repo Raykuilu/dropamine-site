@@ -1,4 +1,5 @@
 {
   "newPerRun": 500,
-  "maxPreviews": 9843
+  "maxPreviews": 9843,
+  "crawlRate": 9
 }

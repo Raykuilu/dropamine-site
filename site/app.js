@@ -21,7 +21,7 @@ const li = () => Math.max(0, LANGS.indexOf(LANG));
 let I18X = null, ITEMX = null;   // langue en plus : textes et noms, puis ses objets
 const extra = () => LANG !== 'en' && LANG !== 'fr';
 const I18N = {
-  'tab.rank': ['Hiscores', 'Classements'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'], 'acct.out': ['Sign out', 'Se déconnecter'],
+  'tab.rank': ['Hiscores', 'Classements'], lvlH: ['LEVEL', 'NIVEAU'], 'tab.char': ['Character', 'Personnage'], 'tab.mine': ['My character', 'Mon personnage'], 'acct.in': ['Sign in', 'Se connecter'], 'acct.out': ['Sign out', 'Se déconnecter'],
   myChars: ['My characters', 'Mes personnages'],
   youHere: ['YOU', 'TOI'],
   pulseDl: ['{n} downloads', '{n} téléchargements'], pulseChars: ['{n} characters tracked', '{n} personnages suivis'], pulseGuilds: ['{n} guild{s}', '{n} guilde{s}'],
@@ -74,7 +74,21 @@ const I18N = {
   runsEmpty: ['In game, add the items you want (Hunt tab), type /drop hiscores and paste the line on the Join page: you then show up here with everyone who needs the same dungeons.', 'En jeu, ajoute les objets que tu veux (onglet Chasse), tape /drop hiscores et colle la ligne sur la page Inscription : tu apparais alors ici avec tous ceux qui ont besoin des mêmes donjons.'],
   runsNoGuild: ['Nobody in your guild has shared yet: showing all players.', 'Personne de ta guilde n’a encore partagé : tous les joueurs sont affichés.'],
   runsSrc: ['Loot tables: AtlasLoot Forever (GPL-2.0).', 'Tables de butin : AtlasLoot Forever (GPL-2.0).'],
-  'tab.news': ["What's new", 'Nouveautés'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
+  'tab.news': ["What's new", 'Nouveautés'], 'tab.stats': ['Stats', 'Stats'],
+  stTitle: ['Forever in numbers', 'Forever en chiffres'], stNote: ['{n} characters level 10+ read from the public armory · updated {d}', '{n} personnages niveau 10+ relevés dans l’armurerie publique · mis à jour {d}'],
+  stChars: ['characters', 'personnages'], stLvl60: ['level 60', 'niveau 60'], stGuilds: ['guilds', 'guildes'], stHk: ['honorable kills', 'victoires honorables'], stDuels: ['duels fought', 'duels disputés'],
+  stClasses: ['Classes', 'Classes'], stClassesSub: ['share, average level, PvP and duels', 'part, niveau moyen, JcJ et duels'],
+  stColClass: ['Class', 'Classe'], stColShare: ['Share', 'Part'], stColLvl: ['Avg level', 'Niv. moyen'], stCol60: ['Level 60', 'Niveau 60'], stColHk: ['HK / char.', 'VH / perso'],
+  stColKd: ['K/D PvP', 'K/D JcJ'], stColDuel: ['Duels won', 'Duels gagnés'], stKdTip: ['honorable kills per PvP death', 'victoires honorables par mort en JcJ'],
+  stDuelTip: ['characters with at least {n} duels', 'personnages avec au moins {n} duels'],
+  stByMode: ['Classes by realm type', 'Classes par type de royaume'], stRaces: ['Races', 'Races'], stFactions: ['Factions', 'Factions'], stLevels: ['Levels', 'Niveaux'],
+  stProfs: ['Professions', 'Métiers'], stProfsSub: ['who has it · maxed (300) · average skill', 'qui l’a · au maximum (300) · niveau moyen'], stPairs: ['Favourite pairs', 'Duos préférés'],
+  stDuelBest: ['Best class in duels', 'Meilleure classe en duel'], stPve: ['A level 60, on average', 'Un niveau 60, en moyenne'],
+  stQuests: ['quests', 'quêtes'], stDeaths: ['deaths', 'morts'], stKills: ['creatures killed', 'créatures tuées'], stDungeons: ['dungeons', 'donjons'], stFlights: ['flights', 'vols'], stFalls: ['deaths by falling', 'morts de chute'], stBosses: ['bosses', 'boss'],
+  stRecords: ['Records', 'Records'], stRecHk: ['Honorable kills', 'Victoires honorables'], stRecDuels: ['Duels won', 'Duels gagnés'], stRecQuests: ['Quests', 'Quêtes'], stRecKills: ['Creatures killed', 'Créatures tuées'],
+  stRecFlights: ['Flights', 'Vols'], stRecFish: ['Fish caught', 'Poissons pêchés'], stRecDungeons: ['Dungeons', 'Donjons'], stRecDeaths: ['Deaths', 'Morts'],
+  stTopGuilds: ['Biggest guilds', 'Plus grandes guildes'], stMembers: ['{n} members read', '{n} membres relevés'], stNone: ['Statistics are not available right now.', 'Les statistiques ne sont pas disponibles pour l’instant.'],
+  stBias: ['Characters are found through guilds, Scout and searches: a faction or realm type with few known players is under-represented.', 'Les personnages sont découverts par les guildes, Scout et les recherches : une faction ou un type de royaume peu connu est sous-représenté.'], 'btn.download': ['Download', 'Télécharger'], 'search.ph': ['Find a character…', 'Chercher un personnage…'],
   'foot.addon': ['THE ADDON', "L'ADDON"], 'foot.join': ['Join or leave', "S'inscrire ou se retirer"], 'foot.privacy': ['Privacy', 'Confidentialité'], 'foot.about': ['About', 'À propos'], newsEnOnly: ['', 'en anglais'], 'foot.code': ['Site source (open source, MIT)', 'Code du site (open source, MIT)'], 'foot.coffee': ['Buy me a coffee', "M'offrir un café"],
   total: ['Total level', 'Niveau total'], level: ['Level', 'Niveau'], defense: ['Defense', 'Défense'],
   'g.lvl': ['LEVEL', 'NIVEAU'], 'g.wpn': ['WEAPONS & DEFENSE', 'ARMES ET DÉFENSE'], 'g.prf': ['PROFESSIONS', 'MÉTIERS'], 'g.pvp': ['PVP', 'JCJ'], duelsWonT: ['Duels won', 'Duels gagnés'],
@@ -417,7 +431,7 @@ const SKILLS = [
 ];
 const showVal = (sk, v, p) => sk.show ? sk.show(v, p) : fmt(v);
 const GROUP_COLOR = { lvl: 'var(--lvl)', wpn: 'var(--wpn)', prf: 'var(--prf)', pvp: '#a874d6', stat: 'var(--rim)', book: 'var(--gold)' };
-const VIEWS = ['home', 'rank', 'char', 'guild', 'runs', 'news', 'get', 'join', 'privacy', 'about'];
+const VIEWS = ['home', 'rank', 'char', 'guild', 'runs', 'news', 'stats', 'get', 'join', 'privacy', 'about'];
 
 // loading : hiscores.json pas encore arrivé (la goutte de chargement s'affiche au lieu d'une liste vide)
 let DATA = { players: [], loading: true }, NEWS = null;
@@ -765,6 +779,78 @@ function renderHome() {
     : nobody();
 }
 
+/* ---------- Stats : tout le serveur (api /hs/stats, calculé sur le relevé) ---------- */
+const CLASS_COL = { 1: '#c79c6e', 2: '#f58cba', 3: '#abd473', 4: '#fff569', 5: '#ffffff', 7: '#0070de', 8: '#69ccf0', 9: '#9482c9', 11: '#ff7d0a' };
+const FACTION_COL = { ALLIANCE: '#4a7bd0', HORDE: '#c0392b' };
+const STATS = {};
+function renderStats() {
+  const box = $('#stats-panel'); if (!box) return;
+  const r = state.region, d = STATS[r];
+  if (d === undefined) {
+    box.innerHTML = loadingBox();
+    STATS[r] = fetch(`${API}/hs/stats?r=${r}`).then(x => x.ok ? x.json() : null).catch(() => null)
+      .then(j => { STATS[r] = j; if (state.view === 'stats' && state.region === r) { renderStats(); animate($('#stats')); } });
+    return;
+  }
+  if (d instanceof Promise) { box.innerHTML = loadingBox(); return; }
+  if (!d || !d.n) { box.innerHTML = `<div class="empty">${t('stNone')}</div>`; return; }
+  const pct = x => x == null ? '—' : `${(x * 100).toLocaleString(locale(), { maximumFractionDigits: 1 })} %`;
+  const num = x => x == null ? '—' : x.toLocaleString(locale(), { maximumFractionDigits: 1 });
+  const bar = (v, max, col) => `<span class="st-bar"><i style="width:${max ? Math.max(1, v / max * 100) : 0}%;background:${col || 'var(--gold)'}"></i></span>`;
+  const cls = id => `<span class="st-cls" style="--c:${CLASS_COL[id] || 'var(--cream)'}">${esc(L2(CLASS[id]) || '?')}</span>`;
+  const rsName = id => L2((RULESETS.find(([x]) => x === id) || [])[1]) || '?';
+  const tile = (n, l) => `<div class="st-tile"><b>${n}</b><span>${l}</span></div>`;
+  const up = new Date(d.at), duels = d.pvp.duelsWon + d.pvp.duelsLost;
+  // classes : part, niveau moyen, niveau 60, JcJ, duels
+  const maxShare = Math.max(...d.classes.map(c => c.share || 0));
+  const classRows = d.classes.map(c => `<tr><th>${cls(c.id)}</th><td class="st-w">${bar(c.share, maxShare, CLASS_COL[c.id])}<small>${pct(c.share)} · ${fmt(c.n)}</small></td>
+    <td>${num(c.avgLevel)}</td><td>${pct(c.n ? c.lvl60 / c.n : null)}</td><td>${num(c.hkPer)}</td><td>${num(c.kd)}</td><td title="${esc(t('stDuelTip', { n: 20 }))}">${pct(c.duelRate)}<small> (${fmt(c.duelists)})</small></td></tr>`).join('');
+  // classes par type de royaume (barres empilées)
+  const modes = Object.entries(d.rulesets).map(([id, n]) => [+id, n]).sort((a, b) => b[1] - a[1]);
+  const byMode = modes.map(([id, n]) => `<div class="st-mode"><h4>${esc(rsName(id))} <small>${fmt(n)}</small></h4><div class="st-stack">${d.classes.filter(c => c.rulesets[id]).sort((a, b) => b.rulesets[id] - a.rulesets[id])
+    .map(c => `<i style="flex:${c.rulesets[id]};background:${CLASS_COL[c.id]}" title="${esc(L2(CLASS[c.id]))} : ${pct(c.rulesets[id] / n)}"></i>`).join('')}</div></div>`).join('');
+  // races, factions, niveaux
+  const maxRace = Math.max(...d.races.map(x => x.n));
+  const races = d.races.filter(x => RACE[x.id]).map(x => `<li><span class="st-cap">${esc(L2(RACE[x.id]) || '?')}</span>${bar(x.n, maxRace, FACTION_COL[x.faction])}<small>${pct(x.share)}</small></li>`).join('');
+  const fac = Object.entries(d.factions).filter(([k]) => FACTION_COL[k]);
+  const facBar = `<div class="st-stack big">${fac.map(([k, n]) => `<i style="flex:${n};background:${FACTION_COL[k]}" title="${k} ${pct(n / d.n)}"></i>`).join('')}</div>
+    <p class="st-legend">${fac.map(([k, n]) => `<span><i style="background:${FACTION_COL[k]}"></i>${k === 'HORDE' ? 'Horde' : 'Alliance'} ${pct(n / d.n)}</span>`).join('')}</p>`;
+  const maxLvl = Math.max(...d.levels.map(x => x.n));
+  const levels = `<div class="st-hist">${d.levels.map(x => `<div><i style="height:${maxLvl ? Math.max(2, x.n / maxLvl * 100) : 0}%"></i><b>${fmt(x.n)}</b><span>${x.a === x.b ? x.a : `${x.a}–${x.b}`}</span></div>`).join('')}</div>`;
+  // métiers et duos
+  const maxProf = Math.max(...d.profs.map(x => x.n));
+  const profs = d.profs.map(x => `<li>${PROF_ICON[x.id] ? `<img src="${icon(PROF_ICON[x.id])}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span></span>'}<span>${esc(profName(x.id))}</span>${bar(x.n, maxProf, '#5f9a4a')}<small>${pct(x.share)} · ${fmt(x.max)} × 300 · ${num(x.avg)}</small></li>`).join('');
+  const pairs = d.profPairs.slice(0, 6).map(x => `<li><span>${x.ids.map(id => esc(profName(id))).join(' + ')}</span><b>${fmt(x.n)}</b></li>`).join('');
+  // meilleure classe en duel
+  const duelList = d.classes.filter(c => c.duelRate != null).sort((a, b) => b.duelRate - a.duelRate)
+    .map(c => `<li>${cls(c.id)}${bar(c.duelRate, 1, CLASS_COL[c.id])}<small>${pct(c.duelRate)} · ${fmt(c.duels)}</small></li>`).join('');
+  // JcE au niveau 60
+  const e = d.pve60;
+  const pve = [[e.quests, 'stQuests'], [e.kills, 'stKills'], [e.deaths, 'stDeaths'], [e.dungeons, 'stDungeons'], [e.bosses, 'stBosses'], [e.flights, 'stFlights'], [e.fallDeaths, 'stFalls']]
+    .filter(([v]) => v != null).map(([v, k]) => tile(num(v), t(k))).join('');
+  // records et guildes
+  const recs = [['hk', 'stRecHk'], ['duelsWon', 'stRecDuels'], ['quests', 'stRecQuests'], ['kills', 'stRecKills'], ['dungeons', 'stRecDungeons'], ['flights', 'stRecFlights'], ['fish', 'stRecFish'], ['deaths', 'stRecDeaths']]
+    .filter(([k]) => d.tops[k]?.length).map(([k, l]) => `<div class="st-rec"><h4>${t(l)}</h4><ol>${d.tops[k].slice(0, 5).map(p => `<li><a href="?p=char&c=${esc(encodeURIComponent(p.key))}" data-c="${esc(p.key)}" style="--c:${CLASS_COL[p.classId] || 'var(--cream)'}">${esc(p.name)} ${esc(p.surname)}</a><b>${fmt(p.v)}</b></li>`).join('')}</ol></div>`).join('');
+  const guilds = d.guilds.top.map(g => `<li><span>${esc(g.name)}</span><small>${t('stMembers', { n: fmt(g.n) })} · ${fmt(g.lvl60)} × 60</small></li>`).join('');
+  box.innerHTML = `
+    <div class="head"><h2>${t('stTitle')}</h2><span class="note">${t('stNote', { n: fmt(d.n), d: up.toLocaleString(locale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) })}</span></div>
+    <div class="st-tiles">${tile(fmt(d.n), t('stChars'))}${tile(fmt(d.lvl60), t('stLvl60'))}${tile(fmt(d.guilds.n), t('stGuilds'))}${tile(fmt(d.pvp.hk), t('stHk'))}${tile(fmt(duels), t('stDuels'))}</div>
+    <p class="st-bias">${t('stBias')}</p>
+    <section class="st-sec"><h3>${t('stClasses')} <small>${t('stClassesSub')}</small></h3>
+      <div class="st-scroll"><table class="st-table"><thead><tr><th>${t('stColClass')}</th><th>${t('stColShare')}</th><th>${t('stColLvl')}</th><th>${t('stCol60')}</th><th>${t('stColHk')}</th><th title="${esc(t('stKdTip'))}">${t('stColKd')}</th><th>${t('stColDuel')}</th></tr></thead><tbody>${classRows}</tbody></table></div></section>
+    <div class="st-grid">
+      <section class="st-sec"><h3>${t('stByMode')}</h3>${byMode}</section>
+      <section class="st-sec"><h3>${t('stDuelBest')}</h3><ul class="st-list">${duelList}</ul></section>
+      <section class="st-sec"><h3>${t('stFactions')}</h3>${facBar}<h3>${t('stRaces')}</h3><ul class="st-list">${races}</ul></section>
+      <section class="st-sec"><h3>${t('stLevels')}</h3>${levels}</section>
+    </div>
+    <section class="st-sec"><h3>${t('stProfs')} <small>${t('stProfsSub')}</small></h3><ul class="st-list st-prof">${profs}</ul>
+      <h3>${t('stPairs')}</h3><ul class="st-pairs">${pairs}</ul></section>
+    <section class="st-sec"><h3>${t('stPve')}</h3><div class="st-tiles small">${pve}</div></section>
+    <section class="st-sec"><h3>${t('stRecords')}</h3><div class="st-recs">${recs}</div></section>
+    <section class="st-sec"><h3>${t('stTopGuilds')}</h3><ol class="st-guilds">${guilds}</ol></section>`;
+}
+
 /* ---------- Classement ---------- */
 // panneaux de filtres du classement (téléphone) : bouton → panneau ; fond, ✕ ou Échap → fermé ; un choix re-dessine la page
 // le panneau est copié à la racine de la page (la page animée a un « transform » : un « fixed » dedans resterait coincé)
@@ -886,6 +972,7 @@ function renderRank() {
     <div class="row${r && r <= 3 ? ' top' : ''}${r ? '' : ' unranked'}${mineK.has(pkey(p)) ? ' me' : ''}${r && r === state.pgHit ? ' hit' : ''}" data-c="${esc(pkey(p))}" role="row">
       <span class="rk">${r || '–'}</span>
       <span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p, g)}<small>${who(p)}${rulesetName(p) ? ' · ' + esc(rulesetName(p)) : ''}</small></span></span>
+      <span class="lv${p.level >= 60 ? ' max' : ''}">${p.level}</span>
       ${isTotal ? tri(p) : sk.prof ? `<span class="mbar"><i style="--w:${(100 * v / (p.professions.find(x => x.id === sk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
         : sk.wpn ? `<span class="mbar w${sk.est(p) ? ' est' : ''}"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>`
         : sk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, sk.ratio(v, p))).toFixed(1)}%"></i></span>` : '<span class="c3"></span>'}
@@ -904,8 +991,8 @@ function renderRank() {
       <nav class="skills rk-sk">${nav}</div></nav>
       <div>
         <div class="chips rk-cls" role="group" style="margin:0 0 12px">${clsChips}</div>
-        <div class="rows" role="table">
-          <div class="row th" role="row"><span>${t('rank')}</span><span>${t('character')}</span><span class="c3">${isTotal ? t('split') : ''}</span><span style="text-align:right">${isTotal ? t('totalH') : t('value')}</span></div>
+        <div class="rows rk-lv" role="table">
+          <div class="row th" role="row"><span>${t('rank')}</span><span>${t('character')}</span><span class="lv">${t('lvlH')}</span><span class="c3">${isTotal ? t('split') : ''}</span><span style="text-align:right">${isTotal ? t('totalH') : t('value')}</span></div>
           ${rows}
         </div>
         ${pager}
@@ -2815,8 +2902,8 @@ function writeUrl(push) {
   if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['d', 'hd'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.rtab === 'ideas' || state.rtab === 'explore') q.set('tab', state.rtab); if (state.runFocus) q.set('run', state.runFocus); }
   history[push ? 'pushState' : 'replaceState'](null, '', q.toString() ? '?' + q : location.pathname);
 }
-const RENDER = { rank: renderRank, char: renderChar, guild: renderGuild, runs: renderRuns, news: renderNews, join: () => Bnet.show() };
-const TITLES = { rank: 'tab.rank', char: 'tab.char', guild: 'tab.guild', runs: 'tab.runs', news: 'tab.news', get: 'btn.download', join: 'foot.join', privacy: 'foot.privacy', about: 'foot.about' };
+const RENDER = { rank: renderRank, char: renderChar, guild: renderGuild, runs: renderRuns, news: renderNews, stats: renderStats, join: () => Bnet.show() };
+const TITLES = { rank: 'tab.rank', char: 'tab.char', guild: 'tab.guild', runs: 'tab.runs', news: 'tab.news', stats: 'tab.stats', get: 'btn.download', join: 'foot.join', privacy: 'foot.privacy', about: 'foot.about' };
 // onglet sélectionné et page affichée (sans la dessiner) : posé tout de suite au changement de page
 function markNav() {
   tabs.forEach(b => b.setAttribute('aria-selected', b.dataset.view === state.view && (b.dataset.view !== 'char' || Bnet.isMine(state.c))));
@@ -2827,7 +2914,7 @@ function markNav() {
 function render(push) {
   applyStatic();
   if (state.view === 'home') renderHome();
-  const wait = DATA.partial && state.view !== 'home' && state.view !== 'news';
+  const wait = DATA.partial && !['home', 'news', 'stats'].includes(state.view);
   if (wait) { const box = PANEL[state.view] && $(PANEL[state.view]); if (box) box.innerHTML = loadingBox(); loadFull().then(() => { if (!DATA.partial) render(false); }); }
   else (RENDER[state.view] || (() => {}))();
   markNav();
@@ -2843,7 +2930,7 @@ function render(push) {
 // changement de page : l'onglet est sélectionné et la page s'affiche tout de suite, avec la goutte de chargement ;
 // le contenu (classement, fiche…) est dessiné à l'image suivante, après que le navigateur a montré le bouton et la goutte
 // (avant : rien ne bougeait pendant le dessin, puis le bouton se sélectionnait d'un coup)
-const PANEL = { rank: '#rank-panel', char: '#char-panel', guild: '#guild-panel', runs: '#runs-panel', news: '#news-list' };
+const PANEL = { rank: '#rank-panel', char: '#char-panel', guild: '#guild-panel', runs: '#runs-panel', news: '#news-list', stats: '#stats-panel' };
 let goN = 0;
 function go(patch) {
   const changedView = patch.view && patch.view !== state.view;

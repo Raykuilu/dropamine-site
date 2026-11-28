@@ -604,7 +604,8 @@
   "lookupBtn": "Buscar «{q}» en la armería",
   "lookupWait": "Buscando en la armería…",
   "lookupNone": "No encontrado en la armería (revisa la ortografía y la región)",
-  "lookupLimit": "Demasiadas búsquedas, vuelve a intentarlo en una hora"
+  "lookupLimit": "Demasiadas búsquedas, vuelve a intentarlo en una hora",
+  "lvlH": "NIVEL"
  },
  "names": {
   "Leatherworking": "Peletería",

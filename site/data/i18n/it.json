@@ -604,7 +604,8 @@
   "lookupBtn": "Cerca «{q}» nell'armeria",
   "lookupWait": "Ricerca nell'armeria…",
   "lookupNone": "Non trovato nell'armeria (controlla l'ortografia e la regione)",
-  "lookupLimit": "Troppe ricerche, riprova tra un'ora"
+  "lookupLimit": "Troppe ricerche, riprova tra un'ora",
+  "lvlH": "LIVELLO"
  },
  "names": {
   "Leatherworking": "Conciatura",

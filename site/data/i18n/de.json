@@ -604,7 +604,8 @@
   "lookupBtn": "„{q}“ im Arsenal suchen",
   "lookupWait": "Suche im Arsenal…",
   "lookupNone": "Nicht im Arsenal gefunden (Schreibweise und Region prüfen)",
-  "lookupLimit": "Zu viele Suchen, versuch es in einer Stunde wieder"
+  "lookupLimit": "Zu viele Suchen, versuch es in einer Stunde wieder",
+  "lvlH": "STUFE"
  },
  "names": {
   "Leatherworking": "Lederverarbeitung",

@@ -18,6 +18,7 @@
 
 import { createServer } from 'node:http';
 import { gzipSync } from 'node:zlib';
+import { Worker } from 'node:worker_threads';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload,
   applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt, parseScoutLine, applyScout, applySettings, applyGuildFollow, queueDue } from './lib.mjs';
@@ -291,11 +292,33 @@ try {
   internal = (await import('./private/admin.mjs')).default({ gh, readRaw, session, isAdmin, send, cfStats: () => cfStats, stateDir: STATE_DIR });
 } catch (err) { if (err.code !== 'ERR_MODULE_NOT_FOUND') console.warn('outils internes :', err.message); }
 
-// relevé continu de tout le serveur WoW Forever (crawl.mjs) ; CRAWL=off dans server/.env pour le couper
+// relevé continu de tout le serveur WoW Forever (crawl.mjs), dans son propre fil (crawl-worker.mjs) pour ne jamais
+// ralentir les réponses au site ; CRAWL=off dans server/.env pour le couper
 let crawl = null;
+function startCrawlWorker() {
+  const w = new Worker(new URL('./crawl-worker.mjs', import.meta.url), { workerData: { stateDir: STATE_DIR, clientId: CFG.clientId, clientSecret: CFG.clientSecret } });
+  const calls = new Map(); let n = 0;
+  w.on('message', async m => {
+    if (m.type === 'res') { const c = calls.get(m.id); if (!c) return; calls.delete(m.id); clearTimeout(c.t); m.err ? c.rej(new Error(m.err)) : c.res(m.r); }
+    else if (m.type === 'readRaw') { const data = await readRaw(m.path, m.fallback).catch(() => m.fallback); w.postMessage({ type: 'readRaw:res', id: m.id, data }); }
+  });
+  w.on('error', err => console.warn('relevé serveur (fil) :', err.message));
+  // le fil s'arrête (erreur) : les appels en cours échouent, il est relancé 30 s plus tard
+  w.on('exit', code => {
+    for (const c of calls.values()) { clearTimeout(c.t); c.rej(new Error('relevé arrêté')); }
+    calls.clear(); crawl = null;
+    console.warn(`relevé serveur : fil arrêté (${code}), relance dans 30 s`);
+    setTimeout(startCrawlWorker, 30e3).unref();
+  });
+  crawl = {
+    call: (fn, ...args) => new Promise((res, rej) => {
+      const id = ++n, t = setTimeout(() => { calls.delete(id); rej(new Error('délai dépassé')); }, 120e3);
+      calls.set(id, { res, rej, t }); w.postMessage({ type: 'call', id, fn, args });
+    }),
+  };
+}
 if (process.env.CRAWL !== 'off') {
-  try { crawl = (await import('./crawl.mjs')).startCrawl({ stateDir: STATE_DIR, clientId: CFG.clientId, clientSecret: CFG.clientSecret, readRaw }); }
-  catch (err) { console.warn('relevé serveur indisponible :', err.message); }
+  try { startCrawlWorker(); } catch (err) { console.warn('relevé serveur indisponible :', err.message); }
 }
 // réponses publiques du relevé (données de l'armurerie, comme le site) ; compressées si le client l'accepte
 function sendPublic(req, res, body, maxAge = 60) {
@@ -304,49 +327,44 @@ function sendPublic(req, res, body, maxAge = 60) {
   res.writeHead(200, h); res.end(text);
 }
 const lookups = { hour: 0, n: 0, by: new Map() };   // quotas de la recherche directe chez Blizzard
-let allCache = null;      // export de tout ce qui est lu (mise à jour du site) : gardé 10 min, déjà compressé
-let activeCache = null;   // export des actifs (lu par la mise à jour du site) : recalculé au plus toutes les 10 min
+const regionOf = url => REGIONS.includes(url.searchParams.get('r')) ? url.searchParams.get('r') : 'eu';
 async function crawlRoute(req, res, url) {
   if (!url.pathname.startsWith('/hs/') || req.method !== 'GET') return false;
   if (!crawl) { send(res, 503, { error: 'relevé indisponible' }, cors); return true; }
   const p = url.pathname;
-  if (p === '/hs/status') sendPublic(req, res, crawl.status(), 30);
-  else if (p === '/hs/active') {
-    if (!activeCache || Date.now() - activeCache.at > 10 * 60e3) activeCache = { at: Date.now(), body: { at: new Date().toISOString(), status: crawl.status(), players: crawl.active() } };
-    sendPublic(req, res, activeCache.body, 300);
-  }
-  else if (p === '/hs/all' || p === '/hs/all.gz') {
-    if (!allCache || Date.now() - allCache.at > 10 * 60e3) {
-      const text = JSON.stringify({ at: new Date().toISOString(), status: crawl.status(), players: crawl.all() });
-      allCache = { at: Date.now(), text, gz: gzipSync(text, { level: 9 }) };
+  try {
+    if (p === '/hs/status') sendPublic(req, res, await crawl.call('status'), 30);
+    else if (p === '/hs/all.gz') {
+      // le fichier compressé tel quel (le proxy d'Infomaniak retire la compression HTTP « Content-Encoding »)
+      const gz = Buffer.from(await crawl.call('allGz'));
+      res.writeHead(200, { ...cors, 'Content-Type': 'application/gzip', 'Content-Length': gz.length, 'Cache-Control': 'public, max-age=300' }); res.end(gz);
     }
-    // /hs/all.gz : le fichier compressé tel quel (le proxy d'Infomaniak retire la compression HTTP « Content-Encoding »)
-    if (p === '/hs/all.gz') { res.writeHead(200, { ...cors, 'Content-Type': 'application/gzip', 'Content-Length': allCache.gz.length, 'Cache-Control': 'public, max-age=300' }); res.end(allCache.gz); }
-    else { res.writeHead(200, { ...cors, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=300' }); res.end(allCache.text); }
-  }
-  else if (p === '/hs/search') sendPublic(req, res, { results: crawl.search(String(url.searchParams.get('q') || '').slice(0, 40), 20) }, 60);
-  else if (p === '/hs/char') {
-    const k = String(url.searchParams.get('k') || '').toLowerCase();
-    const c = validKey(k) ? crawl.char(k) : null;
-    c ? sendPublic(req, res, c, 300) : send(res, 404, { error: 'inconnu' }, cors);
-  }
-  else if (p === '/hs/lookup') {
-    // recherche directe chez Blizzard (5 appels) : 10 par heure et par adresse, 300 par heure en tout
-    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '?', hour = Math.floor(Date.now() / 3600e3);
-    if (lookups.hour !== hour) { lookups.hour = hour; lookups.n = 0; lookups.by.clear(); }
-    if (lookups.n >= 300 || (lookups.by.get(ip) || 0) >= 10) { send(res, 429, { error: 'trop de recherches, réessaie dans une heure' }, cors); return true; }
-    const r = REGIONS.includes(url.searchParams.get('r')) ? url.searchParams.get('r') : 'eu';
-    const name = String(url.searchParams.get('n') || '').slice(0, 40);
-    lookups.n++; lookups.by.set(ip, (lookups.by.get(ip) || 0) + 1);
-    const c = await crawl.lookup(r, name).catch(() => null);
-    c ? sendPublic(req, res, c, 300) : send(res, 404, { error: 'introuvable' }, cors);
-  }
-  else if (p === '/hs/rank') {
-    const r = REGIONS.includes(url.searchParams.get('r')) ? url.searchParams.get('r') : 'eu';
-    const pg = Math.max(1, Math.min(10000, Math.floor(+url.searchParams.get('pg') || 1)));
-    sendPublic(req, res, crawl.rank(r, pg, 50), 120);
-  }
-  else send(res, 404, { error: 'inconnu' }, cors);
+    else if (p === '/hs/stats') {
+      const s = await crawl.call('stats', regionOf(url));
+      s ? sendPublic(req, res, s, 600) : send(res, 404, { error: 'inconnu' }, cors);
+    }
+    else if (p === '/hs/search') sendPublic(req, res, { results: await crawl.call('search', String(url.searchParams.get('q') || '').slice(0, 40), 20) }, 60);
+    else if (p === '/hs/char') {
+      const k = String(url.searchParams.get('k') || '').toLowerCase();
+      const c = validKey(k) ? await crawl.call('char', k) : null;
+      c ? sendPublic(req, res, c, 300) : send(res, 404, { error: 'inconnu' }, cors);
+    }
+    else if (p === '/hs/lookup') {
+      // recherche directe chez Blizzard (5 appels) : 10 par heure et par adresse, 300 par heure en tout
+      const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '?', hour = Math.floor(Date.now() / 3600e3);
+      if (lookups.hour !== hour) { lookups.hour = hour; lookups.n = 0; lookups.by.clear(); }
+      if (lookups.n >= 300 || (lookups.by.get(ip) || 0) >= 10) { send(res, 429, { error: 'trop de recherches, réessaie dans une heure' }, cors); return true; }
+      const name = String(url.searchParams.get('n') || '').slice(0, 40);
+      lookups.n++; lookups.by.set(ip, (lookups.by.get(ip) || 0) + 1);
+      const c = await crawl.call('lookup', regionOf(url), name).catch(() => null);
+      c ? sendPublic(req, res, c, 300) : send(res, 404, { error: 'introuvable' }, cors);
+    }
+    else if (p === '/hs/rank') {
+      const pg = Math.max(1, Math.min(10000, Math.floor(+url.searchParams.get('pg') || 1)));
+      sendPublic(req, res, await crawl.call('rank', regionOf(url), pg, 50), 120);
+    }
+    else send(res, 404, { error: 'inconnu' }, cors);
+  } catch (err) { send(res, 503, { error: 'relevé indisponible' }, cors); }
   return true;
 }
 
@@ -366,7 +384,9 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/auth/login' && req.method === 'GET') {
       const state = randomBytes(18).toString('base64url');
       const q = new URLSearchParams({ client_id: CFG.clientId, response_type: 'code', scope: 'openid wow.profile', state, redirect_uri: `${CFG.publicUrl}/auth/callback` });
-      return send(res, 302, '', { Location: `https://oauth.battle.net/authorize?${q}`, 'Set-Cookie': cookie('dstate', seal(state), 600) });
+      // ?to=admin : retour sur la page admin (api.dropamine.app/admin) après la connexion, au lieu du site (liste fermée : pas de redirection ouverte)
+      const to = url.searchParams.get('to') === 'admin' ? 'admin' : '';
+      return send(res, 302, '', { Location: `https://oauth.battle.net/authorize?${q}`, 'Set-Cookie': [cookie('dstate', seal(state), 600), cookie('dto', to, to ? 600 : 0)] });
     }
 
     if (url.pathname === '/auth/callback' && req.method === 'GET') {
@@ -378,7 +398,8 @@ const server = createServer(async (req, res) => {
       sessions.set(id, { exp: Date.now() + SESSION_HOURS * 3600e3, bnetId: String(user?.id ?? user?.sub ?? ''), battletag: user?.battletag ?? '',
         characters: new Map(characters.map(c => [c.key, c])) });
       // le jeton Battle.net n'est pas gardé : seule la liste des personnages l'est, pour la durée de la session
-      return send(res, 302, '', { Location: back('ok'), 'Set-Cookie': [cookie('dsid', seal(id), SESSION_HOURS * 3600), cookie('dstate', '', 0)] });
+      const toAdmin = parseCookies(req.headers.cookie).dto === 'admin';
+      return send(res, 302, '', { Location: toAdmin ? `${CFG.publicUrl}/admin` : back('ok'), 'Set-Cookie': [cookie('dsid', seal(id), SESSION_HOURS * 3600), cookie('dstate', '', 0), cookie('dto', '', 0)] });
     }
 
     // routes de session : appelées par dropamine.app (CORS avec cookie)

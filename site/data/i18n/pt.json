@@ -604,7 +604,8 @@
   "lookupBtn": "Procurar “{q}” no arsenal",
   "lookupWait": "Procurando no arsenal…",
   "lookupNone": "Não encontrado no arsenal (verifique a grafia e a região)",
-  "lookupLimit": "Pesquisas demais, tente de novo em uma hora"
+  "lookupLimit": "Pesquisas demais, tente de novo em uma hora",
+  "lvlH": "NÍVEL"
  },
  "names": {
   "Leatherworking": "Couraria",
