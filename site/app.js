@@ -78,6 +78,8 @@ const I18N = {
   stTitle: ['Forever in numbers', 'Forever en chiffres'], stNote: ['{n} characters level 10+ read from the public armory · updated {d}', '{n} personnages niveau 10+ relevés dans l’armurerie publique · mis à jour {d}'],
   stNoteK: ['{n} characters level 10+ known (guild rosters), {r} read in detail from the public armory · updated {d}', '{n} personnages niveau 10+ connus (listes de guildes), dont {r} lus en détail dans l’armurerie publique · mis à jour {d}'],
   stRead: ['read in detail (PvP, professions, records)', 'lus en détail (JcJ, métiers, records)'],
+  stProgress: ['Reading in progress: {r} detailed characters out of {n} known — PvP, professions and records grow every hour', 'Relevé en cours : {r} fiches détaillées sur {n} personnages connus. Le JcJ, les métiers et les records s’enrichissent chaque heure'],
+  stLink: ['Server stats: classes, PvP, professions', 'Stats du serveur : classes, JcJ, métiers'],
   stChars: ['characters', 'personnages'], stLvl60: ['level 60', 'niveau 60'], stGuilds: ['guilds', 'guildes'], stHk: ['honorable kills', 'victoires honorables'], stDuels: ['duels fought', 'duels disputés'],
   stClasses: ['Classes', 'Classes'], stClassesSub: ['share, average level, PvP and duels', 'part, niveau moyen, JcJ et duels'],
   stColClass: ['Class', 'Classe'], stColShare: ['Share', 'Part'], stColLvl: ['Avg level', 'Niv. moyen'], stCol60: ['Level 60', 'Niveau 60'], stColHk: ['HK / char.', 'VH / perso'],
@@ -846,6 +848,7 @@ function renderStats() {
   box.innerHTML = `
     <div class="head"><h2>${t('stTitle')}</h2><span class="note">${t(K ? 'stNoteK' : 'stNote', { n: fmt(kN), r: fmt(d.n), d: up.toLocaleString(locale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) })}</span></div>
     <div class="st-tiles">${tile(fmt(kN), t('stChars'))}${tile(fmt(K ? K.lvl60 : d.lvl60), t('stLvl60'))}${tile(fmt(K ? Math.max(K.guilds, d.guilds.n) : d.guilds.n), t('stGuilds'))}${K ? tile(fmt(d.n), t('stRead')) : ''}${tile(fmt(d.pvp.hk), t('stHk'))}${tile(fmt(duels), t('stDuels'))}</div>
+    ${K && d.n < K.n ? `<div class="st-progress"><span>${t('stProgress', { r: fmt(d.n), n: fmt(K.n) })}</span><i style="--w:${(100 * d.n / K.n).toFixed(1)}%"></i></div>` : ''}
     <p class="st-bias">${t('stBias')}</p>
     <section class="st-sec"><h3>${t('stClasses')} <small>${t('stClassesSub')}</small></h3>
       <div class="st-scroll"><table class="st-table"><thead><tr><th>${t('stColClass')}</th><th>${t('stColShare')}</th><th>${t('stColLvl')}</th><th>${t('stCol60')}</th><th>${t('stColHk')}</th><th title="${esc(t('stKdTip'))}">${t('stColKd')}</th><th>${t('stColDuel')}</th></tr></thead><tbody>${classRows}</tbody></table></div></section>

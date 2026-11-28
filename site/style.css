@@ -1567,3 +1567,11 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .rows.rk-lv .lv.max{color:var(--gold)}
 .rows.rk-lv .row.th .lv{font-family:var(--display);font-size:13px;font-weight:600;color:var(--muted)}
 @media (max-width:900px){.rows.rk-lv .row{grid-template-columns:40px minmax(0,1fr) 44px 92px}.rows.rk-lv .lv{font-size:17px}}
+
+/* lien vers les stats depuis les classements, et bandeau d'avancement du relevé */
+.st-link{display:inline-flex;align-items:center;gap:8px;margin:0 0 10px;padding:6px 12px;border:1px solid var(--line-2);border-radius:999px;color:var(--gold);text-decoration:none;font-size:14px}
+.st-link .ti{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+.st-link:hover{border-color:var(--rim)}
+.st-progress{position:relative;margin:4px 0 12px;padding:8px 12px;border:1px solid var(--line-2);border-radius:10px;background:#0d0a07;overflow:hidden;font-size:14px;color:var(--muted)}
+.st-progress span{position:relative;z-index:1}
+.st-progress i{position:absolute;left:0;bottom:0;height:3px;width:var(--w);background:linear-gradient(90deg,var(--gold),#9a7440)}
