@@ -2,6 +2,13 @@
  "lang": "pt",
  "ui": {
    "rkCount": "{n} personagens",
+   "oopsT": "Algo deu errado",
+   "oopsD": "Esta parte da página não pôde ser exibida. Tente de novo; o resto do site funciona.",
+   "srvT": "Servidor indisponível",
+   "retry": "Tentar de novo",
+   "apiSlow": "O servidor não está respondendo agora. Tente de novo em alguns minutos.",
+   "readingT": "Lendo…",
+   "readingD": "Ainda não lido do arsenal. Tente de novo em alguns minutos.",
    "metaChar": "Habilidades, progresso e posição nos Hiscores do Dropamine para WoW Forever {r}, verificados no arsenal oficial.",
    "metaGuild": "{n}: membros, níveis e progresso da semana nos Hiscores do Dropamine para WoW Forever {r}.",
    "metaRank": "Hiscores de WoW Forever {r}: cada habilidade classificada, verificada no arsenal oficial.",

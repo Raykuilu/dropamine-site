@@ -1645,3 +1645,11 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 }
 @media (max-width:640px){.glist2 .g-rs{display:none}}
 .suggest .rs-b{display:inline-block;margin-left:4px;padding:0 6px;border:1px solid var(--rim-lo);border-radius:999px;font-size:11px;font-style:normal;color:var(--muted)}
+/* emblème de classe : à la place de la goutte quand il n'y a pas (ou pas encore) de portrait */
+.vial.emb{display:grid;place-items:center;border-radius:50%;filter:none;background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--cc) 55%,#1a120a),#0b0806 78%);box-shadow:0 0 0 2px color-mix(in srgb,var(--cc) 55%,#000),0 12px 22px rgba(0,0,0,.6)}
+.vial.emb img{width:56%;height:56%;border-radius:50%;box-shadow:0 0 0 2px rgba(0,0,0,.55)}
+.tile .emb,.sic2 .emb{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--cc) 50%,#120c07),#0a0806 80%)}
+.tile .emb img,.sic2 .emb img{position:static;width:64%;height:64%;border-radius:50%}
+img.ava.cls{background:#0a0705}
+.empty.oops{display:flex;flex-direction:column;align-items:center;gap:8px}
+.empty.oops .btn{margin-top:6px}

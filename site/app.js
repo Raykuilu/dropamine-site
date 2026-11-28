@@ -7,6 +7,12 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 // images : la lueur de chargement (style.css, .sk) s'arrête dès que l'image arrive ou échoue
 ['load', 'error'].forEach(ev => document.addEventListener(ev, e => { if (e.target.tagName === 'IMG') e.target.classList.add('ld'); }, true));
+// image qui ne se charge pas : portrait → emblème de la classe (data-fb) ; rendu 3D de la fiche → emblème à sa place
+document.addEventListener('error', e => {
+  const im = e.target; if (im.tagName !== 'IMG') return;
+  if (im.dataset.fb) { const fb = im.dataset.fb; delete im.dataset.fb; im.classList.add('cls'); im.classList.remove('ld'); im.src = fb; return; }
+  if (im.hasAttribute('data-figprobe')) { const pt = im.closest('.portrait'); if (pt?.dataset.emb) { pt.closest('.who')?.classList.remove('has-render'); pt.outerHTML = pt.dataset.emb; } }
+}, true);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /* ======================================================================
@@ -304,6 +310,9 @@ const I18N = {
   newsFailT: ['Unavailable', 'Indisponible'], newsFail: ["The changelog couldn't be loaded.", "Le journal des versions n'a pas pu être chargé."],
   updated: ['Hiscores updated {d}.', 'Hiscores mis à jour le {d}.'], meta: ['Version {v} · free · open source (MIT) · 7 languages', 'Version {v} · gratuit · open source (MIT) · 7 langues'],
   loading: ['Loading…', 'Chargement…'],
+  oopsT: ['Something went wrong', 'Un souci d’affichage'], oopsD: ['This part of the page could not be shown. Try again; the rest of the site still works.', 'Cette partie de la page n’a pas pu s’afficher. Réessaie ; le reste du site fonctionne.'],
+  srvT: ['Server unavailable', 'Serveur indisponible'], retry: ['Try again', 'Réessayer'], apiSlow: ['The server is not answering right now. Try again in a few minutes.', 'Le serveur ne répond pas pour l’instant. Réessaie dans quelques minutes.'],
+  readingT: ['Reading in progress…', 'Lecture en cours…'], readingD: ['Not read from the armory yet. Try again in a few minutes.', 'Pas encore relevé dans l’armurerie. Réessaie dans quelques minutes.'],
   metaChar: ['Skills, progress and rank on the Dropamine Hiscores for WoW Forever {r}, checked against the official armory.', "Compétences, progression et rang sur les Hiscores Dropamine de WoW Forever {r}, vérifiés sur l'armurerie officielle."],
   metaGuild: ['{n}: members, levels and progress of the week on the Dropamine Hiscores for WoW Forever {r}.', '{n} : membres, niveaux et progression de la semaine sur les Hiscores Dropamine de WoW Forever {r}.'],
   metaRank: ['WoW Forever {r} Hiscores: every skill ranked, checked against the official armory.', "Hiscores de WoW Forever {r} : chaque compétence classée, vérifiée sur l'armurerie officielle."],
@@ -334,7 +343,7 @@ const DETAIL = new Map();
 function loadDetail(p) {
   if (!p || p._full) return Promise.resolve(p);
   const k = pkey(p);
-  const stat = () => fetch(`data/c/${encodeURIComponent(p.region || 'eu')}/${encodeURIComponent(p.slug)}.json?v=${encodeURIComponent(DATA.updated || '')}`).then(r => r.ok ? r.json() : null);
+  const stat = () => fetch(`data/c/${encodeURIComponent(p.region || 'eu')}/${encodeURIComponent(p.slug)}.json?v=${encodeURIComponent(DATA.updated || '')}`, tmo(10e3)).then(r => r.ok ? r.json() : null);
   if (!DETAIL.has(k)) DETAIL.set(k, Hs.get(`/hs/char?k=${encodeURIComponent(k)}&ranks=1`).catch(() => null).then(d => d?.key === k ? d : stat())
     .then(d => { if (d && d.key === k) Object.assign(p, d); p._full = true; return p; })
     .catch(() => { p._full = true; return p; }));   // fiche introuvable : on montre ce que l'index sait
@@ -539,7 +548,8 @@ const full = p => `${esc(p.name)} ${esc(p.surname)}`;
 const who = p => `${esc(className(p))} ${p.level}${p.guild ? ' · ' + esc(p.guild.name) : ''}`;
 // portrait de l'armurerie ; sinon (pas encore récupéré par le relevé) l'icône de la classe, pour ne jamais laisser de trou
 const CLASS_ICON = { 1: 'warrior', 2: 'paladin', 3: 'hunter', 4: 'rogue', 5: 'priest', 7: 'shaman', 8: 'mage', 9: 'warlock', 11: 'druid' };
-const avatar = p => p.avatar ? `<img class="ava" src="${esc(p.avatar)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`
+const clsIcon = p => CLASS_ICON[p.classId] ? icon('classicon_' + CLASS_ICON[p.classId]) : '';
+const avatar = p => p.avatar ? `<img class="ava" src="${esc(p.avatar)}"${clsIcon(p) ? ` data-fb="${clsIcon(p)}"` : ''} alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`
   : CLASS_ICON[p.classId] ? `<img class="ava cls" src="${icon('classicon_' + CLASS_ICON[p.classId])}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '';
 const pkey = p => p.key || `${p.region || 'eu'}/${p.slug}`;
 const tri = p => {
@@ -722,20 +732,52 @@ function loadMeDash(force) {
     remember(got.map(c => Object.assign(c.p, { g1: c.g1, g7: c.g7 })));
     // sans choix du joueur : le type de royaume de son meilleur personnage
     if (!rsStored() && !new URLSearchParams(location.search).get('rs')) { const b = got.sort((a, b) => (b.p.total || 0) - (a.p.total || 0))[0]; if (b?.rs && b.rs !== state.rs) { state.rs = b.rs; rsSelect(); } }
+    MEDASH_ERR = false;
     return MEDASH;
-  }).catch(() => (MEDASH = MEDASH || {}));
+  }).catch(() => { MEDASH_ERR = true; medashLoad = null; return (MEDASH = MEDASH || {}); });   // serveur muet : message, et un nouvel essai possible
 }
+let MEDASH_ERR = false, dashN = 0, dashT = 0;
+// Tableau de bord protégé : une erreur de dessin ne doit jamais laisser l'accueil vide (la classe « logged » masque
+// l'accueil public) ; on montre un message et l'accueil public reste visible. Garde-fou contre un redessin en boucle.
 function renderDash() {
   const box = $('#dash'); if (!box) return false;
+  try {
+    const now = Date.now(); if (now - dashT > 3000) { dashT = now; dashN = 0; }
+    if (++dashN > 40) throw new Error('renderDash en boucle');
+    return renderDashNow(box);
+  } catch (e) {
+    console.error(e);
+    $('#home').classList.remove('logged'); box.hidden = false;
+    box.innerHTML = oops('dash');
+    return false;
+  }
+}
+// message clair à la place d'une page vide ou d'un chargement sans fin ; « Réessayer » relance la page
+const oops = (what, k = 'oopsD') => `<div class="empty oops" role="alert"><b>${t(k === 'apiSlow' ? 'srvT' : 'oopsT')}</b>${t(k)}<button class="btn ghost" type="button" data-retry="${esc(what)}">${t('retry')}</button></div>`;
+// fiche ou compte pas encore lus par le relevé : « Lecture en cours… », réessayer dans quelques minutes
+const notRead = (what = '') => `<div class="empty oops" role="status"><b>${t('readingT')}</b>${t('readingD')}${what ? `<button class="btn ghost" type="button" data-retry="${esc(what)}">${t('retry')}</button>` : ''}</div>`;
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-retry]'); if (!b) return;
+  if (b.dataset.retry === 'dash') { MEDASH = null; medashLoad = null; MEDASH_ERR = false; dashN = 0; }
+  if (b.dataset.retry.startsWith('char:')) { const k = b.dataset.retry.slice(5); SERVER_CHARS.delete(k); SERVER_FAIL.delete(k); }
+  render(false);
+});
+function renderDashNow(box) {
   const me = Bnet.mine();
   $('#home').classList.toggle('logged', !!me.length);
   if (!me.length) {
     if (Bnet.logged?.() && !MEDASH && (Bnet.chars?.() || []).length) { box.hidden = false; $('#home').classList.add('logged'); box.innerHTML = loadingBox(4); loadMeDash().then(() => { if (state.view === 'home') { renderDash(); animate($('#dash')); } }); return true; }
-    if (Bnet.logged?.()) { box.hidden = false; $('#home').classList.add('logged'); box.innerHTML = startCard(me); return true; }
+    if (Bnet.logged?.()) {
+      // compte connecté sans personnage affichable : serveur muet, ou personnages pas encore relevés → on le dit
+      const acc = Bnet.chars?.() || [], none = acc.length && MEDASH && acc.every(c => !MEDASH[c.key]);
+      box.hidden = false; $('#home').classList.add('logged');
+      box.innerHTML = (MEDASH_ERR ? oops('dash', 'apiSlow') : none ? notRead('dash') : '') + startCard(me); return true;
+    }
     box.hidden = true; return false;
   }
   box.hidden = false;
   if (!LOOT || !ITEMS || !ART || !runsLoad) Promise.all([loadLoot(), loadItems(), loadArt(), loadRuns()]).then(() => { if (state.view === 'home') renderDash(); });
+  const LT = LOOT?.dungeons && LOOT.idx ? LOOT : null;   // butin pas (encore) chargé ou en échec ({ failed }) : le tableau se dessine sans
   const p = me.find(x => pkey(x) === state.dc) || [...me].sort((a, b) => b.total - a.total)[0];
   if (p && !p._full) loadDetail(p).then(() => { if (state.view === 'home') renderDash(); });
   const md = MEDASH?.[pkey(p)] || null;
@@ -753,25 +795,25 @@ function renderDash() {
         ${old == null ? '' : old > 7 ? `<p class="dh-warn">${t('dashOldLine', { n: Math.floor(old) })}</p>` : `<p class="dh-last">${[d.collection && t('dbLog'), d.hunt && t('dbHunt'), d.achievements && t('dbAch'), d.records && t('dbRec'), p.played && t('played')].filter(Boolean).join(', ')} · ${t('dashLast', { d: dayAgo(Date.parse(p.dropamineAt)) })}</p>`}</div></div>`;
   // 2) mes runs, et ceux à ma portée
   const mineKeys = new Set(me.map(pkey));
-  const myRuns = (RUNS || []).filter(r => r.members.some(m => mineKeys.has(m.key)));
-  const openRuns = (RUNS || []).filter(r => !r.members.some(m => mineKeys.has(m.key)) && LOOT && (() => { const dd = LOOT.dungeons.find(x => x.key === r.dungeon); return dd && fitOf(p, dd) !== 'low'; })()).slice(0, 3);
+  const myRuns = (RUNS || []).filter(r => (r.members || []).some(m => mineKeys.has(m.key)));
+  const openRuns = (RUNS || []).filter(r => !(r.members || []).some(m => mineKeys.has(m.key)) && LT && (() => { const dd = LT.dungeons.find(x => x.key === r.dungeon); return dd && fitOf(p, dd) !== 'low'; })()).slice(0, 3);
   const runsCard = `<section class="dcard"><h3>${t('dashRuns')}</h3>${myRuns.length ? `<ul class="dlist">${myRuns.slice(0, 4).map(runLine).join('')}</ul>` : `<p class="note">${t('dashNoRun')}</p>`}
       ${openRuns.length ? `<h4>${t('dashOpenRuns')}</h4><ul class="dlist">${openRuns.map(runLine).join('')}</ul>` : ''}
       <a class="lnk" href="?p=runs" data-view-link="runs">${t('dashAllRuns')}</a></section>`;
   // 3) ma chasse : objets pas encore trouvés, et qui d'autre chasse au même endroit
   const hunts = (d.hunt || []).filter(x => !x.drops);
-  const others = id => { const keys = new Set((LOOT?.idx.get(id) || []).map(x => x.d.key));
-    return DATA.players.filter(o => o !== p && (o.dropamine?.hunt || []).some(x => !x.drops && (LOOT?.idx.get(x.id) || []).some(y => keys.has(y.d.key)))).length; };
-  const huntCard = `<section class="dcard"><h3>${t('dashHunt')}</h3>${hunts.length ? `<ul class="dhunt">${hunts.slice(0, 6).map(x => { const src = (LOOT?.idx.get(x.id) || []).sort((a, b) => (b.rate || 0) - (a.rate || 0))[0];
-      const n = LOOT ? others(x.id) : 0;
+  const others = id => { const keys = new Set((LT?.idx.get(id) || []).map(x => x.d.key));
+    return DATA.players.filter(o => o !== p && (o.dropamine?.hunt || []).some(x => !x.drops && (LT?.idx.get(x.id) || []).some(y => keys.has(y.d.key)))).length; };
+  const huntCard = `<section class="dcard"><h3>${t('dashHunt')}</h3>${hunts.length ? `<ul class="dhunt">${hunts.slice(0, 6).map(x => { const src = (LT?.idx.get(x.id) || []).sort((a, b) => (b.rate || 0) - (a.rate || 0))[0];
+      const n = LT ? others(x.id) : 0;
       return `<li><span class="ci" data-item="${x.id}" data-boss="${esc(src ? (L2(src.b.n) || src.b.n[0]) : '')}"${src?.rate ? ` data-rate="${src.rate}"` : ''} style="--q:${QCOL[ITEMS?.[x.id]?.q] || '#8a7a5a'}"><img src="${itemIcon(x.id)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>
         <span><b>${esc(x.name)}</b><small>${src ? esc(src.d.name) + (src.rate ? ` · ${fmt(src.rate)} %` : '') : ''}${x.tries ? ` · ${t('huTries', { n: fmt(x.tries) })}` : ''}${n ? ` · <i class="also">${t('dashAlso', { n })}</i>` : ''}</small></span></li>`; }).join('')}</ul>` : `<p class="note">${t('dashNoHunt')}</p>`}</section>`;
   // 4) collection log : où j'en suis, et les donjons presque finis
   const col = d.collection;
   let near = '';
-  if (col?.items?.length && LOOT) {
+  if (col?.items?.length && LT) {
     const g = new Set(col.items);
-    near = LOOT.dungeons.map(dd => { const all = dunItems(dd), have = [...all].filter(id => g.has(id)).length; return { dd, have, total: all.size }; })
+    near = LT.dungeons.map(dd => { const all = dunItems(dd), have = [...all].filter(id => g.has(id)).length; return { dd, have, total: all.size }; })
       .filter(x => x.have > 0 && x.have < x.total).sort((a, b) => b.have / b.total - a.have / a.total).slice(0, 3)
       .map(x => `<li><span>${esc(x.dd.name)}</span><i class="lbar"><i style="width:${(100 * x.have / x.total).toFixed(1)}%"></i></i><b>${x.have} / ${x.total}</b></li>`).join('');
   }
@@ -1121,7 +1163,7 @@ function pendDelta(p) {
 const totalB = (p, d = pendDelta(p)) => `<b${d > 0 ? ` class="pend" title="${esc(t('pendTotal2', { o: fmt(p.total), n: fmt(d) }))}"` : ''} data-n="${p.total + d}">${fmt(p.total + d)}</b>`;
 function skillItems0(p, peers) {
   const place = sk => p.ranks ? p.ranks[sk.id]?.r || null : DATA.partial ? null : rankBy(sk, peers).find(x => x.p === p)?.r;
-  const items = [{ key: 'level', ava: p.avatar, name: t('level'), rank: p.level, max: 60, group: 'lvl', r: place(skillById('level')) }];
+  const items = [{ key: 'level', ava: p.avatar, cls: clsIcon(p), cc: CLASS_COL[p.classId], name: t('level'), rank: p.level, max: 60, group: 'lvl', r: place(skillById('level')) }];
   const used = new Set(p.equipped || []);
   for (const id of WPN_ORDER) {
     const w = wpnOf(p, id); if (!w) continue;
@@ -1141,7 +1183,8 @@ const tipOf = it => `<b>${esc(it.name)}</b><span>${it.key === 'level' ? `${it.ra
   + (it.pend ? `<span class="est">${t('pendTip', { v: it.pend })}</span>` : '');
 // l'icône : le portrait du personnage pour le niveau, l'icône du jeu pour le reste
 const pic = it => it.key === 'level'
-  ? (it.ava ? `<img src="${esc(it.ava)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<span class="logo"></span>')
+  ? (it.ava ? `<img src="${esc(it.ava)}"${it.cls ? ` data-fb="${it.cls}"` : ''} alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`
+    : it.cls ? `<span class="emb" style="--cc:${it.cc || '#8a7a5a'}"><img src="${it.cls}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>` : '<span class="logo"></span>')
   : `<img src="${icon(it.img)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
 const tileOf = it => `<div class="tile g-${it.group}${it.est ? ' est' : ''}${it.spare ? ' spare' : ''}" tabindex="0" data-tip="${esc(tipOf(it))}" aria-label="${esc(it.name)} ${it.rank} / ${it.max}">`
   + pic(it) + `<span class="num"><b${it.pend ? ' class="pend"' : ''}>${it.pend || it.rank}</b><small>/${it.max}</small></span></div>`;
@@ -1208,21 +1251,28 @@ const freshLine = p => `<p class="fresh">${DATA.updated ? t('freshArm', { d: hou
 const SERVER_CHARS = new Map();
 function loadServerChar(k) {
   if (SERVER_CHARS.has(k)) return Promise.resolve(SERVER_CHARS.get(k));
-  return Hs.get(`/hs/char?k=${encodeURIComponent(k)}&ranks=1`).catch(() => null)
-    .then(p => { const v = p && p.key === k ? Object.assign(p, { _full: true, _server: true }) : null; SERVER_CHARS.set(k, v); return v; });
+  // 404 : pas (encore) dans le relevé, retenu ; serveur muet ou trop lent : rien de retenu, message et nouvel essai possible
+  return Hs.get(`/hs/char?k=${encodeURIComponent(k)}&ranks=1`).then(p => p, err => err === 404 ? null : undefined)
+    .then(p => { if (p === undefined) { SERVER_FAIL.add(k); return null; } SERVER_FAIL.delete(k);
+      const v = p && p.key === k ? Object.assign(p, { _full: true, _server: true }) : null; SERVER_CHARS.set(k, v); return v; });
 }
+const SERVER_FAIL = new Set();
+const isMyChar = k => (Bnet.chars?.() || []).some(c => c.key === k);
 function renderChar() {
   if (DATA.loading) { $('#char-panel').innerHTML = loadingBox(); return; }
   if (DATA.failed) { $('#char-panel').innerHTML = failed(); return; }
   const want = state.c;
   let p = DATA.players.find(x => pkey(x) === want || x.slug === want);
   if (!p && want && want.includes('/')) {
+    if (SERVER_FAIL.has(want)) { $('#char-panel').innerHTML = oops('char:' + want, 'apiSlow'); return; }
     if (!SERVER_CHARS.has(want)) {
       $('#char-panel').innerHTML = loadingBox();
       loadServerChar(want).then(() => { if (state.view === 'char' && state.c === want) { renderChar(); animate($('#char')); } });
       return;
     }
     p = SERVER_CHARS.get(want) || undefined;
+    // un de mes personnages, pas encore lu par le relevé : « Lecture en cours… » plutôt que « introuvable »
+    if (!p && isMyChar(want)) { $('#char-panel').innerHTML = notRead('char:' + want); return; }
   }
   if (!p && !want) p = DATA.players.find(x => pkey(x) === Bnet.best());
   if (!p) { $('#char-panel').innerHTML = `<div class="empty"><b>${t('noCharT')}</b>${t('noChar')}</div>`; return; }
@@ -1236,9 +1286,11 @@ function renderChar() {
   const totalRank = p.ranks ? p.ranks.total?.r : DATA.partial ? null : rankBy(SKILLS[0], peers).find(x => x.p === p)?.r;
   const hist = p.history || [], gained = hist.length > 1 ? hist[hist.length - 1].t - hist[0].t : 0;
   const nProf = p.professions?.length || 0;
-  const portrait = p.render
-    ? `<div class="portrait"><div class="plinth"></div><div class="plinth2"></div><div class="fig" style="background-image:url('${esc(p.render)}')" role="img" aria-label="${full(p)}"></div></div>`
+  const emb = clsIcon(p) ? `<div class="vial emb" style="--cc:${CLASS_COL[p.classId] || '#8a7a5a'}" role="img" aria-label="${esc(className(p))}"><img src="${clsIcon(p)}" alt="" decoding="async" referrerpolicy="no-referrer"></div>`
     : `<div class="vial" role="img" aria-label="Dropamine"></div>`;
+  const portrait = p.render
+    ? `<div class="portrait" data-emb="${esc(emb)}"><div class="plinth"></div><div class="plinth2"></div><div class="fig" style="background-image:url('${esc(p.render)}')" role="img" aria-label="${full(p)}"></div><img hidden data-figprobe src="${esc(p.render)}" alt=""></div>`
+    : emb;
   const desc = ['fr', 'es', 'it', 'pt'].includes(LANG) ? `${esc(className(p))} ${esc(raceName(p))}` : `${esc(raceName(p))} ${esc(className(p))}`;
   const mine = Bnet.mine();
   const picker = mine.length > 1 && mine.includes(p)
@@ -1543,7 +1595,7 @@ function huntSuggest(p) {
   const owned = new Set(p.dropamine?.collection?.items || []), hunted = new Set((p.dropamine?.hunt || []).map(h => h.id));
   const worn = wornBySlot(p), out = {};
   const wornLv = k => { const ids = worn[k] || []; return ids.length ? Math.min(...ids.map(id => ITEMS?.[id]?.lv || 0)) : 0; };
-  for (const d of LOOT.dungeons) {
+  for (const d of LOOT?.dungeons || []) {   // butin pas chargé (ou en échec) : pas de suggestion, pas de plantage
     if (fitOf(p, d) === 'low' || (isRaid(d) && !raidAvailable(d))) continue;
     for (const b of d.bosses) for (const e of b.i) {
       if (noDrop(b)) continue;
@@ -2868,13 +2920,15 @@ function applyStatic() {
 const API = (location.hostname === 'localhost' && (() => { try { const q = new URLSearchParams(location.search).get('api'); if (q && /^http:\/\/localhost:\d+$/.test(q)) localStorage.setItem('dropApi', q); return localStorage.getItem('dropApi'); } catch { return null; } })()) || 'https://api.dropamine.app';
 // Lectures publiques du relevé (/hs/*) : une seule requête en cours par adresse, réponse gardée 5 min pour la session ;
 // au-delà, le navigateur revalide avec l'ETag (304 sans corps si rien n'a changé). Jamais de relève en boucle.
+// délai max d'une requête : passé ce temps, elle échoue et la page affiche un message au lieu d'attendre sans fin
+const tmo = ms => (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? { signal: AbortSignal.timeout(ms) } : {};
 const Hs = (() => {
   const mem = new Map(), TTL = 5 * 60e3;
   function get(path, ttl = TTL) {
     const hit = mem.get(path);
     if (hit && (hit.pending || Date.now() - hit.at < ttl)) return hit.p;
     const e = { pending: true, at: 0, data: hit?.data };
-    e.p = fetch(API + path).then(r => r.ok ? r.json() : Promise.reject(r.status))
+    e.p = fetch(API + path, tmo(12e3)).then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then(d => { e.pending = false; e.at = Date.now(); e.data = d; return d; }, err => { mem.delete(path); throw err; });
     mem.set(path, e);
     return e.p;
@@ -2959,11 +3013,17 @@ const Bnet = (() => {
   const call = (path, body) => fetch(API + path, body ? { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'include' });
   async function probe() {
     if (alive !== null) return alive;
-    try { alive = (await fetch(API + '/health', { cache: 'no-store' })).ok; } catch { alive = false; }
+    try { alive = (await fetch(API + '/health', { cache: 'no-store', ...tmo(6e3) })).ok; } catch { alive = false; }
     return alive;
   }
+  // compte : 10 s au plus ; serveur lent ou en erreur (pas un simple « non connecté ») → on le dit, sans bloquer le site
   async function load() {
-    try { const r = await call('/me'); me = r.ok ? await r.json() : null; } catch { me = null; }
+    try {
+      const r = await fetch(API + '/me', { credentials: 'include', ...tmo(10e3) });
+      if (r.status >= 500) throw new Error(r.status);
+      me = r.ok ? await r.json() : null;
+      if (msg === t('apiSlow')) msg = '';
+    } catch { me = null; msg = t('apiSlow'); }
   }
   function draw() {
     const b = box(); b.hidden = false;
@@ -3157,10 +3217,11 @@ function hit(extra = {}) {
 const LIGHT_VIEWS = VIEWS;
 function render(push) {
   applyStatic();
-  if (state.view === 'home') renderHome();
+  // une page qui plante au dessin : message clair à sa place (jamais de page vide), le reste du site continue
+  if (state.view === 'home') try { renderHome(); } catch (e) { console.error(e); }
   const wait = DATA.partial && !LIGHT_VIEWS.includes(state.view);
   if (wait) { const box = PANEL[state.view] && $(PANEL[state.view]); if (box) box.innerHTML = loadingBox(); loadFull().then(() => { if (!DATA.partial) render(false); }); }
-  else (RENDER[state.view] || (() => {}))();
+  else try { (RENDER[state.view] || (() => {}))(); } catch (e) { console.error(e); const box = PANEL[state.view] && $(PANEL[state.view]); if (box) box.innerHTML = oops(state.view); }
   markNav();
   Bnet.header();
   $('#sub').textContent = `HISCORES · FOREVER ${state.region.toUpperCase()}`;
@@ -3439,8 +3500,8 @@ Promise.all([
   fetch('data/changelog.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { NEWS = d; })
     .catch(() => { NEWS = { versions: [] }; }),
   Bnet.init(),
-  loadLang(LANG),
-]).then(() => { Ribbon.load(false); return document.fonts.ready; })
+  Promise.race([loadLang(LANG), new Promise(r => setTimeout(r, 8e3))]),   // langue lente : on démarre quand même (en anglais), elle suit
+]).then(() => { Ribbon.load(false); return Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 3e3))]); })
   .then(() => { if (Draft.resume()) writeUrl(false); render(false); if (Bnet.logged?.()) loadMeDash().then(() => { if (state.view === 'home') render(false); }); freshenNews(); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });
 
 /* ---------- Application installable (PWA) ---------- */

@@ -38,6 +38,8 @@
       if (sessionStorage.getItem('splash') || matchMedia('(prefers-reduced-motion: reduce)').matches || /[?&]shot=1/.test(location.search)) document.documentElement.classList.add('nosplash');
       else sessionStorage.setItem('splash', '1');
     } catch (e) { document.documentElement.classList.add('nosplash'); }
+    // filet : la goutte d'ouverture s'efface au plus tard après 5 s, même si le script du site a échoué
+    setTimeout(function () { document.documentElement.classList.add('ready'); }, 5000);
   })();
 </script>
 <link rel="stylesheet" href="style.css?v=6ad5f24c">

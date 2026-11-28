@@ -2,6 +2,13 @@
  "lang": "de",
  "ui": {
    "rkCount": "{n} Charaktere",
+   "oopsT": "Etwas ist schiefgelaufen",
+   "oopsD": "Dieser Teil der Seite konnte nicht angezeigt werden. Versuch es erneut; der Rest der Seite funktioniert.",
+   "srvT": "Server nicht erreichbar",
+   "retry": "Erneut versuchen",
+   "apiSlow": "Der Server antwortet gerade nicht. Versuch es in ein paar Minuten erneut.",
+   "readingT": "Wird gelesen…",
+   "readingD": "Noch nicht aus dem Arsenal gelesen. Versuch es in ein paar Minuten erneut.",
    "metaChar": "Fertigkeiten, Fortschritt und Rang in den Dropamine-Hiscores für WoW Forever {r}, geprüft am offiziellen Arsenal.",
    "metaGuild": "{n}: Mitglieder, Stufen und Fortschritt der Woche in den Dropamine-Hiscores für WoW Forever {r}.",
    "metaRank": "Hiscores von WoW Forever {r}: jede Fertigkeit in einer Rangliste, geprüft am offiziellen Arsenal.",
