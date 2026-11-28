@@ -1,6 +1,7 @@
 {
  "lang": "it",
  "ui": {
+   "rkCount": "{n} personaggi",
    "metaChar": "Abilità, progressi e posizione negli Hiscores di Dropamine per WoW Forever {r}, verificati sull'armeria ufficiale.",
    "metaGuild": "{n}: membri, livelli e progressi della settimana negli Hiscores di Dropamine per WoW Forever {r}.",
    "metaRank": "Hiscores di WoW Forever {r}: ogni abilità in classifica, verificata sull'armeria ufficiale.",

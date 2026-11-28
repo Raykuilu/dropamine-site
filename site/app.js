@@ -279,7 +279,7 @@ const I18N = {
   previewNoteCrawl: ['Read automatically from the public Forever armory. Is it you? <a href="?p=join" data-view-link="join">Sign in</a> to register for an exact score, or to hide it.',
     "Relevé automatiquement dans l'armurerie publique de Forever. C'est toi ? <a href=\"?p=join\" data-view-link=\"join\">Connecte-toi</a> pour t'inscrire avec un score exact, ou pour le masquer."],
   previewNote: ['Shown because their guild is followed. Is it you? <a href="?p=join" data-view-link="join">Sign in</a> to register for an exact score, or to hide it.',
-    "Affiché parce que sa guilde est suivie. C'est toi ? <a href=\"?p=join\" data-view-link=\"join\">Connecte-toi</a> pour t'inscrire avec un score exact, ou pour le masquer."], allModes: ['All modes', 'Tous les modes'], allClasses: ['All classes', 'Toutes les classes'],
+    "Affiché parce que sa guilde est suivie. C'est toi ? <a href=\"?p=join\" data-view-link=\"join\">Connecte-toi</a> pour t'inscrire avec un score exact, ou pour le masquer."], allModes: ['All modes', 'Tous les modes'], rkCount: ['{n} characters', '{n} personnages'], allClasses: ['All classes', 'Toutes les classes'],
   fSkill: ['Ranking', 'Classement'], fMode: ['Mode', 'Mode'], fClass: ['Class', 'Classe'], allM: ['All', 'Tous'], allC: ['All', 'Toutes'],
   registered: ['{n} registered', '{n} inscrit{s}'], previewN: ['{n} in preview', '{n} en aperçu'],
   legend: ['Weapons estimated, waiting for the Dropamine file', 'Armes estimées, en attente du fichier Dropamine'], weaponsDef: ['Weapons & Defense', 'Armes et Défense'], professions: ['Professions', 'Métiers'],
@@ -334,8 +334,9 @@ const DETAIL = new Map();
 function loadDetail(p) {
   if (!p || p._full) return Promise.resolve(p);
   const k = pkey(p);
-  if (!DETAIL.has(k)) DETAIL.set(k, fetch(`data/c/${encodeURIComponent(p.region || 'eu')}/${encodeURIComponent(p.slug)}.json?v=${encodeURIComponent(DATA.updated || '')}`)
-    .then(r => r.ok ? r.json() : null).then(d => { if (d && d.key === p.key) Object.assign(p, d); p._full = true; return p; })
+  const stat = () => fetch(`data/c/${encodeURIComponent(p.region || 'eu')}/${encodeURIComponent(p.slug)}.json?v=${encodeURIComponent(DATA.updated || '')}`).then(r => r.ok ? r.json() : null);
+  if (!DETAIL.has(k)) DETAIL.set(k, Hs.get(`/hs/char?k=${encodeURIComponent(k)}&ranks=1`).catch(() => null).then(d => d?.key === k ? d : stat())
+    .then(d => { if (d && d.key === k) Object.assign(p, d); p._full = true; return p; })
     .catch(() => { p._full = true; return p; }));   // fiche introuvable : on montre ce que l'index sait
   return DETAIL.get(k);
 }
@@ -558,7 +559,7 @@ function histDiff(p, a, b) {
   if (p.complete || !a.s || !b.s) return b.t - a.t;
   return Object.keys(b.s).filter(k => k[0] !== 'w' && a.s[k] != null).reduce((n, k) => n + (b.s[k] - a.s[k]), 0);
 }
-const dayGain = p => { const h = p.history || []; if (h.length < 2) return 0; const a = h[h.length - 2], b = h[h.length - 1];
+const dayGain = p => { const h = p.history || []; if (h.length < 2) return p.g1 || 0; const a = h[h.length - 2], b = h[h.length - 1];
   return new Date(b.d) - new Date(a.d) <= 1.5 * 864e5 ? histDiff(p, a, b) : 0; };
 const plus = (p, g) => { const d = g ?? dayGain(p); return d > 0 ? `<span class="plus" title="${t('sinceY')}">+${fmt(d)}</span>` : ''; };
 // gain du jour pour la compétence affichée (instantané de la veille) ; niveau total et statistiques sans instantané : le gain total
@@ -707,11 +708,28 @@ function startCard(me) {
 }
 
 // ---------- Accueil personnel (connecté) : tout ce qui sert au quotidien, en un coup d'œil ----------
+// Une seule requête pour tous les personnages du compte (/hs/me-dash) : fiche et historique, gains, rangs, guilde.
+// Plus jamais l'index complet (24 Mo) à la connexion.
+let MEDASH = null, medashLoad = null;
+function loadMeDash(force) {
+  const keys = (Bnet.chars?.() || []).map(c => c.key).slice(0, 10);
+  if (!keys.length) return Promise.resolve(null);
+  if (medashLoad && !force) return medashLoad;
+  return medashLoad = Hs.get('/hs/me-dash?k=' + keys.map(encodeURIComponent).join(',')).then(j => {
+    MEDASH = j.chars || {};
+    const got = Object.values(MEDASH).filter(Boolean);
+    remember(got.map(c => Object.assign(c.p, { g1: c.g1, g7: c.g7 })));
+    // sans choix du joueur : le type de royaume de son meilleur personnage
+    if (!rsStored() && !new URLSearchParams(location.search).get('rs')) { const b = got.sort((a, b) => (b.p.total || 0) - (a.p.total || 0))[0]; if (b?.rs && b.rs !== state.rs) { state.rs = b.rs; rsSelect(); } }
+    return MEDASH;
+  }).catch(() => (MEDASH = MEDASH || {}));
+}
 function renderDash() {
   const box = $('#dash'); if (!box) return false;
   const me = Bnet.mine();
   $('#home').classList.toggle('logged', !!me.length);
   if (!me.length) {
+    if (Bnet.logged?.() && !MEDASH && (Bnet.chars?.() || []).length) { box.hidden = false; $('#home').classList.add('logged'); box.innerHTML = loadingBox(4); loadMeDash().then(() => { if (state.view === 'home') { renderDash(); animate($('#dash')); } }); return true; }
     if (Bnet.logged?.()) { box.hidden = false; $('#home').classList.add('logged'); box.innerHTML = startCard(me); return true; }
     box.hidden = true; return false;
   }
@@ -719,8 +737,9 @@ function renderDash() {
   if (!LOOT || !ITEMS || !ART || !runsLoad) Promise.all([loadLoot(), loadItems(), loadArt(), loadRuns()]).then(() => { if (state.view === 'home') renderDash(); });
   const p = me.find(x => pkey(x) === state.dc) || [...me].sort((a, b) => b.total - a.total)[0];
   if (p && !p._full) loadDetail(p).then(() => { if (state.view === 'home') renderDash(); });
-  const peers = DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu'));
-  const rank = DATA.partial ? null : rankBy(SKILLS[0], peers).find(x => x.p === p)?.r, d1 = dayGain(p), d7 = gain7(p);
+  const md = MEDASH?.[pkey(p)] || null;
+  const rank = md?.ranks?.total?.r || (DATA.partial ? null : rankBy(SKILLS[0], DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu') && x.rulesetId === p.rulesetId)).find(x => x.p === p)?.r);
+  const d1 = md ? md.g1 : dayGain(p), d7 = md ? md.g7 : gain7(p);
   const chooser = me.length > 1 ? `<div class="chips">${me.map(x => `<span class="chip ${x === p ? 'on' : ''}" data-dc="${esc(pkey(x))}">${full(x)} <small>${x.level}</small></span>`).join('')}</div>` : '';
   const d = p.dropamine || {};
   const old = p.dropamineAt ? (Date.now() - Date.parse(p.dropamineAt)) / 864e5 : null;
@@ -760,10 +779,12 @@ function renderDash() {
   // 5) ma guilde : mon rang, les plus forts de la semaine
   let guildCard = '';
   if (p.guild) {
-    const mates = DATA.players.filter(x => x.guild?.slug === p.guild.slug && (x.region || 'eu') === (p.region || 'eu'));
-    const gr = [...mates].sort((a, b) => b.total - a.total).indexOf(p) + 1;
-    const movers = mates.map(x => ({ x, g: gain7(x) })).filter(o => o.g > 0).sort((a, b) => b.g - a.g).slice(0, 3);
-    guildCard = `<section class="dcard"><h3>${esc(p.guild.name)}</h3><p class="dg">${t('dashGuildRank', { r: ord(gr), n: mates.length })}</p>
+    // ma guilde : rang et meilleurs de la semaine donnés par le serveur (même type de royaume) ; sinon, ce que le site connaît
+    const mg = md?.guild, mates = mg ? null : DATA.players.filter(x => x.guild?.slug === p.guild.slug && (x.region || 'eu') === (p.region || 'eu'));
+    const gr = mg ? mg.rank : [...mates].sort((a, b) => b.total - a.total).indexOf(p) + 1, gn = mg ? mg.members : mates.length;
+    if (mg) remember((mg.movers || []).map(o => Object.assign(o.p, { g1: o.g1, g7: o.g7 })));
+    const movers = mg ? (mg.movers || []).map(o => ({ x: o.p, g: o.g7 })) : mates.map(x => ({ x, g: gain7(x) })).filter(o => o.g > 0).sort((a, b) => b.g - a.g).slice(0, 3);
+    guildCard = `<section class="dcard"><h3>${esc(p.guild.name)}</h3><p class="dg">${gr ? t('dashGuildRank', { r: ord(gr), n: gn }) : ''}</p>
       ${movers.length ? `<h4>${t('bestWeek')}</h4><ul class="dlist">${movers.map(o => `<li><a data-c="${esc(pkey(o.x))}" href="?p=char&c=${esc(pkey(o.x))}">${avatar(o.x)}<b>${full(o.x)}</b><span class="up">+${fmt(o.g)}</span></a></li>`).join('')}</ul>` : ''}
       <a class="lnk" href="?p=guild&g=${esc(p.guild.slug)}" data-g="${esc(p.guild.slug)}">${t('dashGuild')}</a></section>`;
   }
@@ -934,87 +955,88 @@ document.addEventListener('click', e => {
     $('#guild-panel .rows')?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
     return;
   }
-  const me = e.target.closest('[data-pgme]'); if (me) { const i = +me.dataset.pgme; rankJump(Math.floor(i / RANK_PER) + 1, i + 1); }
+  const me = e.target.closest('[data-pgmine]'); if (me) { state.rk = me.dataset.pgmine; renderRank(); }   // ma place : le serveur renvoie la page qui contient ce personnage
 });
 document.addEventListener('keydown', e => {
   const inp = e.target.closest?.('[data-pgrank]'); if (!inp || e.key !== 'Enter') return;
   const r = Math.max(1, Math.min(+inp.max || 1, Math.floor(+inp.value || 1)));
   rankJump(Math.ceil(r / RANK_PER), r);
 });
+// Classements : une page de 50 lignes demandée au serveur (/hs/rank), par région, type de royaume, compétence et classe.
+// Plus jamais l'index complet : le navigateur ne reçoit que ce qu'il affiche.
+const rankPath = (sk, pg, k = '') => `/hs/rank?r=${state.region}&skill=${encodeURIComponent(sk.id)}${state.rs ? '&rs=' + state.rs : ''}${state.cls ? '&cls=' + state.cls : ''}${state.dg ? '&sort=g1' : state.dw ? '&sort=g7' : ''}&pg=${pg}&per=${RANK_PER}${k ? '&k=' + encodeURIComponent(k) : ''}`;
 function renderRank() {
-  if (DATA.loading) { $('#rank-panel').innerHTML = loadingBox(); return; }
-  if (DATA.failed) { $('#rank-panel').innerHTML = failed(); return; }
-  const sk = skillById(state.skill), region = inRegion();
-  const byRs = state.rs ? region.filter(p => p.rulesetId === state.rs) : region;
-  let list = rankBy(sk, state.cls ? byRs.filter(p => p.classId === state.cls) : byRs);
-  // tri par meilleur gain du jour (les + verts) : seuls ceux qui ont progressé, rangés par gain
-  if (state.dg) list = list.map(x => ({ ...x, g: skillGain(x.p, sk) })).filter(x => x.g > 0).sort((a, b) => b.g - a.g || b.v - a.v).map((x, i) => ({ ...x, r: i + 1 }));
-  else if (state.dw) list = list.map(x => ({ ...x, g: weekGainFor(x.p, sk) })).filter(x => x.g > 0).sort((a, b) => b.g - a.g || b.v - a.v).map((x, i) => ({ ...x, r: i + 1 }));
-  const classes = [...new Set(byRs.map(p => p.classId).filter(Boolean))].sort((a, b) => L2(CLASS[a]).localeCompare(L2(CLASS[b])));
+  const sk = skillById(state.skill), box = $('#rank-panel');
+  // un filtre qui change ramène à la page 1 (la page reste dans l'adresse : ?pg=)
+  const sig = [state.region, sk.id, state.rs, state.cls, state.dg, state.dw].join('|');
+  if (state.pgKey && state.pgKey !== sig) state.pg = 1;
+  state.pgKey = sig;
+  const path = rankPath(sk, state.pg || 1, state.rk), j = Hs.peek(path);
+  if (!j) {
+    if (!box.querySelector('.skel')) box.innerHTML = loadingBox();
+    Hs.get(path).then(d => {
+      remember(d.rows.map(x => x.p));
+      if (!state.rs && d.rs && !state.rk) { state.rs = d.rs; Hs.seed(rankPath(sk, d.page), d); state.rs = 0; }
+      if (rsFrom(d)) state.pgKey = [state.region, sk.id, state.rs, state.cls, state.dg, state.dw].join('|');   // même page, type précisé
+      if (state.rk) { state.pg = d.page; state.pgHit = d.me?.r || null; state.rk = ''; Hs.get(rankPath(sk, d.page)).catch(() => {}); }
+      if (state.view === 'rank' && state.pgKey === [state.region, sk.id, state.rs, state.cls, state.dg, state.dw].join('|')) {
+        renderRank(); animate($('#rank')); writeUrl(false);
+        if (state.pgHit) $('#rank-panel .row.hit')?.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+      }
+    }).catch(() => { if (state.view === 'rank' && state.pgKey === sig) box.innerHTML = failed(); });
+    return;
+  }
+  if (state.rk) state.rk = '';
+  state.pg = j.page;
+  const info = RSINFO[state.region] && !(RSINFO[state.region] instanceof Promise) ? RSINFO[state.region] : null;
   let nav = '', grp;
-  // comme la grille de l'addon : chaque compétence avec son icône ; une arme n'apparaît que si quelqu'un la pratique
-  // groupes pliables (Armes, Métiers…) : le groupe de la compétence affichée reste ouvert, les autres suivent le choix du joueur
-  const has = s => !!s && region.some(p => s.get(p));
-  const shown = SKILLS.filter(s => !(s.wpn || s.group === 'book' || s.group === 'pvp') || s.id === sk.id || has(s) || (s.with && has(skillById(s.with))));
-  shown.forEach(s => {
+  // comme la grille de l'addon : chaque compétence avec son icône ; groupes pliables (Armes, Métiers…) : le groupe de la
+  // compétence affichée reste ouvert, les autres suivent le choix du joueur
+  SKILLS.forEach(s => {
     if (s.group !== grp) {
       if (grp) nav += '</div>';
       grp = s.group;
-      if (grp) { const n = shown.filter(x => x.group === grp).length, open = grp === sk.group || n < 3 || skFold(grp);
+      if (grp) { const n = SKILLS.filter(x => x.group === grp).length, open = grp === sk.group || n < 3 || skFold(grp);
         nav += `<div class="sg${open ? '' : ' shut'}"><button type="button" class="grp" data-sgt="${grp}" aria-expanded="${open}"><i class="dot" style="background:${GROUP_COLOR[grp]}"></i>${t('g.' + grp)}<span class="sgn">${n}</span><i class="chev" aria-hidden="true"></i></button>`; }
       else nav += '<div class="sg">';
     }
     const ic = s.logo || s.id === 'total' ? '<i class="sic logo"></i>' : s.icon ? `<img class="sic" src="${icon(s.icon)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<i class="sic none"></i>';
     nav += `<a href="?p=rank&s=${s.id}" data-skill="${s.id}" class="${s.id === sk.id ? 'on' : ''}">${ic}<span class="lb">${s.label()}</span> <span>${s.max}</span></a>`;
   });
-  const count = id => region.filter(p => p.rulesetId === id).length;
-  const rsChips = `<span class="chip ${state.rs ? '' : 'on'}" data-rs="0">${t('allModes')}<span class="n">${region.length}</span></span>` +
-    RULESETS.map(([id, names]) => `<span class="chip ${state.rs === id ? 'on' : ''}" data-rs="${id}">${L2(names)}<span class="n">${count(id)}</span></span>`).join('')
+  const rs = j.rs || state.rs;
+  const rsChips = RULESETS.map(([id, names]) => `<span class="chip ${rs === id ? 'on' : ''}" data-rs="${id}">${L2(names)}${info?.counts?.[id] ? `<span class="n">${fmt(info.counts[id])}</span>` : ''}</span>`).join('')
     + `<span class="chip dg${state.dg ? ' on' : ''}" data-dg role="button" tabindex="0" title="${t('dgTip')}">▲ ${t('dgSort')}</span>`
     + `<span class="chip dg${state.dw ? ' on' : ''}" data-dw role="button" tabindex="0" title="${t('dwTip')}">▲ ${t('dwSort')}</span>`;
+  const classes = Object.keys(CLASS).map(Number).sort((a, b) => L2(CLASS[a]).localeCompare(L2(CLASS[b])));
   const clsChips = `<span class="chip ${state.cls ? '' : 'on'}" data-cls="0">${t('allClasses')}</span>` +
     classes.map(c => `<span class="chip ${state.cls === c ? 'on' : ''}" data-cls="${c}">${esc(L2(CLASS[c]))}</span>`).join('');
   const isTotal = sk.id === 'total';
-  // téléphone : 3 boutons (compétence, mode, classe) qui ouvrent un panneau du bas, au lieu de 3 rangées de pastilles.
-  // Les panneaux reprennent les listes de l'ordinateur (groupes pliables compris).
-  const rsName = state.rs ? L2((RULESETS.find(([id]) => id === state.rs) || [0, ['?', '?']])[1]) : t('allM');
+  // téléphone : 3 boutons (compétence, type de royaume, classe) qui ouvrent un panneau du bas, au lieu de 3 rangées de pastilles
   const skIc = sk.logo || sk.id === 'total' ? '<i class="sic logo"></i>' : sk.icon ? `<img class="sic" src="${icon(sk.icon)}" alt="" decoding="async" referrerpolicy="no-referrer">` : '';
   const fbtn = (k, lbl, val, ic = '') => `<button type="button" class="fbtn" data-fs="${k}" aria-haspopup="dialog"><small>${lbl}</small><span>${ic}<b>${val}</b></span><i class="chev" aria-hidden="true"></i></button>`;
   const sheet = (k, title, body) => `<div class="fsheet" data-fsheet="${k}" hidden role="dialog" aria-label="${esc(title)}"><div class="fs-in"><div class="fs-h"><b>${title}</b><button type="button" class="fs-x" data-fsx aria-label="${t('close')}">✕</button></div>${body}</div></div>`;
-  const fbar = `<div class="fbar">${fbtn('skill', t('fSkill'), esc(sk.label()), skIc)}${fbtn('rs', t('fMode'), esc(rsName) + (state.dg || state.dw ? ' ▲' : ''))}${fbtn('cls', t('fClass'), state.cls ? esc(L2(CLASS[state.cls])) : t('allC'))}</div>`
+  const fbar = `<div class="fbar">${fbtn('skill', t('fSkill'), esc(sk.label()), skIc)}${fbtn('rs', t('fMode'), esc(rsLabel(rs)) + (state.dg || state.dw ? ' ▲' : ''))}${fbtn('cls', t('fClass'), state.cls ? esc(L2(CLASS[state.cls])) : t('allC'))}</div>`
     + sheet('skill', t('fSkill'), `<nav class="skills">${nav}</div></nav>`)
     + sheet('rs', t('fMode'), `<div class="chips">${rsChips}</div>`)
     + sheet('cls', t('fClass'), `<div class="chips">${clsChips}</div>`);
-  // armes estimées : affichées sous le classement, sans rang
-  const pool = state.cls ? byRs.filter(p => p.classId === state.cls) : byRs;
-  const estRows = sk.wpn ? pool.filter(p => sk.est(p) && sk.get(p)).sort((a, b) => sk.get(b) - sk.get(a)).map(p => ({ p, v: sk.get(p), r: 0 })) : [];
-  // pages de RANK_PER lignes ; un filtre qui change ramène à la page 1 (la page reste dans l'adresse : ?pg=)
-  const sig = [state.region, sk.id, state.rs, state.cls, state.dg, state.dw].join('|');
-  if (state.pgKey && state.pgKey !== sig) state.pg = 1;
-  state.pgKey = sig;
-  const pages = Math.max(1, Math.ceil(list.length / RANK_PER));
-  state.pg = Math.min(Math.max(1, state.pg || 1), pages);
-  const from = (state.pg - 1) * RANK_PER, pageRows = list.slice(from, from + RANK_PER), lastPage = state.pg === pages;
-  const mineK = new Set(Bnet.mine().map(pkey)), myIdx = list.findIndex(x => mineK.has(pkey(x.p)));
-  const pager = pagerNav('rank', state.pg, pages, list.length,
-    (list.length > RANK_PER ? `<label class="pg-go">${t('pgGo')}<input type="number" min="1" max="${list.length}" inputmode="numeric" data-pgrank aria-label="${t('pgGo')}"></label>` : '')
-    + (myIdx >= 0 ? `<button type="button" class="btn ghost pg-me" data-pgme="${myIdx}">${t('pgMine')}</button>` : ''));
-  const row = ({ p, v, r, g }) => `
+  const mine = Bnet.mine().filter(p => (p.region || 'eu') === state.region), mineK = new Set(mine.map(pkey));
+  const pager = pagerNav('rank', j.page, j.pages, j.total,
+    (j.total > RANK_PER ? `<label class="pg-go">${t('pgGo')}<input type="number" min="1" max="${j.total}" inputmode="numeric" data-pgrank aria-label="${t('pgGo')}"></label>` : '')
+    + (mine.length && !state.dg && !state.dw ? `<button type="button" class="btn ghost pg-me" data-pgmine="${esc(pkey([...mine].sort((a, b) => b.total - a.total)[0]))}">${t('pgMine')}</button>` : ''));
+  const row = ({ p, v, r, g1, g7 }) => `
     <div class="row${r && r <= 3 ? ' top' : ''}${r ? '' : ' unranked'}${mineK.has(pkey(p)) ? ' me' : ''}${r && r === state.pgHit ? ' hit' : ''}" data-c="${esc(pkey(p))}" role="row">
       <span class="rk">${r || '–'}</span>
-      <span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p, g)}<small>${who(p)}${rulesetName(p) ? ' · ' + esc(rulesetName(p)) : ''}</small></span></span>
+      <span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p, (state.dw ? g7 : g1) || 0)}<small>${who(p)}</small></span></span>
       <span class="lv${p.level >= 60 ? ' max' : ''}">${p.level}</span>
-      ${isTotal ? tri(p) : sk.prof ? `<span class="mbar"><i style="--w:${(100 * v / (p.professions.find(x => x.id === sk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
-        : sk.wpn ? `<span class="mbar w${sk.est(p) ? ' est' : ''}"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>`
-        : sk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, sk.ratio(v, p))).toFixed(1)}%"></i></span>` : '<span class="c3"></span>'}
-      <span class="tot">${showVal(sk, v, p)}${isTotal ? estTag(p) : sk.wpn && sk.est(p) ? `<em>${t('est')}</em>` : ''}</span>
+      ${isTotal ? tri(p) : sk.prof ? `<span class="mbar"><i style="--w:${(100 * v / ((p.professions || []).find(x => x.id === sk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
+        : sk.wpn ? `<span class="mbar w"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>`
+        : sk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, sk.ratio(v, p) || 0)).toFixed(1)}%"></i></span>` : '<span class="c3"></span>'}
+      <span class="tot">${showVal(sk, v, p)}${isTotal ? estTag(p) : ''}</span>
     </div>`;
-  const rows = state.dg || state.dw ? (list.length ? pageRows.map(row).join('') : `<div class="empty">${t(state.dw ? 'dwNone' : 'dgNone')}</div>`)
-    : (list.length || estRows.length)
-    ? pageRows.map(row).join('') + (estRows.length && lastPage ? `<div class="you-sep est-sep">${t('estSep')}</div>` + estRows.map(row).join('') : '')
-    : sk.id === 'hpk' ? `<div class="empty">${t('hpkNone')}</div>` : nobody();
-  $('#rank-panel').innerHTML = `
-    <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('registered', { n: region.filter(p => !p.preview).length })}${region.some(p => p.preview) ? ' · ' + t('previewN', { n: region.filter(p => p.preview).length }) : ''} · Forever ${state.region.toUpperCase()}</span></div>
+  const rows = j.rows.length ? j.rows.map(row).join('')
+    : state.dg || state.dw ? `<div class="empty">${t(state.dw ? 'dwNone' : 'dgNone')}</div>` : sk.id === 'hpk' ? `<div class="empty">${t('hpkNone')}</div>` : nobody();
+  box.innerHTML = `
+    <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('rkCount', { n: fmt(j.total) })} · ${esc(rsLabel(rs))} · Forever ${state.region.toUpperCase()}</span></div>
     ${fbar}
     ${state.dg || state.dw ? `<span class="dgon" ${state.dw ? 'data-dw' : 'data-dg'} role="button" tabindex="0" title="${t(state.dw ? 'dwTip' : 'dgTip')}">▲ ${t(state.dw ? 'dwSort' : 'dgSort')} <i aria-hidden="true">✕</i></span>` : ''}
     <div class="chips rk-rs" role="group">${rsChips}</div>
@@ -1030,6 +1052,8 @@ function renderRank() {
       </div>
     </div>
     ${isTotal ? `<div class="legend"><span><i style="background:var(--lvl)"></i>${t('level')}</span><span><i style="background:var(--wpn)"></i>${t('weaponsDef')}</span><span><i style="background:var(--prf)"></i>${t('professions')}</span><span><i style="background:repeating-linear-gradient(135deg,var(--wpn) 0 3px,#33435f 3px 6px)"></i>${t('legend')}</span></div>` : ''}`;
+  // page suivante préparée en arrière-plan (une seule requête, pas en mode économie de données ni en 2G)
+  if (j.page < j.pages && !navigator.connection?.saveData && !/2g/.test(navigator.connection?.effectiveType || '')) Hs.get(rankPath(sk, j.page + 1)).catch(() => {});
 }
 
 /* ---------- Personnage ---------- */
@@ -1085,7 +1109,7 @@ function pendDelta(p) {
 // Total affiché : simulé et discret s'il y a une ligne en attente
 const totalB = (p, d = pendDelta(p)) => `<b${d > 0 ? ` class="pend" title="${esc(t('pendTotal2', { o: fmt(p.total), n: fmt(d) }))}"` : ''} data-n="${p.total + d}">${fmt(p.total + d)}</b>`;
 function skillItems0(p, peers) {
-  const place = sk => rankBy(sk, peers).find(x => x.p === p)?.r;
+  const place = sk => p.ranks ? p.ranks[sk.id]?.r || null : DATA.partial ? null : rankBy(sk, peers).find(x => x.p === p)?.r;
   const items = [{ key: 'level', ava: p.avatar, name: t('level'), rank: p.level, max: 60, group: 'lvl', r: place(skillById('level')) }];
   const used = new Set(p.equipped || []);
   for (const id of WPN_ORDER) {
@@ -1173,7 +1197,7 @@ const freshLine = p => `<p class="fresh">${DATA.updated ? t('freshArm', { d: hou
 const SERVER_CHARS = new Map();
 function loadServerChar(k) {
   if (SERVER_CHARS.has(k)) return Promise.resolve(SERVER_CHARS.get(k));
-  return fetch(`${API}/hs/char?k=${encodeURIComponent(k)}`).then(r => r.ok ? r.json() : null).catch(() => null)
+  return Hs.get(`/hs/char?k=${encodeURIComponent(k)}&ranks=1`).catch(() => null)
     .then(p => { const v = p && p.key === k ? Object.assign(p, { _full: true, _server: true }) : null; SERVER_CHARS.set(k, v); return v; });
 }
 function renderChar() {
@@ -1198,7 +1222,7 @@ function renderChar() {
     return;
   }
   const peers = DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu'));
-  const totalRank = rankBy(SKILLS[0], peers).find(x => x.p === p)?.r;
+  const totalRank = p.ranks ? p.ranks.total?.r : DATA.partial ? null : rankBy(SKILLS[0], peers).find(x => x.p === p)?.r;
   const hist = p.history || [], gained = hist.length > 1 ? hist[hist.length - 1].t - hist[0].t : 0;
   const nProf = p.professions?.length || 0;
   const portrait = p.render
@@ -1288,7 +1312,7 @@ function hsBook(p) {
 }
 function hsRows(p) {
   const peers = DATA.players.filter(x => (x.region || 'eu') === (p.region || 'eu'));
-  const rank = id => rankBy(skillById(id), peers).find(x => x.p === p)?.r || null;
+  const rank = id => p.ranks ? p.ranks[id]?.r || null : DATA.partial ? null : rankBy(skillById(id), peers).find(x => x.p === p)?.r || null;
   const row = (name, img, v, max, group, id, hkey) => ({ name, img, v, max, group, rank: rank(id), week: weekGain(p, hkey), vText: fmt(v), maxText: fmt(max) });
   const rows = [{ ...row(t('total'), null, p.total, p.max || 2460, 'lvl', 'total', 't'), total: true, parts: p.parts }];
   rows.push(row(t('level'), p.avatar, p.level, 60, 'lvl', 'level', 'l'));
@@ -1877,48 +1901,58 @@ function weekBadges(p) {
   return out.length ? `<div class="wk-badges">${out.map(x => `<span class="wk-badge">${esc(x)}</span>`).join('')}</div>` : '';
 }
 function gain7(p) {
-  const h = p.history || []; if (h.length < 2) return null;
+  const h = p.history || []; if (h.length < 2) return p.g7 ?? null;   // reçu de l'API sans historique : gain calculé par le serveur
   const last = h[h.length - 1], cut = new Date(new Date(last.d) - 7 * 864e5).toISOString().slice(0, 10);
   return histDiff(p, [...h].reverse().find(x => x.d <= cut) || h[0], last);
 }
 const GUILD_KNOWN = new Map();   // membres connus du relevé serveur, par guilde (« région/slug »)
 const foldTxt = s => String(s ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+// Liste des guildes : une page demandée au serveur (/hs/guilds), par région et type de royaume ; le rang reste le rang
+// complet même quand on cherche un nom ou une faction. Type d'une guilde = type de la majorité de ses membres.
+const GM_KEYS = ['total', 'avg', 'l60', 'hk', 'prof', 'members'];
+const guildsPath = () => `/hs/guilds?r=${state.region}${state.rs ? '&rs=' + state.rs : ''}&m=${GM_KEYS.includes(state.gm) ? state.gm : 'total'}${state.glq ? '&q=' + encodeURIComponent(state.glq) : ''}${state.gfac ? '&fac=' + state.gfac : ''}&pg=${state.gpg || 1}&per=${RANK_PER}`;
+function renderGuildList() {
+  const box = $('#guild-panel'), path = guildsPath(), j = Hs.peek(path), gm = GM_KEYS.includes(state.gm) ? state.gm : 'total', gf = state.gfac || '';
+  if (!j) {
+    if (!box.querySelector('.skel') && !box.querySelector('[data-glq]')) box.innerHTML = loadingBox();
+    Hs.get(path).then(d => { rsFrom(d); if (state.view === 'guild' && !state.g) { if (!Hs.peek(guildsPath())) Hs.seed(guildsPath(), d); renderGuildList(); animate($('#guild')); } })
+      .catch(() => { if (state.view === 'guild' && !state.g) box.innerHTML = failed(); });
+    return;
+  }
+  state.gpg = j.page;
+  const maxV = Math.max(1, ...j.rows.map(x => x.v || 0)), rs = j.rs || state.rs;
+  const gmChips = `<div class="chips gm" role="group">${GM_KEYS.map(k => `<span class="chip${k === gm ? ' on' : ''}" data-gm="${k}" role="button" tabindex="0">${t('gm.' + k)}</span>`).join('')}</div>`;
+  const facChips = `<div class="chips gfacs" role="group">${['', 'ALLIANCE', 'HORDE'].map(f => `<span class="chip${gf === f ? ' on' : ''}" data-gfac="${f}" role="button" tabindex="0">${f ? `<i class="cdot" style="background:${f === 'HORDE' ? '#c0392b' : '#4a7bd0'}"></i>${f === 'HORDE' ? 'Horde' : 'Alliance'}` : t('allFactions')}</span>`).join('')}</div>`;
+  const rows = j.rows.map(x => { const f = x.faction;
+    return `<div class="row${x.r <= 3 ? ' top' : ''}" data-g="${esc(x.slug)}" role="row"><span class="rk">${x.r}</span><span class="nm"><span><b>${esc(x.name)}</b><small>${f ? `<span class="gfac ${f === 'HORDE' ? 'h' : 'a'}">${f === 'HORDE' ? 'Horde' : 'Alliance'}</span> ` : ''}<span class="g-rs">${esc(rsLabel(x.rs || rs))} · </span>${t('gmSub', { n: x.l60 || 0 })}</small></span></span><span class="lv">${fmt(x.n)}</span><span class="mbar g"><i style="--w:${(100 * (x.v || 0) / maxV).toFixed(1)}%"></i></span><span class="tot">${fmt(x.v)}</span></div>`; }).join('');
+  // la recherche garde le focus et la position du curseur pendant que la liste se redessine
+  const had = document.activeElement?.matches?.('[data-glq]'), pos = had ? document.activeElement.selectionStart : 0;
+  box.innerHTML = `<div class="head"><h2>${t('guildsT')}</h2><span class="note">${t('guildsNote', { r: state.region.toUpperCase() })} · ${esc(rsLabel(rs))} · ${t('gCount', { n: fmt(j.total) })}</span></div>
+    <div class="gtools"><label class="gq"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" data-glq value="${esc(state.glq || '')}" placeholder="${esc(t('glq'))}" aria-label="${esc(t('glq'))}"></label>${facChips}</div>
+    ${gmChips}
+    <div class="rows rk-lv glist2" role="table">${j.rows.length ? `<div class="row th" role="row"><span>${t('rank')}</span><span>${t('guildH')}</span><span class="lv">${t('members')}</span><span class="c3"></span><span style="text-align:right">${t('gm.' + gm)}</span></div>` + rows
+      : `<div class="empty"><b>${t('noGuildT')}</b>${t(state.glq || gf ? 'gNoMatch' : 'noGuild')}</div>`}</div>${pagerNav('guild', j.page, j.pages, j.total)}`;
+  if (had) { const i = box.querySelector('[data-glq]'); i.focus(); i.setSelectionRange(pos, pos); }
+  if (j.page < j.pages && !navigator.connection?.saveData) { const nx = guildsPath().replace(/&pg=\d+/, '&pg=' + (j.page + 1)); Hs.get(nx).catch(() => {}); }
+}
 function renderGuild() {
   if (DATA.loading) { $('#guild-panel').innerHTML = loadingBox(); return; }
   if (DATA.failed) { $('#guild-panel').innerHTML = failed(); return; }
-  const all = guilds(), g = all.find(x => x.slug === state.g);
-  if (!g) {
-    // classements de guildes : niveau total cumulé, moyenne par membre (3 membres au moins), niveaux 60, victoires honorables, métiers, membres
-    const GM = { total: x => x.total, avg: x => x.members.length >= 3 ? Math.round(x.total / x.members.length) : null,
-      l60: x => x.members.filter(p => p.level >= 60).length, hk: x => x.members.reduce((n, p) => n + (armoryStat(p, 'hk') || 0), 0),
-      prof: x => x.members.reduce((n, p) => n + (p.parts?.professions || 0), 0), members: x => x.members.length };
-    const gm = GM[state.gm] ? state.gm : 'total';
-    const ranked = all.map(x => ({ x, v: GM[gm](x) })).filter(r => r.v != null && r.v > 0).sort((a, b) => b.v - a.v || b.x.total - a.x.total);
-    const facOf = x => x.members.find(p => p.faction)?.faction || null;
-    const gq = foldTxt(state.glq || ''), gf = state.gfac || '';
-    const shown = ranked.map((r, i) => ({ ...r, r: i + 1 })).filter(({ x }) => (!gq || foldTxt(x.name).includes(gq)) && (!gf || facOf(x) === gf));
-    state.gpg = pageOf(state.gpg, shown.length);
-    const gFrom2 = (state.gpg - 1) * RANK_PER, maxV = Math.max(1, ...shown.map(s => s.v));
-    const gmChips = `<div class="chips gm" role="group">${Object.keys(GM).map(k => `<span class="chip${k === gm ? ' on' : ''}" data-gm="${k}" role="button" tabindex="0">${t('gm.' + k)}</span>`).join('')}</div>`;
-    const facChips = `<div class="chips gfacs" role="group">${['', 'ALLIANCE', 'HORDE'].map(f => `<span class="chip${gf === f ? ' on' : ''}" data-gfac="${f}" role="button" tabindex="0">${f ? `<i class="cdot" style="background:${f === 'HORDE' ? '#c0392b' : '#4a7bd0'}"></i>${f === 'HORDE' ? 'Horde' : 'Alliance'}` : t('allFactions')}</span>`).join('')}</div>`;
-    const rows = shown.slice(gFrom2, gFrom2 + RANK_PER).map(({ x, v, r }) => { const f = facOf(x), n60 = x.members.filter(p => p.level >= 60).length;
-      return `<div class="row${r <= 3 ? ' top' : ''}" data-g="${esc(x.slug)}" role="row"><span class="rk">${r}</span><span class="nm"><span><b>${esc(x.name)}</b><small>${f ? `<span class="gfac ${f === 'HORDE' ? 'h' : 'a'}">${f === 'HORDE' ? 'Horde' : 'Alliance'}</span> ` : ''}${t('gmSub', { n: n60 })}</small></span></span><span class="lv">${fmt(x.members.length)}</span><span class="mbar g"><i style="--w:${(100 * v / maxV).toFixed(1)}%"></i></span><span class="tot">${fmt(v)}</span></div>`; }).join('');
-    $('#guild-panel').innerHTML = `<div class="head"><h2>${t('guildsT')}</h2><span class="note">${t('guildsNote', { r: state.region.toUpperCase() })} · ${t('gCount', { n: fmt(all.length) })}</span></div>
-      <div class="gtools"><label class="gq"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" data-glq value="${esc(state.glq || '')}" placeholder="${esc(t('glq'))}" aria-label="${esc(t('glq'))}"></label>${facChips}</div>
-      ${gmChips}
-      <div class="rows rk-lv glist2" role="table">${shown.length ? `<div class="row th" role="row"><span>${t('rank')}</span><span>${t('guildH')}</span><span class="lv">${t('members')}</span><span class="c3"></span><span style="text-align:right">${t('gm.' + gm)}</span></div>` + rows
-        : `<div class="empty"><b>${t('noGuildT')}</b>${t(ranked.length ? 'gNoMatch' : 'noGuild')}</div>`}</div>${pagerNav('guild', state.gpg, Math.ceil(shown.length / RANK_PER), shown.length)}`;
+  if (!state.g) return renderGuildList();
+  // page d'une guilde : la liste du relevé (/hs/guild), avec la fiche complète des membres lus quand le serveur la donne (full=1)
+  const gk = `${state.region}/${state.g}`, gpath = `/hs/guild?k=${encodeURIComponent(gk)}&full=1`, known = Hs.peek(gpath);
+  if (!known) {
+    $('#guild-panel').innerHTML = loadingBox();
+    Hs.get(gpath).then(j => { remember(j.players); if (state.view === 'guild' && state.g === gk.split('/')[1]) { renderGuild(); animate($('#guild')); } })
+      .catch(() => { if (state.view === 'guild') $('#guild-panel').innerHTML = failed(); });
     return;
   }
-  const rank = all.indexOf(g) + 1, members = [...g.members].sort((a, b) => b.total - a.total);
-  // membres connus du relevé serveur (liste de la guilde) : chargés une fois, en plus de ceux publiés sur le site
-  const gk = `${state.region}/${g.slug}`;
-  if (!GUILD_KNOWN.has(gk)) {
-    GUILD_KNOWN.set(gk, null);
-    fetch(`${API}/hs/guild?k=${encodeURIComponent(gk)}`).then(r => r.ok ? r.json() : null).catch(() => null)
-      .then(j => { GUILD_KNOWN.set(gk, j || { members: [] }); if (state.view === 'guild' && state.g === g.slug) { renderGuild(); animate($('#guild')); } });
-  }
-  const known = GUILD_KNOWN.get(gk), pubKeys = new Set(members.map(pkey));
+  const fromApi = (known.players || []).filter(p => (p.region || 'eu') === state.region);
+  const all = guilds(), local = all.find(x => x.slug === state.g);
+  const gm0 = fromApi.length ? fromApi : local?.members || [];
+  const g = { name: known.name || local?.name || state.g, slug: state.g, members: gm0, total: gm0.reduce((n, p) => n + (p.total || 0), 0) };
+  const rank = known.rank || 0, members = [...g.members].sort((a, b) => b.total - a.total);
+  const pubKeys = new Set(members.map(pkey));
   const unread = (known?.members || []).filter(m => !pubKeys.has(m.key)).sort((a, b) => b.level - a.level);
   const everyone = [...members.map(p => ({ level: p.level, classId: p.classId })), ...unread];
   const n60 = everyone.filter(p => p.level >= 60).length, avgLvl = everyone.length ? everyone.reduce((s, p) => s + p.level, 0) / everyone.length : 0;
@@ -2012,7 +2046,7 @@ function renderGuild() {
   $('#guild-panel').innerHTML = `
     <span class="back" data-g="">${t('allGuilds')}</span>
     <div class="who gh">
-      <div><h2>${esc(g.name)}</h2><p>${faction ? `<span class="gfac ${faction === 'HORDE' ? 'h' : 'a'}">${faction === 'HORDE' ? 'Horde' : 'Alliance'}</span> · ` : ''}${state.region.toUpperCase()} · ${t('guildTotal', { r: ord(rank) })}</p><button class="share gshare" type="button" data-gshare="${esc(g.slug)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button></div>
+      <div><h2>${esc(g.name)}</h2><p>${faction ? `<span class="gfac ${faction === 'HORDE' ? 'h' : 'a'}">${faction === 'HORDE' ? 'Horde' : 'Alliance'}</span> · ` : ''}${state.region.toUpperCase()} · ${esc(rsLabel(known.rs || state.rs))}${rank ? ' · ' + t('guildTotal', { r: ord(rank) }) : ''}</p><button class="share gshare" type="button" data-gshare="${esc(g.slug)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button></div>
       <div class="score"><div class="n" data-n="${g.total}">${fmt(g.total)}</div><div class="r">${t('totalH')}</div></div>
     </div>
     <div class="st-tiles gtiles">${tile(fmt(everyone.length), t('gKnown'))}${tile(fmt(n60), t('stLvl60'))}${tile(avgLvl ? avgLvl.toLocaleString(locale(), { maximumFractionDigits: 1 }) : '—', t('stColLvl'))}${tile(fmt(hk), t('stHk'))}</div>
@@ -2442,7 +2476,9 @@ function renderRuns() {
   const box = $('#runs-panel');
   if (!LOOT || !ITEMS || !ART || DATA.loading) {
     box.innerHTML = loadingBox();
-    Promise.all([loadLoot(), loadItems(), loadArt(), loadRuns()]).then(() => { if (state.view === 'runs') { renderRuns(); animate($('#runs')); } });
+    // données des joueurs pas encore là : leur arrivée redessine la page (sans cette garde, la promesse déjà tenue relançait
+    // renderRuns en boucle et figeait l'onglet)
+    if (!LOOT || !ITEMS || !ART) Promise.all([loadLoot(), loadItems(), loadArt(), loadRuns()]).then(() => { if (state.view === 'runs') { renderRuns(); animate($('#runs')); } });
     return;
   }
   if (LOOT.failed || DATA.failed) { box.innerHTML = failed(); return; }
@@ -2817,7 +2853,52 @@ function applyStatic() {
 /* ======================================================================
    Connexion Battle.net (api.dropamine.app) : n'apparaît que si le service répond.
    ====================================================================== */
-const API = 'https://api.dropamine.app';
+// poste de développement : une API locale peut remplacer la vraie (localStorage.dropApi = 'http://localhost:8787')
+const API = (location.hostname === 'localhost' && (() => { try { const q = new URLSearchParams(location.search).get('api'); if (q && /^http:\/\/localhost:\d+$/.test(q)) localStorage.setItem('dropApi', q); return localStorage.getItem('dropApi'); } catch { return null; } })()) || 'https://api.dropamine.app';
+// Lectures publiques du relevé (/hs/*) : une seule requête en cours par adresse, réponse gardée 5 min pour la session ;
+// au-delà, le navigateur revalide avec l'ETag (304 sans corps si rien n'a changé). Jamais de relève en boucle.
+const Hs = (() => {
+  const mem = new Map(), TTL = 5 * 60e3;
+  function get(path, ttl = TTL) {
+    const hit = mem.get(path);
+    if (hit && (hit.pending || Date.now() - hit.at < ttl)) return hit.p;
+    const e = { pending: true, at: 0, data: hit?.data };
+    e.p = fetch(API + path).then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(d => { e.pending = false; e.at = Date.now(); e.data = d; return d; }, err => { mem.delete(path); throw err; });
+    mem.set(path, e);
+    return e.p;
+  }
+  const peek = path => mem.get(path)?.data;   // déjà reçu : dessiné tout de suite, sans attendre
+  // même réponse connue sous une autre adresse (type de royaume choisi par le serveur) : pas de deuxième requête
+  const seed = (path, data) => { if (!mem.has(path)) mem.set(path, { pending: false, at: Date.now(), data, p: Promise.resolve(data) }); };
+  return { get, peek, seed };
+})();
+// joueurs reçus de l'API (classements, tableau de bord…) : ajoutés aux joueurs connus, sans remplacer une fiche complète
+function remember(list) {
+  const idx = new Map(DATA.players.map(p => [pkey(p), p]));
+  for (const p of list || []) {
+    if (!p || !(p.key || p.slug)) continue;
+    const old = idx.get(pkey(p));
+    if (!old) { DATA.players.push(p); idx.set(pkey(p), p); }
+    else if (!old._full) for (const [k, v] of Object.entries(p)) if (k !== 'history' || !old.history?.length) old[k] = v;
+  }
+}
+// type de royaume (JcJ, Normal, JdR, JdR-JcJ) : choix global comme la région, jamais mélangé. Retenu dans le navigateur ;
+// sans choix : celui du personnage connecté, sinon le plus peuplé de la région (donné par le serveur).
+const RSINFO = {};
+const loadRsInfo = r => RSINFO[r] ??= Hs.get(`/hs/rsinfo?r=${r}`, 30 * 60e3).then(j => (RSINFO[r] = j)).catch(() => (RSINFO[r] = null));
+const rsStored = () => { try { return +localStorage.getItem('rs') || 0; } catch { return 0; } };
+const rsLabel = id => L2((RULESETS.find(([x]) => x === id) || [0, ['?', '?']])[1]);
+function rsSelect() {
+  const sel = $('#rs'); if (!sel) return;
+  const info = RSINFO[state.region];
+  sel.setAttribute('aria-label', t('fMode')); sel.title = t('fMode');
+  sel.innerHTML = RULESETS.map(([id]) => `<option value="${id}">${esc(rsLabel(id))}</option>`).join('');
+  if (state.rs) sel.value = String(state.rs);
+  else if (info && info.def) sel.value = String(info.def);
+}
+// le serveur dit quel type il a utilisé (réponse « rs ») : le site s'aligne, sans l'imposer comme choix du joueur
+function rsFrom(j) { if (j?.rs && !state.rs) { state.rs = j.rs; rsSelect(); writeUrl(false); return true; } return false; }
 Object.assign(I18N, {
   bnTitle: ['Register with Battle.net', 'Inscription avec Battle.net'],
   bnPitch: ['Sign in with Blizzard: your Forever characters are listed, tick the ones to show. We never see your password.',
@@ -2984,7 +3065,8 @@ function setMeta() {
   if (state.region !== 'eu') q.set('r', state.region);
   if (state.view === 'char' && state.c) q.set('c', state.c);
   if (state.view === 'guild' && state.g) q.set('g', state.g);
-  if (state.view === 'rank') { if (state.skill !== 'total') q.set('s', state.skill); if (state.rs) q.set('m', state.rs); }
+  if (state.view === 'rank' && state.skill !== 'total') q.set('s', state.skill);
+  if (state.rs && ['rank', 'guild', 'stats'].includes(state.view) && !(state.view === 'guild' && state.g)) q.set('rs', state.rs);
   const url = 'https://dropamine.app/' + (q.toString() ? '?' + q : ''), r = state.region.toUpperCase();
   const h2 = $('#' + state.view + '-panel h2')?.textContent.trim(), sub = $('#' + state.view + '-panel h2 + p')?.textContent.trim();
   let title = document.title, desc = META0;
@@ -3021,7 +3103,7 @@ function readUrl() {
   const v = q.get('p');
   state.view = VIEWS.includes(v) ? v : (q.get('bnet') ? 'join' : q.get('c') ? 'char' : q.get('g') ? 'guild' : 'home');
   state.region = ['eu', 'us'].includes(q.get('r')) ? q.get('r') : 'eu';
-  state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0; state.dg = q.get('dg') === '1'; state.dw = !state.dg && q.get('dw') === '1'; state.pg = Math.max(1, +q.get('pg') || 1); state.pgKey = null;
+  state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = [1, 2, 3, 15].includes(+(q.get('rs') || q.get('m'))) ? +(q.get('rs') || q.get('m')) : rsStored(); state.dg = q.get('dg') === '1'; state.dw = !state.dg && q.get('dw') === '1'; state.pg = Math.max(1, +q.get('pg') || 1); state.pgKey = null;
   state.c = q.get('c') || state.c; state.g = q.get('g') || '';
   if (state.view === 'runs') Object.assign(state, { rtab: ['ideas', 'planned', 'explore'].includes(q.get('tab')) ? q.get('tab') : undefined, hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
 }
@@ -3031,7 +3113,8 @@ function writeUrl(push) {
   if (DEMO) q.set('demo', DEMO);
   if (state.view !== 'home') q.set('p', state.view);
   if (state.region !== 'eu') q.set('r', state.region);
-  if (state.view === 'rank') { if (state.pg > 1) q.set('pg', state.pg); if (state.dg) q.set('dg', '1'); if (state.dw) q.set('dw', '1'); if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); if (state.rs) q.set('m', state.rs); }
+  if (state.view === 'rank') { if (state.pg > 1) q.set('pg', state.pg); if (state.dg) q.set('dg', '1'); if (state.dw) q.set('dw', '1'); if (state.skill !== 'total') q.set('s', state.skill); if (state.cls) q.set('cl', state.cls); }
+  if (state.rs && ['rank', 'guild', 'stats', 'runs'].includes(state.view) && !(state.view === 'guild' && state.g)) q.set('rs', state.rs);
   if (state.view === 'char' && state.c) q.set('c', state.c);
   if (state.view === 'guild' && state.g) q.set('g', state.g);
   if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['d', 'hd'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.rtab === 'ideas' || state.rtab === 'explore') q.set('tab', state.rtab); if (state.runFocus) q.set('run', state.runFocus); }
@@ -3058,8 +3141,9 @@ function hit(extra = {}) {
   if (hitRef) { body.ref = hitRef; hitRef = ''; }
   try { navigator.sendBeacon(`${API}/hit`, new Blob([JSON.stringify(body)], { type: 'text/plain' })); } catch { /* rien */ }
 }
-// pages qui se contentent de l'accueil léger (data/home.json) : jamais l'index complet
-const LIGHT_VIEWS = ['home', 'news', 'stats', 'get', 'privacy', 'about'];
+// toutes les pages partent de l'accueil léger (data/home.json : inscrits, top, totaux) et demandent le reste à l'API
+// (/hs/*) : l'index complet (data/hiscores.json, 24 Mo) n'est plus lu que si home.json manque
+const LIGHT_VIEWS = VIEWS;
 function render(push) {
   applyStatic();
   if (state.view === 'home') renderHome();
@@ -3070,6 +3154,7 @@ function render(push) {
   Bnet.header();
   $('#sub').textContent = `HISCORES · FOREVER ${state.region.toUpperCase()}`;
   $('#region').value = state.region;
+  rsSelect(); if (!RSINFO[state.region]) loadRsInfo(state.region).then(rsSelect);
   document.title = state.view === 'home' ? t('title') : `${t(TITLES[state.view])} · Dropamine`;
   animate($('#' + state.view));
   // dons : seulement sur les pages de l'addon, jamais à côté des données Blizzard (classements, fiches, guildes)
@@ -3152,7 +3237,8 @@ tabs.forEach(b => b.addEventListener('click', () => go(b.dataset.view === 'char'
 // barre du bas : « Moi » = ma fiche si connecté, sinon la page d'inscription
 $$('.tabbar [data-go]').forEach(b => b.addEventListener('click', () => { const v = b.dataset.go;
   go(v === 'me' ? (Bnet.best() ? { view: 'char', c: Bnet.best() } : { view: 'join' }) : { view: v }); }));
-$('#region').addEventListener('change', e => go({ region: e.target.value, cls: 0, g: '' }));
+$('#region').addEventListener('change', e => { go({ region: e.target.value, cls: 0, g: '' }); loadRsInfo(state.region).then(rsSelect); });
+$('#rs').addEventListener('change', e => { const rs = +e.target.value; try { localStorage.setItem('rs', rs); } catch { /* rien */ } go({ rs, cls: 0, gpg: 1, pg: 1 }); });
 $('#lang').addEventListener('change', e => setLang(e.target.value));
 document.addEventListener('click', e => {
   if (e.button || e.ctrlKey || e.metaKey || e.shiftKey) return;
@@ -3163,7 +3249,7 @@ document.addEventListener('click', e => {
   if (d.viewLink) go({ view: d.viewLink });
   else if (d.skill) go({ skill: d.skill });
   else if (d.cls !== undefined) go({ cls: +d.cls });
-  else if (d.rs !== undefined) go({ rs: +d.rs, cls: 0 });
+  else if (d.rs !== undefined && +d.rs) { try { localStorage.setItem('rs', +d.rs); } catch { /* rien */ } go({ rs: +d.rs, cls: 0, gpg: 1, pg: 1 }); }
   else if (d.c) go({ view: 'char', c: d.c });
   else if (d.g !== undefined) go({ view: 'guild', g: d.g });
 });
@@ -3177,10 +3263,11 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
   const withLookup = () => { const n = fullName(input.value), f = n && fold(n); hits = hits.filter(h => !h.lookup);
     if (f && !hits.some(h => fold(`${h.name} ${h.surname}`) === f)) hits = [...hits.slice(0, 7), { lookup: n }]; };
   const fold = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const rsOf = p => p.rs || p.rulesetId || 0;
   const draw = () => {
     box.innerHTML = hits.length ? hits.map((p, i) => p.lookup
       ? `<a href="#" class="lookup${i === hl ? ' hl' : ''}" data-lookup="1">${look === 'wait' ? `<i class="spin" aria-hidden="true"></i>${t('lookupWait')}` : `🔎 ${t('lookupBtn', { q: esc(p.lookup) })}`}${look === 'none' || look === 'limit' ? `<small>${t(look === 'none' ? 'lookupNone' : 'lookupLimit')}</small>` : ''}</a>`
-      : `<a href="?p=char&c=${esc(pkey(p))}" class="${i === hl ? 'hl' : ''}" data-key="${esc(pkey(p))}">${full(p)}<small>${esc((p.region || 'eu').toUpperCase())} · ${who(p)}</small></a>`).join('')
+      : `<a href="?p=char&c=${esc(pkey(p))}" class="${i === hl ? 'hl' : ''}" data-key="${esc(pkey(p))}">${full(p)}<small>${esc((p.region || 'eu').toUpperCase())} · ${who(p)}${rsOf(p) && state.rs && rsOf(p) !== state.rs ? ` <span class="rs-b">${esc(rsLabel(rsOf(p)))}</span>` : ''}</small></a>`).join('')
       : `<div class="none">${t('noSearch')}</div>`;
     box.classList.toggle('on', input.value.trim().length > 0);
   };
@@ -3196,21 +3283,19 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
     }
     input.value = ''; box.classList.remove('on'); input.blur(); go({ view: 'char', c: pkey(p), region: p.region || 'eu' });
   };
-  input.addEventListener('focus', () => { if (DATA.partial) loadFull().then(() => { if (input.value.trim()) input.dispatchEvent(new Event('input')); }); });
-  let srvT = 0, srvQ = '';
+  let srvT = 0, srvQ = '', srvAbort = null;
   input.addEventListener('input', () => {
-    if (DATA.partial) loadFull().then(() => { if (!DATA.partial) input.dispatchEvent(new Event('input')); });
     const q = fold(input.value.trim()); hl = 0; look = '';
-    hits = q ? DATA.players.filter(p => fold(`${p.name} ${p.surname} ${p.slug}`).includes(q)).slice(0, 8) : [];
+    hits = q ? DATA.players.filter(p => fold(`${p.name} ${p.surname} ${p.slug}`).includes(q)).sort((a, b) => (rsOf(b) === state.rs) - (rsOf(a) === state.rs)).slice(0, 8) : [];
     withLookup(); draw();
-    clearTimeout(srvT);
-    if (q.length >= 2 && hits.length < 8) srvT = setTimeout(() => {
-      srvQ = q; hit({ p: 'search', q });
-      fetch(`${API}/hs/search?q=${encodeURIComponent(q)}`).then(r => r.ok ? r.json() : null).catch(() => null).then(j => {
+    clearTimeout(srvT); srvAbort?.abort();
+    if (q.length >= 2) srvT = setTimeout(() => {
+      srvQ = q; hit({ p: 'search', q }); srvAbort = new AbortController();
+      fetch(`${API}/hs/search?q=${encodeURIComponent(q)}&r=${state.region}${state.rs ? '&rs=' + state.rs : ''}`, { signal: srvAbort.signal }).then(r => r.ok ? r.json() : null).catch(() => null).then(j => {
         if (srvQ !== fold(input.value.trim()) || !j?.results) return;
         const seen = new Set(hits.map(pkey));
         const more = j.results.filter(r => !seen.has(r.key)).map(r => ({ ...r, guild: r.guild ? { name: r.guild } : null, _srv: true }));
-        hits = [...hits.filter(h => !h.lookup), ...more].slice(0, 8); withLookup(); draw();
+        hits = [...hits.filter(h => !h.lookup), ...more].sort((a, b) => (rsOf(b) === state.rs) - (rsOf(a) === state.rs)).slice(0, 8); withLookup(); draw();
       });
     }, 250);
   });
@@ -3345,7 +3430,7 @@ Promise.all([
   Bnet.init(),
   loadLang(LANG),
 ]).then(() => { Ribbon.load(false); return document.fonts.ready; })
-  .then(() => { if (Draft.resume()) writeUrl(false); render(false); if (DATA.partial && Bnet.logged?.()) loadFull().then(() => { if (state.view === 'home') render(false); }); freshenNews(); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });
+  .then(() => { if (Draft.resume()) writeUrl(false); render(false); if (Bnet.logged?.()) loadMeDash().then(() => { if (state.view === 'home') render(false); }); freshenNews(); Ribbon.swell(.7); const hs = BOOT_HSIMG; const hp = hs && DATA.players.find(x => pkey(x) === hs); if (hp) HsImage.open(hp); });
 
 /* ---------- Application installable (PWA) ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

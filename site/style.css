@@ -1635,3 +1635,13 @@ html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
 .dsteps img{flex:none}
 @media (max-width:640px){.sk-row{grid-template-columns:28px minmax(0,1fr) 48px;gap:10px;padding:11px 6px}.sk-c{width:28px;height:28px}}
 @media (prefers-reduced-motion:reduce){.sk,.ci img,.dsteps img,img.ava,img.sic,.wk-skill img{animation:none!important}.skel{animation:none}}
+
+/* type de royaume (JcJ, Normal…) : choix global à côté de la région ; sur téléphone, les trois sélecteurs se serrent */
+.rs-sel{max-width:190px;text-overflow:ellipsis}
+@media (max-width:720px){
+  .nav .tools .region{padding-left:9px;padding-right:22px;background-position:right 8px center;font-size:12.5px;letter-spacing:.04em}
+  .nav .tools .lang-sel{min-width:0}
+  .nav .tools .rs-sel{max-width:96px}
+}
+@media (max-width:640px){.glist2 .g-rs{display:none}}
+.suggest .rs-b{display:inline-block;margin-left:4px;padding:0 6px;border:1px solid var(--rim-lo);border-radius:999px;font-size:11px;font-style:normal;color:var(--muted)}
