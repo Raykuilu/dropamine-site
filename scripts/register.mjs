@@ -71,14 +71,14 @@ async function main() {
       if (!reg.optout.includes(e.key)) reg.optout.push(e.key);
       await rm(join(ROOT, 'data/history', e.region, `${e.slug}.json`), { force: true });
       reply.push(`**${e.key}** ne sera plus affiché sur le site (ni inscrit, ni en aperçu de guilde). / **${e.key}** will no longer be shown on the site (neither registered nor as a guild preview).`); status = 'ok';
-    } else if (reg.owners[e.key] && reg.owners[e.key] !== author) {
+    } else if ((reg.owners[e.key] && reg.owners[e.key] !== author) || reg.ownersEnc?.[e.key]) {
       // seul le compte qui a inscrit le personnage peut le retirer automatiquement
       status = 'review';
       reply.push("Ce personnage a été inscrit par un autre compte GitHub : le mainteneur va vérifier la demande à la main.",
         '', 'This character was registered by another GitHub account: the maintainer will review the request.');
     } else {
       reg.characters.splice(idx, 1);
-      delete reg.owners[e.key];
+      delete reg.owners[e.key]; if (reg.ownersEnc) delete reg.ownersEnc[e.key];
       await rm(join(ROOT, 'data/history', e.region, `${e.slug}.json`), { force: true });
       const upFile = join(ROOT, 'data/uploads.json');
       if (existsSync(upFile)) { const up = JSON.parse(await readFile(upFile, 'utf8')); delete up[e.key]; await writeFile(upFile, JSON.stringify(up, null, 2) + '\n'); }

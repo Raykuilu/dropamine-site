@@ -20,9 +20,9 @@ import { createServer } from 'node:http';
 import { gzipSync } from 'node:zlib';
 import { Worker } from 'node:worker_threads';
 import { createAnalytics } from './analytics.mjs';
-import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHmac, createHash, timingSafeEqual } from 'node:crypto';
 import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload,
-  applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt, parseScoutLine, applyScout, applySettings, applyGuildFollow, queueDue } from './lib.mjs';
+  sealSecret, openSecret, openRegistry, sealRegistry, applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt, parseScoutLine, applyScout, applySettings, applyGuildFollow, queueDue } from './lib.mjs';
 import { readFileSync, existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { vapidKeys, sendPush, validSub, addSub, removeSub, runEvents, dueReminders } from './push.mjs';
@@ -117,13 +117,25 @@ async function readFile(path, fallback) {
   if (res.status === 404 && fallback !== undefined) return { data: fallback, sha: undefined };
   if (!res.ok) throw new Error(`lecture de ${path} (${res.status})`);
   const j = await res.json();
-  return { data: JSON.parse(Buffer.from(j.content, 'base64').toString('utf8')), sha: j.sha };
+  return { data: openStored(path, JSON.parse(Buffer.from(j.content, 'base64').toString('utf8'))), sha: j.sha };
+}
+// données sensibles gardées dans le dépôt public : chiffrées avec une clé tirée du secret du serveur (jamais dans le dépôt)
+const DATA_KEY = createHash('sha256').update('dropamine-data:' + CFG.sessionSecret).digest();
+function openStored(path, data) {
+  if (path === 'data/registry.json') return openRegistry(DATA_KEY, data);
+  if (path === 'data/runs.json' && data?.enc) { const t = openSecret(DATA_KEY, data.enc); return t ? JSON.parse(t) : { runs: [] }; }
+  return data;
+}
+function sealStored(path, data) {
+  if (path === 'data/registry.json') return sealRegistry(DATA_KEY, data);
+  if (path === 'data/runs.json') return { _comment: 'Sauvegarde chiffrée des sorties : seul api.dropamine.app peut la lire.', enc: sealSecret(DATA_KEY, JSON.stringify(data)) };
+  return data;
 }
 const readRegistry = async () => { const { data, sha } = await readFile('data/registry.json'); return { registry: data, sha }; };
 async function writeFile(path, data, sha, message) {
   const res = await gh(`/contents/${path}`, { method: 'PUT', body: JSON.stringify({
     message, sha, branch: 'main',
-    content: Buffer.from(JSON.stringify(data, null, 2) + '\n').toString('base64'),
+    content: Buffer.from(JSON.stringify(sealStored(path, data), null, 2) + '\n').toString('base64'),
     committer: { name: 'dropamine-api', email: '41898282+github-actions[bot]@users.noreply.github.com' },
   }) });
   // 409 / 422 : quelqu'un a écrit entre-temps (ou la branche n'est pas encore à jour juste après un commit) ;
@@ -163,6 +175,15 @@ async function autoRun() {
   } catch (err) { console.warn('vidage de la file :', err.message); }
 }
 setInterval(autoRun, 10 * 60e3).unref();
+setTimeout(async () => {
+  try {
+    const raw = await gh('/contents/data/registry.json?ref=main', { headers: { Accept: 'application/vnd.github.raw+json' } }).then(r => r.ok ? r.json() : null);
+    if (raw && Object.values(raw.owners ?? {}).some(v => String(v).startsWith('bnet:')))
+      await updateRegistry(r => ({ registry: r, changed: true }), 'Hiscores: encrypt account links');
+    const runs = await gh('/contents/data/runs.json?ref=main', { headers: { Accept: 'application/vnd.github.raw+json' } }).then(r => r.ok ? r.json() : null);
+    if (runs && !runs.enc) { await runsLoad(); await updateFile('data/runs.json', { runs: [] }, () => ({ registry: RUNS, changed: true }), 'Runs: encrypted backup'); }
+  } catch (err) { console.warn('chiffrement du registre :', err.message); }
+}, 20e3).unref();
 // lecture → modification → écriture, recommencée si quelqu'un a écrit entre-temps
 async function updateFile(path, fallback, fn, message) {
   for (let attempt = 0; attempt < 5; attempt++) {

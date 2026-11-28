@@ -209,3 +209,21 @@ test('queueDue : en mode relevé serveur, publication chaque heure même file vi
   assert.equal(queueDue({ players: {}, runs: [{ mode: 'publish', kept: 0, fresh: 50000 }] }, { maxPreviews: 10 }, { at: now - AUTO_RUN_GAP, done: true }, now), true);
   assert.equal(queueDue({ players: {}, runs: [{ mode: 'publish' }] }, {}, { at: now - 60e3, done: true }, now), false);
 });
+
+import { sealSecret, openSecret, openRegistry, sealRegistry } from './lib.mjs';
+test('chiffrement : registre public sans lien visible entre personnages d’un même compte', () => {
+  const key = Buffer.alloc(32, 7), other = Buffer.alloc(32, 8);
+  const a = sealSecret(key, 'bnet:abc'), b = sealSecret(key, 'bnet:abc');
+  assert.notEqual(a, b, 'même valeur, textes différents');
+  assert.equal(openSecret(key, a), 'bnet:abc'); assert.equal(openSecret(other, a), null, 'mauvaise clé'); assert.equal(openSecret(key, 'v1:abimé'), null);
+  const reg = { characters: ['eu/a-b', 'eu/c-d', 'eu/e-f'], owners: { 'eu/a-b': 'bnet:abc', 'eu/c-d': 'bnet:abc', 'eu/e-f': 'octocat' } };
+  const pub = sealRegistry(key, reg);
+  assert.deepEqual(pub.owners, { 'eu/e-f': 'octocat' }, 'seul l’auteur GitHub (public) reste en clair');
+  assert.ok(!JSON.stringify(pub).includes('bnet:'), 'aucune empreinte en clair');
+  assert.notEqual(pub.ownersEnc['eu/a-b'], pub.ownersEnc['eu/c-d'], 'pas de lien visible');
+  const back = openRegistry(key, pub);
+  assert.deepEqual(back.owners, reg.owners);
+  assert.equal(sealRegistry(key, back).ownersEnc['eu/a-b'], pub.ownersEnc['eu/a-b'], 'réécrit sans changement : même texte');
+  const { _enc, ...r2 } = back; delete r2.owners['eu/c-d'];
+  assert.deepEqual(Object.keys(sealRegistry(key, { ...r2, _enc }).ownersEnc), ['eu/a-b'], 'retrait : son entrée chiffrée disparaît');
+});

@@ -1,4 +1,38 @@
 // api.dropamine.app — fonctions pures (testées sans réseau).
+import { createCipheriv, createDecipheriv, randomBytes as rnd } from 'node:crypto';
+
+// Chiffrement (AES-256-GCM) des données sensibles gardées dans le dépôt public : seul le serveur a la clé.
+// Un aléa neuf à chaque chiffrement : deux fois la même valeur ne donnent jamais le même texte (aucun lien visible).
+export function sealSecret(key, text) {
+  const iv = rnd(12), c = createCipheriv('aes-256-gcm', key, iv);
+  const ct = Buffer.concat([c.update(String(text), 'utf8'), c.final()]);
+  return 'v1:' + Buffer.concat([iv, c.getAuthTag(), ct]).toString('base64url');
+}
+export function openSecret(key, sealed) {
+  try {
+    const b = Buffer.from(String(sealed).slice(3), 'base64url'), d = createDecipheriv('aes-256-gcm', key, b.subarray(0, 12));
+    d.setAuthTag(b.subarray(12, 28));
+    return Buffer.concat([d.update(b.subarray(28)), d.final()]).toString('utf8');
+  } catch { return null; }
+}
+// registre public : les comptes Battle.net (empreintes « bnet: ») sont chiffrés un par un dans ownersEnc ;
+// les auteurs GitHub (inscription par ticket, déjà publics sur le ticket) restent dans owners
+export function openRegistry(key, data) {
+  if (!data) return data;
+  const owners = { ...(data.owners ?? {}) };
+  for (const [k, v] of Object.entries(data.ownersEnc ?? {})) { const o = openSecret(key, v); if (o) owners[k] = o; }
+  const { ownersEnc, ...rest } = data;
+  return { ...rest, owners, _enc: ownersEnc ?? {} };
+}
+export function sealRegistry(key, data) {
+  if (!data) return data;
+  const { _enc = {}, owners = {}, ownersEnc: _, ...rest } = data, plain = {}, enc = {};
+  for (const [k, v] of Object.entries(owners)) {
+    if (String(v).startsWith('bnet:')) enc[k] = _enc[k] && openSecret(key, _enc[k]) === v ? _enc[k] : sealSecret(key, v);   // inchangé : même texte (pas de commit inutile)
+    else plain[k] = v;
+  }
+  return { ...rest, owners: plain, ownersEnc: enc };
+}
 
 // Lien d'un personnage dans la réponse /profile/user/wow → identifiant « région/slug »
 //   Forever (sans royaume) : …/profile/wow/character/ray-kuilu?namespace=profile-forever-eu
