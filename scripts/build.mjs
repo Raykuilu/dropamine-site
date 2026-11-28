@@ -14,6 +14,7 @@ import { readFile, writeFile, mkdir, rename, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gunzipSync } from 'node:zlib';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const REGIONS = ['eu', 'us', 'tw'];
@@ -417,7 +418,9 @@ async function main() {
   if (!Array.isArray(prevList)) prevList = (await readJson(join(ROOT, 'site/data/hiscores.json'), { players: [] })).players ?? [];
   // relevé du serveur (api.dropamine.app, server/crawl.mjs) : quand il tourne, c'est lui qui lit les aperçus chez Blizzard,
   // la mise à jour ne relit plus que les inscrits (la limite Blizzard de 36 000 appels / h est partagée)
-  const srv = await fetch('https://api.dropamine.app/hs/all', { signal: AbortSignal.timeout(300e3) }).then(r => r.ok ? r.json() : null).catch(() => null);
+  // export déjà compressé (/hs/all.gz : ≈ 200 octets par personnage au lieu de 1,3 Ko)
+  const srv = await fetch('https://api.dropamine.app/hs/all.gz', { signal: AbortSignal.timeout(300e3) })
+    .then(async r => r.ok ? JSON.parse(gunzipSync(Buffer.from(await r.arrayBuffer())).toString('utf8')) : null).catch(() => null);
   const mode = serverMode(srv);
   console.log(`relevé serveur : ${mode}${srv?.status ? ` (${srv.status.read} lus, ${srv.status.active} actifs, ${srv.status.waiting} à découvrir)` : ''}`);
   // file d'attente (mode « off ») : guildes suivies et Scout y entrent ; puis les guildes des joueurs connus (un seul niveau)

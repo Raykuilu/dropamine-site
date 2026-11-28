@@ -315,14 +315,14 @@ async function crawlRoute(req, res, url) {
     if (!activeCache || Date.now() - activeCache.at > 10 * 60e3) activeCache = { at: Date.now(), body: { at: new Date().toISOString(), status: crawl.status(), players: crawl.active() } };
     sendPublic(req, res, activeCache.body, 300);
   }
-  else if (p === '/hs/all') {
+  else if (p === '/hs/all' || p === '/hs/all.gz') {
     if (!allCache || Date.now() - allCache.at > 10 * 60e3) {
       const text = JSON.stringify({ at: new Date().toISOString(), status: crawl.status(), players: crawl.all() });
-      allCache = { at: Date.now(), text, gz: gzipSync(text) };
+      allCache = { at: Date.now(), text, gz: gzipSync(text, { level: 9 }) };
     }
-    const h = { ...cors, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=300' };
-    if (/gzip/.test(req.headers['accept-encoding'] || '')) { res.writeHead(200, { ...h, 'Content-Encoding': 'gzip' }); res.end(allCache.gz); }
-    else { res.writeHead(200, h); res.end(allCache.text); }
+    // /hs/all.gz : le fichier compressé tel quel (le proxy d'Infomaniak retire la compression HTTP « Content-Encoding »)
+    if (p === '/hs/all.gz') { res.writeHead(200, { ...cors, 'Content-Type': 'application/gzip', 'Content-Length': allCache.gz.length, 'Cache-Control': 'public, max-age=300' }); res.end(allCache.gz); }
+    else { res.writeHead(200, { ...cors, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=300' }); res.end(allCache.text); }
   }
   else if (p === '/hs/search') sendPublic(req, res, { results: crawl.search(String(url.searchParams.get('q') || '').slice(0, 40), 20) }, 60);
   else if (p === '/hs/char') {
