@@ -2149,6 +2149,38 @@ function gain7(p) {
 }
 const GUILD_KNOWN = new Map();   // membres connus du relevé serveur, par guilde (« région/slug »)
 const foldTxt = s => String(s ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+// Public : la liste des guildes d'avant (critère total, moyenne, 60, VH, métiers, membres). Le classement par compétence
+// ci-dessous reste un aperçu réservé à l'administrateur jusqu'à validation (preview()).
+// Liste des guildes : une page demandée au serveur (/hs/guilds), par région et type de royaume ; le rang reste le rang
+// complet même quand on cherche un nom ou une faction. Type d'une guilde = type de la majorité de ses membres.
+const GM_KEYS = ['total', 'avg', 'l60', 'hk', 'prof', 'members'];
+const guildsPathOld = () => `/hs/guilds?r=${state.region}${state.rs ? '&rs=' + state.rs : ''}&m=${GM_KEYS.includes(state.gm) ? state.gm : 'total'}${state.glq ? '&q=' + encodeURIComponent(state.glq) : ''}${state.gfac ? '&fac=' + state.gfac : ''}&pg=${state.gpg || 1}&per=${RANK_PER}`;
+function renderGuildListOld() {
+  const box = $('#guild-panel'), path = guildsPathOld(), j = Hs.peek(path), gm = GM_KEYS.includes(state.gm) ? state.gm : 'total', gf = state.gfac || '';
+  if (!j) {
+    if (!box.querySelector('.skel') && !box.querySelector('[data-glq]')) box.innerHTML = loadingBox();
+    Hs.get(path).then(d => { rsFrom(d); if (state.view === 'guild' && !state.g) { if (!Hs.peek(guildsPathOld())) Hs.seed(guildsPathOld(), d); renderGuildList(); animate($('#guild')); } })
+      .catch(() => { if (state.view === 'guild' && !state.g) box.innerHTML = failed(); });
+    return;
+  }
+  state.gpg = j.page;
+  const maxV = Math.max(1, ...j.rows.map(x => x.v || 0)), rs = j.rs || state.rs;
+  const gmChips = `<div class="chips gm" role="group">${GM_KEYS.map(k => `<span class="chip${k === gm ? ' on' : ''}" data-gm="${k}" role="button" tabindex="0">${t('gm.' + k)}</span>`).join('')}</div>`;
+  const facChips = `<div class="chips gfacs" role="group">${['', 'ALLIANCE', 'HORDE'].map(f => `<span class="chip${gf === f ? ' on' : ''}" data-gfac="${f}" role="button" tabindex="0">${f ? `<i class="cdot" style="background:${f === 'HORDE' ? '#c0392b' : '#4a7bd0'}"></i>${f === 'HORDE' ? 'Horde' : 'Alliance'}` : t('allFactions')}</span>`).join('')}</div>`;
+  const rows = j.rows.map(x => { const f = x.faction;
+    return `<div class="row${x.r <= 3 ? ' top' : ''}" data-g="${esc(x.slug)}" role="row"><span class="rk">${x.r}</span><span class="nm"><span><b>${esc(x.name)}</b><small>${f ? `<span class="gfac ${f === 'HORDE' ? 'h' : 'a'}">${f === 'HORDE' ? 'Horde' : 'Alliance'}</span> ` : ''}<span class="g-rs">${esc(rsLabel(x.rs || rs))} · </span>${t('gmSub', { n: x.l60 || 0 })}</small></span></span><span class="lv">${fmt(x.n)}</span><span class="mbar g"><i style="--w:${(100 * (x.v || 0) / maxV).toFixed(1)}%"></i></span><span class="tot">${fmt(x.v)}</span></div>`; }).join('');
+  // la recherche garde le focus et la position du curseur pendant que la liste se redessine
+  const had = document.activeElement?.matches?.('[data-glq]'), pos = had ? document.activeElement.selectionStart : 0;
+  box.innerHTML = `<div class="head"><h2>${t('guildsT')}</h2><span class="note">${t('guildsNote', { r: state.region.toUpperCase() })} · ${esc(rsLabel(rs))} · ${t('gCount', { n: fmt(j.total) })}</span></div>
+    <div class="gtools"><label class="gq"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" data-glq value="${esc(state.glq || '')}" placeholder="${esc(t('glq'))}" aria-label="${esc(t('glq'))}"></label>${facChips}</div>
+    ${gmChips}
+    <div class="rows rk-lv glist2" role="table">${j.rows.length ? `<div class="row th" role="row"><span>${t('rank')}</span><span>${t('guildH')}</span><span class="lv">${t('members')}</span><span class="c3"></span><span style="text-align:right">${t('gm.' + gm)}</span></div>` + rows
+      : `<div class="empty"><b>${t('noGuildT')}</b>${t(state.glq || gf ? 'gNoMatch' : 'noGuild')}</div>`}</div>${pagerNav('guild', j.page, j.pages, j.total)}`;
+  if (had) { const i = box.querySelector('[data-glq]'); i.focus(); i.setSelectionRange(pos, pos); }
+  if (j.page < j.pages && !navigator.connection?.saveData) { const nx = guildsPathOld().replace(/&pg=\d+/, '&pg=' + (j.page + 1)); Hs.get(nx).catch(() => {}); }
+}
+document.addEventListener('click', e => { const c = e.target.closest('[data-gm]'); if (c) { state.gm = c.dataset.gm; state.gpg = 1; renderGuild(); } });
+function renderGuildList() { return preview() ? renderGuildListNew() : renderGuildListOld(); }
 // Classement des guildes, comme celui des personnages : par région, type de royaume, compétence, classe et faction.
 // Score d'une guilde = moyenne de ses 10 meilleurs membres lus dans la compétence (une petite guilde d'élite peut battre
 // une grosse) ; il faut 5 membres classés (3 avec un filtre de classe). Rang du classement complet, même en cherchant un nom.
@@ -2157,7 +2189,7 @@ const guildsPath = (pg = state.gpg || 1) => `/hs/guilds?r=${state.region}${state
   + `${state.gdg ? '&sort=g1' : state.gdw ? '&sort=g7' : ''}&pg=${pg}&per=${RANK_PER}`;
 const gVal = v => v == null ? '–' : (v % 1 ? v.toLocaleString(locale(), { maximumFractionDigits: Math.abs(v) < 10 ? 2 : 1 }) : fmt(v));
 const gSig = () => [state.region, skillById(state.gsk).id, state.rs, state.gcls, state.gfac, state.glq, state.gdg, state.gdw].join('|');
-function renderGuildList() {
+function renderGuildListNew() {
   const box = $('#guild-panel'), sk = skillById(state.gsk), gf = state.gfac || '', sig = gSig();
   if (state.gKey && state.gKey !== sig) state.gpg = 1;   // un filtre qui change ramène à la page 1
   state.gKey = sig;
@@ -2185,7 +2217,7 @@ function renderGuildList() {
   // la recherche garde le focus et la position du curseur pendant que la liste se redessine
   const had = document.activeElement?.matches?.('[data-glq]'), pos = had ? document.activeElement.selectionStart : 0;
   box.innerHTML = `
-    <div class="head"><h2>${t('guildsT')} · ${esc(sk.label())}</h2><span class="note">${t('gAvgNote', { top: j.top, min: j.min })} · ${t('gCount', { n: fmt(j.total) })} · ${esc(rsLabel(rs))} · Forever ${state.region.toUpperCase()}</span></div>
+    <div class="head"><h2>${t('guildsT')} · ${esc(sk.label())} ${admBadge()}</h2><span class="note">${t('gAvgNote', { top: j.top, min: j.min })} · ${t('gCount', { n: fmt(j.total) })} · ${esc(rsLabel(rs))} · Forever ${state.region.toUpperCase()}</span></div>
     ${fbar}
     ${gains ? `<span class="dgon" ${state.gdw ? 'data-gdw' : 'data-gdg'} role="button" tabindex="0" title="${t(state.gdw ? 'dwTip' : 'dgTip')}">▲ ${t(state.gdw ? 'dwSort' : 'dgSort')} <i aria-hidden="true">✕</i></span>` : ''}
     <div class="chips rk-rs" role="group">${rsChips}</div>
@@ -3429,7 +3461,7 @@ function writeUrl(push) {
   if (state.rs && ['rank', 'guild', 'stats', 'runs'].includes(state.view) && !(state.view === 'guild' && state.g)) q.set('rs', state.rs);
   if (state.view === 'char' && state.c) q.set('c', state.c);
   if (state.view === 'guild' && state.g) q.set('g', state.g);
-  if (state.view === 'guild' && !state.g) { if (state.gsk && state.gsk !== 'total') q.set('gk', state.gsk); if (state.gcls) q.set('gc', state.gcls); if (state.gdg || state.gdw) q.set('gd', state.gdg ? '1' : '7'); if (state.gfac) q.set('gf', state.gfac); if (state.gpg > 1) q.set('gp', state.gpg); }
+  if (state.view === 'guild' && !state.g && preview()) { if (state.gsk && state.gsk !== 'total') q.set('gk', state.gsk); if (state.gcls) q.set('gc', state.gcls); if (state.gdg || state.gdw) q.set('gd', state.gdg ? '1' : '7'); if (state.gfac) q.set('gf', state.gfac); if (state.gpg > 1) q.set('gp', state.gpg); }
   if (state.view === 'runs') { [['q', 'hq'], ['lv', 'hl'], ['ty', 'ht'], ['d', 'hd'], ['role', 'hr'], ['when', 'hw']].forEach(([k, v]) => { if (state[v]) q.set(k, state[v]); }); if (state.pf && state.pf !== 'all') q.set('f', state.pf); if (state.rtab === 'ideas' || state.rtab === 'explore') q.set('tab', state.rtab); if (state.runFocus) q.set('run', state.runFocus); }
   history[push ? 'pushState' : 'replaceState'](null, '', q.toString() ? '?' + q : location.pathname);
 }
