@@ -1045,7 +1045,10 @@ function renderStats() {
     return;
   }
   if (d instanceof Promise) { box.innerHTML = loadingBox(); return; }
-  if (!d || !d.n) { box.innerHTML = `<div class="empty">${t('stNone')}</div>`; return; }
+  if (!d || !d.n) {   // grands chiffres indisponibles (serveur lent) : les blocs à part (mur, semaine, ta place…) s'affichent quand même
+    const rs = state.rs;
+    box.innerHTML = `<div class="empty">${t('stNone')}</div>${rs ? stPlace(rs) + stWall(rs) + stWeekSkill(rs) + stProgress(rs) + stCompare(rs) : ''}`; return;
+  }
   const pct = x => x == null ? '—' : `${(x * 100).toLocaleString(locale(), { maximumFractionDigits: 1 })} %`;
   const num = x => x == null ? '—' : x.toLocaleString(locale(), { maximumFractionDigits: 1 });
   const bar = (v, max, col) => `<span class="st-bar"><i style="width:${max ? Math.max(1, v / max * 100) : 0}%;background:${col || 'var(--gold)'}"></i></span>`;
