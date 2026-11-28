@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CRAWL, nextVisit, rosterMembers, crawlPlayer, moved, histPoint, discoverOrder, crawlEta, validCharKey } from './crawl-lib.mjs';
-import { openCrawlDb, addChars, addGuild, saveChar, goneChar, purgeOld, pickWork, dueGuild, activePlayers, charByKey, searchChars, rankPage, crawlCounts } from './crawl.mjs';
+import { knownCounts, openCrawlDb, addChars, addGuild, saveChar, goneChar, purgeOld, pickWork, dueGuild, activePlayers, charByKey, searchChars, rankPage, crawlCounts } from './crawl.mjs';
 
 const api = (o = {}) => ({
   profile: { name: 'Ray', surname: 'Kuilu', level: 37, character_class: { id: 11, name: 'Druide' }, race: { id: 4, name: 'Elfe de la nuit' }, faction: { type: 'ALLIANCE' },
@@ -15,7 +15,9 @@ test('relevé : règles pures', () => {
   assert.equal(nextVisit(100, 50), 100 + CRAWL.REFRESH_IDLE);
   assert.equal(nextVisit(100, null), 100 + CRAWL.REFRESH_IDLE);
   assert.ok(CRAWL.REFRESH_IDLE < CRAWL.KEEP_DAYS, 'relu bien avant 30 jours');
-  assert.deepEqual(rosterMembers('eu', { members: [{ character: { slug: 'A-B', level: 12 } }, { character: { slug: 'c-d', level: 9 } }, { character: {} }] }), [{ key: 'eu/a-b', level: 12 }]);
+  assert.deepEqual(rosterMembers('eu', { guild: { name: 'Krijgers', faction: { type: 'HORDE' } }, members: [
+    { character: { slug: 'A-B', level: 12, name: 'A', surname: 'B', playable_class: { id: 8 }, playable_race: { id: 8 } } }, { character: { slug: 'c-d', level: 9 } }, { character: {} }] }),
+    [{ key: 'eu/a-b', level: 12, name: 'A', surname: 'B', cls: 8, race: 8, faction: 'HORDE', gname: 'Krijgers' }], 'la liste de guilde donne classe, race et faction');
   assert.ok(validCharKey('eu/ray-kuilu') && !validCharKey('eu/ray') && !validCharKey('xx/a-b'));
   const p = crawlPlayer('eu', 'Ray-Kuilu', api());
   assert.equal(p.key, 'eu/ray-kuilu'); assert.equal(p.level, 37); assert.equal(p.guild.slug, 'everybody-knows'); assert.equal(p.preview, true);
@@ -55,8 +57,12 @@ test('relevé : base, découverte, actifs, introuvables, 30 jours, recherche, cl
   purgeOld(db, 102 + CRAWL.KEEP_DAYS + 1);
   assert.equal(charByKey(db, 'eu/x-y'), null, 'plus de 30 jours sans relecture : effacé');
   addGuild(db, 'eu', 'Les-Veilleurs', 'Les Veilleurs', 'follow');
+  addChars(db, [{ key: 'eu/frosty-wizard', level: 60, name: 'Frosty', surname: 'Wizard', cls: 8, race: 8, faction: 'HORDE', gname: 'Krijgers' }], 'guild', 140);
+  assert.deepEqual(searchChars(db, 'frosty').map(r => [r.key, r.read, r.classId]), [['eu/frosty-wizard', false, 8]], 'connu par sa guilde : cherchable');
+  const k = knownCounts(db, 'eu');
+  assert.equal(k.n, 1); assert.equal(k.lvl60, 1); assert.deepEqual(k.factions, { HORDE: 1 }); assert.deepEqual(k.classes, { 8: 1 });
   const c = crawlCounts(db, 140);
-  assert.equal(c.known, 2); assert.equal(c.read, 0); assert.equal(c.guilds, 2);
+  assert.equal(c.known, 3); assert.equal(c.read, 0); assert.equal(c.guilds, 2);
 });
 
 import { lookupSlug } from './crawl-lib.mjs';

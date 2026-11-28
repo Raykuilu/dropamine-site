@@ -35,21 +35,29 @@ export function openCrawlDb(file) {
     CREATE INDEX IF NOT EXISTS guilds_due ON guilds (roster_at);
     CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT);
   `);
+  for (const col of ['name TEXT', 'surname TEXT', 'cls INTEGER', 'race INTEGER', 'faction TEXT', 'gname TEXT']) {
+    try { db.exec(`ALTER TABLE chars ADD COLUMN ${col}`); } catch { /* déjà là */ }
+  }
+  db.exec('CREATE INDEX IF NOT EXISTS chars_known ON chars (region, cls)');
   return db;
 }
 
 // ajoute des personnages à découvrir (une meilleure source fait passer devant)
 export function addChars(db, items, src, today = dayOf()) {
-  const ins = db.prepare(`INSERT INTO chars (key, region, slug, src, prio, level, found, next_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  const ins = db.prepare(`INSERT INTO chars (key, region, slug, src, prio, level, found, next_at, name, surname, cls, race, faction, gname, nf, sf)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET prio = MIN(prio, excluded.prio), src = CASE WHEN excluded.prio < prio THEN excluded.src ELSE src END,
-      level = MAX(level, excluded.level)`);
+      level = MAX(level, excluded.level), name = COALESCE(excluded.name, name), surname = COALESCE(excluded.surname, surname),
+      cls = COALESCE(excluded.cls, cls), race = COALESCE(excluded.race, race), faction = COALESCE(excluded.faction, faction),
+      gname = COALESCE(excluded.gname, gname), nf = COALESCE(nf, excluded.nf), sf = COALESCE(sf, excluded.sf)`);
   let n = 0;
   db.exec('BEGIN');
   try {
     for (const it of items) {
       if (!validCharKey(it.key)) continue;
       const [region, slug] = it.key.split('/');
-      ins.run(it.key, region, slug, src, SRC_PRIO[src] ?? 9, it.level ?? 0, today, today);
+      ins.run(it.key, region, slug, src, SRC_PRIO[src] ?? 9, it.level ?? 0, today, today, it.name ?? null, it.surname ?? null, it.cls ?? null,
+        it.race ?? null, it.faction ?? null, it.gname ?? null, it.name ? fold(it.name) : null, it.surname ? fold(it.surname) : null);
       n++;
     }
     db.exec('COMMIT');
@@ -78,6 +86,8 @@ export function saveChar(db, player, today = dayOf()) {
       gone = 0, fails = 0, guild = excluded.guild, nf = excluded.nf, sf = excluded.sf, total = excluded.total, data = excluded.data`)
     .run(player.key, player.region, player.slug, player.level, today, today, nextVisit(today, active, !prevPt), active, gkey,
       fold(player.name), fold(player.surname), player.total, JSON.stringify(player));
+  db.prepare('UPDATE chars SET name = ?, surname = ?, cls = ?, race = ?, faction = ?, gname = ? WHERE key = ?')
+    .run(player.name ?? null, player.surname ?? null, player.classId ?? null, player.raceId ?? null, player.faction ?? null, player.guild?.name ?? null, player.key);
   if (gkey) addGuild(db, player.region, player.guild.slug, player.guild.name, 'char');
   return { active: active != null && today - active <= CRAWL.ACTIVE_DAYS };
 }
@@ -90,14 +100,14 @@ export function setMedia(db, key, media, today = dayOf()) {
 }
 export const needsMedia = (p, today = dayOf()) => !p.mediaAt || today - p.mediaAt >= 7;
 export function goneChar(db, key, today = dayOf()) {
-  db.prepare('UPDATE chars SET gone = ?, data = NULL, total = NULL, fetched = NULL, next_at = ?, nf = NULL, sf = NULL WHERE key = ?').run(today, today + CRAWL.GONE_RETRY, key);
+  db.prepare('UPDATE chars SET gone = ?, data = NULL, total = NULL, fetched = NULL, next_at = ?, nf = NULL, sf = NULL, name = NULL, surname = NULL, cls = NULL, race = NULL, faction = NULL, gname = NULL WHERE key = ?').run(today, today + CRAWL.GONE_RETRY, key);
   db.prepare('DELETE FROM hist WHERE key = ?').run(key);
 }
 // ménage quotidien : rien de plus vieux que 30 jours
 export function purgeOld(db, today = dayOf()) {
   const cut = today - CRAWL.KEEP_DAYS;
   db.prepare('DELETE FROM hist WHERE d < ?').run(cut);
-  db.prepare('UPDATE chars SET data = NULL, total = NULL, fetched = NULL, nf = NULL, sf = NULL, next_at = ? WHERE fetched IS NOT NULL AND fetched < ?').run(today, cut);
+  db.prepare('UPDATE chars SET data = NULL, total = NULL, fetched = NULL, nf = NULL, sf = NULL, name = NULL, surname = NULL, cls = NULL, race = NULL, faction = NULL, gname = NULL, next_at = ? WHERE fetched IS NOT NULL AND fetched < ?').run(today, cut);
   db.prepare('UPDATE chars SET gone = 0 WHERE gone > 0 AND next_at <= ?').run(today);   // introuvables : retentés après 30 jours
 }
 
@@ -110,7 +120,7 @@ export function pickWork(db, n, skip, today = dayOf()) {
   return out;
 }
 export function dueGuild(db, today = dayOf()) {
-  return db.prepare('SELECT key, region, slug FROM guilds WHERE roster_at IS NULL OR roster_at <= ? ORDER BY roster_at IS NOT NULL, roster_at LIMIT 1').get(today - CRAWL.ROSTER_DAYS) ?? null;
+  return db.prepare('SELECT key, region, slug, src FROM guilds WHERE roster_at IS NULL OR roster_at <= ? ORDER BY roster_at IS NOT NULL, roster_at LIMIT 1').get(today - CRAWL.ROSTER_DAYS) ?? null;
 }
 
 // lectures pour le site
@@ -142,10 +152,25 @@ export function searchChars(db, q, limit = 20) {
   const words = fold(q).trim().split(/\s+/).filter(Boolean);
   if (!words.length || words[0].length < 2) return [];
   const [a, b] = words, hi = s => s + '\u{10FFFF}';
+  const cols = 'key, region, slug, name, surname, level, cls, total, gname, data IS NOT NULL AS isread';
   const rows = b
-    ? db.prepare('SELECT data FROM chars WHERE nf = ? AND sf >= ? AND sf < ? AND data IS NOT NULL ORDER BY total DESC LIMIT ?').all(a, b, hi(b), limit)
-    : db.prepare(`SELECT data FROM chars WHERE data IS NOT NULL AND ((nf >= ? AND nf < ?) OR (sf >= ? AND sf < ?)) ORDER BY total DESC LIMIT ?`).all(a, hi(a), a, hi(a), limit);
-  return rows.map(r => { const p = JSON.parse(r.data); return { key: p.key, region: p.region, slug: p.slug, name: p.name, surname: p.surname, level: p.level, classId: p.classId, total: p.total, guild: p.guild?.name ?? null }; });
+    ? db.prepare(`SELECT ${cols} FROM chars WHERE nf = ? AND sf >= ? AND sf < ? AND gone = 0 ORDER BY isread DESC, total DESC, level DESC LIMIT ?`).all(a, b, hi(b), limit)
+    : db.prepare(`SELECT ${cols} FROM chars WHERE gone = 0 AND ((nf >= ? AND nf < ?) OR (sf >= ? AND sf < ?)) ORDER BY isread DESC, total DESC, level DESC LIMIT ?`).all(a, hi(a), a, hi(a), limit);
+  return rows.map(r => ({ key: r.key, region: r.region, slug: r.slug, name: r.name, surname: r.surname, level: r.level, classId: r.cls, total: r.total, guild: r.gname, read: !!r.isread }));
+}
+export function knownCounts(db, region) {
+  const q = sql => db.prepare(sql).all(region);
+  const base = "FROM chars WHERE region = ? AND gone = 0 AND cls IS NOT NULL";
+  const n = db.prepare(`SELECT COUNT(*) AS n, SUM(level >= 60) AS l60 ${base}`).get(region);
+  return {
+    n: n.n ?? 0, lvl60: n.l60 ?? 0,
+    classes: Object.fromEntries(q(`SELECT cls AS k, COUNT(*) AS n ${base} GROUP BY cls`).map(r => [r.k, r.n])),
+    classes60: Object.fromEntries(q(`SELECT cls AS k, COUNT(*) AS n ${base} AND level >= 60 GROUP BY cls`).map(r => [r.k, r.n])),
+    races: Object.fromEntries(q(`SELECT race AS k, COUNT(*) AS n ${base} AND race IS NOT NULL GROUP BY race`).map(r => [r.k, r.n])),
+    factions: Object.fromEntries(q(`SELECT faction AS k, COUNT(*) AS n ${base} AND faction IS NOT NULL GROUP BY faction`).map(r => [r.k, r.n])),
+    levels: q(`SELECT CASE WHEN level >= 60 THEN 60 ELSE (level / 10) * 10 END AS k, COUNT(*) AS n ${base} GROUP BY k`).map(r => ({ a: r.k, b: r.k === 60 ? 60 : r.k + 9, n: r.n })),
+    guilds: db.prepare("SELECT COUNT(DISTINCT gname) AS n FROM chars WHERE region = ? AND gone = 0 AND gname IS NOT NULL").get(region).n,
+  };
 }
 export function rankPage(db, region, page = 1, per = 50) {
   const n = db.prepare('SELECT COUNT(*) AS n FROM chars WHERE region = ? AND data IS NOT NULL').get(region).n;
@@ -225,7 +250,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
   async function readGuild(g) {
     const roster = await get(g.region, `/data/wow/guild/${encodeURIComponent(g.slug)}/roster`);
     const members = rosterMembers(g.region, roster);
-    addChars(db, members, 'guild');
+    addChars(db, members, g.src === 'follow' ? 'follow' : 'guild');
     db.prepare('UPDATE guilds SET roster_at = ?, members = ? WHERE key = ?').run(dayOf(), roster ? (roster.members ?? []).length : 0, g.key);
   }
   // une tâche à la fois par « ouvrier » ; une liste de guilde toutes les 4 tâches, pour que la boule de neige grossisse
@@ -234,7 +259,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     while (!stopped) {
       if (rate <= 0) { await sleep(10e3); continue; }
       try {
-        const g = turn++ % 4 === 0 ? dueGuild(db) : null;
+        const g = turn++ % 2 === 0 ? dueGuild(db) : null;
         if (g && !inflight.has(g.key)) { inflight.add(g.key); busy++; try { await readGuild(g); } finally { inflight.delete(g.key); busy--; } continue; }
         const [w] = pickWork(db, 1, inflight);
         if (!w) { const g2 = dueGuild(db); if (g2 && !inflight.has(g2.key)) { inflight.add(g2.key); busy++; try { await readGuild(g2); } finally { inflight.delete(g2.key); busy--; } } else await sleep(30e3); continue; }
@@ -291,6 +316,15 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     search: (q, limit) => searchChars(db, q, limit),
     rank: (region, page, per) => rankPage(db, region, page, per),
     add: (items, src) => addChars(db, items, src),
+    async readNow(key) {
+      const known = charByKey(db, key); if (known) return known;
+      const row = db.prepare('SELECT region, slug FROM chars WHERE key = ? AND gone = 0').get(key);
+      if (!row || rate <= 0 || inflight.has(key)) return null;
+      inflight.add(key);
+      try { await readChar({ key, region: row.region, slug: row.slug }); } finally { inflight.delete(key); }
+      return charByKey(db, key);
+    },
+    known: region => knownCounts(db, region),
     // recherche directe : un joueur que le relevé ne connaît pas encore est lu tout de suite chez Blizzard (5 appels)
     async lookup(region, name) {
       const slug = lookupSlug(name); if (!slug || rate <= 0) return null;   // relevé coupé dans l'admin : pas d'appel Blizzard

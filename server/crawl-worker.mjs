@@ -20,7 +20,7 @@ let allCache = null, statsCache = null;
 const API = {
   status: () => crawl.status(),
   search: (q, limit) => crawl.search(q, limit),
-  char: k => crawl.char(k),
+  char: k => crawl.char(k) ?? crawl.readNow(k),
   rank: (r, pg, per) => crawl.rank(r, pg, per),
   lookup: (r, name) => crawl.lookup(r, name),
   // tout ce qui est lu, déjà compressé (mise à jour du site) : refait au plus toutes les 10 min
@@ -35,7 +35,7 @@ const API = {
   stats(r) {
     if (!statsCache || Date.now() - statsCache.at > 30 * 60e3) {
       const all = crawl.all();
-      statsCache = { at: Date.now(), by: Object.fromEntries(REGIONS.map(x => [x, computeStats(all, x)])) };
+      statsCache = { at: Date.now(), by: Object.fromEntries(REGIONS.map(x => [x, { ...computeStats(all, x), known: crawl.known(x) }])) };
     }
     return statsCache.by[r] ?? null;
   },

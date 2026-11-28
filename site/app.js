@@ -76,6 +76,8 @@ const I18N = {
   runsSrc: ['Loot tables: AtlasLoot Forever (GPL-2.0).', 'Tables de butin : AtlasLoot Forever (GPL-2.0).'],
   'tab.news': ["What's new", 'Nouveautés'], 'tab.stats': ['Stats', 'Stats'],
   stTitle: ['Forever in numbers', 'Forever en chiffres'], stNote: ['{n} characters level 10+ read from the public armory · updated {d}', '{n} personnages niveau 10+ relevés dans l’armurerie publique · mis à jour {d}'],
+  stNoteK: ['{n} characters level 10+ known (guild rosters), {r} read in detail from the public armory · updated {d}', '{n} personnages niveau 10+ connus (listes de guildes), dont {r} lus en détail dans l’armurerie publique · mis à jour {d}'],
+  stRead: ['read in detail (PvP, professions, records)', 'lus en détail (JcJ, métiers, records)'],
   stChars: ['characters', 'personnages'], stLvl60: ['level 60', 'niveau 60'], stGuilds: ['guilds', 'guildes'], stHk: ['honorable kills', 'victoires honorables'], stDuels: ['duels fought', 'duels disputés'],
   stClasses: ['Classes', 'Classes'], stClassesSub: ['share, average level, PvP and duels', 'part, niveau moyen, JcJ et duels'],
   stColClass: ['Class', 'Classe'], stColShare: ['Share', 'Part'], stColLvl: ['Avg level', 'Niv. moyen'], stCol60: ['Level 60', 'Niveau 60'], stColHk: ['HK / char.', 'VH / perso'],
@@ -801,22 +803,31 @@ function renderStats() {
   const rsName = id => L2((RULESETS.find(([x]) => x === id) || [])[1]) || '?';
   const tile = (n, l) => `<div class="st-tile"><b>${n}</b><span>${l}</span></div>`;
   const up = new Date(d.at), duels = d.pvp.duelsWon + d.pvp.duelsLost;
+  const K = d.known?.n ? d.known : null;   // tous les connus (listes de guildes) ; sinon seulement les fiches lues
+  const kN = K ? K.n : d.n, kShare = c => K ? (K.classes[c.id] || 0) / K.n : c.share, k60 = c => K ? ((K.classes60[c.id] || 0) / (K.classes[c.id] || 1)) : (c.n ? c.lvl60 / c.n : null);
+  if (K) {   // classes connues mais pas encore lues : ajoutées au tableau
+    for (const id of Object.keys(K.classes).map(Number)) if (!d.classes.some(c => c.id === id)) d.classes.push({ id, n: 0, rulesets: {}, factions: {} });
+    d.classes.sort((x, y) => (K.classes[y.id] || 0) - (K.classes[x.id] || 0));
+  }
   // classes : part, niveau moyen, niveau 60, JcJ, duels
-  const maxShare = Math.max(...d.classes.map(c => c.share || 0));
-  const classRows = d.classes.map(c => `<tr><th>${cls(c.id)}</th><td class="st-w">${bar(c.share, maxShare, CLASS_COL[c.id])}<small>${pct(c.share)} · ${fmt(c.n)}</small></td>
-    <td>${num(c.avgLevel)}</td><td>${pct(c.n ? c.lvl60 / c.n : null)}</td><td>${num(c.hkPer)}</td><td>${num(c.kd)}</td><td title="${esc(t('stDuelTip', { n: 20 }))}">${pct(c.duelRate)}<small> (${fmt(c.duelists)})</small></td></tr>`).join('');
+  const maxShare = Math.max(...d.classes.map(c => kShare(c) || 0));
+  const classRows = d.classes.map(c => `<tr><th>${cls(c.id)}</th><td class="st-w">${bar(kShare(c), maxShare, CLASS_COL[c.id])}<small>${pct(kShare(c))} · ${fmt(K ? K.classes[c.id] || 0 : c.n)}</small></td>
+    <td>${num(c.avgLevel)}</td><td>${pct(k60(c))}</td><td>${num(c.hkPer)}</td><td>${num(c.kd)}</td><td title="${esc(t('stDuelTip', { n: 20 }))}">${pct(c.duelRate)}<small> (${fmt(c.duelists)})</small></td></tr>`).join('');
   // classes par type de royaume (barres empilées)
   const modes = Object.entries(d.rulesets).map(([id, n]) => [+id, n]).sort((a, b) => b[1] - a[1]);
   const byMode = modes.map(([id, n]) => `<div class="st-mode"><h4>${esc(rsName(id))} <small>${fmt(n)}</small></h4><div class="st-stack">${d.classes.filter(c => c.rulesets[id]).sort((a, b) => b.rulesets[id] - a.rulesets[id])
     .map(c => `<i style="flex:${c.rulesets[id]};background:${CLASS_COL[c.id]}" title="${esc(L2(CLASS[c.id]))} : ${pct(c.rulesets[id] / n)}"></i>`).join('')}</div></div>`).join('');
   // races, factions, niveaux
-  const maxRace = Math.max(...d.races.map(x => x.n));
-  const races = d.races.filter(x => RACE[x.id]).map(x => `<li><span class="st-cap">${esc(L2(RACE[x.id]) || '?')}</span>${bar(x.n, maxRace, FACTION_COL[x.faction])}<small>${pct(x.share)}</small></li>`).join('');
-  const fac = Object.entries(d.factions).filter(([k]) => FACTION_COL[k]);
-  const facBar = `<div class="st-stack big">${fac.map(([k, n]) => `<i style="flex:${n};background:${FACTION_COL[k]}" title="${k} ${pct(n / d.n)}"></i>`).join('')}</div>
-    <p class="st-legend">${fac.map(([k, n]) => `<span><i style="background:${FACTION_COL[k]}"></i>${k === 'HORDE' ? 'Horde' : 'Alliance'} ${pct(n / d.n)}</span>`).join('')}</p>`;
-  const maxLvl = Math.max(...d.levels.map(x => x.n));
-  const levels = `<div class="st-hist">${d.levels.map(x => `<div><i style="height:${maxLvl ? Math.max(2, x.n / maxLvl * 100) : 0}%"></i><b>${fmt(x.n)}</b><span>${x.a === x.b ? x.a : `${x.a}–${x.b}`}</span></div>`).join('')}</div>`;
+  const RACE_FAC = { 1: 'ALLIANCE', 3: 'ALLIANCE', 4: 'ALLIANCE', 7: 'ALLIANCE', 2: 'HORDE', 5: 'HORDE', 6: 'HORDE', 8: 'HORDE' };
+  const raceList = K ? Object.entries(K.races).map(([id, n]) => ({ id: +id, n, share: n / K.n, faction: RACE_FAC[id] })).sort((x, y) => y.n - x.n) : d.races;
+  const maxRace = Math.max(...raceList.map(x => x.n));
+  const races = raceList.filter(x => RACE[x.id]).map(x => `<li><span class="st-cap">${esc(L2(RACE[x.id]) || '?')}</span>${bar(x.n, maxRace, FACTION_COL[x.faction])}<small>${pct(x.share)} · ${fmt(x.n)}</small></li>`).join('');
+  const facSrc = K ? K.factions : d.factions, fac = Object.entries(facSrc).filter(([k]) => FACTION_COL[k]);
+  const facBar = `<div class="st-stack big">${fac.map(([k, n]) => `<i style="flex:${n};background:${FACTION_COL[k]}" title="${k} ${pct(n / kN)}"></i>`).join('')}</div>
+    <p class="st-legend">${fac.map(([k, n]) => `<span><i style="background:${FACTION_COL[k]}"></i>${k === 'HORDE' ? 'Horde' : 'Alliance'} ${pct(n / kN)} · ${fmt(n)}</span>`).join('')}</p>`;
+  const lvlSrc = K ? K.levels.sort((x, y) => x.a - y.a) : d.levels;
+  const maxLvl = Math.max(...lvlSrc.map(x => x.n));
+  const levels = `<div class="st-hist">${lvlSrc.map(x => `<div><i style="height:${maxLvl ? Math.max(2, x.n / maxLvl * 100) : 0}%"></i><b>${fmt(x.n)}</b><span>${x.a === x.b ? x.a : `${x.a}–${x.b}`}</span></div>`).join('')}</div>`;
   // métiers et duos
   const maxProf = Math.max(...d.profs.map(x => x.n));
   const profs = d.profs.map(x => `<li>${PROF_ICON[x.id] ? `<img src="${icon(PROF_ICON[x.id])}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span></span>'}<span>${esc(profName(x.id))}</span>${bar(x.n, maxProf, '#5f9a4a')}<small>${pct(x.share)} · ${fmt(x.max)} × 300 · ${num(x.avg)}</small></li>`).join('');
@@ -833,8 +844,8 @@ function renderStats() {
     .filter(([k]) => d.tops[k]?.length).map(([k, l]) => `<div class="st-rec"><h4>${t(l)}</h4><ol>${d.tops[k].slice(0, 5).map(p => `<li><a href="?p=char&c=${esc(encodeURIComponent(p.key))}" data-c="${esc(p.key)}" style="--c:${CLASS_COL[p.classId] || 'var(--cream)'}">${esc(p.name)} ${esc(p.surname)}</a><b>${fmt(p.v)}</b></li>`).join('')}</ol></div>`).join('');
   const guilds = d.guilds.top.map(g => `<li><span>${esc(g.name)}</span><small>${t('stMembers', { n: fmt(g.n) })} · ${fmt(g.lvl60)} × 60</small></li>`).join('');
   box.innerHTML = `
-    <div class="head"><h2>${t('stTitle')}</h2><span class="note">${t('stNote', { n: fmt(d.n), d: up.toLocaleString(locale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) })}</span></div>
-    <div class="st-tiles">${tile(fmt(d.n), t('stChars'))}${tile(fmt(d.lvl60), t('stLvl60'))}${tile(fmt(d.guilds.n), t('stGuilds'))}${tile(fmt(d.pvp.hk), t('stHk'))}${tile(fmt(duels), t('stDuels'))}</div>
+    <div class="head"><h2>${t('stTitle')}</h2><span class="note">${t(K ? 'stNoteK' : 'stNote', { n: fmt(kN), r: fmt(d.n), d: up.toLocaleString(locale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) })}</span></div>
+    <div class="st-tiles">${tile(fmt(kN), t('stChars'))}${tile(fmt(K ? K.lvl60 : d.lvl60), t('stLvl60'))}${tile(fmt(K ? Math.max(K.guilds, d.guilds.n) : d.guilds.n), t('stGuilds'))}${K ? tile(fmt(d.n), t('stRead')) : ''}${tile(fmt(d.pvp.hk), t('stHk'))}${tile(fmt(duels), t('stDuels'))}</div>
     <p class="st-bias">${t('stBias')}</p>
     <section class="st-sec"><h3>${t('stClasses')} <small>${t('stClassesSub')}</small></h3>
       <div class="st-scroll"><table class="st-table"><thead><tr><th>${t('stColClass')}</th><th>${t('stColShare')}</th><th>${t('stColLvl')}</th><th>${t('stCol60')}</th><th>${t('stColHk')}</th><th title="${esc(t('stKdTip'))}">${t('stColKd')}</th><th>${t('stColDuel')}</th></tr></thead><tbody>${classRows}</tbody></table></div></section>

@@ -38,9 +38,11 @@ export function nextVisit(today, activeDay, first = false) {
 
 // liste d'une guilde → personnages à découvrir (niveau 10+)
 export function rosterMembers(region, roster) {
+  const gname = roster?.guild?.name ?? null, gfaction = roster?.guild?.faction?.type ?? null;
   return (roster?.members ?? []).map(m => m.character)
     .filter(c => c?.slug && (c.level ?? 0) >= CRAWL.MIN_LEVEL)
-    .map(c => ({ key: charKey(region, c.slug), level: c.level }));
+    .map(c => ({ key: charKey(region, c.slug), level: c.level, name: c.name ?? null, surname: c.surname ?? null,
+      cls: c.playable_class?.id ?? null, race: c.playable_race?.id ?? null, faction: c.faction?.type ?? gfaction, gname }));
 }
 
 // fiche légère d'un personnage (même calcul que la mise à jour du site, sans réputations, rendu 3D ni équipement détaillé)
