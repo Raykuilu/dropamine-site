@@ -268,6 +268,34 @@ export function guildList(db, { region, rs, m = 'total', q = '', fac = null, pag
   return { region, rs, m, total, page, per, pages, rows: ranked.slice((page - 1) * per, page * per).map(({ nf, ...g }) => ({ ...g, avg: g.n ? Math.round(g.total / g.n) : 0 })) };
 }
 
+// Classement des guildes dans une compétence, façon classement des personnages : score = moyenne de ses TOP meilleurs
+// membres lus dans cette compétence (une grosse guilde ne gagne pas au nombre, une petite d'élite peut passer devant).
+// Il faut au moins MIN membres classés pour figurer. cls : seulement les membres de cette classe ; fac : faction des membres.
+// sort = g1 | g7 : somme des gains de ses membres dans la compétence (seulement les guildes qui ont progressé).
+export const GUILD_TOP = 10, GUILD_MIN = 5, GUILD_MIN_CLS = 3;
+export function guildSkillList(db, { region, rs, skill = 'total', cls = null, fac = null, q = '', sort = null, page = 1, per = 50 }) {
+  rs = pickRs(db, region, rs);
+  const by = sort === 'g1' || sort === 'g7' ? sort : null, min = cls ? GUILD_MIN_CLS : GUILD_MIN;
+  const rows = st(db, `WITH m AS (
+      SELECT c.guild AS g, s.v, s.g1, s.g7, ROW_NUMBER() OVER (PARTITION BY c.guild ORDER BY s.v DESC, s.key) AS rn
+      FROM sk s JOIN chars c ON c.key = s.key
+      WHERE s.region = ? AND s.rs = ? AND s.skill = ?${clsFilter(cls).replace('cls', 's.cls')}${facFilter(fac).replace('fac', 's.fac')} AND c.guild IS NOT NULL)
+    SELECT m.g AS key, COUNT(*) AS n, AVG(CASE WHEN m.rn <= ${GUILD_TOP} THEN m.v END) AS v, MAX(m.v) AS best, SUM(m.g1) AS g1, SUM(m.g7) AS g7,
+      a.slug, a.name, a.faction, a.nf, a.n AS members
+    FROM m LEFT JOIN gagg a ON a.key = m.g AND a.rs = ?
+    GROUP BY m.g HAVING COUNT(*) >= ?`).all(region, rs, skill, rs, min);
+  const val = by ? (g => g[by]) : (g => g.v);
+  const list = rows.filter(g => val(g) > 0).sort((a, b) => val(b) - val(a) || b.v - a.v || (a.key < b.key ? -1 : 1));
+  const qf = fold(q).trim();
+  // le rang reste celui du classement complet, même quand on cherche un nom
+  const ranked = list.map((g, i) => ({ ...g, r: i + 1 })).filter(g => !qf || (g.nf ?? fold(g.key.split('/')[1])).includes(qf));
+  const total = ranked.length, pages = Math.ceil(total / per);
+  page = Math.max(1, Math.min(page, Math.max(1, pages)));
+  return { region, rs, skill, cls, fac, sort: by, top: GUILD_TOP, min, total, page, per, pages,
+    rows: ranked.slice((page - 1) * per, page * per).map(({ nf, ...g }) => ({ ...g, slug: g.slug ?? g.key.split('/')[1], name: g.name ?? g.key.split('/')[1],
+      v: Math.round(g.v * 10) / 10, g1: g.g1 ?? 0, g7: g.g7 ?? 0 })) };
+}
+
 // page d'une guilde : fiches complètes des membres lus de son type (sans historique), rang de la guilde
 export function guildFull(db, gkey) {
   const g = st(db, 'SELECT key, slug, name, faction, rs, region, n, l60, total, hk, prof, g7 FROM gagg WHERE key = ? ORDER BY n DESC LIMIT 1').get(gkey);

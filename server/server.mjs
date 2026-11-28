@@ -362,7 +362,7 @@ function startCrawlWorker() {
   };
 }
 // fil de lecture : connexion SQLite en lecture seule, jamais bloquée par les écritures du relevé
-const READ_FNS = new Set(['search', 'rsinfo', 'rankList', 'guilds', 'movers', 'meDash', 'ranks', 'guildFull', 'char', 'guild', 'rank']);
+const READ_FNS = new Set(['search', 'rsinfo', 'rankList', 'guilds', 'guildSkills', 'movers', 'meDash', 'ranks', 'guildFull', 'char', 'guild', 'rank']);
 let reader = null;
 function startReader() {
   const w = new Worker(new URL('./hs-reader.mjs', import.meta.url), { workerData: { stateDir: STATE_DIR } });

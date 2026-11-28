@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openCrawlDb, saveChar, goneChar, purgeOld, charByKey, searchChars } from './crawl.mjs';
-import { skillValues, gains, loadOverlay, indexChar, refreshGuilds, rulesetCounts, rankList, guildList, guildFull, movers, meDash, reindexAll, indexStale, ranksOf } from './hs-index.mjs';
+import { skillValues, gains, loadOverlay, indexChar, refreshGuilds, rulesetCounts, rankList, guildList, guildSkillList, guildFull, movers, meDash, reindexAll, indexStale, ranksOf } from './hs-index.mjs';
 
 const P = (key, o = {}) => ({ key, region: key.split('/')[0], slug: key.split('/')[1], name: key.split('/')[1].split('-')[0], surname: 'zed', classId: 1, raceId: 1,
   faction: 'ALLIANCE', guild: { name: 'Les Gens', slug: 'les-gens' }, rulesetId: 1, level: 60, total: 1000, defense: 300,
@@ -120,4 +120,29 @@ test('fiche : rangs de toutes ses compétences ; gains par compétence ; armes e
   assert.deepEqual(f.players.map(p => p.key), ['eu/c-d', 'eu/a-b']);
   assert.ok(f.players.every(p => !('history' in p) && 'g1' in p && 'g7' in p));
   assert.deepEqual(guildFull(db, 'eu/inconnue').players, []);
+});
+
+test('guildes par compétence : moyenne des 10 meilleurs, au moins 5 classés, classe, gains, recherche', () => {
+  const db = openCrawlDb(':memory:'), today = 20785;
+  const G = (slug, name) => ({ guild: { name, slug } });
+  // grosse guilde : 12 membres moyens ; petite d'élite : 5 très forts ; trop petite : 3 au max
+  for (let i = 0; i < 12; i++) saveChar(db, P(`eu/big${i}-m`, { total: 1000 + i, ...G('grosse', 'Grosse') }), today);
+  for (let i = 0; i < 5; i++) saveChar(db, P(`eu/elite${i}-m`, { total: 2000 + i, classId: i < 3 ? 11 : 1, ...G('elite', 'Élite') }), today);
+  for (let i = 0; i < 3; i++) saveChar(db, P(`eu/tiny${i}-m`, { total: 2460, ...G('mini', 'Mini') }), today);
+  saveChar(db, P('eu/us0-m', { total: 2460, region: 'us', key: 'us/us0-m', ...G('grosse', 'Grosse') }), today);
+  refreshGuilds(db);
+  const r = guildSkillList(db, { region: 'eu', rs: 1 });
+  assert.deepEqual(r.rows.map(g => [g.key, g.r, g.n]), [['eu/elite', 1, 5], ['eu/grosse', 2, 12]], 'élite devant, trop petite absente');
+  assert.equal(r.rows[1].v, 1006.5, 'moyenne des 10 meilleurs (1002 à 1011)');
+  assert.equal(r.rows[0].best, 2004); assert.equal(r.rows[0].name, 'Élite'); assert.equal(r.rows[1].members, 12);
+  // classe : seuls les druides comptent (3 suffisent avec un filtre de classe)
+  const d = guildSkillList(db, { region: 'eu', rs: 1, cls: 11 });
+  assert.deepEqual(d.rows.map(g => [g.key, g.n]), [['eu/elite', 3]]);
+  // recherche : le rang reste celui du classement complet
+  assert.deepEqual(guildSkillList(db, { region: 'eu', rs: 1, q: 'gros' }).rows.map(g => [g.key, g.r]), [['eu/grosse', 2]]);
+  // gains : aucun (un seul relevé) → liste vide ; compétence d'arme
+  assert.equal(guildSkillList(db, { region: 'eu', rs: 1, sort: 'g7' }).total, 0);
+  assert.equal(guildSkillList(db, { region: 'eu', rs: 1, skill: 'level' }).rows[0].v, 60);
+  // autre type : rien de mélangé
+  assert.equal(guildSkillList(db, { region: 'eu', rs: 2 }).total, 0);
 });

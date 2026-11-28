@@ -64,6 +64,14 @@ return async function crawlRoute(req, res, url) {
         // sort=g1|g7 : meilleurs gains dans cette compétence ; est=1 : armes estimées (sans rang)
         sort: ['g1', 'g7'].includes(url.searchParams.get('sort')) ? url.searchParams.get('sort') : null, est: url.searchParams.get('est') === '1' && /^w/.test(skill) }));
     }
+    else if (p === '/hs/guilds' && ['skill', 'cls', 'sort'].some(x => url.searchParams.has(x))) {
+      // classement des guildes par compétence (moyenne de leurs 10 meilleurs membres), filtres classe et faction, meilleurs gains
+      const skill = String(url.searchParams.get('skill') || 'total');
+      if (!SKILL_RE.test(skill)) { send(res, 400, { error: 'paramètre' }, cors); return true; }
+      await sendHs(req, res, url, 300, () => crawl.call('guildSkills', { region: regionOf(url), rs: rsParam(url), skill, cls: intParam(url, 'cls', null, 1, 20), fac: facParam(url),
+        q: String(url.searchParams.get('q') || '').slice(0, 40), sort: ['g1', 'g7'].includes(url.searchParams.get('sort')) ? url.searchParams.get('sort') : null,
+        page: intParam(url, 'pg', 1, 1, 10000), per: intParam(url, 'per', 50, 10, 100) }));
+    }
     else if (p === '/hs/guilds') {
       const m = String(url.searchParams.get('m') || 'total');
       await sendHs(req, res, url, 120, () => crawl.call('guilds', { region: regionOf(url), rs: rsParam(url), m: ['total', 'avg', 'l60', 'hk', 'prof', 'members', 'g7'].includes(m) ? m : 'total',

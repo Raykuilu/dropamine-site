@@ -25,6 +25,7 @@ const API = {
   rsinfo: r => crawl.rsinfo(r),
   rankList: o => crawl.rankList(o),
   guilds: o => crawl.guilds(o),
+  guildSkills: o => crawl.guildSkills(o),
   movers: o => crawl.movers(o),
   meDash: keys => crawl.meDash(keys),
   ranks: k => crawl.ranksOf(k),
