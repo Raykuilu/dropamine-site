@@ -146,3 +146,16 @@ test('guildes par compétence : moyenne des 10 meilleurs, au moins 5 classés, c
   // autre type : rien de mélangé
   assert.equal(guildSkillList(db, { region: 'eu', rs: 2 }).total, 0);
 });
+
+test('ex æquo : même valeur, même rang, partout', () => {
+  const db = openCrawlDb(':memory:'), today = 20785;
+  for (const [k, t] of [['eu/aa-x', 2460], ['eu/bb-x', 2460], ['eu/cc-x', 2460], ['eu/dd-x', 2000], ['eu/ee-x', 1900]]) saveChar(db, P(k, { total: t }), today);
+  assert.deepEqual(rankList(db, { region: 'eu', rs: 1 }).rows.map(r => r.r), [1, 1, 1, 4, 5]);
+  assert.deepEqual(rankList(db, { region: 'eu', rs: 1, per: 10, page: 1 }).rows.slice(1, 3).map(r => r.r), [1, 1]);
+  // deuxième page qui commence au milieu d'un groupe d'ex æquo
+  assert.deepEqual(rankList(db, { region: 'eu', rs: 1, per: 2, page: 2 }).rows.map(r => r.r), [1, 4]);
+  const p2 = rankList(db, { region: 'eu', rs: 1, per: 10, k: 'eu/cc-x' });
+  assert.equal(p2.me.r, 1);
+  assert.equal(ranksOf(db, 'eu/cc-x').total.r, 1);
+  assert.equal(ranksOf(db, 'eu/dd-x').total.r, 4);
+});

@@ -229,16 +229,22 @@ export function rankList(db, { region, rs, skill = 'total', cls = null, fac = nu
   if (k && !by) {
     const mine = st(db, `SELECT v ${from} AND key = ?`).get(...args, k);
     if (mine) {
-      const r = st(db, `SELECT COUNT(*) AS n ${from} AND (v > ? OR (v = ? AND key < ?))`).get(...args, mine.v, mine.v, k).n + 1;
-      me = { key: k, r, v: mine.v }; page = Math.ceil(r / per);
+      // rang de compétition : même valeur, même rang (la page reste celle de sa position dans la liste)
+      const pos = st(db, `SELECT COUNT(*) AS n ${from} AND (v > ? OR (v = ? AND key < ?))`).get(...args, mine.v, mine.v, k).n + 1;
+      const r = st(db, `SELECT COUNT(*) AS n ${from} AND v > ?`).get(...args, mine.v).n + 1;
+      me = { key: k, r, v: mine.v }; page = Math.ceil(pos / per);
     }
   }
   page = Math.max(1, Math.min(page, Math.max(1, Math.ceil(total / per))));
   const one = st(db, 'SELECT key, data, g1 AS cg1, g7 AS cg7 FROM chars WHERE key = ?');
   const rows = st(db, `SELECT key, v, g1, g7 ${from} ORDER BY ${order} LIMIT ? OFFSET ?`).all(...args, per, (page - 1) * per)
     .map(s => ({ ...one.get(s.key), v: s.v, g1: s.g1, g7: s.g7 }));
+  // même valeur, même rang (1, 2, 2, 4…) ; classés par gain : rang = position
+  const above = v => st(db, `SELECT COUNT(*) AS n ${from} AND v > ?`).get(...args, v).n;
+  let prev = null, rk = 0;
+  const rankAt = (r, i) => { if (by) return (page - 1) * per + i + 1; if (r.v !== prev) { rk = i ? (page - 1) * per + i + 1 : above(r.v) + 1; prev = r.v; } return rk; };
   return { region, rs, skill, cls, fac, sort: by, est: !!est, total, page, per, pages: Math.ceil(total / per), me,
-    rows: rows.map((r, i) => rowOut(db, r, est ? { v: r.v } : { r: (page - 1) * per + i + 1, v: r.v })).filter(Boolean) };
+    rows: rows.map((r, i) => rowOut(db, r, est ? { v: r.v } : { r: rankAt(r, i), v: r.v })).filter(Boolean) };
 }
 // rang d'un personnage dans ses classements (tous si skills est absent), dans son type de royaume
 export function ranksOf(db, key, skills = null) {
@@ -248,7 +254,7 @@ export function ranksOf(db, key, skills = null) {
   for (const sk of skills) {
     const mine = st(db, 'SELECT v FROM sk WHERE region = ? AND rs = ? AND skill = ? AND key = ?').get(c.region, c.rs, sk, key);
     if (!mine) continue;
-    const n = st(db, 'SELECT COUNT(*) AS n FROM sk WHERE region = ? AND rs = ? AND skill = ? AND (v > ? OR (v = ? AND key < ?))').get(c.region, c.rs, sk, mine.v, mine.v, key).n;
+    const n = st(db, 'SELECT COUNT(*) AS n FROM sk WHERE region = ? AND rs = ? AND skill = ? AND v > ?').get(c.region, c.rs, sk, mine.v).n;   // même valeur, même rang
     out[sk] = { r: n + 1, v: mine.v, of: st(db, 'SELECT COUNT(*) AS n FROM sk WHERE region = ? AND rs = ? AND skill = ?').get(c.region, c.rs, sk).n };
   }
   return out;
@@ -288,7 +294,8 @@ export function guildSkillList(db, { region, rs, skill = 'total', cls = null, fa
   const list = rows.filter(g => val(g) > 0).sort((a, b) => val(b) - val(a) || b.v - a.v || (a.key < b.key ? -1 : 1));
   const qf = fold(q).trim();
   // le rang reste celui du classement complet, même quand on cherche un nom
-  const ranked = list.map((g, i) => ({ ...g, r: i + 1 })).filter(g => !qf || (g.nf ?? fold(g.key.split('/')[1])).includes(qf));
+  let prevV = null, rk = 0;   // même score, même rang (classés par gain : position)
+  const ranked = list.map((g, i) => { if (by) rk = i + 1; else if (g.v !== prevV) { rk = i + 1; prevV = g.v; } return { ...g, r: rk }; }).filter(g => !qf || (g.nf ?? fold(g.key.split('/')[1])).includes(qf));
   const total = ranked.length, pages = Math.ceil(total / per);
   page = Math.max(1, Math.min(page, Math.max(1, pages)));
   return { region, rs, skill, cls, fac, sort: by, top: GUILD_TOP, min, total, page, per, pages,
