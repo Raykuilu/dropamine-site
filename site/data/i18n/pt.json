@@ -625,7 +625,10 @@
   "gOnRead": "{n} membros lidos",
   "gPvp": "JxJ",
   "gKb": "Golpes finais",
-  "gTopWeek": "Maiores ganhos da semana"
+  "gTopWeek": "Maiores ganhos da semana",
+  "glq": "Procurar uma guilda…",
+  "allFactions": "Ambas as facções",
+  "gCount": "{n} guildas"
  },
  "names": {
   "Leatherworking": "Couraria",

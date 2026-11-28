@@ -625,7 +625,10 @@
   "gOnRead": "{n} membri letti",
   "gPvp": "PvP",
   "gKb": "Colpi di grazia",
-  "gTopWeek": "Maggiori progressi della settimana"
+  "gTopWeek": "Maggiori progressi della settimana",
+  "glq": "Cerca una gilda…",
+  "allFactions": "Entrambe le fazioni",
+  "gCount": "{n} gilde"
  },
  "names": {
   "Leatherworking": "Conciatura",

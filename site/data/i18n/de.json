@@ -625,7 +625,10 @@
   "gOnRead": "{n} gelesene Mitglieder",
   "gPvp": "PvP",
   "gKb": "Todesstöße",
-  "gTopWeek": "Größte Zuwächse der Woche"
+  "gTopWeek": "Größte Zuwächse der Woche",
+  "glq": "Gilde suchen…",
+  "allFactions": "Beide Fraktionen",
+  "gCount": "{n} Gilden"
  },
  "names": {
   "Leatherworking": "Lederverarbeitung",

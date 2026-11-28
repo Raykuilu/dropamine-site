@@ -625,7 +625,10 @@
   "gOnRead": "{n} miembros leídos",
   "gPvp": "JcJ",
   "gKb": "Golpes de gracia",
-  "gTopWeek": "Mayores progresos de la semana"
+  "gTopWeek": "Mayores progresos de la semana",
+  "glq": "Buscar una hermandad…",
+  "allFactions": "Ambas facciones",
+  "gCount": "{n} hermandades"
  },
  "names": {
   "Leatherworking": "Peletería",

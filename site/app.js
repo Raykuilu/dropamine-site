@@ -22,6 +22,7 @@ let I18X = null, ITEMX = null;   // langue en plus : textes et noms, puis ses ob
 const extra = () => LANG !== 'en' && LANG !== 'fr';
 const I18N = {
   'tab.rank': ['Hiscores', 'Classements'],
+  glq: ['Find a guild…', 'Chercher une guilde…'], allFactions: ['Both factions', 'Les deux factions'], gCount: ['{n} guilds', '{n} guildes'],
   'gt.members': ['Members', 'Membres'], 'gt.stats': ['Stats', 'Stats'], 'gt.progress': ['This week', 'Cette semaine'],
   gq: ['Find a member…', 'Chercher un membre…'], only60: ['Level 60 only', 'Niveau 60 seulement'], d7s: ['in 7 days', 'en 7 jours'],
   gUnread: ['Not read yet ({n})', 'Pas encore lus ({n})'], gUnreadSub: ['known from the guild roster; click to read them now', 'connus par la liste de la guilde ; clique pour les lire tout de suite'],
@@ -527,7 +528,10 @@ $('.brand-logo').addEventListener('mouseenter', () => Ribbon.swell(.35));
 /* ---------- Morceaux réutilisés ---------- */
 const full = p => `${esc(p.name)} ${esc(p.surname)}`;
 const who = p => `${esc(className(p))} ${p.level}${p.guild ? ' · ' + esc(p.guild.name) : ''}`;
-const avatar = p => p.avatar ? `<img class="ava" src="${esc(p.avatar)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '';
+// portrait de l'armurerie ; sinon (pas encore récupéré par le relevé) l'icône de la classe, pour ne jamais laisser de trou
+const CLASS_ICON = { 1: 'warrior', 2: 'paladin', 3: 'hunter', 4: 'rogue', 5: 'priest', 7: 'shaman', 8: 'mage', 9: 'warlock', 11: 'druid' };
+const avatar = p => p.avatar ? `<img class="ava" src="${esc(p.avatar)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+  : CLASS_ICON[p.classId] ? `<img class="ava cls" src="${icon('classicon_' + CLASS_ICON[p.classId])}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '';
 const pkey = p => p.key || `${p.region || 'eu'}/${p.slug}`;
 const tri = p => {
   const w = v => (100 * v / (p.max || 2460)).toFixed(1) + '%';
@@ -790,7 +794,7 @@ function renderHome() {
 }
 
 /* ---------- Stats : tout le serveur (api /hs/stats, calculé sur le relevé) ---------- */
-const CLASS_COL = { 1: '#c79c6e', 2: '#f58cba', 3: '#abd473', 4: '#fff569', 5: '#ffffff', 7: '#0070de', 8: '#69ccf0', 9: '#9482c9', 11: '#ff7d0a' };
+const CLASS_COL = { 1: '#c79c6e', 2: '#f58cba', 3: '#abd473', 4: '#fff569', 5: '#ffffff', 7: '#3f9dff', 8: '#69ccf0', 9: '#a796e6', 11: '#ff7d0a' };   // Chaman et Démoniste éclaircis : lisibles sur le fond sombre
 const FACTION_COL = { ALLIANCE: '#4a7bd0', HORDE: '#c0392b' };
 const STATS = {};
 function renderStats() {
@@ -1883,13 +1887,20 @@ function renderGuild() {
       prof: x => x.members.reduce((n, p) => n + (p.parts?.professions || 0), 0), members: x => x.members.length };
     const gm = GM[state.gm] ? state.gm : 'total';
     const ranked = all.map(x => ({ x, v: GM[gm](x) })).filter(r => r.v != null && r.v > 0).sort((a, b) => b.v - a.v || b.x.total - a.x.total);
-    state.gpg = pageOf(state.gpg, ranked.length);
-    const gFrom = (state.gpg - 1) * RANK_PER;
+    const facOf = x => x.members.find(p => p.faction)?.faction || null;
+    const gq = foldTxt(state.glq || ''), gf = state.gfac || '';
+    const shown = ranked.map((r, i) => ({ ...r, r: i + 1 })).filter(({ x }) => (!gq || foldTxt(x.name).includes(gq)) && (!gf || facOf(x) === gf));
+    state.gpg = pageOf(state.gpg, shown.length);
+    const gFrom2 = (state.gpg - 1) * RANK_PER, maxV = Math.max(1, ...shown.map(s => s.v));
     const gmChips = `<div class="chips gm" role="group">${Object.keys(GM).map(k => `<span class="chip${k === gm ? ' on' : ''}" data-gm="${k}" role="button" tabindex="0">${t('gm.' + k)}</span>`).join('')}</div>`;
-    $('#guild-panel').innerHTML = `<div class="head"><h2>${t('guildsT')}</h2><span class="note">${t('guildsNote', { r: state.region.toUpperCase() })}</span></div>${gmChips}
-      <div class="rows glist">${ranked.length ? `<div class="row th"><span>${t('rank')}</span><span>${t('guildH')}</span><span style="text-align:right" class="c3">${t('members')}</span><span style="text-align:right">${t('gm.' + gm)}</span></div>` +
-        ranked.slice(gFrom, gFrom + RANK_PER).map(({ x, v }, j) => { const i = gFrom + j; return `<div class="row${i < 3 ? ' top' : ''}" data-g="${esc(x.slug)}"><span class="rk">${i + 1}</span><span class="nm"><span><b>${esc(x.name)}</b><small>${t('gmSub', { n: x.members.filter(p => p.level >= 60).length })}</small></span></span><span class="val">${x.members.length}</span><span class="tot">${fmt(v)}</span></div>`; }).join('')
-        : `<div class="empty"><b>${t('noGuildT')}</b>${t('noGuild')}</div>`}</div>${pagerNav('guild', state.gpg, Math.ceil(ranked.length / RANK_PER), ranked.length)}`;
+    const facChips = `<div class="chips gfacs" role="group">${['', 'ALLIANCE', 'HORDE'].map(f => `<span class="chip${gf === f ? ' on' : ''}" data-gfac="${f}" role="button" tabindex="0">${f ? `<i class="cdot" style="background:${f === 'HORDE' ? '#c0392b' : '#4a7bd0'}"></i>${f === 'HORDE' ? 'Horde' : 'Alliance'}` : t('allFactions')}</span>`).join('')}</div>`;
+    const rows = shown.slice(gFrom2, gFrom2 + RANK_PER).map(({ x, v, r }) => { const f = facOf(x), n60 = x.members.filter(p => p.level >= 60).length;
+      return `<div class="row${r <= 3 ? ' top' : ''}" data-g="${esc(x.slug)}" role="row"><span class="rk">${r}</span><span class="nm"><span><b>${esc(x.name)}</b><small>${f ? `<span class="gfac ${f === 'HORDE' ? 'h' : 'a'}">${f === 'HORDE' ? 'Horde' : 'Alliance'}</span> ` : ''}${t('gmSub', { n: n60 })}</small></span></span><span class="lv">${fmt(x.members.length)}</span><span class="mbar g"><i style="--w:${(100 * v / maxV).toFixed(1)}%"></i></span><span class="tot">${fmt(v)}</span></div>`; }).join('');
+    $('#guild-panel').innerHTML = `<div class="head"><h2>${t('guildsT')}</h2><span class="note">${t('guildsNote', { r: state.region.toUpperCase() })} · ${t('gCount', { n: fmt(all.length) })}</span></div>
+      <div class="gtools"><label class="gq"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" data-glq value="${esc(state.glq || '')}" placeholder="${esc(t('glq'))}" aria-label="${esc(t('glq'))}"></label>${facChips}</div>
+      ${gmChips}
+      <div class="rows rk-lv glist2" role="table">${shown.length ? `<div class="row th" role="row"><span>${t('rank')}</span><span>${t('guildH')}</span><span class="lv">${t('members')}</span><span class="c3"></span><span style="text-align:right">${t('gm.' + gm)}</span></div>` + rows
+        : `<div class="empty"><b>${t('noGuildT')}</b>${t(ranked.length ? 'gNoMatch' : 'noGuild')}</div>`}</div>${pagerNav('guild', state.gpg, Math.ceil(shown.length / RANK_PER), shown.length)}`;
     return;
   }
   const rank = all.indexOf(g) + 1, members = [...g.members].sort((a, b) => b.total - a.total);
@@ -1898,7 +1909,7 @@ function renderGuild() {
   if (!GUILD_KNOWN.has(gk)) {
     GUILD_KNOWN.set(gk, null);
     fetch(`${API}/hs/guild?k=${encodeURIComponent(gk)}`).then(r => r.ok ? r.json() : null).catch(() => null)
-      .then(j => { GUILD_KNOWN.set(gk, j || { members: [] }); if (state.view === 'guild' && state.g === g.slug) renderGuild(); });
+      .then(j => { GUILD_KNOWN.set(gk, j || { members: [] }); if (state.view === 'guild' && state.g === g.slug) { renderGuild(); animate($('#guild')); } });
   }
   const known = GUILD_KNOWN.get(gk), pubKeys = new Set(members.map(pkey));
   const unread = (known?.members || []).filter(m => !pubKeys.has(m.key)).sort((a, b) => b.level - a.level);
@@ -1931,7 +1942,7 @@ function renderGuild() {
     const classes = [...new Set(everyone.map(p => p.classId).filter(Boolean))].sort((a, b) => a - b);
     const tools = `<div class="gtools">
       <label class="gq"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" data-gq value="${esc(state.gq || '')}" placeholder="${esc(t('gq'))}" aria-label="${esc(t('gq'))}"></label>
-      <div class="chips gcl" role="group"><span class="chip${!cl ? ' on' : ''}" data-gcl="0" role="button" tabindex="0">${t('allClasses')}</span>${classes.map(id => `<span class="chip${cl === id ? ' on' : ''}" data-gcl="${id}" role="button" tabindex="0" style="--c:${CLASS_COL[id] || 'var(--cream)'}">${esc(L2(CLASS[id]) || '?')}</span>`).join('')}</div>
+      <div class="chips gcl" role="group"><span class="chip${!cl ? ' on' : ''}" data-gcl="0" role="button" tabindex="0">${t('allClasses')}</span>${classes.map(id => `<span class="chip${cl === id ? ' on' : ''}" data-gcl="${id}" role="button" tabindex="0"><i class="cdot" style="background:${CLASS_COL[id] || 'var(--cream)'}"></i>${esc(L2(CLASS[id]) || '?')}</span>`).join('')}</div>
       <span class="chip${only60 ? ' on' : ''}" data-g60 role="button" tabindex="0">★ ${t('only60')}</span>
       <div class="gsort"><label for="gs">${t('sortBy')}</label><select id="gs" data-gs>${og}</select></div></div>`;
     const rows = ranked.slice(mFrom, mFrom + RANK_PER).map(({ p, v, r }) => {
@@ -1997,7 +2008,7 @@ function renderGuild() {
       <div><h2>${esc(g.name)}</h2><p>${faction ? `<span class="gfac ${faction === 'HORDE' ? 'h' : 'a'}">${faction === 'HORDE' ? 'Horde' : 'Alliance'}</span> · ` : ''}${state.region.toUpperCase()} · ${t('guildTotal', { r: ord(rank) })}</p><button class="share gshare" type="button" data-gshare="${esc(g.slug)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>${t('share')}</span></button></div>
       <div class="score"><div class="n" data-n="${g.total}">${fmt(g.total)}</div><div class="r">${t('totalH')}</div></div>
     </div>
-    <div class="st-tiles gtiles">${tile(fmt(everyone.length), t('gKnown'))}${tile(fmt(members.length), t('gOnSite'))}${tile(fmt(n60), t('stLvl60'))}${tile(avgLvl ? avgLvl.toLocaleString(locale(), { maximumFractionDigits: 1 }) : '—', t('stColLvl'))}${tile(fmt(hk), t('stHk'))}</div>
+    <div class="st-tiles gtiles">${tile(fmt(everyone.length), t('gKnown'))}${tile(fmt(n60), t('stLvl60'))}${tile(avgLvl ? avgLvl.toLocaleString(locale(), { maximumFractionDigits: 1 }) : '—', t('stColLvl'))}${tile(fmt(hk), t('stHk'))}</div>
     ${tabs}
     <div class="gbody">${body}</div>`;
 }
@@ -2705,13 +2716,16 @@ function renderNews() {
 document.addEventListener('click', e => { const a = e.target.closest('[data-sec]'); if (!a) return; e.preventDefault(); document.getElementById(a.dataset.sec)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); });
 document.addEventListener('click', e => {
   const gt = e.target.closest('[data-gt]'); if (gt) { state.gt = gt.dataset.gt; renderGuild(); animate($('#guild')); return; }
+  const gfa = e.target.closest('[data-gfac]'); if (gfa) { state.gfac = gfa.dataset.gfac; state.gpg = 1; renderGuild(); animate($('#guild')); return; }
   const gc = e.target.closest('[data-gcl]'); if (gc) { state.gcl = +gc.dataset.gcl || 0; renderGuild(); animate($('#guild')); return; }
   if (e.target.closest('[data-g60]')) { state.g60 = !state.g60; renderGuild(); animate($('#guild')); }
 });
 let gqT = 0;
 document.addEventListener('input', e => {
+  const li = e.target.closest('[data-glq]');
+  if (li) { clearTimeout(gqT); gqT = setTimeout(() => { state.glq = li.value; state.gpg = 1; const pos = li.selectionStart; renderGuild(); animate($('#guild')); const n = $('[data-glq]'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 200); return; }
   const i = e.target.closest('[data-gq]'); if (!i) return;
-  clearTimeout(gqT); gqT = setTimeout(() => { state.gq = i.value; const pos = i.selectionStart; renderGuild(); const n = $('[data-gq]'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 200);
+  clearTimeout(gqT); gqT = setTimeout(() => { state.gq = i.value; const pos = i.selectionStart; renderGuild(); animate($('#guild')); const n = $('[data-gq]'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 200);
 });
 document.addEventListener('change', e => { const sel = e.target.closest('[data-gs]'); if (!sel) return; state.gs = sel.value; renderGuild(); animate($('#guild-panel')); });
 document.addEventListener('click', e => { const x = e.target.closest('.release.folded .toggle'); if (x) { x.closest('.release').classList.remove('folded'); x.remove(); } });
@@ -2973,7 +2987,7 @@ function readUrl() {
   const q = new URLSearchParams(location.search);
   const v = q.get('p');
   state.view = VIEWS.includes(v) ? v : (q.get('bnet') ? 'join' : q.get('c') ? 'char' : q.get('g') ? 'guild' : 'home');
-  state.region = ['eu', 'us', 'tw'].includes(q.get('r')) ? q.get('r') : 'eu';
+  state.region = ['eu', 'us'].includes(q.get('r')) ? q.get('r') : 'eu';
   state.skill = q.get('s') || 'total'; state.cls = +q.get('cl') || 0; state.rs = +q.get('m') || 0; state.dg = q.get('dg') === '1'; state.dw = !state.dg && q.get('dw') === '1'; state.pg = Math.max(1, +q.get('pg') || 1); state.pgKey = null;
   state.c = q.get('c') || state.c; state.g = q.get('g') || '';
   if (state.view === 'runs') Object.assign(state, { rtab: ['ideas', 'planned', 'explore'].includes(q.get('tab')) ? q.get('tab') : undefined, hq: q.get('q') || '', hl: q.get('lv') || '', ht: q.get('ty') || '', hd: q.get('d') || '', hr: q.get('role') || '', hw: q.get('when') || '', pf: q.get('f') || state.pf || 'all' });
