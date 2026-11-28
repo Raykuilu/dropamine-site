@@ -351,6 +351,8 @@ function startCrawlWorker() {
   crawl = {
     // lectures du site : fil de lecture séparé (hs-reader.mjs), sinon le relevé lui-même
     call: async (fn, ...args) => {
+      // statistiques : toujours la dernière version calculée en tâche de fond (jamais de calcul pendant une requête)
+      if (fn === 'stats' && statsW) return statsOf(...args);
       if (reader && READ_FNS.has(fn)) {
         try {
           const r = await reader.call(fn, ...args);
@@ -363,28 +365,39 @@ function startCrawlWorker() {
 }
 // fil de lecture : connexion SQLite en lecture seule, jamais bloquée par les écritures du relevé
 const READ_FNS = new Set(['search', 'rsinfo', 'rankList', 'guilds', 'guildSkills', 'wall', 'weekSkill', 'quantiles', 'compare', 'movers', 'meDash', 'ranks', 'guildFull', 'char', 'guild', 'rank']);
-let reader = null;
-function startReader() {
-  const w = new Worker(new URL('./hs-reader.mjs', import.meta.url), { workerData: { stateDir: STATE_DIR } });
+let reader = null, statsW = null, STATS = null;
+// /hs/stats : réponse immédiate depuis la dernière version reçue du fil des statistiques (null : premier calcul en cours)
+const statsOf = (r, rs) => !STATS ? null : rs == null ? (STATS.by[r] ?? null) : (STATS.by[r + '/' + rs] ?? { rs, n: 0, empty: true });
+function startStats() {
+  const w = new Worker(new URL('./stats-worker.mjs', import.meta.url), { workerData: { stateDir: STATE_DIR } });
+  statsW = w;
+  w.on('message', m => { if (m.type === 'stats') STATS = m.cache; });
+  w.on('error', err => console.warn('statistiques (fil) :', err.message));
+  w.on('exit', code => { statsW = null; console.warn(`statistiques : fil arrêté (${code}), relance dans 30 s`); setTimeout(startStats, 30e3).unref(); });
+}
+// un fil en lecture seule (lectures du site, ou statistiques en tâche de fond), relancé 30 s après un arrêt
+function startHelper(file, label, set) {
+  const w = new Worker(new URL(file, import.meta.url), { workerData: { stateDir: STATE_DIR } });
   const calls = new Map(); let n = 0;
   w.on('message', m => { if (m.type !== 'res') return; const c = calls.get(m.id); if (!c) return; calls.delete(m.id); clearTimeout(c.t); m.err ? c.rej(new Error(m.err)) : c.res(m.r); });
-  w.on('error', err => console.warn('lecture du relevé (fil) :', err.message));
+  w.on('error', err => console.warn(`${label} (fil) :`, err.message));
   w.on('exit', code => {
-    for (const c of calls.values()) { clearTimeout(c.t); c.rej(new Error('lecture arrêtée')); }
-    calls.clear(); reader = null;
-    console.warn(`lecture du relevé : fil arrêté (${code}), relance dans 30 s`);
-    setTimeout(startReader, 30e3).unref();
+    for (const c of calls.values()) { clearTimeout(c.t); c.rej(new Error(`${label} arrêté`)); }
+    calls.clear(); set(null);
+    console.warn(`${label} : fil arrêté (${code}), relance dans 30 s`);
+    setTimeout(() => startHelper(file, label, set), 30e3).unref();
   });
-  reader = {
+  set({
     call: (fn, ...args) => new Promise((res, rej) => {
       const id = ++n, t = setTimeout(() => { calls.delete(id); rej(new Error('délai dépassé')); }, 30e3);
       calls.set(id, { res, rej, t }); w.postMessage({ type: 'call', id, fn, args });
     }),
-  };
+  });
 }
 if (process.env.CRAWL !== 'off') {
   try { startCrawlWorker(); } catch (err) { console.warn('relevé serveur indisponible :', err.message); }
-  try { startReader(); } catch (err) { console.warn('lecture du relevé indisponible :', err.message); }
+  try { startHelper('./hs-reader.mjs', 'lecture du relevé', x => { reader = x; }); } catch (err) { console.warn('lecture du relevé indisponible :', err.message); }
+  try { startStats(); } catch (err) { console.warn('statistiques indisponibles :', err.message); }
 }
 const crawlRoute = hsRoutes({ getCrawl: () => crawl, send, cors, validKey, regions: REGIONS });
 

@@ -51,7 +51,8 @@ return async function crawlRoute(req, res, url) {
     }
     else if (p === '/hs/stats') {
       const s = await crawl.call('stats', regionOf(url), rsParam(url));
-      s ? sendPublic(req, res, s, 600) : send(res, 404, { error: 'inconnu' }, cors);
+      // null : premier calcul pas encore fini (quelques minutes après un premier démarrage)
+      s ? sendPublic(req, res, s, 600) : send(res, 503, { error: 'statistiques en préparation' }, { ...cors, 'Retry-After': '120' });
     }
     else if (p === '/hs/search') sendPublic(req, res, { results: await crawl.call('search', String(url.searchParams.get('q') || '').slice(0, 40), 20, rsParam(url)) }, 60);
     else if (p === '/hs/rsinfo') await sendHs(req, res, url, 600, () => crawl.call('rsinfo', regionOf(url)));
