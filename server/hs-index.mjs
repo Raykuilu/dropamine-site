@@ -94,7 +94,8 @@ const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] != null).map(
 // (ré)indexe un personnage lu : colonnes pré-calculées et lignes de classement
 export function indexChar(db, key) {
   const row = st(db, 'SELECT key, region, data FROM chars WHERE key = ?').get(key);
-  st(db, 'DELETE FROM sk WHERE key = ?').run(key);
+  // le Score global (skill = 'score') est refait en tâche de fond pour tout le monde (hs-stats.mjs) : gardé ici tant que la fiche existe
+  st(db, row?.data ? "DELETE FROM sk WHERE key = ? AND skill != 'score'" : 'DELETE FROM sk WHERE key = ?').run(key);
   if (!row?.data) { st(db, 'UPDATE chars SET rs = NULL, g1 = NULL, g7 = NULL, hk = NULL, prof = NULL WHERE key = ?').run(key); return; }
   const hist = st(db, 'SELECT d, t, s FROM hist WHERE key = ? ORDER BY d').all(key);
   writeIndex(db, key, row.region, merged(db, key, JSON.parse(row.data)), hist);

@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { charByKey, searchChars, guildMembers, rankPage } from './crawl.mjs';
 import { rulesetCounts, rankList, guildList, guildSkillList, guildFull, movers, meDash, ranksOf } from './hs-index.mjs';
 import { dayOf } from './crawl-lib.mjs';
-import { wall, weekSkill, quantiles, compare } from './hs-stats.mjs';
+import { wall, weekSkill, quantiles, compare, scoreParts } from './hs-stats.mjs';
 
 const FILE = join(workerData.stateDir, 'crawl.db');
 let db = null;
@@ -30,6 +30,7 @@ export const READS = {
   weekSkill: o => weekSkill(base(), { ...o, today: dayOf() }),
   quantiles: o => quantiles(base(), o),
   compare: o => compare(base(), o),
+  scoreParts: k => scoreParts(base(), k),
   movers: o => movers(base(), { ...o, today: dayOf() }),
   meDash: keys => meDash(base(), keys, k => charByKey(base(), k)),
   ranks: k => ranksOf(base(), k),

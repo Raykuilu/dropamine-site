@@ -364,7 +364,7 @@ function startCrawlWorker() {
   };
 }
 // fil de lecture : connexion SQLite en lecture seule, jamais bloquée par les écritures du relevé
-const READ_FNS = new Set(['search', 'rsinfo', 'rankList', 'guilds', 'guildSkills', 'wall', 'weekSkill', 'quantiles', 'compare', 'movers', 'meDash', 'ranks', 'guildFull', 'char', 'guild', 'rank']);
+const READ_FNS = new Set(['search', 'rsinfo', 'rankList', 'guilds', 'guildSkills', 'wall', 'weekSkill', 'quantiles', 'compare', 'scoreParts', 'movers', 'meDash', 'ranks', 'guildFull', 'char', 'guild', 'rank']);
 let reader = null, statsW = null, STATS = null;
 // /hs/stats : réponse immédiate depuis la dernière version reçue du fil des statistiques (null : premier calcul en cours)
 const statsOf = (r, rs) => !STATS ? null : rs == null ? (STATS.by[r] ?? null) : (STATS.by[r + '/' + rs] ?? { rs, n: 0, empty: true });

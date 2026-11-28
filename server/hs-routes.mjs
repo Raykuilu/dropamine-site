@@ -29,7 +29,7 @@ function hsCached(key, ttl, fn) {
 const intParam = (url, k, def, min, max) => { const v = Math.floor(+url.searchParams.get(k)); return url.searchParams.has(k) && Number.isFinite(v) && v >= min ? Math.min(v, max) : def; };
 const rsParam = url => { const v = +url.searchParams.get('rs'); return [1, 2, 3, 15].includes(v) ? v : null; };
 const facParam = url => { const f = url.searchParams.get('fac'); return f === 'ALLIANCE' || f === 'HORDE' ? f : null; };
-const SKILL_RE = /^(total|level|defense|hk|kd|duels|hpk|pvprank|killingBlows|kills|quests|dungeons|flights|clog|ach|played|rsession|rday|rhour|rcombo|w[a-z0-9]{2,12}|p\d{2,4})$/;
+const SKILL_RE = /^(score|total|level|defense|hk|kd|duels|hpk|pvprank|killingBlows|kills|quests|dungeons|flights|clog|ach|played|rsession|rday|rhour|rcombo|w[a-z0-9]{2,12}|p\d{2,4})$/;
 async function sendHs(req, res, url, ttl, fn) {
   const r = await hsCached(url.pathname + '?' + [...url.searchParams].sort().map(([k, v]) => k + '=' + v).join('&'), ttl, fn);
   sendPublic(req, res, r.body, Math.min(ttl, 120), r);
@@ -104,7 +104,7 @@ return async function crawlRoute(req, res, url) {
     else if (p === '/hs/char') {
       const k = String(url.searchParams.get('k') || '').toLowerCase();
       const c = validKey(k) ? await crawl.call('char', k) : null;
-      if (c && url.searchParams.get('ranks') === '1') c.ranks = await crawl.call('ranks', k);   // rang dans chaque classement, dans son type
+      if (c && url.searchParams.get('ranks') === '1') { c.ranks = await crawl.call('ranks', k); c.scoreParts = await crawl.call('scoreParts', k); }   // + détail du Score global   // rang dans chaque classement, dans son type
       c ? sendPublic(req, res, c, 300) : send(res, 404, { error: 'inconnu' }, cors);
     }
     else if (p === '/hs/lookup') {

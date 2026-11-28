@@ -11,7 +11,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
-import { openStats, recordCaps, backfillCaps, purgeCaps, wall, weekSkill, quantiles, compare } from './hs-stats.mjs';
+import { openStats, recordCaps, backfillCaps, purgeCaps, wall, weekSkill, quantiles, compare, computeScores, scoreParts } from './hs-stats.mjs';
 import { openIndex, indexChar, indexStale, reindexAll, loadOverlay, refreshGuilds, rulesetCounts, pickRs, rankList, guildList, guildSkillList, guildFull, movers, meDash, merged, ranksOf } from './hs-index.mjs';
 import { CRAWL, SRC_PRIO, dayOf, isoDay, charKey, validCharKey, nextVisit, rosterMembers, crawlPlayer, histPoint, moved, discoverOrder, crawlEta, lookupSlug, HOUR_CAP, HOUR_MAX, slowDown, speedUp, regMode } from './crawl-lib.mjs';
 
@@ -342,14 +342,16 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
       db.exec('BEGIN'); try { for (const k of keys) indexChar(db, k); db.exec('COMMIT'); } catch (err) { db.exec('ROLLBACK'); throw err; }
     } catch (err) { log.warn('inscrits (reg.json) :', err.message); }
   }
+  // Score global : refait pour tout le monde toutes les 30 min (quelques secondes ; seul le relevé attend, jamais le site)
+  function scores() { try { const t = Date.now(), n = computeScores(db); log.info?.(`score global : ${n} personnages, ${Date.now() - t} ms`); } catch (err) { log.warn('score global :', err.message); } }
   function guildsAgg() { try { refreshGuilds(db); } catch (err) { log.warn('guildes agrégées :', err.message); } }
   (async () => {
     await settings(); await seed(); purgeOld(db);
     // index des classements : refait en entier si sa version a changé (par lots, le fil reste disponible)
     if (indexStale(db)) { try { const n = await reindexAll(db); log.info?.(`index des classements : ${n} personnages`); } catch (err) { log.warn('index des classements :', err.message); } }
     try { const n = backfillCaps(db); if (n) log.info?.(`caps (page Stats) : ${n} amorcés depuis l'historique`); } catch (err) { log.warn('caps :', err.message); }
-    await overlay(); guildsAgg();
-    timers.push(setInterval(overlay, 3600e3), setInterval(guildsAgg, 10 * 60e3));
+    await overlay(); guildsAgg(); scores();
+    timers.push(setInterval(overlay, 3600e3), setInterval(guildsAgg, 10 * 60e3), setInterval(scores, 30 * 60e3));
     timers.push(setInterval(() => { rate = speedUp(rate, target, Date.now() - last429); }, 60e3), setInterval(settings, 10 * 60e3), setInterval(seed, 6 * 3600e3), setInterval(() => purgeOld(db), 6 * 3600e3));
     timers.forEach(t => t.unref?.());
     for (let i = 0; i < 12; i++) worker();
@@ -377,6 +379,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     weekSkill: o => weekSkill(db, { ...o, today: dayOf() }),
     quantiles: o => quantiles(db, o),
     compare: o => compare(db, o),
+    scoreParts: k => scoreParts(db, k),
     movers: o => movers(db, { ...o, today: dayOf() }),
     meDash: keys => meDash(db, keys, k => charByKey(db, k)),
     ranksOf: (key, skills) => ranksOf(db, key, skills),

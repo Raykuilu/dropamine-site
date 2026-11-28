@@ -30,6 +30,7 @@ const API = {
   weekSkill: o => crawl.weekSkill(o),
   quantiles: o => crawl.quantiles(o),
   compare: o => crawl.compare(o),
+  scoreParts: k => crawl.scoreParts(k),
   movers: o => crawl.movers(o),
   meDash: keys => crawl.meDash(keys),
   ranks: k => crawl.ranksOf(k),

@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openCrawlDb, saveChar, purgeOld } from './crawl.mjs';
 import { rankList } from './hs-index.mjs';
-import { capsOf, backfillCaps, wall, weekSkill, weekSkillOf, WEEK_SKILLS, quantiles, compare } from './hs-stats.mjs';
+import { capsOf, backfillCaps, wall, weekSkill, weekSkillOf, WEEK_SKILLS, quantiles, compare, computeScores, scoreParts } from './hs-stats.mjs';
+import { indexChar, ranksOf } from './hs-index.mjs';
 
 const P = (key, o = {}) => ({ key, region: key.split('/')[0], slug: key.split('/')[1], name: key.split('/')[1].split('-')[0], surname: 'zed', classId: 1, raceId: 1,
   faction: 'ALLIANCE', rulesetId: 1, level: 60, total: 1000, max: 2460, defense: 300, weaponList: [], professions: [{ id: 356, skill: 100 }],
@@ -74,4 +75,29 @@ test('centiles par type et par classe ; face-à-face ; Leveling', () => {
   assert.equal(c.types[1].n, 40); assert.equal(c.types[1].l60, 30); assert.equal(c.types[3].n, 1); assert.ok(c.types[3].small);
   const lv = rankList(db, { region: 'eu', rs: 1, low: true });
   assert.equal(lv.total, 10); assert.equal(lv.rows[0].p.level, 39);
+});
+
+test('Score global : moyenne des notes, K/D facultatif, deux meilleurs métiers, sans armes, types séparés', () => {
+  const db = openCrawlDb(':memory:'), today = MON;
+  // A meilleur partout ; B moyen ; C faible sans JcJ (pas de K/D : pas pénalisé, juste absent) ; D dans un autre type
+  saveChar(db, P('eu/aa-z', { total: 2400, level: 60, defense: 300, weaponList: [{ id: 'swords', rank: 300 }], professions: [{ id: 186, skill: 300 }, { id: 182, skill: 300 }],
+    stats: { hk: 900, pvpDeaths: 100, duelsWon: 50, killingBlows: 500, kills: 9000, quests: 400, dungeons: 30, flights: 80 } }), today);
+  saveChar(db, P('eu/bb-z', { total: 1800, level: 50, defense: 250, weaponList: [{ id: 'swords', rank: 200 }], professions: [{ id: 186, skill: 150 }],
+    stats: { hk: 100, pvpDeaths: 100, duelsWon: 5, killingBlows: 50, kills: 3000, quests: 200, dungeons: 10, flights: 20 } }), today);
+  saveChar(db, P('eu/cc-z', { total: 900, level: 30, defense: 150, weaponList: [], professions: [], stats: { kills: 500, quests: 50 } }), today);
+  saveChar(db, P('eu/dd-z', { total: 2460, rulesetId: 3 }), today);
+  assert.equal(computeScores(db), 4);
+  const r = rankList(db, { region: 'eu', rs: 1, skill: 'score' });
+  assert.deepEqual(r.rows.map(x => x.p.key), ['eu/aa-z', 'eu/bb-z', 'eu/cc-z']);
+  assert.ok(r.rows[0].v > r.rows[1].v && r.rows[1].v > r.rows[2].v);
+  assert.ok(r.rows.every(x => x.v >= 0 && x.v <= 100));
+  const a = scoreParts(db, 'eu/aa-z'), c = scoreParts(db, 'eu/cc-z');
+  assert.equal(a.total, 83); assert.equal(a.weapon, undefined, 'armes non comptées (rang réel des inscrits seulement)'); assert.equal(a.prof, 83);
+  assert.ok('kd' in a && !('kd' in c), 'K/D seulement s\'il existe');
+  assert.equal(c.prof, 0);
+  assert.equal(rankList(db, { region: 'eu', rs: 3, skill: 'score' }).total, 1, 'jamais mélangé');
+  // une relecture garde le score jusqu'au prochain calcul ; le rang du score sort avec les autres
+  saveChar(db, P('eu/bb-z', { total: 1810 }), today);
+  assert.equal(rankList(db, { region: 'eu', rs: 1, skill: 'score' }).total, 3);
+  assert.equal(ranksOf(db, 'eu/aa-z').score.r, 1);
 });

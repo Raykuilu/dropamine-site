@@ -11,7 +11,8 @@ const st = (db, sql) => { let m = STMTS.get(db); if (!m) STMTS.set(db, m = new M
 
 export function openStats(db) {
   db.exec(`CREATE TABLE IF NOT EXISTS ms (key TEXT NOT NULL, what TEXT NOT NULL, region TEXT, rs INTEGER, d INTEGER NOT NULL, pre INTEGER DEFAULT 0, PRIMARY KEY (key, what));
-    CREATE INDEX IF NOT EXISTS ms_list ON ms (region, rs, what, pre, d);`);
+    CREATE INDEX IF NOT EXISTS ms_list ON ms (region, rs, what, pre, d);
+    CREATE TABLE IF NOT EXISTS scp (key TEXT PRIMARY KEY, c TEXT NOT NULL);`);
 }
 
 // ------------------------------------------------------------------------------------------- caps (milestones)
@@ -135,4 +136,64 @@ export function compare(db, { region }) {
   for (const c of cls) if (types[c.rs]) types[c.rs].classes[c.cls] = c.n;
   for (const f of fac) if (types[f.rs]) types[f.rs].factions[f.faction] = f.n;
   return { region, types };
+}
+
+// ------------------------------------------------------------------------------------------- Score global
+// Une note de 0 à 100 par stat : la part des personnages du même type de royaume (et de la même région) qu'on dépasse
+// (ex æquo comptés à moitié). Le score est la moyenne de ces notes, à poids égal. Seules les stats que l'armurerie donne
+// pour tout le monde comptent (pas celles des inscrits) : ainsi personne n'est avantagé par l'addon.
+// - compteurs (VH, duels, coups fatals, monstres, quêtes, donjons, trajets), total, niveau, défense : absents = 0 ;
+// - ratio K/D : seulement s'il existe (20 combats au moins), sinon la note est simplement retirée de la moyenne ;
+// - armes : pas comptées (l'armurerie ne donne leur rang réel que pour les inscrits, sinon une estimation) ;
+// - métiers : moyenne des deux meilleurs, comparés à tout le type (ne pas l'avoir compte en dessous ; aucun = 0).
+// Refait en tâche de fond (fil du relevé), rangé dans sk sous skill = 'score' : tous les classements, filtres et rangs
+// existants marchent tels quels. Le détail des notes est gardé dans scp, pour l'expliquer sur la fiche.
+export const SCORE_ALL = ['total', 'level', 'defense', 'hk', 'duels', 'killingBlows', 'kills', 'quests', 'dungeons', 'flights'];
+export const SCORE_OPT = ['kd'];
+const pctOf = (sorted, v, absent, n) => {
+  let lo = 0, hi = sorted.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (sorted[m] < v) lo = m + 1; else hi = m; }
+  let eq = lo; while (eq < sorted.length && sorted[eq] === v) eq++;
+  return n ? 100 * (absent + lo + (eq - lo) / 2) / n : 0;
+};
+export function computeScores(db) {
+  db.exec('CREATE TABLE IF NOT EXISTS scp (key TEXT PRIMARY KEY, c TEXT NOT NULL)');
+  const types = st(db, 'SELECT DISTINCT region, rs FROM sk WHERE skill = \'total\'').all();
+  const rows = [], parts = [];
+  for (const { region, rs } of types) {
+    const by = new Map(), people = new Map();
+    // une seule lecture : toutes les valeurs du type, par compétence et par personnage
+    for (const r of st(db, "SELECT skill, v, key, cls, fac FROM sk WHERE region = ? AND rs = ? AND skill != 'score' AND skill NOT LIKE '~%'").iterate(region, rs)) {
+      (by.get(r.skill) ?? by.set(r.skill, []).get(r.skill)).push(r.v);
+      const p = people.get(r.key) ?? people.set(r.key, { cls: r.cls, fac: r.fac, v: {} }).get(r.key);
+      p.v[r.skill] = r.v;
+    }
+    for (const [k, p] of people) if (p.v.total == null) people.delete(k);   // classé seulement avec un total
+    for (const vs of by.values()) vs.sort((a, b) => a - b);
+    const n = people.size;
+    for (const [key, p] of people) {
+      const c = {};
+      for (const sk of SCORE_ALL) { const vs = by.get(sk) ?? []; c[sk] = p.v[sk] != null ? pctOf(vs, p.v[sk], n - vs.length, n) : 100 * (n - vs.length) / 2 / n; }
+      for (const sk of SCORE_OPT) if (p.v[sk] != null) { const vs = by.get(sk); c[sk] = pctOf(vs, p.v[sk], 0, vs.length); }
+      const pr = Object.keys(p.v).filter(k => /^p\d+$/.test(k)).map(k => pctOf(by.get(k), p.v[k], n - by.get(k).length, n)).sort((a, b) => b - a);
+      c.prof = ((pr[0] ?? 0) + (pr[1] ?? 0)) / 2;
+      const vals = Object.values(c), score = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10;
+      rows.push([region, rs, score, key, p.cls, p.fac]);
+      parts.push([key, JSON.stringify(Object.fromEntries(Object.entries(c).map(([k, v]) => [k, Math.round(v)])))]);
+    }
+  }
+  db.exec('BEGIN');
+  try {
+    db.exec("DELETE FROM sk WHERE skill = 'score'; DELETE FROM scp");
+    const ins = st(db, "INSERT OR REPLACE INTO sk (region, rs, skill, v, key, cls, fac, g1, g7) VALUES (?, ?, 'score', ?, ?, ?, ?, 0, 0)");
+    for (const r of rows) ins.run(...r);
+    const ip = st(db, 'INSERT OR REPLACE INTO scp (key, c) VALUES (?, ?)');
+    for (const p of parts) ip.run(...p);
+    db.exec('COMMIT');
+  } catch (err) { db.exec('ROLLBACK'); throw err; }
+  return rows.length;
+}
+// détail du score d'un personnage (notes de 0 à 100 par stat), pour la fiche
+export function scoreParts(db, key) {
+  try { const r = st(db, 'SELECT c FROM scp WHERE key = ?').get(key); return r ? JSON.parse(r.c) : null; } catch { return null; }
 }
