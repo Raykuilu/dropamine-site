@@ -10018,6 +10018,44 @@
       "c": "WARLOCK",
       "s": "x",
       "d": 20784
+    },
+    "eu/almatankia-tunnan": {
+      "l": 23,
+      "c": "PALADIN",
+      "g": "Hope to Hit",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/madjoker-lefabulousse": {
+      "l": 1,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/arcavius-greywood": {
+      "l": 1,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/sélénia-elwynn": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/diane-ostic": {
+      "l": 1,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/carlito-totor": {
+      "l": 60,
+      "c": "SHAMAN",
+      "g": "Murmures",
+      "s": "x",
+      "d": 20784
     }
   }
 }
