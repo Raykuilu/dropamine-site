@@ -600,7 +600,11 @@
   "gmSub": "{n} de nivel 60",
   "ytPlay": "Reproducir el vídeo",
   "ytCap": "Comparte tu lista de caza, encuentra tu grupo",
-  "previewNoteCrawl": "Leído automáticamente de la armería pública de Forever. ¿Eres tú? <a href=\"?p=join\" data-view-link=\"join\">Inicia sesión</a> para inscribirte con una puntuación exacta, o para ocultarlo."
+  "previewNoteCrawl": "Leído automáticamente de la armería pública de Forever. ¿Eres tú? <a href=\"?p=join\" data-view-link=\"join\">Inicia sesión</a> para inscribirte con una puntuación exacta, o para ocultarlo.",
+  "lookupBtn": "Buscar «{q}» en la armería",
+  "lookupWait": "Buscando en la armería…",
+  "lookupNone": "No encontrado en la armería (revisa la ortografía y la región)",
+  "lookupLimit": "Demasiadas búsquedas, vuelve a intentarlo en una hora"
  },
  "names": {
   "Leatherworking": "Peletería",

@@ -246,6 +246,9 @@ const I18N = {
   member: ['MEMBER', 'MEMBRE'], guildH: ['GUILD', 'GUILDE'], members: ['MEMBERS', 'INSCRITS'], d7: ['7 D', '7 J'],
   est: ['estimated', 'estimé'], preview: ['preview', 'aperçu'],
   sealPreview: ['GUILD PREVIEW · NOT REGISTERED', 'APERÇU DE GUILDE · NON INSCRIT'],
+  lookupBtn: ['Look up “{q}” in the armory', 'Chercher « {q} » dans l’armurerie'], lookupWait: ['Searching the armory…', 'Recherche dans l’armurerie…'],
+  lookupNone: ['Not found in the armory (check the spelling and the region)', 'Introuvable dans l’armurerie (vérifie l’orthographe et la région)'],
+  lookupLimit: ['Too many lookups, try again in an hour', 'Trop de recherches, réessaie dans une heure'],
   previewNoteCrawl: ['Read automatically from the public Forever armory. Is it you? <a href="?p=join" data-view-link="join">Sign in</a> to register for an exact score, or to hide it.',
     "Relevé automatiquement dans l'armurerie publique de Forever. C'est toi ? <a href=\"?p=join\" data-view-link=\"join\">Connecte-toi</a> pour t'inscrire avec un score exact, ou pour le masquer."],
   previewNote: ['Shown because their guild is followed. Is it you? <a href="?p=join" data-view-link="join">Sign in</a> to register for an exact score, or to hide it.',
@@ -2930,21 +2933,38 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
 
 /* ---------- Recherche ---------- */
 (function search() {
-  const input = $('#q'), box = $('#suggest'); let hits = [], hl = 0;
+  const input = $('#q'), box = $('#suggest'); let hits = [], hl = 0, look = '';   // look : '' | wait | none | limit
+  // « Prénom Nom » complet et absent des résultats : proposer de le chercher directement dans l'armurerie (api /hs/lookup)
+  const fullName = v => { const w = v.trim().split(/\s+/); return w.length === 2 && w.every(x => /^\p{L}{2,16}$/u.test(x)) ? w.join(' ') : null; };
+  const withLookup = () => { const n = fullName(input.value), f = n && fold(n); hits = hits.filter(h => !h.lookup);
+    if (f && !hits.some(h => fold(`${h.name} ${h.surname}`) === f)) hits = [...hits.slice(0, 7), { lookup: n }]; };
   const fold = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const draw = () => {
-    box.innerHTML = hits.length ? hits.map((p, i) => `<a href="?p=char&c=${esc(pkey(p))}" class="${i === hl ? 'hl' : ''}" data-key="${esc(pkey(p))}">${full(p)}<small>${esc((p.region || 'eu').toUpperCase())} · ${who(p)}</small></a>`).join('')
+    box.innerHTML = hits.length ? hits.map((p, i) => p.lookup
+      ? `<a href="#" class="lookup${i === hl ? ' hl' : ''}" data-lookup="1">${look === 'wait' ? `<i class="spin" aria-hidden="true"></i>${t('lookupWait')}` : `🔎 ${t('lookupBtn', { q: esc(p.lookup) })}`}${look === 'none' || look === 'limit' ? `<small>${t(look === 'none' ? 'lookupNone' : 'lookupLimit')}</small>` : ''}</a>`
+      : `<a href="?p=char&c=${esc(pkey(p))}" class="${i === hl ? 'hl' : ''}" data-key="${esc(pkey(p))}">${full(p)}<small>${esc((p.region || 'eu').toUpperCase())} · ${who(p)}</small></a>`).join('')
       : `<div class="none">${t('noSearch')}</div>`;
     box.classList.toggle('on', input.value.trim().length > 0);
   };
-  const pick = p => { input.value = ''; box.classList.remove('on'); input.blur(); go({ view: 'char', c: pkey(p), region: p.region || 'eu' }); };
+  const pick = p => {
+    if (p.lookup) {
+      if (look === 'wait') return;
+      look = 'wait'; draw();
+      fetch(`${API}/hs/lookup?r=${encodeURIComponent(state.region)}&n=${encodeURIComponent(p.lookup)}`).then(async r => {
+        if (r.ok) { const c = await r.json(); SERVER_CHARS.set(c.key, Object.assign(c, { _full: true, _server: true })); look = ''; pick(c); return; }
+        look = r.status === 429 ? 'limit' : 'none'; draw();
+      }).catch(() => { look = 'none'; draw(); });
+      return;
+    }
+    input.value = ''; box.classList.remove('on'); input.blur(); go({ view: 'char', c: pkey(p), region: p.region || 'eu' });
+  };
   input.addEventListener('focus', () => { if (DATA.partial) loadFull().then(() => { if (input.value.trim()) input.dispatchEvent(new Event('input')); }); });
   let srvT = 0, srvQ = '';
   input.addEventListener('input', () => {
     if (DATA.partial) loadFull().then(() => { if (!DATA.partial) input.dispatchEvent(new Event('input')); });
-    const q = fold(input.value.trim()); hl = 0;
+    const q = fold(input.value.trim()); hl = 0; look = '';
     hits = q ? DATA.players.filter(p => fold(`${p.name} ${p.surname} ${p.slug}`).includes(q)).slice(0, 8) : [];
-    draw();
+    withLookup(); draw();
     clearTimeout(srvT);
     if (q.length >= 2 && hits.length < 8) srvT = setTimeout(() => {
       srvQ = q;
@@ -2952,7 +2972,7 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
         if (srvQ !== fold(input.value.trim()) || !j?.results) return;
         const seen = new Set(hits.map(pkey));
         const more = j.results.filter(r => !seen.has(r.key)).map(r => ({ ...r, guild: r.guild ? { name: r.guild } : null, _srv: true }));
-        hits = [...hits, ...more].slice(0, 8); draw();
+        hits = [...hits.filter(h => !h.lookup), ...more].slice(0, 8); withLookup(); draw();
       });
     }, 250);
   });
@@ -2962,8 +2982,8 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
     else if (e.key === 'Enter' && hits[hl]) pick(hits[hl]);
     else if (e.key === 'Escape') { box.classList.remove('on'); input.blur(); }
   });
-  box.addEventListener('mousedown', e => { const a = e.target.closest('a[data-key]'); if (a) { e.preventDefault(); const p = hits.find(h => pkey(h) === a.dataset.key) || DATA.players.find(h => pkey(h) === a.dataset.key); if (p) pick(p); } });
-  input.addEventListener('blur', () => setTimeout(() => box.classList.remove('on'), 120));
+  box.addEventListener('mousedown', e => { if (e.target.closest('a[data-lookup]')) { e.preventDefault(); const l = hits.find(h => h.lookup); if (l) pick(l); return; } const a = e.target.closest('a[data-key]'); if (a) { e.preventDefault(); const p = hits.find(h => pkey(h) === a.dataset.key) || DATA.players.find(h => pkey(h) === a.dataset.key); if (p) pick(p); } });
+  input.addEventListener('blur', () => setTimeout(() => { if (look !== 'wait') box.classList.remove('on'); }, 120));
 })();
 
 /* ---------- Démo (poste de développement seulement) : ?demo=1 ----------

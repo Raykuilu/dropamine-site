@@ -4,7 +4,7 @@ import { score, pickStats, skillSnapshot } from '../scripts/build.mjs';
 
 export const DAY = 864e5;
 export const CRAWL = {
-  RATE: 6,              // appels Blizzard par seconde (≈ 21 600 / h ; limite Blizzard 36 000 / h, partagée avec la mise à jour GitHub)
+  RATE: 8,              // appels Blizzard par seconde (≈ 28 800 / h ; limite Blizzard 36 000 / h, la mise à jour GitHub ne lit plus que les inscrits)
   RATE_MAX: 9,          // plafond du réglage admin (≈ 32 400 / h)
   CALLS_CHAR: 5,        // profil, métiers, équipement, statistiques, statistiques de hauts faits
   MIN_LEVEL: 10,        // l'armurerie ne montre rien en dessous
@@ -21,6 +21,12 @@ export const isoDay = d => new Date(d * DAY).toISOString().slice(0, 10);
 
 // clé « région/slug » valide (le slug Forever est « prénom-nom »)
 export const charKey = (region, slug) => `${region}/${String(slug).toLowerCase()}`;
+// « Prénom Nom » tapé dans la recherche → slug de l'armurerie Forever (« prénom-nom », accents gardés) ; null si ce n'est pas un nom complet
+export function lookupSlug(text) {
+  const w = String(text ?? '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (w.length !== 2 || !w.every(x => /^\p{L}{2,16}$/u.test(x))) return null;
+  return w.join('-');
+}
 export const validCharKey = k => typeof k === 'string' && /^(eu|us|tw)\/[^/\s]+-[^/\s]+$/.test(k) && k.length <= 80;
 
 // prochain passage d'un personnage déjà lu : souvent s'il bouge, une fois par semaine sinon (toujours bien avant 30 jours)

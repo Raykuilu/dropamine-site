@@ -276,11 +276,10 @@ export const QUEUE = { NEW: 150, REFRESH: 500, GUILDS: 10, GUILD_EVERY: 7, MAX_P
 const PRIO = { scout: 0, follow: 1, guild: 2 };
 const KEY_RE = /^(eu|us|tw)\/[^/]+-[^/]+$/;
 // mode de la mise à jour selon le relevé du serveur : off (il ne tourne pas : ancienne file d'attente),
-// hold (il tourne depuis moins de 2 jours : on garde les aperçus publiés sans les relire), publish (on publie ses actifs)
-export function serverMode(srv, day) {
+// all (il tourne : on publie tout ce qu'il a lu, sans plafond, plus les aperçus déjà publiés qu'il n'a pas encore relus)
+export function serverMode(srv) {
   const st = srv?.status;
-  if (!st || !(st.target > 0) || !Array.isArray(srv.players)) return 'off';
-  return st.since && day - st.since >= 2 ? 'publish' : 'hold';
+  return st && st.target > 0 && Array.isArray(srv.players) ? 'all' : 'off';
 }
 export const validEntryKey = k => typeof k === 'string' && KEY_RE.test(k);
 export function emptyQueue() { return { players: {}, guilds: {}, gone: {}, runs: [] }; }
@@ -418,8 +417,8 @@ async function main() {
   if (!Array.isArray(prevList)) prevList = (await readJson(join(ROOT, 'site/data/hiscores.json'), { players: [] })).players ?? [];
   // relevé du serveur (api.dropamine.app, server/crawl.mjs) : quand il tourne, c'est lui qui lit les aperçus chez Blizzard,
   // la mise à jour ne relit plus que les inscrits (la limite Blizzard de 36 000 appels / h est partagée)
-  const srv = await fetch('https://api.dropamine.app/hs/active', { signal: AbortSignal.timeout(180e3) }).then(r => r.ok ? r.json() : null).catch(() => null);
-  const mode = serverMode(srv, day);
+  const srv = await fetch('https://api.dropamine.app/hs/all', { signal: AbortSignal.timeout(300e3) }).then(r => r.ok ? r.json() : null).catch(() => null);
+  const mode = serverMode(srv);
   console.log(`relevé serveur : ${mode}${srv?.status ? ` (${srv.status.read} lus, ${srv.status.active} actifs, ${srv.status.waiting} à découvrir)` : ''}`);
   // file d'attente (mode « off ») : guildes suivies et Scout y entrent ; puis les guildes des joueurs connus (un seul niveau)
   const queue = { ...emptyQueue(), ...(await readJson(join(ROOT, 'data/queue.json'), emptyQueue())) };
@@ -453,11 +452,12 @@ async function main() {
     for (const e of fresh) delete queue.players[e.key];
   } else {
     const out = k => regKeys.has(k) || optout.has(k);
-    if (mode === 'publish') srvPlayers = srv.players.filter(p => validEntryKey(p.key) && !out(p.key));   // seulement les actifs
-    const keep = mode === 'hold' ? prevList.filter(p => p.preview && !out(p.key)) : [];                  // les premiers jours : on garde l'existant
+    srvPlayers = srv.players.filter(p => validEntryKey(p.key) && !out(p.key));                       // tout ce que le relevé a lu
+    const read = new Set(srvPlayers.map(p => p.key));
+    const keep = prevList.filter(p => p.preview && !out(p.key) && !read.has(p.key));                 // pas encore relus : gardés tels quels
     plan = { keep, refresh: [], count: keep.length + srvPlayers.length };
     run = { t: new Date().toISOString(), mode, added: 0, refreshed: 0, kept: keep.length, fresh: srvPlayers.length, previews: plan.count };
-    console.log(`aperçus : ${plan.count} (${mode === 'publish' ? 'actifs du relevé serveur' : 'gardés en attendant le relevé serveur'})`);
+    console.log(`aperçus : ${plan.count} (${srvPlayers.length} du relevé serveur, ${keep.length} gardés en attendant leur relecture)`);
   }
   // un personnage retiré ne garde pas d'historique
   for (const k of optout) { const [r, s] = k.split('/'); await rm(join(ROOT, 'data/history', r, `${s}.json`), { force: true }); }

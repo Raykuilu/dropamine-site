@@ -11,7 +11,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
-import { CRAWL, SRC_PRIO, dayOf, isoDay, charKey, validCharKey, nextVisit, rosterMembers, crawlPlayer, histPoint, moved, discoverOrder, crawlEta } from './crawl-lib.mjs';
+import { CRAWL, SRC_PRIO, dayOf, isoDay, charKey, validCharKey, nextVisit, rosterMembers, crawlPlayer, histPoint, moved, discoverOrder, crawlEta, lookupSlug } from './crawl-lib.mjs';
 
 const LOCALE = { eu: 'fr_FR', us: 'en_US', tw: 'zh_TW' };
 export const fold = s => String(s ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
@@ -121,6 +121,16 @@ const hydrate = (db, row) => {
   p.fetched = row.fetched;
   return p;
 };
+export function allPlayers(db) {
+  const hist = new Map();
+  for (const h of db.prepare('SELECT key, d, t, s, hk FROM hist ORDER BY key, d').iterate())
+    (hist.get(h.key) ?? hist.set(h.key, []).get(h.key)).push({ d: isoDay(h.d), t: h.t, s: JSON.parse(h.s), ...(h.hk != null ? { hk: h.hk } : {}) });
+  const out = [];
+  for (const r of db.prepare('SELECT key, data, fetched FROM chars WHERE data IS NOT NULL').iterate()) {
+    const p = JSON.parse(r.data); p.history = hist.get(r.key) ?? []; p.fetched = r.fetched; out.push(p);
+  }
+  return out;
+}
 export function activePlayers(db, days = CRAWL.ACTIVE_DAYS, today = dayOf()) {
   return db.prepare('SELECT key, data, fetched FROM chars WHERE active_at >= ? AND data IS NOT NULL').all(today - days).map(r => hydrate(db, r));
 }
@@ -265,7 +275,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     await settings(); await seed(); purgeOld(db);
     timers.push(setInterval(() => { if (rate < target && Date.now() - last429 > 60e3) rate++; if (rate > target) rate = target; }, 60e3), setInterval(settings, 10 * 60e3), setInterval(seed, 6 * 3600e3), setInterval(() => purgeOld(db), 6 * 3600e3));
     timers.forEach(t => t.unref?.());
-    for (let i = 0; i < 6; i++) worker();
+    for (let i = 0; i < 12; i++) worker();
   })();
   return {
     db,
@@ -276,10 +286,22 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
         seeded: db.prepare("SELECT v FROM meta WHERE k = 'seeded'").get()?.v ?? null };
     },
     active: days => activePlayers(db, days),
+    all: () => allPlayers(db),
     char: key => charByKey(db, key),
     search: (q, limit) => searchChars(db, q, limit),
     rank: (region, page, per) => rankPage(db, region, page, per),
     add: (items, src) => addChars(db, items, src),
+    // recherche directe : un joueur que le relevé ne connaît pas encore est lu tout de suite chez Blizzard (5 appels)
+    async lookup(region, name) {
+      const slug = lookupSlug(name); if (!slug || rate <= 0) return null;   // relevé coupé dans l'admin : pas d'appel Blizzard
+      const key = charKey(region, slug);
+      const known = charByKey(db, key); if (known) return known;
+      if (inflight.has(key)) { for (let i = 0; i < 40 && inflight.has(key); i++) await sleep(500); return charByKey(db, key); }
+      addChars(db, [{ key }], 'scout');
+      inflight.add(key);
+      try { await readChar({ key, region, slug }); } finally { inflight.delete(key); }
+      return charByKey(db, key);
+    },
     stop() { stopped = true; timers.forEach(clearInterval); },
   };
 }

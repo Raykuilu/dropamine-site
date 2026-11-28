@@ -600,7 +600,11 @@
   "gmSub": "{n} al livello 60",
   "ytPlay": "Guarda il video",
   "ytCap": "Condividi la tua lista di caccia, trova il tuo gruppo",
-  "previewNoteCrawl": "Letto automaticamente dall'armeria pubblica di Forever. Sei tu? <a href=\"?p=join\" data-view-link=\"join\">Accedi</a> per iscriverti con un punteggio esatto, o per nasconderlo."
+  "previewNoteCrawl": "Letto automaticamente dall'armeria pubblica di Forever. Sei tu? <a href=\"?p=join\" data-view-link=\"join\">Accedi</a> per iscriverti con un punteggio esatto, o per nasconderlo.",
+  "lookupBtn": "Cerca «{q}» nell'armeria",
+  "lookupWait": "Ricerca nell'armeria…",
+  "lookupNone": "Non trovato nell'armeria (controlla l'ortografia e la regione)",
+  "lookupLimit": "Troppe ricerche, riprova tra un'ora"
  },
  "names": {
   "Leatherworking": "Conciatura",

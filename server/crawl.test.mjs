@@ -58,3 +58,10 @@ test('relevé : base, découverte, actifs, introuvables, 30 jours, recherche, cl
   const c = crawlCounts(db, 140);
   assert.equal(c.known, 2); assert.equal(c.read, 0); assert.equal(c.guilds, 2);
 });
+
+import { lookupSlug } from './crawl-lib.mjs';
+test('recherche directe : seulement un « Prénom Nom » complet', () => {
+  assert.equal(lookupSlug('Ray Kuilu'), 'ray-kuilu');
+  assert.equal(lookupSlug('  Dé   Monique '), 'dé-monique');
+  for (const bad of ['ray', 'a b', 'ray kuilu x', 'x<y z', 'ray-kuilu', '']) assert.equal(lookupSlug(bad), null, bad);
+});

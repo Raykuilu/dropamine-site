@@ -303,6 +303,8 @@ function sendPublic(req, res, body, maxAge = 60) {
   if (/\bgzip\b/.test(req.headers['accept-encoding'] || '')) { res.writeHead(200, { ...h, 'Content-Encoding': 'gzip' }); return res.end(gzipSync(text)); }
   res.writeHead(200, h); res.end(text);
 }
+const lookups = { hour: 0, n: 0, by: new Map() };   // quotas de la recherche directe chez Blizzard
+let allCache = null;      // export de tout ce qui est lu (mise à jour du site) : gardé 10 min, déjà compressé
 let activeCache = null;   // export des actifs (lu par la mise à jour du site) : recalculé au plus toutes les 10 min
 async function crawlRoute(req, res, url) {
   if (!url.pathname.startsWith('/hs/') || req.method !== 'GET') return false;
@@ -313,11 +315,31 @@ async function crawlRoute(req, res, url) {
     if (!activeCache || Date.now() - activeCache.at > 10 * 60e3) activeCache = { at: Date.now(), body: { at: new Date().toISOString(), status: crawl.status(), players: crawl.active() } };
     sendPublic(req, res, activeCache.body, 300);
   }
+  else if (p === '/hs/all') {
+    if (!allCache || Date.now() - allCache.at > 10 * 60e3) {
+      const text = JSON.stringify({ at: new Date().toISOString(), status: crawl.status(), players: crawl.all() });
+      allCache = { at: Date.now(), text, gz: gzipSync(text) };
+    }
+    const h = { ...cors, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=300' };
+    if (/gzip/.test(req.headers['accept-encoding'] || '')) { res.writeHead(200, { ...h, 'Content-Encoding': 'gzip' }); res.end(allCache.gz); }
+    else { res.writeHead(200, h); res.end(allCache.text); }
+  }
   else if (p === '/hs/search') sendPublic(req, res, { results: crawl.search(String(url.searchParams.get('q') || '').slice(0, 40), 20) }, 60);
   else if (p === '/hs/char') {
     const k = String(url.searchParams.get('k') || '').toLowerCase();
     const c = validKey(k) ? crawl.char(k) : null;
     c ? sendPublic(req, res, c, 300) : send(res, 404, { error: 'inconnu' }, cors);
+  }
+  else if (p === '/hs/lookup') {
+    // recherche directe chez Blizzard (5 appels) : 10 par heure et par adresse, 300 par heure en tout
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '?', hour = Math.floor(Date.now() / 3600e3);
+    if (lookups.hour !== hour) { lookups.hour = hour; lookups.n = 0; lookups.by.clear(); }
+    if (lookups.n >= 300 || (lookups.by.get(ip) || 0) >= 10) { send(res, 429, { error: 'trop de recherches, réessaie dans une heure' }, cors); return true; }
+    const r = REGIONS.includes(url.searchParams.get('r')) ? url.searchParams.get('r') : 'eu';
+    const name = String(url.searchParams.get('n') || '').slice(0, 40);
+    lookups.n++; lookups.by.set(ip, (lookups.by.get(ip) || 0) + 1);
+    const c = await crawl.lookup(r, name).catch(() => null);
+    c ? sendPublic(req, res, c, 300) : send(res, 404, { error: 'introuvable' }, cors);
   }
   else if (p === '/hs/rank') {
     const r = REGIONS.includes(url.searchParams.get('r')) ? url.searchParams.get('r') : 'eu';

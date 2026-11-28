@@ -600,7 +600,11 @@
   "gmSub": "{n} no nível 60",
   "ytPlay": "Assistir ao vídeo",
   "ytCap": "Compartilhe sua lista de caçada, encontre seu grupo",
-  "previewNoteCrawl": "Lido automaticamente do arsenal público de Forever. É você? <a href=\"?p=join\" data-view-link=\"join\">Entre</a> para se inscrever com uma pontuação exata, ou para ocultá-lo."
+  "previewNoteCrawl": "Lido automaticamente do arsenal público de Forever. É você? <a href=\"?p=join\" data-view-link=\"join\">Entre</a> para se inscrever com uma pontuação exata, ou para ocultá-lo.",
+  "lookupBtn": "Procurar “{q}” no arsenal",
+  "lookupWait": "Procurando no arsenal…",
+  "lookupNone": "Não encontrado no arsenal (verifique a grafia e a região)",
+  "lookupLimit": "Pesquisas demais, tente de novo em uma hora"
  },
  "names": {
   "Leatherworking": "Couraria",
