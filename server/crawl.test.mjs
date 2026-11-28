@@ -71,3 +71,14 @@ test('recherche directe : seulement un « Prénom Nom » complet', () => {
   assert.equal(lookupSlug('  Dé   Monique '), 'dé-monique');
   for (const bad of ['ray', 'a b', 'ray kuilu x', 'x<y z', 'ray-kuilu', '']) assert.equal(lookupSlug(bad), null, bad);
 });
+
+import { slowDown, speedUp, regMode, HOUR_CAP } from './crawl-lib.mjs';
+test('régulateur : refus → débit / 2, remontée d’un demi-cran par minute, modes', () => {
+  assert.equal(slowDown(9), 4.5); assert.equal(slowDown(1.5), 1, 'jamais sous 1 appel / s');
+  assert.equal(speedUp(4.5, 9, 30e3), 4.5, 'moins d’une minute après un refus : on attend');
+  assert.equal(speedUp(4.5, 9, 61e3), 5); assert.equal(speedUp(8.8, 9, 61e3), 9); assert.equal(speedUp(9, 6, 61e3), 6, 'réglage baissé dans l’admin');
+  assert.equal(regMode({ rate: 9, target: 9, hourCalls: HOUR_CAP, manualLastMin: 0 }), 'pause');
+  assert.equal(regMode({ rate: 4.5, target: 9, hourCalls: 1000, manualLastMin: 0 }), 'ralenti');
+  assert.equal(regMode({ rate: 9, target: 9, hourCalls: 1000, manualLastMin: 200 }), 'afflux');
+  assert.equal(regMode({ rate: 9, target: 9, hourCalls: 1000, manualLastMin: 10 }), 'normal');
+});

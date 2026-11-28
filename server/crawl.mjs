@@ -11,7 +11,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
-import { CRAWL, SRC_PRIO, dayOf, isoDay, charKey, validCharKey, nextVisit, rosterMembers, crawlPlayer, histPoint, moved, discoverOrder, crawlEta, lookupSlug } from './crawl-lib.mjs';
+import { CRAWL, SRC_PRIO, dayOf, isoDay, charKey, validCharKey, nextVisit, rosterMembers, crawlPlayer, histPoint, moved, discoverOrder, crawlEta, lookupSlug, HOUR_CAP, HOUR_MAX, slowDown, speedUp, regMode } from './crawl-lib.mjs';
 
 const LOCALE = { eu: 'fr_FR', us: 'en_US', tw: 'zh_TW' };
 export const fold = s => String(s ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
@@ -196,21 +196,30 @@ export function crawlCounts(db, today = dayOf()) {
 export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = console }) {
   mkdirSync(stateDir, { recursive: true });
   const db = openCrawlDb(join(stateDir, 'crawl.db'));
-  let target = CRAWL.RATE, rate = CRAWL.RATE, last429 = 0, bucket = 0, lastFill = Date.now(), tok = null, tokExp = 0, stopped = false, busy = 0, errors = 0, lastErr = null, refused = 0;
+  let target = CRAWL.RATE, rate = CRAWL.RATE, last429 = 0, bucket = 0, lastFill = Date.now(), tok = null, tokExp = 0, stopped = false, busy = 0, errors = 0, lastErr = null, refused = 0, manualWaiting = 0;
+  const manualMin = new Array(60).fill(0);   // appels faits pour des visiteurs, par minute
   const minutes = new Array(60).fill(0), minuteOf = () => Math.floor(Date.now() / 60e3);
   let curMin = minuteOf();
-  const count = n => { const m = minuteOf(); while (curMin < m) { curMin++; minutes[curMin % 60] = 0; } minutes[m % 60] += n; };
+  const count = (n, manual) => { const m = minuteOf(); while (curMin < m) { curMin++; minutes[curMin % 60] = 0; manualMin[curMin % 60] = 0; } minutes[m % 60] += n; if (manual) manualMin[m % 60] += n; };
+  const manualLastMin = () => { count(0); return manualMin[curMin % 60] + manualMin[(curMin + 59) % 60]; };
   const callsLastHour = () => { count(0); return minutes.reduce((a, b) => a + b, 0); };
   const callsLast10 = () => { count(0); let n = 0; for (let i = 1; i <= 10; i++) n += minutes[(curMin - i + 60) % 60]; return n; };
   const inflight = new Set();
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  async function take(n) {                                   // seau de jetons : `rate` appels par seconde au plus
-    for (;;) {
-      if (stopped) throw new Error('arrêté');
-      const now = Date.now(); bucket = Math.min(rate * 2, bucket + (now - lastFill) / 1000 * rate); lastFill = now;
-      if (rate > 0 && bucket >= n) { bucket -= n; count(n); return; }
-      await sleep(rate > 0 ? Math.max(50, (n - bucket) / rate * 1000) : 5000);
-    }
+  // seau de jetons : `rate` appels par seconde au plus. Un visiteur (recherche, fiche demandée) passe avant le relevé de fond,
+  // qui lui cède la place tant qu'un appel de visiteur attend ; au-delà de HOUR_CAP sur l'heure, le fond s'arrête.
+  async function take(n, manual = false) {
+    if (manual) manualWaiting++;
+    try {
+      for (;;) {
+        if (stopped) throw new Error('arrêté');
+        if (!manual && (manualWaiting > 0 || callsLastHour() >= HOUR_CAP)) { await sleep(manualWaiting > 0 ? 100 : 5000); continue; }
+        if (manual && callsLastHour() >= HOUR_MAX) throw new Error('limite Blizzard de l\'heure atteinte');
+        const now = Date.now(); bucket = Math.min(rate * 2, bucket + (now - lastFill) / 1000 * rate); lastFill = now;
+        if (rate > 0 && bucket >= n) { bucket -= n; count(n, manual); return; }
+        await sleep(rate > 0 ? Math.max(50, (n - bucket) / rate * 1000) : 5000);
+      }
+    } finally { if (manual) manualWaiting--; }
   }
   async function token() {
     if (tok && Date.now() < tokExp) return tok;
@@ -220,26 +229,26 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     const j = await res.json(); tok = j.access_token; tokExp = Date.now() + Math.max(60, (j.expires_in ?? 3600) - 300) * 1000;
     return tok;
   }
-  async function get(region, path) {
-    await take(1);
+  async function get(region, path, manual = false) {
+    await take(1, manual);
     const sep = path.includes('?') ? '&' : '?';
     const url = `https://${region}.api.blizzard.com${path}${sep}namespace=profile-forever-${region}&locale=${LOCALE[region] || 'en_US'}`;
     for (let attempt = 0; attempt < 3; attempt++) {
       const res = await fetch(url, { headers: { Authorization: `Bearer ${await token()}` }, signal: AbortSignal.timeout(20e3) });
       if (res.status === 404) return null;
       if (res.status === 401) { tok = null; continue; }
-      if (res.status === 429) { refused++; last429 = Date.now(); rate = Math.max(1, rate - 1); await sleep(2000 * (attempt + 1)); continue; }   // Blizzard freine : on ralentit
+      if (res.status === 429) { refused++; last429 = Date.now(); rate = slowDown(rate); await sleep(2000 * (attempt + 1)); continue; }   // Blizzard freine : débit divisé par deux
       if (!res.ok) throw new Error(`${region}${path} → ${res.status}`);
       return res.json();
     }
     throw new Error(`${region}${path} → trop de requêtes`);
   }
-  async function readChar(w) {
+  async function readChar(w, manual = false) {
     const base = `/profile/wow/character/${encodeURIComponent(w.slug)}`;
-    const profile = await get(w.region, base);
+    const profile = await get(w.region, base, manual);
     if (!profile) { goneChar(db, w.key); return; }
     const [professions, equipment, statistics, achStats] = await Promise.all([
-      get(w.region, `${base}/professions`), get(w.region, `${base}/equipment`), get(w.region, `${base}/statistics`), get(w.region, `${base}/achievements/statistics`)]);
+      get(w.region, `${base}/professions`, manual), get(w.region, `${base}/equipment`, manual), get(w.region, `${base}/statistics`, manual), get(w.region, `${base}/achievements/statistics`, manual)]);
     const player = crawlPlayer(w.region, w.slug, { profile, professions, equipment, statistics, achStats });
     const old = db.prepare('SELECT data FROM chars WHERE key = ? AND data IS NOT NULL').get(w.key);
     const prev = old ? JSON.parse(old.data) : null;
@@ -298,7 +307,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
   const timers = [];
   (async () => {
     await settings(); await seed(); purgeOld(db);
-    timers.push(setInterval(() => { if (rate < target && Date.now() - last429 > 60e3) rate++; if (rate > target) rate = target; }, 60e3), setInterval(settings, 10 * 60e3), setInterval(seed, 6 * 3600e3), setInterval(() => purgeOld(db), 6 * 3600e3));
+    timers.push(setInterval(() => { rate = speedUp(rate, target, Date.now() - last429); }, 60e3), setInterval(settings, 10 * 60e3), setInterval(seed, 6 * 3600e3), setInterval(() => purgeOld(db), 6 * 3600e3));
     timers.forEach(t => t.unref?.());
     for (let i = 0; i < 12; i++) worker();
   })();
@@ -306,7 +315,9 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     db,
     status() {
       const c = crawlCounts(db), calls = callsLastHour();
-      return { ...c, rate, target, perHour: rate * 3600, callsLastHour: calls, refused, busy, errors, lastErr,
+      const manual = manualLastMin();
+      return { ...c, rate, target, perHour: Math.round(rate * 3600), callsLastHour: calls, refused, busy, errors, lastErr,
+        mode: regMode({ rate, target, hourCalls: calls, manualLastMin: manual }), manualLastMin: manual, last429: last429 ? new Date(last429).toISOString() : null,
         etaHours: crawlEta(c.waiting, callsLast10() * 6), since: Number(db.prepare("SELECT v FROM meta WHERE k = 'since'").get()?.v ?? 0) || null,
         seeded: db.prepare("SELECT v FROM meta WHERE k = 'seeded'").get()?.v ?? null };
     },
@@ -321,7 +332,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
       const row = db.prepare('SELECT region, slug FROM chars WHERE key = ? AND gone = 0').get(key);
       if (!row || rate <= 0 || inflight.has(key)) return null;
       inflight.add(key);
-      try { await readChar({ key, region: row.region, slug: row.slug }); } finally { inflight.delete(key); }
+      try { await readChar({ key, region: row.region, slug: row.slug }, true); } finally { inflight.delete(key); }
       return charByKey(db, key);
     },
     known: region => knownCounts(db, region),
@@ -333,7 +344,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
       if (inflight.has(key)) { for (let i = 0; i < 40 && inflight.has(key); i++) await sleep(500); return charByKey(db, key); }
       addChars(db, [{ key }], 'scout');
       inflight.add(key);
-      try { await readChar({ key, region, slug }); } finally { inflight.delete(key); }
+      try { await readChar({ key, region, slug }, true); } finally { inflight.delete(key); }
       return charByKey(db, key);
     },
     stop() { stopped = true; timers.forEach(clearInterval); },

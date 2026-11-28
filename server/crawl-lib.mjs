@@ -76,6 +76,19 @@ export function discoverOrder(a, b) {
   return (SRC_PRIO[a.src] ?? 9) - (SRC_PRIO[b.src] ?? 9) || (b.level ?? 0) - (a.level ?? 0) || a.key.localeCompare(b.key);
 }
 
+// Régulateur du débit, recalculé chaque minute (comme la difficulté de Bitcoin, en très simple) :
+// un refus de Blizzard divise le débit par deux, chaque minute sans refus le remonte d'un demi-cran jusqu'au réglage ;
+// au-delà de HOUR_CAP appels sur l'heure glissante, le relevé de fond s'arrête (les visiteurs gardent leur marge jusqu'à HOUR_MAX).
+export const HOUR_CAP = 34000, HOUR_MAX = 35500;
+export const slowDown = rate => Math.max(1, rate / 2);
+export const speedUp = (rate, target, since429) => (since429 > 60e3 && rate < target ? Math.min(target, rate + 0.5) : Math.min(rate, target));
+export function regMode({ rate, target, hourCalls, manualLastMin }) {
+  if (hourCalls >= HOUR_CAP) return 'pause';
+  if (rate < target) return 'ralenti';
+  if (manualLastMin > rate * 60 * 0.2) return 'afflux';
+  return 'normal';
+}
+
 // estimations pour l'admin : débit réel et temps restant pour découvrir ce qui attend
 export function crawlEta(waiting, callsPerHour, callsPerChar = CRAWL.CALLS_CHAR) {
   const perHour = callsPerHour / callsPerChar;
