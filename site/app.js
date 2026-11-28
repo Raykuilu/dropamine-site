@@ -5,6 +5,8 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches || SHOT;
 if (SHOT) document.documentElement.classList.add('static');
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+// images : la lueur de chargement (style.css, .sk) s'arrête dès que l'image arrive ou échoue
+['load', 'error'].forEach(ev => document.addEventListener(ev, e => { if (e.target.tagName === 'IMG') e.target.classList.add('ld'); }, true));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /* ======================================================================
@@ -302,6 +304,9 @@ const I18N = {
   newsFailT: ['Unavailable', 'Indisponible'], newsFail: ["The changelog couldn't be loaded.", "Le journal des versions n'a pas pu être chargé."],
   updated: ['Hiscores updated {d}.', 'Hiscores mis à jour le {d}.'], meta: ['Version {v} · free · open source (MIT) · 7 languages', 'Version {v} · gratuit · open source (MIT) · 7 langues'],
   loading: ['Loading…', 'Chargement…'],
+  metaChar: ['Skills, progress and rank on the Dropamine Hiscores for WoW Forever {r}, checked against the official armory.', "Compétences, progression et rang sur les Hiscores Dropamine de WoW Forever {r}, vérifiés sur l'armurerie officielle."],
+  metaGuild: ['{n}: members, levels and progress of the week on the Dropamine Hiscores for WoW Forever {r}.', '{n} : membres, niveaux et progression de la semaine sur les Hiscores Dropamine de WoW Forever {r}.'],
+  metaRank: ['WoW Forever {r} Hiscores: every skill ranked, checked against the official armory.', "Hiscores de WoW Forever {r} : chaque compétence classée, vérifiée sur l'armurerie officielle."],
   title: ['Dropamine — the WoW Forever addon that celebrates every +1', "Dropamine — l'addon WoW Forever qui fête chaque +1"],
   dgSort: ["Today's best gains", 'Meilleurs gains du jour'], dgTip: ['Who gained the most since yesterday, in this ranking', 'Qui a le plus progressé depuis hier, dans ce classement'],
   dgNone: ['Nobody has gained here since yesterday yet.', "Personne n'a encore progressé ici depuis hier."],
@@ -345,7 +350,9 @@ function loadFull() {
     DATA = d;
   }).catch(() => { fullLoad = null; if (!DATA.partial) DATA = { players: [], failed: true }; });
 }
-const loadingBox = () => `<div class="empty dload"><span class="ldrop" aria-hidden="true"><span class="ld-liq"><span class="ld-fill"><i class="r"></i><i class="b"></i><i class="g"></i></span></span><img src="img/drop-frame.png" alt=""></span><span>${t('loading')}</span></div>`;
+// chargement : lignes fantômes (avatar, deux lignes de texte, score) avec une lueur, au lieu d'une page vide ; le texte reste lu par les lecteurs d'écran
+const SK_W = [[62, 38], [48, 30], [70, 44], [55, 34], [66, 40], [44, 28]];
+const loadingBox = (n = 6) => `<div class="skel" role="status" aria-busy="true"><span class="sr">${t('loading')}</span>${Array.from({ length: n }, (_, i) => `<div class="sk-row" aria-hidden="true"><i class="sk sk-c"></i><span><i class="sk sk-l" style="width:${SK_W[i % 6][0]}%"></i><i class="sk sk-l s" style="width:${SK_W[i % 6][1]}%"></i></span><i class="sk sk-n"></i></div>`).join('')}</div>`;
 const LOCALES = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES', it: 'it-IT', pt: 'pt-BR', ru: 'ru-RU' };
 const locale = () => LOCALES[LANG] || 'en-GB';
 const fmt = n => Math.round(n).toLocaleString(locale());
@@ -530,8 +537,8 @@ const full = p => `${esc(p.name)} ${esc(p.surname)}`;
 const who = p => `${esc(className(p))} ${p.level}${p.guild ? ' · ' + esc(p.guild.name) : ''}`;
 // portrait de l'armurerie ; sinon (pas encore récupéré par le relevé) l'icône de la classe, pour ne jamais laisser de trou
 const CLASS_ICON = { 1: 'warrior', 2: 'paladin', 3: 'hunter', 4: 'rogue', 5: 'priest', 7: 'shaman', 8: 'mage', 9: 'warlock', 11: 'druid' };
-const avatar = p => p.avatar ? `<img class="ava" src="${esc(p.avatar)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
-  : CLASS_ICON[p.classId] ? `<img class="ava cls" src="${icon('classicon_' + CLASS_ICON[p.classId])}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '';
+const avatar = p => p.avatar ? `<img class="ava" src="${esc(p.avatar)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`
+  : CLASS_ICON[p.classId] ? `<img class="ava cls" src="${icon('classicon_' + CLASS_ICON[p.classId])}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '';
 const pkey = p => p.key || `${p.region || 'eu'}/${p.slug}`;
 const tri = p => {
   const w = v => (100 * v / (p.max || 2460)).toFixed(1) + '%';
@@ -737,7 +744,7 @@ function renderDash() {
     return DATA.players.filter(o => o !== p && (o.dropamine?.hunt || []).some(x => !x.drops && (LOOT?.idx.get(x.id) || []).some(y => keys.has(y.d.key)))).length; };
   const huntCard = `<section class="dcard"><h3>${t('dashHunt')}</h3>${hunts.length ? `<ul class="dhunt">${hunts.slice(0, 6).map(x => { const src = (LOOT?.idx.get(x.id) || []).sort((a, b) => (b.rate || 0) - (a.rate || 0))[0];
       const n = LOOT ? others(x.id) : 0;
-      return `<li><span class="ci" data-item="${x.id}" data-boss="${esc(src ? (L2(src.b.n) || src.b.n[0]) : '')}"${src?.rate ? ` data-rate="${src.rate}"` : ''} style="--q:${QCOL[ITEMS?.[x.id]?.q] || '#8a7a5a'}"><img src="${itemIcon(x.id)}" alt="" loading="lazy" referrerpolicy="no-referrer"></span>
+      return `<li><span class="ci" data-item="${x.id}" data-boss="${esc(src ? (L2(src.b.n) || src.b.n[0]) : '')}"${src?.rate ? ` data-rate="${src.rate}"` : ''} style="--q:${QCOL[ITEMS?.[x.id]?.q] || '#8a7a5a'}"><img src="${itemIcon(x.id)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>
         <span><b>${esc(x.name)}</b><small>${src ? esc(src.d.name) + (src.rate ? ` · ${fmt(src.rate)} %` : '') : ''}${x.tries ? ` · ${t('huTries', { n: fmt(x.tries) })}` : ''}${n ? ` · <i class="also">${t('dashAlso', { n })}</i>` : ''}</small></span></li>`; }).join('')}</ul>` : `<p class="note">${t('dashNoHunt')}</p>`}</section>`;
   // 4) collection log : où j'en suis, et les donjons presque finis
   const col = d.collection;
@@ -765,7 +772,7 @@ function renderDash() {
     ...(p.weaponList || []).filter(w => !w.est && (p.equipped || []).includes(w.id)).map(w => ({ n: L2(WPN[w.id]), v: w.rank, m: 5 * p.level, ic: WPN[w.id]?.[2] })),
     { n: t('defense'), v: p.defense || 0, m: 5 * p.level, ic: DEF_ICON }]
     .filter(x => x.v > 0 && x.v < x.m).sort((a, b) => (b.v / b.m) - (a.v / a.m)).slice(0, 4);
-  const stepCard = steps.length ? `<section class="dcard"><h3>${t('dashNext')}</h3><ul class="dsteps">${steps.map(x => `<li><img src="${icon(x.ic)}" alt="" referrerpolicy="no-referrer"><span>${esc(x.n)}</span><i class="lbar"><i style="width:${(100 * x.v / x.m).toFixed(1)}%"></i></i><b>${x.v} / ${x.m}</b><small>${t('dashLeft', { n: x.m - x.v })}</small></li>`).join('')}</ul></section>` : '';
+  const stepCard = steps.length ? `<section class="dcard"><h3>${t('dashNext')}</h3><ul class="dsteps">${steps.map(x => `<li><img src="${icon(x.ic)}" alt="" decoding="async" referrerpolicy="no-referrer"><span>${esc(x.n)}</span><i class="lbar"><i style="width:${(100 * x.v / x.m).toFixed(1)}%"></i></i><b>${x.v} / ${x.m}</b><small>${t('dashLeft', { n: x.m - x.v })}</small></li>`).join('')}</ul></section>` : '';
   box.innerHTML = `${chooser}${hero}${startCard(me)}${syncCard(p, myRuns)}${raidBanner()}<div class="dgrid">${runsCard}${huntCard}${colCard}${stepCard}${guildCard}</div>
     <p class="dash-more"><a class="lnk" data-dash-intro>${t('dashAbout')}</a></p>`;
   return true;
@@ -788,7 +795,7 @@ function renderHome() {
   // connecté : ton meilleur personnage, sous le top 5 s'il n'y figure pas
   const me = all.find(x => pkey(x.p) === Bnet.best());
   const you = me && !top.includes(me) ? `<div class="you-sep">${t('youHere')}</div>${line(me, ' you')}` : '';
-  $('#home-top').innerHTML = DATA.loading ? loadingBox() : DATA.failed ? failed() : top.length
+  $('#home-top').innerHTML = DATA.loading ? loadingBox(5) : DATA.failed ? failed() : top.length
     ? top.map(x => line(x, pkey(x.p) === Bnet.best() ? ' you' : '')).join('') + you
     : nobody();
 }
@@ -842,7 +849,7 @@ function renderStats() {
   const levels = `<div class="st-hist">${lvlSrc.map(x => `<div><i style="height:${maxLvl ? Math.max(2, x.n / maxLvl * 100) : 0}%"></i><b>${fmt(x.n)}</b><span>${x.a === x.b ? x.a : `${x.a}–${x.b}`}</span></div>`).join('')}</div>`;
   // métiers et duos
   const maxProf = Math.max(...d.profs.map(x => x.n));
-  const profs = d.profs.map(x => `<li>${PROF_ICON[x.id] ? `<img src="${icon(PROF_ICON[x.id])}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span></span>'}<span>${esc(profName(x.id))}</span>${bar(x.n, maxProf, '#5f9a4a')}<small>${pct(x.share)} · ${fmt(x.max)} × 300 · ${num(x.avg)}</small></li>`).join('');
+  const profs = d.profs.map(x => `<li>${PROF_ICON[x.id] ? `<img src="${icon(PROF_ICON[x.id])}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<span></span>'}<span>${esc(profName(x.id))}</span>${bar(x.n, maxProf, '#5f9a4a')}<small>${pct(x.share)} · ${fmt(x.max)} × 300 · ${num(x.avg)}</small></li>`).join('');
   const pairs = d.profPairs.slice(0, 6).map(x => `<li><span>${x.ids.map(id => esc(profName(id))).join(' + ')}</span><b>${fmt(x.n)}</b></li>`).join('');
   // meilleure classe en duel
   const duelList = d.classes.filter(c => c.duelRate != null).sort((a, b) => b.duelRate - a.duelRate)
@@ -957,7 +964,7 @@ function renderRank() {
         nav += `<div class="sg${open ? '' : ' shut'}"><button type="button" class="grp" data-sgt="${grp}" aria-expanded="${open}"><i class="dot" style="background:${GROUP_COLOR[grp]}"></i>${t('g.' + grp)}<span class="sgn">${n}</span><i class="chev" aria-hidden="true"></i></button>`; }
       else nav += '<div class="sg">';
     }
-    const ic = s.logo || s.id === 'total' ? '<i class="sic logo"></i>' : s.icon ? `<img class="sic" src="${icon(s.icon)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<i class="sic none"></i>';
+    const ic = s.logo || s.id === 'total' ? '<i class="sic logo"></i>' : s.icon ? `<img class="sic" src="${icon(s.icon)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<i class="sic none"></i>';
     nav += `<a href="?p=rank&s=${s.id}" data-skill="${s.id}" class="${s.id === sk.id ? 'on' : ''}">${ic}<span class="lb">${s.label()}</span> <span>${s.max}</span></a>`;
   });
   const count = id => region.filter(p => p.rulesetId === id).length;
@@ -971,7 +978,7 @@ function renderRank() {
   // téléphone : 3 boutons (compétence, mode, classe) qui ouvrent un panneau du bas, au lieu de 3 rangées de pastilles.
   // Les panneaux reprennent les listes de l'ordinateur (groupes pliables compris).
   const rsName = state.rs ? L2((RULESETS.find(([id]) => id === state.rs) || [0, ['?', '?']])[1]) : t('allM');
-  const skIc = sk.logo || sk.id === 'total' ? '<i class="sic logo"></i>' : sk.icon ? `<img class="sic" src="${icon(sk.icon)}" alt="" referrerpolicy="no-referrer">` : '';
+  const skIc = sk.logo || sk.id === 'total' ? '<i class="sic logo"></i>' : sk.icon ? `<img class="sic" src="${icon(sk.icon)}" alt="" decoding="async" referrerpolicy="no-referrer">` : '';
   const fbtn = (k, lbl, val, ic = '') => `<button type="button" class="fbtn" data-fs="${k}" aria-haspopup="dialog"><small>${lbl}</small><span>${ic}<b>${val}</b></span><i class="chev" aria-hidden="true"></i></button>`;
   const sheet = (k, title, body) => `<div class="fsheet" data-fsheet="${k}" hidden role="dialog" aria-label="${esc(title)}"><div class="fs-in"><div class="fs-h"><b>${title}</b><button type="button" class="fs-x" data-fsx aria-label="${t('close')}">✕</button></div>${body}</div></div>`;
   const fbar = `<div class="fbar">${fbtn('skill', t('fSkill'), esc(sk.label()), skIc)}${fbtn('rs', t('fMode'), esc(rsName) + (state.dg || state.dw ? ' ▲' : ''))}${fbtn('cls', t('fClass'), state.cls ? esc(L2(CLASS[state.cls])) : t('allC'))}</div>`
@@ -1099,8 +1106,8 @@ const tipOf = it => `<b>${esc(it.name)}</b><span>${it.key === 'level' ? `${it.ra
   + (it.pend ? `<span class="est">${t('pendTip', { v: it.pend })}</span>` : '');
 // l'icône : le portrait du personnage pour le niveau, l'icône du jeu pour le reste
 const pic = it => it.key === 'level'
-  ? (it.ava ? `<img src="${esc(it.ava)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="logo"></span>')
-  : `<img src="${icon(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer">`;
+  ? (it.ava ? `<img src="${esc(it.ava)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<span class="logo"></span>')
+  : `<img src="${icon(it.img)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
 const tileOf = it => `<div class="tile g-${it.group}${it.est ? ' est' : ''}${it.spare ? ' spare' : ''}" tabindex="0" data-tip="${esc(tipOf(it))}" aria-label="${esc(it.name)} ${it.rank} / ${it.max}">`
   + pic(it) + `<span class="num"><b${it.pend ? ' class="pend"' : ''}>${it.pend || it.rank}</b><small>/${it.max}</small></span></div>`;
 const lineOf = it => `<div class="sline g-${it.group}${it.est ? ' est' : ''}${it.spare ? ' spare' : ''}" tabindex="0" data-tip="${esc(tipOf(it))}">
@@ -1353,7 +1360,7 @@ const HsImage = (() => {
 const catHead = (id, title, src, extra = '') => `<div class="cathead"><h3 class="sub">${title}</h3><span class="src ${src}">${t(src === 'arm' ? 'srcArm' : 'srcDecl')}</span>${extra ? `<span class="cx2">${extra}</span>` : ''}</div>`;
 // tuile : icône du jeu, intitulé, grand chiffre, précision
 const tile = (ic, label, value, sub = '', cls = '') => value == null ? '' :
-  `<div class="stile ${cls}">${ic ? `<img class="sti" src="${icon(ic)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<i class="sti logo"></i>'}<span class="stl">${label}</span><b class="stv">${typeof value === 'number' ? fmt(value) : value}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
+  `<div class="stile ${cls}">${ic ? `<img class="sti" src="${icon(ic)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<i class="sti logo"></i>'}<span class="stl">${label}</span><b class="stv">${typeof value === 'number' ? fmt(value) : value}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
 const kdOf = st => st.hk == null ? null : st.pvpDeaths ? st.hk / st.pvpDeaths : st.hk;
 function secNav(p) {
   const st = p.stats || {}, d = p.dropamine || {};
@@ -1494,7 +1501,7 @@ const huntName = (h, lc) => { const x = ITEMS?.[h.id], own = cleanName(h.name);
 const bestSrc = id => (LOOT?.idx?.get(id) || []).slice().sort((a, b) => (b.rate || 0) - (a.rate || 0))[0];
 const bossName = b => isTrash(b) ? t('runsTrash') : (L2(b.n) || b.n[0]);
 const rateTxt = r => r ? r.toLocaleString(locale(), { maximumFractionDigits: r < 10 ? 1 : 0 }) + ' %' : '';
-const itemChip = id => `<span class="ci lit" data-item="${id}" style="--q:${QCOL[ITEMS?.[id]?.q] || '#8a7a5a'}"><img src="${itemIcon(id)}" alt="" loading="lazy" referrerpolicy="no-referrer"></span>`;
+const itemChip = id => `<span class="ci lit" data-item="${id}" style="--q:${QCOL[ITEMS?.[id]?.q] || '#8a7a5a'}"><img src="${itemIcon(id)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>`;
 function wornBySlot(p) { const w = {}; for (const [s, id] of p.gear || []) { const k = GEAR_SLOT[s]; if (k) (w[k] ||= []).push(id); } return w; }
 // suggestions : objets de donjon utilisables, à ton niveau, meilleurs que ce que tu portes (niveau d'objet), ni obtenus ni déjà chassés
 function huntSuggest(p) {
@@ -1528,7 +1535,7 @@ function huntPanel(p) {
   if (!hunt.length && !mine) return '';
   if (!LOOT || !ITEMS) {
     huntWait ??= Promise.all([loadLoot(), loadItems()]).then(() => { if (state.view === 'char') renderChar(); });
-    return `<section class="cat hunt" id="sec-hunt">${catHead('hunt', t('dbHunt'), 'decl')}${loadingBox()}</section>`;
+    return `<section class="cat hunt" id="sec-hunt">${catHead('hunt', t('dbHunt'), 'decl')}${loadingBox(3)}</section>`;
   }
   const bySlot = {};
   for (const h of hunt) { const k = SLOT_OF[ITEMS[h.id]?.s]; if (k) (bySlot[k] ||= []).push(h); }
@@ -1610,7 +1617,7 @@ function dropBook(p) {
     const rows = [...c.dungeons].sort((a, b) => b.x / b.y - a.x / a.y).map(g =>
       `<li><span>${esc(g.name)}</span>${bar(g.x, g.y)}<b>${g.x} / ${g.y}</b></li>`).join('');
     parts.push(`<section class="db-card db-wide"><h4>${t('dbLog')}</h4><div class="db-big">${fmt(c.x)}<small> / ${fmt(c.y)}</small></div>${bar(c.x, c.y)}
-      ${c.items?.length ? `<div class="clog" data-clog>${loadingBox()}</div>` : `${rows ? `<ul class="db-list">${rows}</ul>` : ''}<p class="db-note">${t('clogResend')}</p>`}</section>`);
+      ${c.items?.length ? `<div class="clog" data-clog>${loadingBox(3)}</div>` : `${rows ? `<ul class="db-list">${rows}</ul>` : ''}<p class="db-note">${t('clogResend')}</p>`}</section>`);
   }
   if (d.achievements) {
     const a = d.achievements;
@@ -1830,7 +1837,7 @@ function renderWeekNow(box) {
         ${you}
         <div class="wk-card wk-skiller"><p class="wk-lbl">${t('wkSkillerT')}</p><div class="chips wk-br" role="group" aria-label="${t('level')}">${chips}</div>${podium}</div>
         <div class="wk-card wk-hunter"><p class="wk-lbl">${t('wkHunterT')}</p>${b.hunters ? wkList(b.hunter, t('wkNoneHunter')) : `<p class="wk-empty">${t('wkNoHunters')}</p>`}<p class="wk-how">${t('wkHunterHow')}</p></div>
-        <div class="wk-card"><p class="wk-lbl">${t('wkSkillT')}</p>${sk ? `<p class="wk-skill">${sk.icon ? `<img src="${icon(sk.icon)}" alt="" referrerpolicy="no-referrer">` : ''}<b>${esc(sk.label())}</b></p>` : ''}${wkList(b.skillTop, t('wkNoneSkill'))}
+        <div class="wk-card"><p class="wk-lbl">${t('wkSkillT')}</p>${sk ? `<p class="wk-skill">${sk.icon ? `<img src="${icon(sk.icon)}" alt="" decoding="async" referrerpolicy="no-referrer">` : ''}<b>${esc(sk.label())}</b></p>` : ''}${wkList(b.skillTop, t('wkNoneSkill'))}
           <p class="wk-lbl" style="margin-top:14px">${t('wkFighterT')}</p>${wkList(b.fighter, t('wkNoneHk'))}</div>
       </div>
     </div>
@@ -1977,7 +1984,7 @@ function renderGuild() {
     const clsBars = Object.entries(byCls).sort((a, b) => b[1] - a[1]).map(([id, n]) => `<li><span style="color:${CLASS_COL[id]}">${esc(L2(CLASS[id]) || '?')}</span><span class="st-bar"><i style="width:${Math.max(2, n / maxC * 100)}%;background:${CLASS_COL[id]}"></i></span><small>${fmt(n)} · ${Math.round(100 * n / everyone.length)} %</small></li>`).join('');
     // métiers : combien les ont, combien au maximum
     const profs = PROF_ORDER.map(id => { const w = members.filter(p => p.professions?.some(x => x.id === id)); return { id, n: w.length, max: w.filter(p => p.professions.find(x => x.id === id).skill >= 300).length }; }).filter(x => x.n);
-    const profList = profs.sort((a, b) => b.n - a.n).map(x => `<li>${PROF_ICON[x.id] ? `<img src="${icon(PROF_ICON[x.id])}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span></span>'}<span>${esc(profName(x.id))}</span><small>${fmt(x.n)} · ${fmt(x.max)} × 300</small></li>`).join('');
+    const profList = profs.sort((a, b) => b.n - a.n).map(x => `<li>${PROF_ICON[x.id] ? `<img src="${icon(PROF_ICON[x.id])}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<span></span>'}<span>${esc(profName(x.id))}</span><small>${fmt(x.n)} · ${fmt(x.max)} × 300</small></li>`).join('');
     // JcJ
     const top = (k) => members.map(p => ({ p, v: armoryStat(p, k) || 0 })).filter(x => x.v > 0).sort((a, b) => b.v - a.v)[0];
     const tHk = top('hk'), tDuel = top('duelsWon'), tKb = top('killingBlows');
@@ -2079,7 +2086,7 @@ async function fillClog(p) {
   box.innerHTML = list.map((x, k) => `${head(x, k)}<details class="cdun"${k === 0 ? ' open' : ''}><summary><span class="cdn">${esc(x.d.name)}</span>
       <i class="lbar"><i style="width:${(100 * x.have / x.total).toFixed(1)}%"></i></i><b>${x.have} / ${x.total}</b></summary>
       <div class="cboss">${x.bosses.map(({ b, items }) => `<div class="cb"><span class="cbn">${esc(bossName(b))}</span><div class="cgrid">${items.map(i =>
-        `<span class="ci${got.has(i.id) ? ' got' : ''}" data-item="${i.id}" data-boss="${esc(bossName(b))}"${i.rate != null ? ` data-rate="${i.rate}"` : ''} style="--q:${QCOL[ITEMS?.[i.id]?.q] || '#8a7a5a'}"><img src="${itemIcon(i.id)}" alt="${esc(itemName(i.id))}" loading="lazy" referrerpolicy="no-referrer"></span>`).join('')}</div></div>`).join('')}</div></details>`).join('')
+        `<span class="ci${got.has(i.id) ? ' got' : ''}" data-item="${i.id}" data-boss="${esc(bossName(b))}"${i.rate != null ? ` data-rate="${i.rate}"` : ''} style="--q:${QCOL[ITEMS?.[i.id]?.q] || '#8a7a5a'}"><img src="${itemIcon(i.id)}" alt="${esc(itemName(i.id))}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>`).join('')}</div></div>`).join('')}</div></details>`).join('')
     + `<p class="db-note">${t('clogSrc')}</p>`;
 }
 // infobulle d'objet, façon jeu. Ses lignes sont dans items-tips.json (60 % du poids des objets), chargé au premier survol
@@ -2171,10 +2178,10 @@ function suggestGroup(people) {
   const tank = pick('tank'), heal = pick('heal'), dps = pool.filter(x => !used.has(x)).slice(0, 3);
   return { tank, heal, dps };
 }
-const itemIcons = list => list.map(x => `<span class="ci got" data-item="${x.h.id}" data-boss="${esc(isTrash(x.boss) ? t('runsTrash') : (L2(x.boss.n) || x.boss.n[0]))}"${x.rate != null ? ` data-rate="${x.rate}"` : ''} style="--q:${QCOL[ITEMS?.[x.h.id]?.q] || '#8a7a5a'}"><img src="${itemIcon(x.h.id)}" alt="${esc(x.h.name)}" loading="lazy" referrerpolicy="no-referrer"></span>`).join('');
+const itemIcons = list => list.map(x => `<span class="ci got" data-item="${x.h.id}" data-boss="${esc(isTrash(x.boss) ? t('runsTrash') : (L2(x.boss.n) || x.boss.n[0]))}"${x.rate != null ? ` data-rate="${x.rate}"` : ''} style="--q:${QCOL[ITEMS?.[x.h.id]?.q] || '#8a7a5a'}"><img src="${itemIcon(x.h.id)}" alt="${esc(x.h.name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>`).join('');
 const fitTag = f => f === 'ok' ? `<i class="fit ok">${t('fitOk')}</i>` : f === 'low' ? `<i class="fit low">${t('runsLow')}</i>` : `<i class="fit high">${t('fitHigh')}</i>`;
 const artStyle = key => ART?.[key] ? ` style="--art:url('https://render.worldofwarcraft.com/${ART[key]}')"` : '';
-const roleIcon = role => `<img class="role" src="${icon(ROLE_IC[role] || ROLE_IC.dps)}" alt="${t('role.' + (role || 'dps'))}" title="${t('role.' + (role || 'dps'))}" referrerpolicy="no-referrer">`;
+const roleIcon = role => `<img class="role" src="${icon(ROLE_IC[role] || ROLE_IC.dps)}" alt="${t('role.' + (role || 'dps'))}" title="${t('role.' + (role || 'dps'))}" decoding="async" referrerpolicy="no-referrer">`;
 const whenText = iso => new Date(iso).toLocaleString(locale(), { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
 const localInput = d => { const z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`; };
@@ -2410,10 +2417,10 @@ function exploreBlock(me) {
   const bossName = b => isTrash(b) ? t('runsTrash') : (L2(b.n) || b.n[0]);
   const detail = sel ? `<div class="xdet"${artStyle(sel.key)}><div class="xh"><h3>${esc(sel.name)}</h3>${dunFrom(sel) ? `<span class="lv">${t('runsLvl', { a: dunFrom(sel), b: (sel.lvl || [])[2] })}</span>` : ''}</div>
       ${sel.bosses.map(b => `<div class="cb"><span class="cbn">${esc(bossName(b))}</span><div class="cgrid">${b.i.map(e => { const id = Array.isArray(e) ? e[0] : e, rate = Array.isArray(e) ? e[1] : null, hn = hunt.get(id) || 0;
-        return `<button type="button" class="ci xi${dr.items.includes(id) ? ' pick' : ''}" data-xpick="${id}" data-item="${id}" data-boss="${esc(bossName(b))}"${rate != null ? ` data-rate="${rate}"` : ''} data-stat="${esc(stat(id))}" style="--q:${QCOL[ITEMS?.[id]?.q] || '#8a7a5a'}" aria-pressed="${dr.items.includes(id)}"><img src="${itemIcon(id)}" alt="${esc(itemName(id))}" loading="lazy" referrerpolicy="no-referrer">${hn ? `<em>${hn}</em>` : ''}</button>`; }).join('')}</div></div>`).join('')}</div>` : `<p class="note xpick">${t('xPickDun')}</p>`;
+        return `<button type="button" class="ci xi${dr.items.includes(id) ? ' pick' : ''}" data-xpick="${id}" data-item="${id}" data-boss="${esc(bossName(b))}"${rate != null ? ` data-rate="${rate}"` : ''} data-stat="${esc(stat(id))}" style="--q:${QCOL[ITEMS?.[id]?.q] || '#8a7a5a'}" aria-pressed="${dr.items.includes(id)}"><img src="${itemIcon(id)}" alt="${esc(itemName(id))}" loading="lazy" decoding="async" referrerpolicy="no-referrer">${hn ? `<em>${hn}</em>` : ''}</button>`; }).join('')}</div></div>`).join('')}</div>` : `<p class="note xpick">${t('xPickDun')}</p>`;
   // le formulaire : identique pour tous ; le personnage n'apparaît qu'une fois connecté
   const chars = Bnet.chars();
-  const picked = dr.items.length ? `<div class="cgrid xpicked">${dr.items.map(id => `<button type="button" class="ci got" data-xpick="${id}" data-item="${id}" style="--q:${QCOL[ITEMS?.[id]?.q] || '#8a7a5a'}"><img src="${itemIcon(id)}" alt="${esc(itemName(id))}" loading="lazy" referrerpolicy="no-referrer"></button>`).join('')}</div>
+  const picked = dr.items.length ? `<div class="cgrid xpicked">${dr.items.map(id => `<button type="button" class="ci got" data-xpick="${id}" data-item="${id}" style="--q:${QCOL[ITEMS?.[id]?.q] || '#8a7a5a'}"><img src="${itemIcon(id)}" alt="${esc(itemName(id))}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></button>`).join('')}</div>
       <p class="note">${t('xPicked', { n: dr.items.length })} · <button type="button" class="lnk" data-xclear>${t('xClear')}</button></p>` : `<p class="note">${t('xPickHint')}</p>`;
   const draft = sel ? `<div class="xdraft"><p class="wk-lbl">${t('xDraftT')} · ${esc(sel.name)}</p>${picked}
       <div class="pform xform" data-dun="${esc(sel.key)}">
@@ -2966,7 +2973,31 @@ const Bnet = (() => {
 })();
 
 /* ---------- Animations d'arrivée ---------- */
+// balises de la page (adresse de référence, description, Open Graph) mises à jour à chaque vue : sans elles, toutes les
+// pages se déclaraient être l'accueil. Lues dans le titre déjà dessiné (fiche, guilde), donc toujours dans la langue choisie.
+const META0 = $('meta[name="description"]')?.content || '';
+const setTag = (sel, attr, val) => { const el = $(sel); if (el && el.getAttribute(attr) !== val) el.setAttribute(attr, val); };
+function setMeta() {
+  if (SHOT) return;
+  const q = new URLSearchParams();
+  if (state.view !== 'home') q.set('p', state.view);
+  if (state.region !== 'eu') q.set('r', state.region);
+  if (state.view === 'char' && state.c) q.set('c', state.c);
+  if (state.view === 'guild' && state.g) q.set('g', state.g);
+  if (state.view === 'rank') { if (state.skill !== 'total') q.set('s', state.skill); if (state.rs) q.set('m', state.rs); }
+  const url = 'https://dropamine.app/' + (q.toString() ? '?' + q : ''), r = state.region.toUpperCase();
+  const h2 = $('#' + state.view + '-panel h2')?.textContent.trim(), sub = $('#' + state.view + '-panel h2 + p')?.textContent.trim();
+  let title = document.title, desc = META0;
+  if (state.view === 'char' && h2 && sub) { title = `${h2} · Hiscores · Dropamine`; desc = `${h2}${LANG === 'fr' ? ' : ' : ': '}${sub}. ${t('metaChar', { r })}`; }
+  else if (state.view === 'guild' && state.g && h2) { title = `${h2} · ${t('tab.guild')} · Dropamine`; desc = t('metaGuild', { n: h2, r }); }
+  else if (state.view === 'rank') desc = t('metaRank', { r });
+  document.title = title;
+  setTag('link[rel="canonical"]', 'href', url); setTag('meta[property="og:url"]', 'content', url);
+  setTag('meta[name="description"]', 'content', desc); setTag('meta[property="og:description"]', 'content', desc);
+  setTag('meta[property="og:title"]', 'content', title);
+}
 function animate(view) {
+  setMeta();
   $$('.tri i,.prof .bar i,.mbar i', view).forEach((el, i) => {
     const target = getComputedStyle(el).getPropertyValue('--w');
     if (reduce) { el.style.width = target; return; }
@@ -3027,10 +3058,12 @@ function hit(extra = {}) {
   if (hitRef) { body.ref = hitRef; hitRef = ''; }
   try { navigator.sendBeacon(`${API}/hit`, new Blob([JSON.stringify(body)], { type: 'text/plain' })); } catch { /* rien */ }
 }
+// pages qui se contentent de l'accueil léger (data/home.json) : jamais l'index complet
+const LIGHT_VIEWS = ['home', 'news', 'stats', 'get', 'privacy', 'about'];
 function render(push) {
   applyStatic();
   if (state.view === 'home') renderHome();
-  const wait = DATA.partial && !['home', 'news', 'stats'].includes(state.view);
+  const wait = DATA.partial && !LIGHT_VIEWS.includes(state.view);
   if (wait) { const box = PANEL[state.view] && $(PANEL[state.view]); if (box) box.innerHTML = loadingBox(); loadFull().then(() => { if (!DATA.partial) render(false); }); }
   else (RENDER[state.view] || (() => {}))();
   markNav();
@@ -3304,7 +3337,7 @@ readUrl();
 render(false);
 Ribbon.load(true);
 Promise.all([
-  state.view === 'home' && !BOOT_HSIMG
+  LIGHT_VIEWS.includes(state.view) && !BOOT_HSIMG
     ? fetch('data/home.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { DATA = d; }).catch(() => loadFull())
     : loadFull(),
   fetch('data/changelog.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => { NEWS = d; })

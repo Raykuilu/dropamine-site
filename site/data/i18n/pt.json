@@ -1,6 +1,9 @@
 {
  "lang": "pt",
  "ui": {
+   "metaChar": "Habilidades, progresso e posição nos Hiscores do Dropamine para WoW Forever {r}, verificados no arsenal oficial.",
+   "metaGuild": "{n}: membros, níveis e progresso da semana nos Hiscores do Dropamine para WoW Forever {r}.",
+   "metaRank": "Hiscores de WoW Forever {r}: cada habilidade classificada, verificada no arsenal oficial.",
   "tab.rank": "Hiscores",
   "tab.char": "Personagem",
   "tab.mine": "Meu personagem",
