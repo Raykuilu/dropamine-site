@@ -344,15 +344,47 @@ function startCrawlWorker() {
     console.warn(`relevé serveur : fil arrêté (${code}), relance dans 30 s`);
     setTimeout(startCrawlWorker, 30e3).unref();
   });
+  const call = (fn, ...args) => new Promise((res, rej) => {
+    const id = ++n, t = setTimeout(() => { calls.delete(id); rej(new Error('délai dépassé')); }, 120e3);
+    calls.set(id, { res, rej, t }); w.postMessage({ type: 'call', id, fn, args });
+  });
   crawl = {
+    // lectures du site : fil de lecture séparé (hs-reader.mjs), sinon le relevé lui-même
+    call: async (fn, ...args) => {
+      if (reader && READ_FNS.has(fn)) {
+        try {
+          const r = await reader.call(fn, ...args);
+          if (fn !== 'char' || r) return r;
+        } catch (err) { console.warn('lecture du relevé :', fn, err.message); }
+      }
+      return call(fn, ...args);   // personnage pas encore lu : le relevé le lit à la demande
+    },
+  };
+}
+// fil de lecture : connexion SQLite en lecture seule, jamais bloquée par les écritures du relevé
+const READ_FNS = new Set(['search', 'rsinfo', 'rankList', 'guilds', 'movers', 'meDash', 'ranks', 'guildFull', 'char', 'guild', 'rank']);
+let reader = null;
+function startReader() {
+  const w = new Worker(new URL('./hs-reader.mjs', import.meta.url), { workerData: { stateDir: STATE_DIR } });
+  const calls = new Map(); let n = 0;
+  w.on('message', m => { if (m.type !== 'res') return; const c = calls.get(m.id); if (!c) return; calls.delete(m.id); clearTimeout(c.t); m.err ? c.rej(new Error(m.err)) : c.res(m.r); });
+  w.on('error', err => console.warn('lecture du relevé (fil) :', err.message));
+  w.on('exit', code => {
+    for (const c of calls.values()) { clearTimeout(c.t); c.rej(new Error('lecture arrêtée')); }
+    calls.clear(); reader = null;
+    console.warn(`lecture du relevé : fil arrêté (${code}), relance dans 30 s`);
+    setTimeout(startReader, 30e3).unref();
+  });
+  reader = {
     call: (fn, ...args) => new Promise((res, rej) => {
-      const id = ++n, t = setTimeout(() => { calls.delete(id); rej(new Error('délai dépassé')); }, 120e3);
+      const id = ++n, t = setTimeout(() => { calls.delete(id); rej(new Error('délai dépassé')); }, 30e3);
       calls.set(id, { res, rej, t }); w.postMessage({ type: 'call', id, fn, args });
     }),
   };
 }
 if (process.env.CRAWL !== 'off') {
   try { startCrawlWorker(); } catch (err) { console.warn('relevé serveur indisponible :', err.message); }
+  try { startReader(); } catch (err) { console.warn('lecture du relevé indisponible :', err.message); }
 }
 const crawlRoute = hsRoutes({ getCrawl: () => crawl, send, cors, validKey, regions: REGIONS });
 
