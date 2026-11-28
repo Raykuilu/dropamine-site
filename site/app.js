@@ -455,7 +455,8 @@ const VIEWS = ['home', 'rank', 'char', 'guild', 'runs', 'news', 'stats', 'get', 
 // loading : hiscores.json pas encore arrivé (la goutte de chargement s'affiche au lieu d'une liste vide)
 let DATA = { players: [], loading: true }, NEWS = null;
 const state = { view: 'home', region: 'eu', skill: 'total', cls: 0, rs: 0, c: '', g: '', gs: 'total', rscope: '' };
-const inRegion = () => DATA.players.filter(p => (p.region || 'eu') === state.region);
+// joueurs connus de la région et du type de royaume choisis (JcJ, Normal… ne se mélangent jamais : ce sont d'autres royaumes)
+const inRegion = () => DATA.players.filter(p => (p.region || 'eu') === state.region && (!state.rs || !p.rulesetId || p.rulesetId === state.rs));
 
 /* ======================================================================
    Le ruban : trois bandes fines sous la navigation. Il gonfle en vague
@@ -811,10 +812,13 @@ function renderHome() {
   renderLive();
   fillPulse();
 
-  const all = rankBy(SKILLS[0], inRegion()), top = all.slice(0, 5);
+  const tp = `/hs/rank?r=${state.region}&skill=total${state.rs ? '&rs=' + state.rs : ''}&pg=1&per=5`, tj = Hs.peek(tp);
+  if (!tj && !DATA.loading) Hs.get(tp).then(j => { remember(j.rows.map(x => x.p)); if (state.view === 'home') renderHome(); }).catch(() => {});
+  const all = tj ? tj.rows.map(x => ({ p: DATA.players.find(q => pkey(q) === pkey(x.p)) || x.p, v: x.v, r: x.r })) : rankBy(SKILLS[0], inRegion().filter(p => !state.rs || p.rulesetId === state.rs)), top = all.slice(0, 5);
   const line = ({ p, v, r }, cls = '') => `<div class="row${r <= 3 ? ' top' : ''}${cls}" data-c="${esc(pkey(p))}" style="grid-template-columns:44px minmax(0,1fr) minmax(90px,160px) 96px"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p)}<small>${who(p)}</small></span></span>${tri(p)}<span class="tot">${fmt(v)}${estTag(p)}</span></div>`;
   // connecté : ton meilleur personnage, sous le top 5 s'il n'y figure pas
-  const me = all.find(x => pkey(x.p) === Bnet.best());
+  const bk = Bnet.best(), md = MEDASH?.[bk], bp = md && DATA.players.find(q => pkey(q) === bk);
+  const me = all.find(x => pkey(x.p) === bk) || (bp && md.ranks?.total?.r && md.rs === (tj?.rs || state.rs) ? { p: bp, v: bp.total, r: md.ranks.total.r } : null);
   const you = me && !top.includes(me) ? `<div class="you-sep">${t('youHere')}</div>${line(me, ' you')}` : '';
   $('#home-top').innerHTML = DATA.loading ? loadingBox(5) : DATA.failed ? failed() : top.length
     ? top.map(x => line(x, pkey(x.p) === Bnet.best() ? ' you' : '')).join('') + you
@@ -827,11 +831,11 @@ const FACTION_COL = { ALLIANCE: '#4a7bd0', HORDE: '#c0392b' };
 const STATS = {};
 function renderStats() {
   const box = $('#stats-panel'); if (!box) return;
-  const r = state.region, d = STATS[r];
+  const r = state.region, sk = r + '/' + (state.rs || ''), d = STATS[sk];   // par région et type de royaume (jamais mélangés)
   if (d === undefined) {
     box.innerHTML = loadingBox();
-    STATS[r] = fetch(`${API}/hs/stats?r=${r}`).then(x => x.ok ? x.json() : null).catch(() => null)
-      .then(j => { STATS[r] = j; if (state.view === 'stats' && state.region === r) { renderStats(); animate($('#stats')); } });
+    STATS[sk] = Hs.get(`/hs/stats?r=${r}${state.rs ? '&rs=' + state.rs : ''}`, 30 * 60e3).catch(() => null)
+      .then(j => { STATS[sk] = j; if (j?.rs && !state.rs) { rsFrom(j); STATS[r + '/' + j.rs] = j; } if (state.view === 'stats' && state.region === r) { renderStats(); animate($('#stats')); } });
     return;
   }
   if (d instanceof Promise) { box.innerHTML = loadingBox(); return; }
@@ -1793,7 +1797,7 @@ const wkList = (rows, empty) => rows.length ? `<ol class="wk-list">${rows.slice(
 // la semaine ne change qu'avec les données, la langue, la région, l'onglet choisi ou le compte : sinon on garde l'affichage (≈ 150 ms de calcul)
 function renderWeek() {
   const box = $('#week'); if (!box) return;
-  const key = () => [DATA.updated, DATA.players.length, DATA.loading, DATA.failed, state.region, LANG, WB, WD, Bnet.mine().map(pkey).join(',')].join('|');
+  const key = () => [DATA.updated, DATA.players.length, DATA.loading, DATA.failed, state.region, state.rs, LANG, WB, WD, Bnet.mine().map(pkey).join(',')].join('|');
   if (box.dataset.k === key()) return;
   renderWeekNow(box);
   box.dataset.k = key();   // après le dessin : il choisit la tranche (WB) la première fois
@@ -1877,7 +1881,7 @@ document.addEventListener('click', e => {
 // semaine en cours : calculée une fois par jeu de données et région (sinon tout le monde est reparcouru pour chaque ligne)
 let weekMemo = null;
 function weekMonday() {
-  const k = (DATA.updated || '') + '|' + state.region + '|' + DATA.players.length;
+  const k = (DATA.updated || '') + '|' + state.region + '|' + state.rs + '|' + DATA.players.length;
   if (weekMemo?.k !== k) weekMemo = { k, m: weekNow(weekPlayers()) };
   return weekMemo.m;
 }
