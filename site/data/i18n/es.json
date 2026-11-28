@@ -116,6 +116,7 @@
    "admPrevTip": "Visible solo para el administrador hasta su validación",
    "scoreT": "Puntuación global",
    "scoreNote": "media de tus notas en 11 estadísticas, comparado con los jugadores de tu tipo de reino",
+   "scoreMax": "Al máximo de una habilidad (nivel 60, defensa 300, profesión 300, total 2460), la nota es 100.",
    "scoreNoKd": "(K/D no contado: menos de 20 combates.)",
    "metaChar": "Habilidades, progreso y puesto en los Hiscores de Dropamine para WoW Forever {r}, verificados con la armería oficial.",
    "metaGuild": "{n}: miembros, niveles y progreso de la semana en los Hiscores de Dropamine para WoW Forever {r}.",

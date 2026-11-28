@@ -116,6 +116,7 @@
    "admPrevTip": "Nur für den Administrator sichtbar, bis zur Freigabe",
    "scoreT": "Gesamtwertung",
    "scoreNote": "Durchschnitt deiner Noten in 11 Werten, verglichen mit den Spielern deines Realmtyps",
+   "scoreMax": "Am Maximum einer Fertigkeit (Stufe 60, Verteidigung 300, Beruf 300, Gesamt 2.460) ist die Note 100.",
    "scoreNoKd": "(K/D nicht gezählt: weniger als 20 Kämpfe.)",
    "metaChar": "Fertigkeiten, Fortschritt und Rang in den Dropamine-Hiscores für WoW Forever {r}, geprüft am offiziellen Arsenal.",
    "metaGuild": "{n}: Mitglieder, Stufen und Fortschritt der Woche in den Dropamine-Hiscores für WoW Forever {r}.",

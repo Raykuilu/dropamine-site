@@ -116,6 +116,7 @@
    "admPrevTip": "Visibile solo all’amministratore fino alla convalida",
    "scoreT": "Punteggio globale",
    "scoreNote": "media dei tuoi voti in 11 statistiche, rispetto ai giocatori del tuo tipo di reame",
+   "scoreMax": "Al massimo di un’abilità (livello 60, difesa 300, professione 300, totale 2460), il voto è 100.",
    "scoreNoKd": "(K/D non conteggiato: meno di 20 combattimenti.)",
    "metaChar": "Abilità, progressi e posizione negli Hiscores di Dropamine per WoW Forever {r}, verificati sull'armeria ufficiale.",
    "metaGuild": "{n}: membri, livelli e progressi della settimana negli Hiscores di Dropamine per WoW Forever {r}.",

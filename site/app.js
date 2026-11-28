@@ -195,6 +195,7 @@ const I18N = {
   cmpSmallTip: ["Fewer than 300 characters: percentages move a lot.", "Moins de 300 personnages : les pourcentages bougent beaucoup."],
   scoreT: ["Overall score", "Score global"],
   scoreNote: ["average of your marks in 11 stats, compared with the players of your realm type", "moyenne de tes notes dans 11 stats, comparé aux joueurs de ton type de royaume"],
+  scoreMax: ["At the maximum of a skill (level 60, defense 300, profession 300, total 2,460), the mark is 100.", "Au maximum d’une compétence (niveau 60, défense 300, métier 300, total 2 460), la note est de 100."],
   scoreNoKd: ["(K/D left out: fewer than 20 fights.)", "(K/D non compté : moins de 20 combats.)"],
   gNoMatchG: ['No guild matches these filters.', 'Aucune guilde ne correspond à ces filtres.'],
   gRanked: ['{n} ranked', '{n} classés'], gBest: ['best {v}', 'meilleur {v}'], gAvg: ['Average', 'Moyenne'],
@@ -1453,7 +1454,7 @@ function scoreBlock(p) {
   const rows = SCORE_PARTS.filter(([k]) => parts[k] != null).map(([k, l]) => `<li class="${qTier(parts[k])}"><span>${esc(capF(l()))}</span><i class="qbar"><i style="width:${Math.max(2, parts[k])}%"></i></i><b>${fmt(parts[k])}</b></li>`).join('');
   return `<section class="scoreb"><h3>${t('scoreT')} ${admBadge()}</h3>
     <div class="sc-top"><b>${sc ? SCORE_SK.show(sc.v) : '–'}<small> / 100</small></b>${sc?.r ? `<span>${ord(sc.r)} / ${fmt(sc.of)} · ${esc(rsLabel(p.rulesetId))}</span>` : ''}</div>
-    <p class="note">${t('scoreNote')}${parts.kd == null ? ' ' + t('scoreNoKd') : ''}</p><ul class="qlist sc-list">${rows}</ul></section>`;
+    <p class="note">${capF(t('scoreNote'))}. ${t('scoreMax')}${parts.kd == null ? ' ' + t('scoreNoKd') : ''}</p><ul class="qlist sc-list">${rows}</ul></section>`;
 }
 const isMyChar = k => (Bnet.chars?.() || []).some(c => c.key === k);
 function renderChar() {
