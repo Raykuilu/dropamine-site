@@ -812,7 +812,7 @@ function renderHome() {
   renderLive();
   fillPulse();
 
-  const tp = `/hs/rank?r=${state.region}&skill=total${state.rs ? '&rs=' + state.rs : ''}&pg=1&per=5`, tj = Hs.peek(tp);
+  const tp = `/hs/rank?r=${state.region}&skill=total${state.rs ? '&rs=' + state.rs : ''}&pg=1&per=10`, tj = Hs.peek(tp);
   if (!tj && !DATA.loading) Hs.get(tp).then(j => { remember(j.rows.map(x => x.p)); if (state.view === 'home') renderHome(); }).catch(() => {});
   const all = tj ? tj.rows.map(x => ({ p: DATA.players.find(q => pkey(q) === pkey(x.p)) || x.p, v: x.v, r: x.r })) : rankBy(SKILLS[0], inRegion().filter(p => !state.rs || p.rulesetId === state.rs)), top = all.slice(0, 5);
   const line = ({ p, v, r }, cls = '') => `<div class="row${r <= 3 ? ' top' : ''}${cls}" data-c="${esc(pkey(p))}" style="grid-template-columns:44px minmax(0,1fr) minmax(90px,160px) 96px"><span class="rk">${r}</span><span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p)}<small>${who(p)}</small></span></span>${tri(p)}<span class="tot">${fmt(v)}${estTag(p)}</span></div>`;
