@@ -10056,6 +10056,347 @@
       "g": "Murmures",
       "s": "x",
       "d": 20784
+    },
+    "eu/elbow-up": {
+      "l": 45,
+      "c": "PALADIN",
+      "g": "TRUENORTH",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/shloub-danlemilus": {
+      "l": 27,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/bernard-chiaseur": {
+      "l": 28,
+      "c": "HUNTER",
+      "g": "Forever Guardians",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/daben-rurio": {
+      "l": 50,
+      "c": "WARLOCK",
+      "g": "La Quenelle Ardente",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/zatshow-zshow": {
+      "l": 44,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/krisdez-dez": {
+      "l": 1,
+      "c": "WARRIOR",
+      "g": "Les Viocs Forever",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/pwn-flake": {
+      "l": 52,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/marek-white": {
+      "l": 5,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/ares-volantyr": {
+      "l": 14,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/lewys-hunt": {
+      "l": 60,
+      "c": "HUNTER",
+      "g": "Monolith",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/ulven-ylva": {
+      "l": 26,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/artoras-valorion": {
+      "l": 18,
+      "c": "PALADIN",
+      "g": "Chevaliers au Pancréas",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/acedia-zirrach": {
+      "l": 60,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/fée-legroskaka": {
+      "l": 11,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/anorata-astralys": {
+      "l": 60,
+      "c": "PALADIN",
+      "g": "La Rûche",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/ursa-gunpowder": {
+      "l": 22,
+      "c": "HUNTER",
+      "g": "Les Alphas",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/huntress-ishros": {
+      "l": 20,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/clémiette-rosery": {
+      "l": 29,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/nyrris-silverwing": {
+      "l": 26,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/ezhihetetlen-dekomolyan": {
+      "l": 47,
+      "c": "MAGE",
+      "g": "Elit Alakulat",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/elaureana-landar": {
+      "l": 47,
+      "c": "PALADIN",
+      "g": "Hors la l Oie",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/zenkins-lirfa": {
+      "l": 21,
+      "c": "PRIEST",
+      "g": "Les Nains Soumis",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/ego-ebriussum": {
+      "l": 25,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/lune-sanglante": {
+      "l": 60,
+      "c": "DRUID",
+      "g": "Sans mana ni loi",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/mr-superfräsarn": {
+      "l": 22,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/biggi-moe": {
+      "l": 47,
+      "c": "WARRIOR",
+      "g": "Elite Gamer",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/gédéon-bulleenfuite": {
+      "l": 12,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/eremor-legend": {
+      "l": 33,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/heliox-vex": {
+      "l": 24,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/axestorm-piedcarré": {
+      "l": 21,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/tarantio-waylander": {
+      "l": 41,
+      "c": "ROGUE",
+      "g": "C R E W",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/durnhill-sombrorage": {
+      "l": 27,
+      "c": "SHAMAN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/lucasual-bignorbert": {
+      "l": 46,
+      "c": "HUNTER",
+      "g": "Ronchon et Dragon",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/ullanos-ombreloup": {
+      "l": 47,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/john-duf": {
+      "l": 14,
+      "c": "MAGE",
+      "g": "Les pélerins",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/pod-huntar": {
+      "l": 31,
+      "c": "HUNTER",
+      "g": "Arthroz",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/bérylone-tedior": {
+      "l": 27,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/arleen-alston": {
+      "l": 23,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/ace-cham": {
+      "l": 39,
+      "c": "SHAMAN",
+      "g": "Semper Umbra",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/bischa-muda": {
+      "l": 24,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/sky-dol": {
+      "l": 57,
+      "c": "PRIEST",
+      "g": "Arthrose Ancestrale",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/bank-gab": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/red-flagx": {
+      "l": 41,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/ayaqt-bank": {
+      "l": 1,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/omahc-ondamic": {
+      "l": 48,
+      "c": "ROGUE",
+      "g": "Croutons et Dragons",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/torm-dawnwalker": {
+      "l": 40,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/pie-nuts": {
+      "l": 1,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/démo-niste": {
+      "l": 52,
+      "c": "WARLOCK",
+      "g": "Insoumis en Azeroth",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/bibam-sanctum": {
+      "l": 21,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/polythene-päm": {
+      "l": 39,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/sam-samdudémon": {
+      "l": 59,
+      "c": "HUNTER",
+      "g": "Aégis",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/xy-lazare": {
+      "l": 31,
+      "c": "MAGE",
+      "g": "Arthroz",
+      "s": "x",
+      "d": 20784
+    },
+    "eu/daerna-aldyths": {
+      "l": 26,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20784
     }
   }
 }
