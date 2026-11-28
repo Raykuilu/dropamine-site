@@ -10397,6 +10397,187 @@
       "c": "ROGUE",
       "s": "x",
       "d": 20784
+    },
+    "eu/lumin-ayre": {
+      "l": 21,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/palami-lami": {
+      "l": 31,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/boumspirit-prime": {
+      "l": 37,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/pimprenelle-astreclair": {
+      "l": 30,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/anastazia-snezhnaya": {
+      "l": 24,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/durdin-mainmarteau": {
+      "l": 34,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/fisdep-fisdep": {
+      "l": 54,
+      "c": "ROGUE",
+      "g": "Le Serveur",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/cornelius-ruissargent": {
+      "l": 30,
+      "c": "HUNTER",
+      "g": "Les Lions De L Alliance",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/frottedard-sendubou": {
+      "l": 12,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/renira-targarian": {
+      "l": 60,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/barak-trellheïm": {
+      "l": 17,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/dr-mamour": {
+      "l": 45,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/vernii-barista": {
+      "l": 21,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/lili-lamperouge": {
+      "l": 24,
+      "c": "ROGUE",
+      "g": "Æra",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/malachia-ravenwood": {
+      "l": 8,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/melheal-latizis": {
+      "l": 35,
+      "c": "PRIEST",
+      "g": "Latizis",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/zer-anne": {
+      "l": 16,
+      "c": "DRUID",
+      "g": "TRUENORTH",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/dio-whitebeard": {
+      "l": 42,
+      "c": "PALADIN",
+      "g": "Lightbane",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/morwen-ashvaleember": {
+      "l": 29,
+      "c": "WARLOCK",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/lawriana-law": {
+      "l": 32,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/avatar-nyar": {
+      "l": 19,
+      "c": "WARRIOR",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/lunaris-dosdur": {
+      "l": 14,
+      "c": "DRUID",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/cagou-caoutchouc": {
+      "l": 35,
+      "c": "HUNTER",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/semeru-jrr": {
+      "l": 10,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/drazzan-rosven": {
+      "l": 43,
+      "c": "PALADIN",
+      "g": "La Chope et le Glaive",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/adramalor-stormblood": {
+      "l": 12,
+      "c": "MAGE",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/rekuiem-corvisart": {
+      "l": 30,
+      "c": "PRIEST",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/hålfdån-ðånkråð": {
+      "l": 29,
+      "c": "PALADIN",
+      "s": "x",
+      "d": 20785
+    },
+    "eu/lana-fildenuit": {
+      "l": 18,
+      "c": "ROGUE",
+      "s": "x",
+      "d": 20785
     }
   }
 }
