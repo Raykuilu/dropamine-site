@@ -112,6 +112,8 @@
    "scSend": "Senden",
    "scOk": "{n} Spieler empfangen, {a} neu · {t} in der Liste.",
    "scErr": "Abgelehnt ({e}).",
+   "admPrev": "Admin-Vorschau",
+   "admPrevTip": "Nur für den Administrator sichtbar, bis zur Freigabe",
    "metaChar": "Fertigkeiten, Fortschritt und Rang in den Dropamine-Hiscores für WoW Forever {r}, geprüft am offiziellen Arsenal.",
    "metaGuild": "{n}: Mitglieder, Stufen und Fortschritt der Woche in den Dropamine-Hiscores für WoW Forever {r}.",
    "metaRank": "Hiscores von WoW Forever {r}: jede Fertigkeit in einer Rangliste, geprüft am offiziellen Arsenal.",

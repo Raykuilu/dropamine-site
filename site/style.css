@@ -1696,3 +1696,4 @@ img.ava.cls{background:#0a0705}
 .st-table.cmp thead th{white-space:nowrap}.st-table.cmp td small{color:var(--muted)}
 .cmp-small{display:block;font-size:11px;color:#d09a52;font-weight:400;letter-spacing:0;text-transform:none}
 .st-table.cmp{min-width:420px}
+.adm-b{display:inline-block;vertical-align:middle;margin-left:8px;padding:2px 8px;border-radius:999px;border:1px dashed #d09a52;color:#e0b070;font:600 11px/1.4 var(--serif);letter-spacing:.06em;text-transform:uppercase;font-style:normal}

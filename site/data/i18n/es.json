@@ -112,6 +112,8 @@
    "scSend": "Enviar",
    "scOk": "Recibidos {n} jugadores, {a} nuevos · {t} en la lista.",
    "scErr": "Rechazado ({e}).",
+   "admPrev": "Vista previa admin",
+   "admPrevTip": "Visible solo para el administrador hasta su validación",
    "metaChar": "Habilidades, progreso y puesto en los Hiscores de Dropamine para WoW Forever {r}, verificados con la armería oficial.",
    "metaGuild": "{n}: miembros, niveles y progreso de la semana en los Hiscores de Dropamine para WoW Forever {r}.",
    "metaRank": "Hiscores de WoW Forever {r}: cada habilidad clasificada, verificada con la armería oficial.",

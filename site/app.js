@@ -922,6 +922,11 @@ const STATS = {};
 // ---------- Stats : les surprises (mur des 2 460, compétence de la semaine, ta place, face à face, progression) ----------
 // Chaque bloc a sa petite requête (/hs/wall, /hs/weekskill, /hs/quantiles, /hs/compare, /hs/rank), gardée 10 min ;
 // toujours par région ET type de royaume, jamais mélangés. Un bloc qui n'a pas répondu ne s'affiche pas (le reste oui).
+// Nouveautés en aperçu : visibles seulement par un administrateur connecté, tant que le propriétaire ne les a pas validées.
+// Règle : toute nouveauté du site part derrière ce drapeau. Aucune requête vers leurs routes pour les autres visiteurs.
+const preview = () => !!Bnet.admin?.();
+const admBadge = () => `<span class="adm-b" title="${esc(t('admPrevTip'))}">${t('admPrev')}</span>`;
+const stNew = rs => !preview() || !rs ? '' : [stPlace, stWall, stWeekSkill, stProgress, stCompare].map(fn => fn(rs).replace('</h3>', ' ' + admBadge() + '</h3>')).join('');
 const STX_PEND = new Set(), STX_FAIL = new Set();
 function stx(path, ttl = 10 * 60e3) {
   const v = Hs.peek(path); if (v) return v;
@@ -1047,7 +1052,7 @@ function renderStats() {
   if (d instanceof Promise) { box.innerHTML = loadingBox(); return; }
   if (!d || !d.n) {   // grands chiffres indisponibles (serveur lent) : les blocs à part (mur, semaine, ta place…) s'affichent quand même
     const rs = state.rs;
-    box.innerHTML = `<div class="empty">${t('stNone')}</div>${rs ? stPlace(rs) + stWall(rs) + stWeekSkill(rs) + stProgress(rs) + stCompare(rs) : ''}`; return;
+    box.innerHTML = `<div class="empty">${t('stNone')}</div>${stNew(rs)}`; return;
   }
   const pct = x => x == null ? '—' : `${(x * 100).toLocaleString(locale(), { maximumFractionDigits: 1 })} %`;
   const num = x => x == null ? '—' : x.toLocaleString(locale(), { maximumFractionDigits: 1 });
@@ -1101,10 +1106,11 @@ function renderStats() {
     <div class="st-tiles">${tile(fmt(kN), t('stChars'))}${tile(fmt(K ? K.lvl60 : d.lvl60), t('stLvl60'))}${tile(fmt(K ? Math.max(K.guilds, d.guilds.n) : d.guilds.n), t('stGuilds'))}${K ? tile(fmt(d.n), t('stRead')) : ''}${tile(fmt(d.pvp.hk), t('stHk'))}${tile(fmt(duels), t('stDuels'))}</div>
     ${K && d.n < K.n ? `<div class="st-progress"><span>${t('stProgress', { r: fmt(d.n), n: fmt(K.n) })}</span><i style="--w:${(100 * d.n / K.n).toFixed(1)}%"></i></div>` : ''}
     <p class="st-bias">${t('stBias')}</p>
-    ${stPlace(d.rs || state.rs)}${stWall(d.rs || state.rs)}${stWeekSkill(d.rs || state.rs)}${stProgress(d.rs || state.rs)}${stCompare(d.rs || state.rs)}
+    ${stNew(d.rs || state.rs)}
     <section class="st-sec"><h3>${t('stClasses')} <small>${t('stClassesSub')}</small></h3>
       <div class="st-scroll"><table class="st-table"><thead><tr><th>${t('stColClass')}</th><th>${t('stColShare')}</th><th>${t('stColLvl')}</th><th>${t('stCol60')}</th><th>${t('stColHk')}</th><th title="${esc(t('stKdTip'))}">${t('stColKd')}</th><th>${t('stColDuel')}</th></tr></thead><tbody>${classRows}</tbody></table></div></section>
     <div class="st-grid">
+      ${preview() ? '' : `<section class="st-sec"><h3>${t('stByMode')}</h3>${byMode}</section>`}
       <section class="st-sec"><h3>${t('stDuelBest')}</h3><ul class="st-list">${duelList}</ul></section>
       <section class="st-sec"><h3>${t('stFactions')}</h3>${facBar}<h3>${t('stRaces')}</h3><ul class="st-list">${races}</ul></section>
       <section class="st-sec"><h3>${t('stLevels')}</h3>${levels}</section>
@@ -3174,6 +3180,7 @@ function rsSelect() {
 // le serveur dit quel type il a utilisé (réponse « rs ») : le site s'aligne, sans l'imposer comme choix du joueur
 function rsFrom(j) { if (j?.rs && !state.rs) { state.rs = j.rs; rsSelect(); writeUrl(false); return true; } return false; }
 Object.assign(I18N, {
+  admPrev: ['Admin preview', 'Aperçu admin'], admPrevTip: ['Visible to the admin only until it is approved', 'Visible par l’administrateur seulement, en attendant validation'],
   bnTitle: ['Register with Battle.net', 'Inscription avec Battle.net'],
   bnPitch: ['Sign in with Blizzard: your Forever characters are listed, tick the ones to show. We never see your password.',
     'Connecte-toi chez Blizzard : tes personnages Forever s\'affichent, coche ceux à montrer. Nous ne voyons jamais ton mot de passe.'],
@@ -3340,7 +3347,7 @@ const Bnet = (() => {
     return res;
   }
   const chars = () => (me?.characters || []).filter(c => c.level >= 10);
-  return { show, init, header, mine, best, isMine, refresh, call, upload, chars, logged: () => !!me };
+  return { show, init, header, mine, best, isMine, refresh, call, upload, chars, logged: () => !!me, admin: () => !!me?.admin };
 })();
 // Connexion depuis l'app installée : Battle.net s'ouvre hors de l'app (onglet Chrome sur Android) et le retour y reste.
 // On retient « connexion en cours » ; quand l'app revient au premier plan, elle relit le compte (cookie partagé avec Chrome)
