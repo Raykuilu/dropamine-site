@@ -1,21 +1,4 @@
 {
-  "runs": [
-    {
-      "id": "mwwy2gs33qj9",
-      "dungeon": "ShadowfangKeep",
-      "at": "2026-11-26T06:48:00.000Z",
-      "note": "",
-      "by": "eu/ray-kuilu",
-      "owner": "bnet:masque",
-      "created": "2026-11-26T02:39:44.499Z",
-      "members": [
-        {
-          "key": "eu/ray-kuilu",
-          "role": "tank",
-          "owner": "bnet:masque"
-        }
-      ],
-      "edited": "2026-11-26T06:32:40.867Z"
-    }
-  ]
+  "_comment": "Sauvegarde chiffrée des sorties : seul api.dropamine.app peut la lire.",
+  "enc": "v1:GRuHeSwttZE_3Xk-4wQ0bv4dvvyjDYFzlYl-8qvoUh2Z60LSXJhlLwC9DwoCc29it1a76QMaGoDCDwRHRYifhQa1dcFBtU32xRm_BzBzMrcoHIxpVJaD7FgXZyD4vl-4wB7eol4jMCuSZUhAtKBMo2lU-ZL1WvAm2jEMrcVOUQv6cMdv6Lj8GoSBQCNVPJqB48ORfj6pisj-q7ekGEzBXBGi_5spNjFD7pDXlTokCEnsSw74lqSyeT-V9nqLYE5idTdn5Ev6op6xydkKUcGlRy0y2qqIdwB3SSUtdA_jnTUIlPtXti0SpbpDGHKEMK1881Ym3u8KJos2wKwK37yFU8erMzKW1InMgrN92pIKfY7ImaeqbpGenwXI99ZFGjrHeGoGuz4o4b-rnxl1zx0vY-tZGGU08Rc1ohsrg6fvp1wOCiFv6CN5u56igNaEBC4"
 }
