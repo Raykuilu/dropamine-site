@@ -980,6 +980,7 @@ function renderRank() {
     if (!box.querySelector('.skel')) box.innerHTML = loadingBox();
     Hs.get(path).then(d => {
       remember(d.rows.map(x => x.p));
+      if (!state.rk) state.pg = d.page;   // page ramenée par le serveur (au-delà de la dernière, par exemple)
       if (!state.rs && d.rs && !state.rk) { state.rs = d.rs; Hs.seed(rankPath(sk, d.page), d); state.rs = 0; }
       if (rsFrom(d)) state.pgKey = [state.region, sk.id, state.rs, state.cls, state.dg, state.dw].join('|');   // même page, type précisé
       if (state.rk) { state.pg = d.page; state.pgHit = d.me?.r || null; state.rk = ''; Hs.get(rankPath(sk, d.page)).catch(() => {}); }
@@ -1027,17 +1028,23 @@ function renderRank() {
   const pager = pagerNav('rank', j.page, j.pages, j.total,
     (j.total > RANK_PER ? `<label class="pg-go">${t('pgGo')}<input type="number" min="1" max="${j.total}" inputmode="numeric" data-pgrank aria-label="${t('pgGo')}"></label>` : '')
     + (mine.length && !state.dg && !state.dw ? `<button type="button" class="btn ghost pg-me" data-pgmine="${esc(pkey([...mine].sort((a, b) => b.total - a.total)[0]))}">${t('pgMine')}</button>` : ''));
-  const row = ({ p, v, r, g1, g7 }) => `
+  const row = ({ p, v, r, g1, g7, est }) => `
     <div class="row${r && r <= 3 ? ' top' : ''}${r ? '' : ' unranked'}${mineK.has(pkey(p)) ? ' me' : ''}${r && r === state.pgHit ? ' hit' : ''}" data-c="${esc(pkey(p))}" role="row">
       <span class="rk">${r || '–'}</span>
       <span class="nm">${avatar(p)}<span><b>${full(p)}</b>${plus(p, (state.dw ? g7 : g1) || 0)}<small>${who(p)}</small></span></span>
       <span class="lv${p.level >= 60 ? ' max' : ''}">${p.level}</span>
       ${isTotal ? tri(p) : sk.prof ? `<span class="mbar"><i style="--w:${(100 * v / ((p.professions || []).find(x => x.id === sk.prof)?.max || 300)).toFixed(1)}%"></i></span>`
-        : sk.wpn ? `<span class="mbar w"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>`
+        : sk.wpn ? `<span class="mbar w${est ? ' est' : ''}"><i style="--w:${(100 * v / (5 * p.level)).toFixed(1)}%"></i></span>`
         : sk.ratio ? `<span class="mbar b"><i style="--w:${(100 * Math.min(1, sk.ratio(v, p) || 0)).toFixed(1)}%"></i></span>` : '<span class="c3"></span>'}
-      <span class="tot">${showVal(sk, v, p)}${isTotal ? estTag(p) : ''}</span>
+      <span class="tot">${showVal(sk, v, p)}${isTotal ? estTag(p) : est ? `<em>${t('est')}</em>` : ''}</span>
     </div>`;
-  const rows = j.rows.length ? j.rows.map(row).join('')
+  let estRows = '';
+  if (sk.wpn && j.page >= j.pages && !state.dg && !state.dw) {
+    const ep = rankPath(sk, 1) + '&est=1', ej = Hs.peek(ep);
+    if (!ej) Hs.get(ep).then(d => { remember(d.rows.map(x => x.p)); if (state.view === 'rank' && state.pgKey === sig) renderRank(); }).catch(() => {});
+    else if (ej.rows.length) estRows = `<div class="you-sep est-sep">${t('estSep')}${ej.total > ej.rows.length ? ` · ${fmt(ej.total)}` : ''}</div>` + ej.rows.map(x => row({ ...x, r: 0, est: true })).join('');
+  }
+  const rows = j.rows.length ? j.rows.map(row).join('') + estRows
     : state.dg || state.dw ? `<div class="empty">${t(state.dw ? 'dwNone' : 'dgNone')}</div>` : sk.id === 'hpk' ? `<div class="empty">${t('hpkNone')}</div>` : nobody();
   box.innerHTML = `
     <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('rkCount', { n: fmt(j.total) })} · ${esc(rsLabel(rs))} · Forever ${state.region.toUpperCase()}</span></div>
