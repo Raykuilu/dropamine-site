@@ -19,6 +19,7 @@ const crawl = startCrawl({ ...workerData, readRaw });
 let allCache = null, statsCache = null;
 const API = {
   status: () => crawl.status(),
+  feed: since => ({ status: crawl.status(), events: crawl.feed(since) }),
   search: (q, limit) => crawl.search(q, limit),
   char: k => crawl.char(k) ?? crawl.readNow(k),
   rank: (r, pg, per) => crawl.rank(r, pg, per),

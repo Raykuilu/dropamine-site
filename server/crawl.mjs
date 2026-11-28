@@ -205,6 +205,8 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
   const callsLastHour = () => { count(0); return minutes.reduce((a, b) => a + b, 0); };
   const callsLast10 = () => { count(0); let n = 0; for (let i = 1; i <= 10; i++) n += minutes[(curMin - i + 60) % 60]; return n; };
   const inflight = new Set();
+  const feed = []; let feedId = 0;
+  const note = ev => { feed.push({ id: ++feedId, t: Date.now(), ...ev }); if (feed.length > 200) feed.shift(); };
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   // seau de jetons : `rate` appels par seconde au plus. Un visiteur (recherche, fiche demandée) passe avant le relevé de fond,
   // qui lui cède la place tant qu'un appel de visiteur attend ; au-delà de HOUR_CAP sur l'heure, le fond s'arrête.
@@ -237,7 +239,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
       const res = await fetch(url, { headers: { Authorization: `Bearer ${await token()}` }, signal: AbortSignal.timeout(20e3) });
       if (res.status === 404) return null;
       if (res.status === 401) { tok = null; continue; }
-      if (res.status === 429) { refused++; last429 = Date.now(); rate = slowDown(rate); await sleep(2000 * (attempt + 1)); continue; }   // Blizzard freine : débit divisé par deux
+      if (res.status === 429) { refused++; last429 = Date.now(); note({ type: 'refused', rate: slowDown(rate) }); rate = slowDown(rate); await sleep(2000 * (attempt + 1)); continue; }   // Blizzard freine : débit divisé par deux
       if (!res.ok) throw new Error(`${region}${path} → ${res.status}`);
       return res.json();
     }
@@ -246,7 +248,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
   async function readChar(w, manual = false) {
     const base = `/profile/wow/character/${encodeURIComponent(w.slug)}`;
     const profile = await get(w.region, base, manual);
-    if (!profile) { goneChar(db, w.key); return; }
+    if (!profile) { goneChar(db, w.key); note({ type: 'gone', key: w.key, manual }); return; }
     const [professions, equipment, statistics, achStats] = await Promise.all([
       get(w.region, `${base}/professions`, manual), get(w.region, `${base}/equipment`, manual), get(w.region, `${base}/statistics`, manual), get(w.region, `${base}/achievements/statistics`, manual)]);
     const player = crawlPlayer(w.region, w.slug, { profile, professions, equipment, statistics, achStats });
@@ -254,6 +256,8 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     const prev = old ? JSON.parse(old.data) : null;
     if (prev?.mediaAt) Object.assign(player, { avatar: prev.avatar, inset: prev.inset, render: prev.render, mediaAt: prev.mediaAt });
     const { active } = saveChar(db, player);
+    note({ type: 'char', key: player.key, name: player.name, surname: player.surname, cls: player.classId, level: player.level, total: player.total,
+      guild: player.guild?.name ?? null, faction: player.faction ?? null, active, manual, first: !prev });
     if (active && needsMedia(player)) setMedia(db, w.key, await get(w.region, `${base}/character-media`).catch(() => null));
   }
   async function readGuild(g) {
@@ -261,6 +265,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     const members = rosterMembers(g.region, roster);
     addChars(db, members, g.src === 'follow' ? 'follow' : 'guild');
     db.prepare('UPDATE guilds SET roster_at = ?, members = ? WHERE key = ?').run(dayOf(), roster ? (roster.members ?? []).length : 0, g.key);
+    note({ type: 'guild', key: g.key, name: roster?.guild?.name ?? g.slug, faction: roster?.guild?.faction?.type ?? null, members: members.length });
   }
   // une tâche à la fois par « ouvrier » ; une liste de guilde toutes les 4 tâches, pour que la boule de neige grossisse
   let turn = 0;
@@ -301,7 +306,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
   }
   // réglages (page admin, data/settings.json) : crawlRate = appels par seconde, 0 = arrêté
   async function settings() {
-    try { const s = await readRaw('data/settings.json', {}); if (Number.isFinite(s.crawlRate)) { target = Math.max(0, Math.min(CRAWL.RATE_MAX, s.crawlRate)); rate = Math.min(rate, target) || target; } }
+    try { const s = await readRaw('data/settings.json', {}); if (Number.isFinite(s.crawlRate)) { target = Math.max(0, Math.min(CRAWL.RATE_MAX, s.crawlRate)); rate = Date.now() - last429 > 10 * 60e3 ? target : Math.min(rate, target); } }
     catch { /* on garde le réglage courant */ }
   }
   const timers = [];
@@ -316,8 +321,9 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
     status() {
       const c = crawlCounts(db), calls = callsLastHour();
       const manual = manualLastMin();
+      const perMin = Array.from({ length: 30 }, (_, i) => minutes[(curMin - 29 + i + 60) % 60]);
       return { ...c, rate, target, perHour: Math.round(rate * 3600), callsLastHour: calls, refused, busy, errors, lastErr,
-        mode: regMode({ rate, target, hourCalls: calls, manualLastMin: manual }), manualLastMin: manual, last429: last429 ? new Date(last429).toISOString() : null,
+        mode: regMode({ rate, target, hourCalls: calls, manualLastMin: manual }), manualLastMin: manual, perMin, last429: last429 ? new Date(last429).toISOString() : null,
         etaHours: crawlEta(c.waiting, callsLast10() * 6), since: Number(db.prepare("SELECT v FROM meta WHERE k = 'since'").get()?.v ?? 0) || null,
         seeded: db.prepare("SELECT v FROM meta WHERE k = 'seeded'").get()?.v ?? null };
     },
@@ -336,6 +342,7 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
       return charByKey(db, key);
     },
     known: region => knownCounts(db, region),
+    feed: since => feed.filter(x => x.id > (since || 0)),
     // recherche directe : un joueur que le relevé ne connaît pas encore est lu tout de suite chez Blizzard (5 appels)
     async lookup(region, name) {
       const slug = lookupSlug(name); if (!slug || rate <= 0) return null;   // relevé coupé dans l'admin : pas d'appel Blizzard

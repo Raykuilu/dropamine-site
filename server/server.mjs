@@ -19,6 +19,7 @@
 import { createServer } from 'node:http';
 import { gzipSync } from 'node:zlib';
 import { Worker } from 'node:worker_threads';
+import { createAnalytics } from './analytics.mjs';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import { charactersFromAccount, applyClaim, applyRelease, parseCookies, validKey, parseHiscoresLine, matchUpload,
   applyRunCreate, applyRunJoin, applyRunLeave, applyRunEdit, publicRuns, applyHuntEdit, keepSiteHunt, parseScoutLine, applyScout, applySettings, applyGuildFollow, queueDue } from './lib.mjs';
@@ -73,8 +74,8 @@ function session(req) {
 
 // ---------------------------------------------------------------- petites protections
 const hits = new Map();
-function limited(req, max = 40) {               // 40 requêtes par minute et par adresse
-  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '?';
+function limited(req, max = 40, bucket = '') {   // 40 requêtes par minute et par adresse ; les lectures fréquentes ont leur propre compteur
+  const ip = (req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '?') + bucket;
   const now = Date.now(), h = hits.get(ip) ?? { n: 0, t: now };
   if (now - h.t > 60e3) { h.n = 0; h.t = now; }
   h.n++; hits.set(ip, h);
@@ -182,6 +183,9 @@ const updateUploads = (fn, message) => updateFile('data/uploads.json', {}, fn, m
 // sur disque (fichier temporaire puis renommage), les écritures passent une par une (file), et une copie de secours
 // part sur GitHub (data/runs.json) au plus toutes les 15 minutes s'il y a eu du changement.
 const STATE_DIR = fileURLToPath(new URL('./.state/', import.meta.url));
+// mesure d'audience maison (sans cookie ni IP) et journal des actions des comptes (30 jours), pour la page admin
+const AUDIT = createAnalytics(STATE_DIR);
+const ipOf = req => req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '?';
 const RUNS_FILE = STATE_DIR + 'runs.json';
 let RUNS = null, runsDirty = false, runsQueue = Promise.resolve();
 async function runsLoad() {
@@ -334,6 +338,7 @@ async function crawlRoute(req, res, url) {
   const p = url.pathname;
   try {
     if (p === '/hs/status') sendPublic(req, res, await crawl.call('status'), 30);
+    else if (p === '/hs/feed') sendPublic(req, res, await crawl.call('feed', Math.max(0, Math.floor(+url.searchParams.get('since') || 0))), 0);
     else if (p === '/hs/all.gz') {
       // le fichier compressé tel quel (le proxy d'Infomaniak retire la compression HTTP « Content-Encoding »)
       const gz = Buffer.from(await crawl.call('allGz'));
@@ -371,9 +376,14 @@ async function crawlRoute(req, res, url) {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, CFG.publicUrl);
   try {
-    if (limited(req, (url.pathname === '/runs' || url.pathname === '/hs/search') && req.method === 'GET' ? 120 : 40)) return send(res, 429, { error: 'trop de requêtes' }, { ...cors, 'Retry-After': '60' });
+    const frequent = ['/runs', '/hs/search', '/hs/feed', '/hit'].includes(url.pathname);   // lectures fréquentes et visites : compteur à part (120 / min)
+    if (limited(req, frequent ? 120 : 40, frequent ? '|f' : '')) return send(res, 429, { error: 'trop de requêtes' }, { ...cors, 'Retry-After': '60' });
     if (req.method === 'OPTIONS') return send(res, 204, '', { ...cors, 'Access-Control-Allow-Methods': 'GET, POST', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600' });
 
+    if (url.pathname === '/hit' && req.method === 'POST') {
+      try { AUDIT.hit(ipOf(req), req.headers['user-agent'] || '', await readBody(req, 2000)); } catch { /* visite ignorée */ }
+      return send(res, 204, '', cors);
+    }
     if (internal && await internal(req, res, url)) return;
     if (await crawlRoute(req, res, url)) return;
     if (url.pathname === '/health') return send(res, 200, 'ok', cors);
@@ -397,13 +407,14 @@ const server = createServer(async (req, res) => {
       const id = randomBytes(24).toString('base64url');
       sessions.set(id, { exp: Date.now() + SESSION_HOURS * 3600e3, bnetId: String(user?.id ?? user?.sub ?? ''), battletag: user?.battletag ?? '',
         characters: new Map(characters.map(c => [c.key, c])) });
+      AUDIT.log('login', user?.battletag ?? '', `${characters.length} personnage(s)`);
       // le jeton Battle.net n'est pas gardé : seule la liste des personnages l'est, pour la durée de la session
       const toAdmin = parseCookies(req.headers.cookie).dto === 'admin';
       return send(res, 302, '', { Location: toAdmin ? `${CFG.publicUrl}/admin` : back('ok'), 'Set-Cookie': [cookie('dsid', seal(id), SESSION_HOURS * 3600), cookie('dstate', '', 0), cookie('dto', '', 0)] });
     }
 
     // routes de session : appelées par dropamine.app (CORS avec cookie)
-    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit', '/push/subscribe', '/push/unsubscribe', '/hunt/save', '/scout', '/admin/run', '/admin/settings', '/admin/guild', '/admin/hide'].includes(url.pathname)) {
+    if (['/me', '/claim', '/release', '/upload', '/logout', '/runs/create', '/runs/join', '/runs/leave', '/runs/edit', '/push/subscribe', '/push/unsubscribe', '/hunt/save', '/scout', '/admin/run', '/admin/settings', '/admin/guild', '/admin/hide', '/admin/audience', '/admin/journal'].includes(url.pathname)) {
       if (req.method === 'POST' && req.headers.origin !== CFG.siteUrl && req.headers.origin !== CFG.publicUrl) return send(res, 403, { error: 'origine refusée' }, cors);
       const s = session(req);
       if (url.pathname === '/logout') {
@@ -435,6 +446,7 @@ const server = createServer(async (req, res) => {
             return { registry: n, changed };
           }, `Hiscores: remove Dropamine line of ${r.done.join(', ')}`).catch(() => {});
         }
+        if (r.done?.length) AUDIT.log(url.pathname === '/claim' ? 'register' : 'unregister', s.battletag, r.done.join(', '));
         if (r.changed) refreshSite();
         return send(res, 200, { done: r.done, refused: r.refused }, cors);
       }
@@ -450,6 +462,7 @@ const server = createServer(async (req, res) => {
           ...(p.played ? { played: p.played } : {}), ...(p.lc ? { lc: p.lc } : {}),
           ...Object.fromEntries(['collection', 'achievements', 'records', 'hunt', 'pvp'].filter(k => p[k]).map(k => [k, p[k]])) };
         await updateUploads(u => ({ registry: { ...u, [c.key]: keepSiteHunt(entry, u[c.key]) }, changed: true }), `Hiscores: Dropamine line for ${c.key}`);
+        AUDIT.log('upload', s.battletag, c.key);
         refreshSite();
         return send(res, 200, { key: c.key, weapons: p.weapons, count: p.weaponList.length }, cors);
       }
@@ -462,13 +475,24 @@ const server = createServer(async (req, res) => {
         let out = null;
         const r = await updateUploads(u => (out = applyHuntEdit(u, key, body.items)).error ? { changed: false } : out, `Hiscores: wanted items of ${key} (site)`);
         if (out?.error) return send(res, 400, { error: out.error }, cors);
+        AUDIT.log('hunt', s.battletag, `${key} · ${out.hunt?.length ?? 0} objet(s)`);
         if (r.changed) refreshSite();
         return send(res, 200, { ok: true, hunt: out.hunt }, cors);
+      }
+      if ((url.pathname === '/admin/audience' || url.pathname === '/admin/journal') && req.method === 'GET') {
+        if (!isAdmin(s)) return send(res, 403, { error: 'admin' }, cors);
+        if (url.pathname === '/admin/audience') {
+          const n = Math.max(1, Math.min(90, Math.floor(+url.searchParams.get('days') || 30)));
+          return send(res, 200, { ...AUDIT.summary(n), pushSubs: Object.values(SUBS).reduce((k, l) => k + (l?.length ?? 0), 0), sessions: sessions.size }, cors);
+        }
+        const limit = Math.max(1, Math.min(2000, Math.floor(+url.searchParams.get('limit') || 300)));
+        return send(res, 200, { entries: AUDIT.journal(limit, url.searchParams.get('type') || null) }, cors);
       }
       // Admin (page admin.html) : relancer un relevé, réglages du remplissage, guildes suivies, retirer un personnage
       if (url.pathname.startsWith('/admin/') && req.method === 'POST') {
         if (!isAdmin(s)) return send(res, 403, { error: 'admin' }, cors);
         const body = await readBody(req);
+        AUDIT.log('admin', s.battletag, `${url.pathname.slice(7)} ${JSON.stringify(body).slice(0, 120)}`);
         if (url.pathname === '/admin/run') { await refreshSite(); return send(res, 200, { ok: true }, cors); }
         if (url.pathname === '/admin/settings') {
           let out = null;
@@ -499,6 +523,7 @@ const server = createServer(async (req, res) => {
         if (p.error) return send(res, 400, { error: p.error }, cors);
         let out = null;
         const r = await updateFile('data/scouted.json', { players: {} }, d => (out = applyScout(d, p.region, p.players)), `Hiscores: scout (${p.players.length} players)`);
+        AUDIT.log('scout', s.battletag, `${p.players.length} reçus, ${out?.added ?? 0} nouveaux`);
         if (r.changed) refreshSite();
         return send(res, 200, { ok: true, received: p.players.length, added: out?.added ?? 0, total: out?.total ?? 0 }, cors);
       }
@@ -507,7 +532,7 @@ const server = createServer(async (req, res) => {
         if (!validSub(sub)) return send(res, 400, { error: 'abonnement invalide' }, cors);
         const r = addSub(SUBS, ownerOf(s), sub);
         if (r.error) return send(res, 503, { error: r.error }, cors);
-        SUBS = r.store; subsSave();
+        SUBS = r.store; subsSave(); AUDIT.log('push-on', s.battletag);
         return send(res, 200, { ok: true }, cors);
       }
       if (url.pathname === '/push/unsubscribe' && req.method === 'POST') {
@@ -526,6 +551,7 @@ const server = createServer(async (req, res) => {
         if (r.error) return send(res, 400, { error: r.error }, cors);
         // notifications : l'organisateur (arrivées, départs), les inscrits (place libérée, groupe complet, annulation)
         const after = RUNS.runs?.find(x => x.id === (r.run?.id ?? body.id)) ?? null;
+        AUDIT.log(url.pathname.slice(1).replace('/', '-'), s.battletag, `${after?.d ?? before?.d ?? ''} ${r.run?.id ?? body.id ?? ''}`.trim());
         if (before || after) notify(runEvents(before, after, owner, { dungeonName: dunName, isRaid: k => RAID_RE.test(k) })).catch(() => {});
         return send(res, 200, { ok: true, id: r.run?.id ?? body.id, cancelled: !!r.cancelled, runs: publicRuns(RUNS) }, cors);
       }

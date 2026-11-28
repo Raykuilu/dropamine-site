@@ -2922,6 +2922,18 @@ function markNav() {
   $$('.tabbar [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === 'me' ? meView : b.dataset.go === state.view && !(state.view === 'char')));
   $$('.view').forEach(v => v.classList.toggle('on', v.id === state.view));
 }
+// Mesure d'audience maison (api.dropamine.app/hit) : page, langue, région, appareil, site d'origine. Aucun cookie, aucune IP gardée ;
+// rien n'est envoyé si le navigateur demande « Do Not Track » ou sur le poste de développement.
+const hitOff = navigator.doNotTrack === '1' || window.doNotTrack === '1' || location.hostname === 'localhost';
+let hitRef = (() => { try { const h = new URL(document.referrer).hostname; return h && h !== location.hostname ? h : ''; } catch { return ''; } })(), lastHit = '';
+function hit(extra = {}) {
+  if (hitOff) return;
+  const body = { p: state.view, r: state.region, l: LANG, m: matchMedia('(pointer:coarse)').matches ? 1 : 0, ...extra };
+  if (body.p === 'char' && !body.c) body.c = state.c; if (body.p === 'guild' && !body.g) body.g = state.g;
+  const sig = JSON.stringify(body); if (sig === lastHit) return; lastHit = sig;
+  if (hitRef) { body.ref = hitRef; hitRef = ''; }
+  try { navigator.sendBeacon(`${API}/hit`, new Blob([JSON.stringify(body)], { type: 'text/plain' })); } catch { /* rien */ }
+}
 function render(push) {
   applyStatic();
   if (state.view === 'home') renderHome();
@@ -2937,6 +2949,7 @@ function render(push) {
   // dons : seulement sur les pages de l'addon, jamais à côté des données Blizzard (classements, fiches, guildes)
   $('#foot-coffee').hidden = !['home', 'get', 'news'].includes(state.view);
   writeUrl(push);
+  hit();
 }
 // changement de page : l'onglet est sélectionné et la page s'affiche tout de suite, avec la goutte de chargement ;
 // le contenu (classement, fiche…) est dessiné à l'image suivante, après que le navigateur a montré le bouton et la goutte
@@ -3065,7 +3078,7 @@ addEventListener('popstate', () => { readUrl(); render(false); Ribbon.swell(.6);
     withLookup(); draw();
     clearTimeout(srvT);
     if (q.length >= 2 && hits.length < 8) srvT = setTimeout(() => {
-      srvQ = q;
+      srvQ = q; hit({ p: 'search', q });
       fetch(`${API}/hs/search?q=${encodeURIComponent(q)}`).then(r => r.ok ? r.json() : null).catch(() => null).then(j => {
         if (srvQ !== fold(input.value.trim()) || !j?.results) return;
         const seen = new Set(hits.map(pkey));
