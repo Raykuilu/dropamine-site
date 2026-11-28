@@ -259,6 +259,8 @@ export function previewEntries(rosters, registered, optout) {
 // Scout (data/scouted.json) → aperçus : vus depuis moins de 30 jours, niveau 10+, ni inscrits, ni retirés, ni déjà montrés ;
 // les plus récents d'abord, SCOUT_LIMIT au plus par relevé (appels Blizzard)
 export const SCOUT_LIMIT = 400;
+// guildes suivies relues au plus par mise à jour quand le serveur est arrêté (appels Blizzard)
+export const FOLLOW_MAX = 1500;
 export function scoutEntries(scouted, taken, optout, day = Math.floor(Date.now() / 864e5)) {
   return Object.entries(scouted?.players ?? {})
     .filter(([key, v]) => (v.d ?? 0) >= day - 30 && (v.l ?? 0) >= 10 && !taken.has(key) && !optout.has(key) && /^(eu|us|tw)\/[^/]+-[^/]+$/.test(key))
@@ -436,7 +438,9 @@ async function main() {
       return (roster?.members ?? []).map(m => m.character).filter(c => c?.slug && (c.level ?? 0) >= 10)
         .map(c => ({ key: `${region}/${c.slug.toLowerCase()}`, via, l: c.level }));
     };
-    for (const g of guilds) qAdd += enqueue(queue, await rosterItems(String(g).toLowerCase(), 'follow'), shown, optout, day);
+    // guildes suivies : celles pas relues depuis QUEUE.GUILD_EVERY jours, FOLLOW_MAX par mise à jour (la liste en compte des dizaines de milliers)
+    const dueFollow = guilds.map(g => String(g).toLowerCase()).filter(g => (queue.guilds[g] ?? -1e9) < day - QUEUE.GUILD_EVERY).slice(0, FOLLOW_MAX);
+    for (const g of dueFollow) qAdd += enqueue(queue, await rosterItems(g, 'follow'), shown, optout, day);
     const scouted = await readJson(join(ROOT, 'data/scouted.json'), { players: {} });
     qAdd += enqueue(queue, Object.entries(scouted.players ?? {}).filter(([, v]) => (v.d ?? 0) >= day - 30 && (v.l ?? 0) >= 10)
       .map(([key, v]) => ({ key, via: 'scout', l: v.l })), shown, optout, day);

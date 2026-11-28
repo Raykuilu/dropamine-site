@@ -25,3 +25,19 @@ test('statistiques : répartitions, métiers, JcJ, duels, records, guildes', () 
   assert.equal(s.guilds.n, 1); assert.equal(s.guilds.top[0].n, 2);
   assert.equal(s.pve60.n, 2); assert.equal(s.pve60.quests, 450);
 });
+
+import { computeDepth } from './stats-lib.mjs';
+test('stats en profondeur : croisements, profil d’un 60, armes, totaux, top par classe', () => {
+  const ps = [
+    P({ key: 'eu/a-a', name: 'A', gender: 'MALE', equipped: ['swords'], defense: 300, stats: { deaths: 100, quests: 900, kills: 50, cheers: 3 } }),
+    P({ key: 'eu/b-b', name: 'B', gender: 'FEMALE', level: 30, total: 900, equipped: ['bows'], stats: { deaths: 10 } }),
+  ];
+  const d = computeDepth(ps);
+  assert.deepEqual(d.classRace[1], { 1: 2 }); assert.deepEqual(d.genders[1], { MALE: 1, FEMALE: 1 });
+  assert.equal(d.classLevels[1][5], 1); assert.equal(d.classLevels[1][2], 1, '30–39');
+  assert.equal(d.profile60[1].n, 1); assert.equal(d.profile60[1].deaths, 100); assert.equal(d.defense60[1], 300);
+  assert.deepEqual(d.weaponsByClass[1], { swords: 1, bows: 1 });
+  assert.equal(d.totals.deaths, 110); assert.equal(d.totals.cheers, 3);
+  assert.equal(d.topByClass[1][0].name, 'A'); assert.equal(d.profSkill[164][4], 2, 'forge à 300');
+  assert.equal(d.inGuild, 2); assert.equal(d.n60, 1);
+});

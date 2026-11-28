@@ -16,6 +16,46 @@ function pushTop(list, p, v) {                          // garde les TOP plus gr
   if (v > list[list.length - 1].v) { list[list.length - 1] = { ...who(p), v }; list.sort((a, b) => b.v - a.v); }
 }
 
+// Stats en profondeur (fiches lues) : croisements, profil type d'un 60 par classe, métiers et armes par classe,
+// totaux du serveur, top par classe, répartition du niveau total. Une seule passe, résultat compact.
+export const FACT_KEYS = ['kills', 'critters', 'quests', 'questsAbandoned', 'deaths', 'fallDeaths', 'fatigueDeaths', 'dungeonDeaths', 'dungeons', 'bossKills',
+  'hk', 'killingBlows', 'pvpDeaths', 'duelsWon', 'duelsLost', 'flights', 'hearth', 'fish', 'mounts', 'healthPotions', 'manaPotions', 'food', 'drinks', 'cheers'];
+const PROFILE_KEYS = ['deaths', 'quests', 'kills', 'hk', 'pvpDeaths', 'duelsWon', 'duelsLost', 'fallDeaths', 'healthPotions', 'manaPotions', 'hearth', 'flights', 'dungeons', 'bossKills', 'fish', 'mounts', 'food', 'drinks', 'cheers'];
+export const SKILL_BUCKETS = [[1, 74], [75, 149], [150, 224], [225, 299], [300, 300]];
+export function computeDepth(ps) {
+  const d = { classRace: {}, genders: {}, factionRuleset: {}, classLevels: {}, profile60: {}, profByClass: {}, profSkill: {}, weaponsByClass: {},
+    totals: {}, topByClass: {}, totalHist: Array(13).fill(0), inGuild: 0, n: ps.length, n60: 0, defense60: {} };
+  const tops = {}, acc60 = {};
+  for (const p of ps) {
+    const c = p.classId ?? 0, st = p.stats ?? {};
+    ((d.classRace[c] ??= {})[p.raceId ?? 0] = (d.classRace[c][p.raceId ?? 0] ?? 0) + 1);
+    const g = d.genders[c] ??= { MALE: 0, FEMALE: 0 }; if (p.gender in g) g[p.gender]++;
+    const fr = (d.factionRuleset[p.faction ?? '?'] ??= {}); fr[p.rulesetId ?? 0] = (fr[p.rulesetId ?? 0] ?? 0) + 1;
+    const lv = d.classLevels[c] ??= Array(6).fill(0); lv[p.level >= 60 ? 5 : Math.max(0, Math.min(4, Math.floor(p.level / 10) - 1))]++;
+    if (p.guild?.slug) d.inGuild++;
+    for (const k of FACT_KEYS) if (st[k]) d.totals[k] = (d.totals[k] ?? 0) + st[k];
+    for (const pr of p.professions ?? []) {
+      const pc = d.profByClass[c] ??= {}; pc[pr.id] = (pc[pr.id] ?? 0) + 1;
+      const h = d.profSkill[pr.id] ??= Array(SKILL_BUCKETS.length).fill(0); const i = SKILL_BUCKETS.findIndex(([a, b]) => pr.skill >= a && pr.skill <= b); if (i >= 0) h[i]++;
+    }
+    for (const w of p.equipped ?? []) { const wc = d.weaponsByClass[c] ??= {}; wc[w] = (wc[w] ?? 0) + 1; }
+    d.totalHist[Math.min(12, Math.floor((p.total ?? 0) / 200))]++;
+    const t = tops[c] ??= []; t.push(p); if (t.length > 12) { t.sort((a, b) => b.total - a.total); t.length = 3; }
+    if (p.level >= 60) {
+      d.n60++;
+      const a = acc60[c] ??= { n: 0, def: 0 }; a.n++; a.def += p.defense ?? 0;
+      for (const k of PROFILE_KEYS) a[k] = (a[k] ?? 0) + (st[k] ?? 0);
+    }
+  }
+  for (const [c, a] of Object.entries(acc60)) {
+    d.profile60[c] = { n: a.n, ...Object.fromEntries(PROFILE_KEYS.map(k => [k, Math.round((a[k] ?? 0) / a.n * 10) / 10])) };
+    d.defense60[c] = Math.round(a.def / a.n);
+  }
+  for (const [c, t] of Object.entries(tops)) d.topByClass[c] = t.sort((a, b) => b.total - a.total).slice(0, 3)
+    .map(p => ({ key: p.key, name: p.name, surname: p.surname, level: p.level, total: p.total, guild: p.guild?.name ?? null, avatar: p.avatar ?? null }));
+  return d;
+}
+
 export function computeStats(players, region) {
   const ps = players.filter(p => (p.region || 'eu') === region && p.level >= 10);
   const out = {
@@ -71,6 +111,7 @@ export function computeStats(players, region) {
   out.profPairs = Object.entries(out.profPairs).map(([k, n]) => ({ ids: k.split('+').map(Number), n })).sort((a, b) => b.n - a.n).slice(0, TOP);
   const e = out.pve60; out.pve60 = { n: e.n, ...Object.fromEntries(['quests', 'deaths', 'kills', 'dungeons', 'flights', 'fallDeaths', 'bosses'].map(f => [f, mean(e[f], e.n)])) };
   out.pvp.kd = ratio(out.pvp.hk, out.pvp.pvpDeaths); out.pvp.duelRate = ratio(out.pvp.duelsWon, out.pvp.duelsWon + out.pvp.duelsLost);
+  out.depth = computeDepth(ps);
   out.guilds = { n: guilds.size, top: [...guilds.values()].sort((a, b) => b.n - a.n).slice(0, TOP).map(g => ({ ...g, avgTotal: mean(g.total, g.n) })) };
   return out;
 }

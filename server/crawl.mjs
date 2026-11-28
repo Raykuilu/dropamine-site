@@ -301,7 +301,9 @@ export function startCrawl({ stateDir, clientId, clientSecret, readRaw, log = co
       const regKeys = (registry.characters ?? []).map(k => String(k).includes('/') ? String(k).toLowerCase() : 'eu/' + String(k).toLowerCase());
       addChars(db, regKeys.map(key => ({ key })), 'reg');
       addChars(db, Object.entries(scouted.players ?? {}).filter(([, v]) => (v.l ?? 0) >= CRAWL.MIN_LEVEL).map(([key, v]) => ({ key, level: v.l })), 'scout');
-      for (const g of follow.guilds ?? []) { const [r, s] = String(g).toLowerCase().split('/'); addGuild(db, r, s, null, 'follow'); }
+      db.exec('BEGIN');   // des dizaines de milliers de guildes : une seule transaction
+      try { for (const g of follow.guilds ?? []) { const [r, s] = String(g).toLowerCase().split('/'); addGuild(db, r, s, null, 'follow'); } db.exec('COMMIT'); }
+      catch (err) { db.exec('ROLLBACK'); throw err; }
       addChars(db, Object.entries(queue.players ?? {}).map(([key, v]) => ({ key, level: v.l })), 'site');
       const site = await fetch('https://dropamine.app/data/hiscores.json').then(r => r.ok ? r.json() : null).catch(() => null);
       if (site?.players) {
