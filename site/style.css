@@ -1697,3 +1697,13 @@ img.ava.cls{background:#0a0705}
 .cmp-small{display:block;font-size:11px;color:#d09a52;font-weight:400;letter-spacing:0;text-transform:none}
 .st-table.cmp{min-width:420px}
 .adm-b{display:inline-block;vertical-align:middle;margin-left:8px;padding:2px 8px;border-radius:999px;border:1px dashed #d09a52;color:#e0b070;font:600 11px/1.4 var(--serif);letter-spacing:.06em;text-transform:uppercase;font-style:normal}
+/* Score global (aperçu admin) : bloc de la fiche, entrée du menu des compétences */
+.scoreb{margin:18px 0 6px;padding:6px 18px 14px;border:1px solid var(--line-2);border-radius:12px;background:linear-gradient(180deg,rgba(196,154,92,.07),transparent 70%),#0d0a07}
+.scoreb h3{font-family:var(--display);color:var(--cream);font-size:19px;margin:12px 0 6px;letter-spacing:.04em}
+.sc-top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.sc-top b{font-family:var(--num);font-size:clamp(34px,5vw,48px);color:var(--gold);line-height:1}.sc-top b small{font-size:16px;color:var(--muted)}
+.sc-top span{color:var(--cream)}
+.sc-list li{grid-template-columns:minmax(110px,200px) minmax(60px,1fr) 44px}
+@media (max-width:560px){.sc-list li{grid-template-columns:minmax(0,1fr) auto}.sc-list b{display:block}}
+.skills a.prev{box-shadow:inset 2px 0 0 #d09a52}
+.sc-note{margin:4px 0 0;flex-basis:100%}

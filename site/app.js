@@ -193,6 +193,9 @@ const I18N = {
   cmpTopCls: ["Most played class", "Classe la plus jouée"],
   cmpSmall: ["small sample", "petit échantillon"],
   cmpSmallTip: ["Fewer than 300 characters: percentages move a lot.", "Moins de 300 personnages : les pourcentages bougent beaucoup."],
+  scoreT: ["Overall score", "Score global"],
+  scoreNote: ["average of your marks in 11 stats, compared with the players of your realm type", "moyenne de tes notes dans 11 stats, comparé aux joueurs de ton type de royaume"],
+  scoreNoKd: ["(K/D left out: fewer than 20 fights.)", "(K/D non compté : moins de 20 combats.)"],
   gNoMatchG: ['No guild matches these filters.', 'Aucune guilde ne correspond à ces filtres.'],
   gRanked: ['{n} ranked', '{n} classés'], gBest: ['best {v}', 'meilleur {v}'], gAvg: ['Average', 'Moyenne'],
   gAvgNote: ['average of the {top} best members · {min} ranked members minimum', 'moyenne des {top} meilleurs membres · {min} membres classés minimum'],
@@ -605,7 +608,11 @@ const tri = p => {
   return `<span class="tri" title="${t('level')} ${p.parts.level} · ${t('weaponsDef')} ${p.parts.combat}${p.complete ? '' : t('estP')} · ${t('professions')} ${p.parts.professions}">` +
     `<i class="l" style="--w:${w(p.parts.level)}"></i><i class="w${p.complete ? '' : ' est'}" style="--w:${w(p.parts.combat)}"></i><i class="p" style="--w:${w(p.parts.professions)}"></i></span>`;
 };
-const skillById = id => SKILLS.find(s => s.id === id) || SKILLS[0];
+// Score global (aperçu admin) : moyenne des notes 0–100 dans 11 stats, comparé aux joueurs du même type de royaume.
+// Pas dans SKILLS : le public ne le voit nulle part et ne demande jamais skill=score.
+const SCORE_SK = { id: 'score', group: null, label: () => t('scoreT'), max: '100', logo: true, preview: true,
+  get: p => p.ranks?.score?.v ?? null, show: v => v == null ? '–' : v.toLocaleString(locale(), { maximumFractionDigits: 1 }), ratio: v => v / 100, note: () => t('scoreNote') };
+const skillById = id => id === 'score' && preview() ? SCORE_SK : SKILLS.find(s => s.id === id) || SKILLS[0];
 // classement : seules les vraies valeurs ont un rang (une arme estimée ne passe jamais devant une arme réelle)
 function rankBy(skill, list) {
   return list.map(p => ({ p, v: skill.get(p) })).filter(x => x.v != null && x.v > 0 && !(skill.est && skill.est(x.p)))
@@ -1192,7 +1199,7 @@ function boardFilters({ sk, rs, cls, dg, dw, a }) {
   let nav = '', grp;
   // comme la grille de l'addon : chaque compétence avec son icône ; groupes pliables (Armes, Métiers…) : le groupe de la
   // compétence affichée reste ouvert, les autres suivent le choix du joueur
-  SKILLS.forEach(s => {
+  (preview() ? [SCORE_SK, ...SKILLS] : SKILLS).forEach(s => {
     if (s.group !== grp) {
       if (grp) nav += '</div>';
       grp = s.group;
@@ -1201,7 +1208,7 @@ function boardFilters({ sk, rs, cls, dg, dw, a }) {
       else nav += '<div class="sg">';
     }
     const ic = s.logo || s.id === 'total' ? '<i class="sic logo"></i>' : s.icon ? `<img class="sic" src="${icon(s.icon)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '<i class="sic none"></i>';
-    nav += `<a href="?p=${a.view}&${a.q}=${s.id}" data-${a.skill}="${s.id}" class="${s.id === sk.id ? 'on' : ''}">${ic}<span class="lb">${s.label()}</span> <span>${s.max}</span></a>`;
+    nav += `<a href="?p=${a.view}&${a.q}=${s.id}" data-${a.skill}="${s.id}" class="${s.id === sk.id ? 'on' : ''}${s.preview ? ' prev' : ''}">${ic}<span class="lb">${s.label()}</span> <span>${s.preview ? '★' : s.max}</span></a>`;
   });
   const rsChips = RULESETS.map(([id, names]) => `<span class="chip ${rs === id ? 'on' : ''}" data-rs="${id}">${L2(names)}${info?.counts?.[id] ? `<span class="n">${fmt(info.counts[id])}</span>` : ''}</span>`).join('')
     + `<span class="chip dg${dg ? ' on' : ''}" data-${a.dg} role="button" tabindex="0" title="${t('dgTip')}">▲ ${t('dgSort')}</span>`
@@ -1268,7 +1275,7 @@ function renderRank() {
   const rows = j.rows.length ? j.rows.map(row).join('') + estRows
     : state.dg || state.dw ? `<div class="empty">${t(state.dw ? 'dwNone' : 'dgNone')}</div>` : sk.id === 'hpk' ? `<div class="empty">${t('hpkNone')}</div>` : nobody();
   box.innerHTML = `
-    <div class="head"><h2>${sk.label()}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('rkCount', { n: fmt(j.total) })} · ${esc(rsLabel(rs))} · Forever ${state.region.toUpperCase()}</span></div>
+    <div class="head"><h2>${sk.label()}${sk.preview ? ' ' + admBadge() : ''}</h2><span class="note">${sk.group === 'book' && !sk.armory ? t('trustShort') + ' · ' : ''}${sk.note ? sk.note() + ' · ' : ''}${t('rkCount', { n: fmt(j.total) })} · ${esc(rsLabel(rs))} · Forever ${state.region.toUpperCase()}</span></div>
     ${fbar}
     ${state.dg || state.dw ? `<span class="dgon" ${state.dw ? 'data-dw' : 'data-dg'} role="button" tabindex="0" title="${t(state.dw ? 'dwTip' : 'dgTip')}">▲ ${t(state.dw ? 'dwSort' : 'dgSort')} <i aria-hidden="true">✕</i></span>` : ''}
     <div class="chips rk-rs" role="group">${rsChips}</div>
@@ -1436,6 +1443,18 @@ function loadServerChar(k) {
       const v = p && p.key === k ? Object.assign(p, { _full: true, _server: true }) : null; SERVER_CHARS.set(k, v); return v; });
 }
 const SERVER_FAIL = new Set();
+// notes 0–100 du Score global (part des personnages du même type que l'on dépasse), couleurs de tranche comme « ta place »
+const SCORE_PARTS = [['total', () => skillById('total').label()], ['level', () => t('level')], ['defense', () => t('defense')], ['hk', () => t('stRecHk')],
+  ['kd', () => skillById('kd').label()], ['duels', () => skillById('duels').label()], ['killingBlows', () => t('qKb')], ['kills', () => t('stRecKills')],
+  ['quests', () => t('stRecQuests')], ['dungeons', () => t('stRecDungeons')], ['flights', () => t('stRecFlights')], ['prof', () => t('professions')]];
+function scoreBlock(p) {
+  if (!preview() || !p.scoreParts) return '';
+  const sc = p.ranks?.score, parts = p.scoreParts;
+  const rows = SCORE_PARTS.filter(([k]) => parts[k] != null).map(([k, l]) => `<li class="${qTier(parts[k])}"><span>${esc(capF(l()))}</span><i class="qbar"><i style="width:${Math.max(2, parts[k])}%"></i></i><b>${fmt(parts[k])}</b></li>`).join('');
+  return `<section class="scoreb"><h3>${t('scoreT')} ${admBadge()}</h3>
+    <div class="sc-top"><b>${sc ? SCORE_SK.show(sc.v) : '–'}<small> / 100</small></b>${sc?.r ? `<span>${ord(sc.r)} / ${fmt(sc.of)} · ${esc(rsLabel(p.rulesetId))}</span>` : ''}</div>
+    <p class="note">${t('scoreNote')}${parts.kd == null ? ' ' + t('scoreNoKd') : ''}</p><ul class="qlist sc-list">${rows}</ul></section>`;
+}
 const isMyChar = k => (Bnet.chars?.() || []).some(c => c.key === k);
 function renderChar() {
   if (DATA.loading) { $('#char-panel').innerHTML = loadingBox(); return; }
@@ -1489,6 +1508,7 @@ function renderChar() {
         return `<div class="score">${dayGain(p) > 0 ? `<div class="toast1"><b>+${fmt(dayGain(p))}</b> ${t('sinceY')}</div>` : ''}<div class="n${d > 0 ? ' pend' : ''}" data-n="${shown}"${d > 0 ? ` title="${esc(t('pendTitle'))}"` : ''}>${fmt(shown)}<small> / ${fmt(p.max || 2460)}</small></div><div class="r">${totalRank ? ord(totalRank) + ' · ' : ''}${t('totalLevel')}</div>${d > 0 ? `<div class="pendnote">${t('pendTotal2', { o: fmt(p.total), n: fmt(d) })}</div>` : ''}</div>`;
       })()}
     </div>
+    ${scoreBlock(p)}
     ${secNav(p)}
     <div id="sec-skills">${skillsBlock(p, peers)}</div>
     ${dropBook(p)}
@@ -2217,7 +2237,7 @@ function renderGuildListNew() {
   // la recherche garde le focus et la position du curseur pendant que la liste se redessine
   const had = document.activeElement?.matches?.('[data-glq]'), pos = had ? document.activeElement.selectionStart : 0;
   box.innerHTML = `
-    <div class="head"><h2>${t('guildsT')} · ${esc(sk.label())} ${admBadge()}</h2><span class="note">${t('gAvgNote', { top: j.top, min: j.min })} · ${t('gCount', { n: fmt(j.total) })} · ${esc(rsLabel(rs))} · Forever ${state.region.toUpperCase()}</span></div>
+    <div class="head"><h2>${t('guildsT')} · ${esc(sk.label())} ${admBadge()}</h2>${sk.preview ? `<p class="note sc-note">${t('scoreNote')}</p>` : ''}<span class="note">${t('gAvgNote', { top: j.top, min: j.min })} · ${t('gCount', { n: fmt(j.total) })} · ${esc(rsLabel(rs))} · Forever ${state.region.toUpperCase()}</span></div>
     ${fbar}
     ${gains ? `<span class="dgon" ${state.gdw ? 'data-gdw' : 'data-gdg'} role="button" tabindex="0" title="${t(state.gdw ? 'dwTip' : 'dgTip')}">▲ ${t(state.gdw ? 'dwSort' : 'dgSort')} <i aria-hidden="true">✕</i></span>` : ''}
     <div class="chips rk-rs" role="group">${rsChips}</div>
