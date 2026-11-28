@@ -42,6 +42,16 @@
     setTimeout(function () { document.documentElement.classList.add('ready'); }, 5000);
   })();
 </script>
+<style>
+  /* premier écran sans attendre style.css (nouvelle version pas encore en cache, onglet de connexion) : fond brun, jamais blanc */
+  html,body{background:#110d09;color-scheme:dark}
+  #splash{position:fixed;inset:0;z-index:100;display:grid;place-content:center;justify-items:center;gap:16px;background:radial-gradient(circle at 50% 45%,#21180e,#0b0806 70%)}
+  html.nosplash #splash{display:none}
+  html.ready #splash{opacity:0;visibility:hidden;pointer-events:none}
+  #splash .drop{position:relative;display:inline-block;width:156px;height:156px}
+  #splash .drop>*{position:absolute;inset:0;width:100%;height:100%}
+  #splash .sp-name{color:#e8c88a}
+</style>
 <link rel="stylesheet" href="style.css?v=6ad5f24c">
 </head>
 <body>

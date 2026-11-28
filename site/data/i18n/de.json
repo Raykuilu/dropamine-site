@@ -483,6 +483,8 @@
   "bnRemove": "Auswahl entfernen",
   "bnDone": "Erledigt: {n} Charakter(e) aktualisiert. Die Hiscores werden in wenigen Minuten aktualisiert.",
   "bnError": "Etwas ist schiefgelaufen. Versuch es gleich noch einmal.",
+  "bnBackT": "Angemeldet!",
+  "bnBackD": "Geh zurück in die Dropamine-App: Du bist dort auch angemeldet. Du kannst diesen Tab schließen.",
   "bnAuthError": "Die Battle.net-Anmeldung wurde nicht abgeschlossen. Versuch es erneut.",
   "bnDown": "Die Battle.net-Anmeldung ist gerade nicht verfügbar. Versuch es später erneut oder nutze das GitHub-Formular unten.",
   "upTitle": "Genauer Wert mit Dropamine",

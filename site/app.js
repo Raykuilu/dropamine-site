@@ -2976,6 +2976,7 @@ Object.assign(I18N, {
   bnAdd: ['Register selected', 'Inscrire la sélection'], bnRemove: ['Remove selected', 'Retirer la sélection'],
   bnDone: ['Done: {n} character{s} updated. The Hiscores refresh within a few minutes.', 'C\'est fait : {n} personnage{s} mis à jour. Les classements se rafraîchissent d\'ici quelques minutes.'],
   bnError: ['Something went wrong. Try again in a moment.', 'Un problème est survenu. Réessaie dans un instant.'],
+  bnBackT: ['Signed in!', 'Connecté !'], bnBackD: ['Go back to the Dropamine app: you are signed in there too. You can close this tab.', 'Retourne dans l’app Dropamine : tu y es connecté aussi. Tu peux fermer cet onglet.'],
   bnAuthError: ['Battle.net sign-in did not complete. Try again.', 'La connexion Battle.net n\'a pas abouti. Réessaie.'],
   bnDown: ['Battle.net sign-in is unavailable right now. Try again later, or use the GitHub form below.',
     'La connexion Battle.net est indisponible pour le moment. Réessaie plus tard, ou utilise le formulaire GitHub ci-dessous.'],
@@ -3004,6 +3005,11 @@ Object.assign(I18N, {
     level: ['Level 10 is required.', 'Le niveau 10 est requis.'],
   },
 });
+// lus avant que l'adresse soit réécrite : retour de Battle.net (?bnet=ok|error), app installée (écran d'accueil)
+const BNET_RET = new URLSearchParams(location.search).get('bnet');
+const STANDALONE = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+// connexion lancée il y a moins de 15 min (sinon oubliée)
+const bnPend = () => { try { const p = JSON.parse(localStorage.getItem('bnPend') || 'null'); return p && Date.now() - p.at < 15 * 60e3 ? p : null; } catch (e) { return null; } };
 const Bnet = (() => {
   let alive = null, me = null, msg = '', upMsg = '', scMsg = '';
   // affiché sur le site : inscrit, ou en aperçu de guilde (et pas masqué) ; coché = affiché
@@ -3052,9 +3058,13 @@ const Bnet = (() => {
     // goutte de chargement pendant la réponse du serveur (seulement au premier affichage, pas de clignotement ensuite)
     { const b = box(); if (b.hidden) { b.hidden = false; b.innerHTML = loadingBox(); } }
     if (!(await probe())) { draw(); return; }
-    const q = new URLSearchParams(location.search);
-    if (q.get('bnet') === 'error') msg = t('bnAuthError');
+    if (BNET_RET === 'error') msg = t('bnAuthError');
     await load(); draw(); header();
+    // retour de Battle.net ouvert hors de l'app installée (Android : onglet Chrome à part) : on renvoie vers l'app
+    if (BNET_RET === 'ok' && me && !STANDALONE && bnPend()?.app) {
+      box().insertAdjacentHTML('afterbegin', `<div class="empty oops bn-back" role="status"><b>${t('bnBackT')}</b>${t('bnBackD')}</div>`);
+      setTimeout(() => { try { window.close(); } catch (e) { /* onglet qui ne se ferme pas tout seul */ } }, 2500);
+    }
   }
   document.addEventListener('click', async e => {
     const el = e.target.closest('[data-bn]'); if (!el) return;
@@ -3123,6 +3133,20 @@ const Bnet = (() => {
   const chars = () => (me?.characters || []).filter(c => c.level >= 10);
   return { show, init, header, mine, best, isMine, refresh, call, upload, chars, logged: () => !!me };
 })();
+// Connexion depuis l'app installée : Battle.net s'ouvre hors de l'app (onglet Chrome sur Android) et le retour y reste.
+// On retient « connexion en cours » ; quand l'app revient au premier plan, elle relit le compte (cookie partagé avec Chrome)
+// et passe en connecté sans rechargement.
+document.addEventListener('click', e => {
+  if (!e.target.closest('a[href$="/auth/login"]')) return;
+  try { localStorage.setItem('bnPend', JSON.stringify({ at: Date.now(), app: STANDALONE })); } catch (err) { /* stockage indisponible */ }
+}, true);
+let bnCheck = 0;
+function bnBack() {
+  const p = bnPend(); if (!p || document.hidden || Bnet.logged() || Date.now() - bnCheck < 3000) return;
+  bnCheck = Date.now();
+  Bnet.refresh().then(() => { if (Bnet.logged()) { try { localStorage.removeItem('bnPend'); } catch (e) { /* rien */ } Ribbon.swell(.8); } });
+}
+if (STANDALONE) { document.addEventListener('visibilitychange', bnBack); addEventListener('focus', bnBack); }
 
 /* ---------- Animations d'arrivée ---------- */
 // balises de la page (adresse de référence, description, Open Graph) mises à jour à chaque vue : sans elles, toutes les

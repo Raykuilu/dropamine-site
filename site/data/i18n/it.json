@@ -483,6 +483,8 @@
   "bnRemove": "Rimuovi i selezionati",
   "bnDone": "Fatto: personaggi aggiornati: {n}. Gli Hiscores si aggiornano entro qualche minuto.",
   "bnError": "Qualcosa è andato storto. Riprova tra un momento.",
+  "bnBackT": "Connesso!",
+  "bnBackD": "Torna nell’app Dropamine: sei connesso anche lì. Puoi chiudere questa scheda.",
   "bnAuthError": "L'accesso con Battle.net non è stato completato. Riprova.",
   "bnDown": "L'accesso con Battle.net non è disponibile al momento. Riprova più tardi, o usa il modulo GitHub qui sotto.",
   "upTitle": "Punteggio esatto con Dropamine",

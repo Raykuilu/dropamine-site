@@ -483,6 +483,8 @@
   "bnRemove": "Quitar la selección",
   "bnDone": "Hecho: personajes actualizados: {n}. La clasificación se actualiza en unos minutos.",
   "bnError": "Algo ha fallado. Vuelve a intentarlo en un momento.",
+  "bnBackT": "¡Conectado!",
+  "bnBackD": "Vuelve a la app de Dropamine: también estás conectado allí. Puedes cerrar esta pestaña.",
   "bnAuthError": "El inicio de sesión con Battle.net no se ha completado. Vuelve a intentarlo.",
   "bnDown": "El inicio de sesión con Battle.net no está disponible ahora mismo. Vuelve a intentarlo más tarde o usa el formulario de GitHub de abajo.",
   "upTitle": "Puntuación exacta con Dropamine",
