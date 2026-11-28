@@ -132,7 +132,15 @@ function sealStored(path, data) {
   if (path === 'data/runs.json') return { _comment: 'Sauvegarde chiffrée des sorties : seul api.dropamine.app peut la lire.', enc: sealSecret(DATA_KEY, JSON.stringify(data)) };
   return data;
 }
-const readRegistry = async () => { const { data, sha } = await readFile('data/registry.json'); return { registry: data, sha }; };
+// registre lu à chaque appel de /me : gardé 3 min en mémoire (une lecture GitHub lente ne ralentit plus la connexion),
+// oublié dès qu'on l'écrit ; une lecture en cours est partagée
+let REG_CACHE = null;
+const readRegistry = () => {
+  if (REG_CACHE && Date.now() - REG_CACHE.at < 180e3) return REG_CACHE.p;
+  const p = readFile('data/registry.json').then(({ data, sha }) => ({ registry: data, sha }));
+  REG_CACHE = { at: Date.now(), p }; p.catch(() => { if (REG_CACHE?.p === p) REG_CACHE = null; });
+  return p;
+};
 async function writeFile(path, data, sha, message) {
   const res = await gh(`/contents/${path}`, { method: 'PUT', body: JSON.stringify({
     message, sha, branch: 'main',
@@ -198,7 +206,7 @@ async function updateFile(path, fallback, fn, message) {
   }
   throw new Error(`${path} occupé, réessaie dans un instant`);
 }
-const updateRegistry = (fn, message) => updateFile('data/registry.json', undefined, fn, message);
+const updateRegistry = async (fn, message) => { try { return await updateFile('data/registry.json', undefined, fn, message); } finally { REG_CACHE = null; } };
 const updateUploads = (fn, message) => updateFile('data/uploads.json', {}, fn, message);
 // ---------------------------------------------------------------- runs : en mémoire, sauvegardés sur le disque du serveur
 // Beaucoup d'inscriptions possibles : pas un commit GitHub par clic. La mémoire fait foi, chaque changement est écrit
