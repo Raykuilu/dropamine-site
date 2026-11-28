@@ -4,8 +4,9 @@
     "eu/ray-kuilu",
     "eu/dé-monique"
   ],
-  "owners": {
-    "eu/ray-kuilu": "bnet:masque",
-    "eu/dé-monique": "bnet:masque"
+  "owners": {},
+  "ownersEnc": {
+    "eu/ray-kuilu": "v1:NbS4qLSSjxPEAV5lnhaf2HiwRK-4ZshchGuWHUPf4Clj1xTLa2wKOmXqemH3oIMsrg",
+    "eu/dé-monique": "v1:CjzsIw8l8yz_5JTeOc6_mEGCsPqYzriu6jwHKPxC34Xpg3HgcavAY8_Q7Wq8SdVbDQ"
   }
 }
